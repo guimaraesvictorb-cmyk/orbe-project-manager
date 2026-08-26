@@ -1,6 +1,20 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
-import type { Task } from '../lib/database.types'
+import type { Task, TaskRecurrence } from '../lib/database.types'
+
+const RECURRENCE_DAYS: Record<Exclude<TaskRecurrence, 'nenhuma'>, number> = {
+  diaria: 1,
+  semanal: 7,
+  quinzenal: 14,
+  mensal: 30,
+}
+
+function nextDeadline(deadline: string | null, recurrence: TaskRecurrence): string | null {
+  if (recurrence === 'nenhuma') return deadline
+  const base = deadline ? new Date(deadline + 'T00:00:00') : new Date()
+  base.setDate(base.getDate() + RECURRENCE_DAYS[recurrence])
+  return base.toISOString().split('T')[0]
+}
 
 interface UseTasksOptions {
   clientId?: string
@@ -44,6 +58,21 @@ export function useTasks(options: UseTasksOptions = {}) {
     const { data, error } = await supabase.from('tasks').update({ ...updates, ...extra }).eq('id', id).select().single()
     if (error) return { error: error.message }
     setTasks((prev) => prev.map((t) => (t.id === id ? data : t)))
+
+    if (updates.status === 'concluido' && data.recurrence !== 'nenhuma') {
+      const {
+        id: _id, created_at: _created_at, updated_at: _updated_at,
+        completed_at: _completed_at, deleted_at: _deleted_at,
+        ...rest
+      } = data as Task
+      void _id; void _created_at; void _updated_at; void _completed_at; void _deleted_at
+      await createTask({
+        ...rest,
+        status: 'backlog',
+        deadline: nextDeadline(data.deadline, data.recurrence),
+      })
+    }
+
     return { data }
   }
 

@@ -114,12 +114,23 @@ function TaskModal({ task, clients, profiles, onClose, onSave, onDelete, current
                 {(Object.keys(PRIORITY_META) as Task["priority"][]).map((p) => <option key={p} value={p}>{PRIORITY_META[p].label}</option>)}
               </select>
             </div>
-            <div className="space-y-1 col-span-2">
+            <div className="space-y-1">
               <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#555" }}>Deadline</label>
               <input type="date" value={form.deadline ?? ""} onChange={(e) => setForm((f) => ({ ...f, deadline: e.target.value || null }))}
                 className={inputCls} style={inputStyle}
                 onFocus={(e) => (e.currentTarget.style.borderColor = "#1FCE4A44")}
                 onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")} />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#555" }}>Repetir</label>
+              <select value={form.recurrence ?? "nenhuma"} onChange={(e) => setForm((f) => ({ ...f, recurrence: e.target.value as Task["recurrence"] }))}
+                className={inputCls} style={{ ...inputStyle, appearance: "none" as const }}>
+                <option value="nenhuma">Não repetir</option>
+                <option value="diaria">Diariamente</option>
+                <option value="semanal">Semanalmente</option>
+                <option value="quinzenal">Quinzenalmente</option>
+                <option value="mensal">Mensalmente</option>
+              </select>
             </div>
           </div>
           <textarea value={form.description ?? ""} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value || null }))}

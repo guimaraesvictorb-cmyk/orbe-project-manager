@@ -132,6 +132,8 @@ export interface WorkflowTrigger {
   created_at: string
 }
 
+export type TaskRecurrence = 'nenhuma' | 'diaria' | 'semanal' | 'quinzenal' | 'mensal'
+
 export interface Task {
   id: string
   client_id: string
@@ -151,6 +153,7 @@ export interface Task {
   data_source: string
   external_id: string | null
   last_synced_at: string | null
+  recurrence: TaskRecurrence
   created_by: string
   created_at: string
   updated_at: string
