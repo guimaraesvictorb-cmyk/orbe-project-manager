@@ -1,5 +1,5 @@
 export const GROQ_MODEL = "llama-3.3-70b-versatile"
-export const GROQ_STORAGE_KEY = "m5os_groq_key"
+export const GROQ_STORAGE_KEY = "orbe_groq_key"
 export const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 export function getGroqApiKey(): string {

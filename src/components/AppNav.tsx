@@ -23,7 +23,7 @@ interface NavGroup { label?: string; items: NavItem[] }
 const NAV: NavGroup[] = [
   {
     items: [
-      { view: "home",      label: "M5 AI",     icon: <Sparkles size={15} /> },
+      { view: "home",      label: "Orbe AI",     icon: <Sparkles size={15} /> },
       { view: "dashboard", label: "Dashboard", icon: <LayoutDashboard size={15} /> },
     ],
   },
@@ -98,7 +98,7 @@ export function AppNav({ active, onChange, profile, onLogout }: AppNavProps) {
         </div>
         <div>
           <p className="text-white font-semibold text-xs leading-tight">Operating System</p>
-          <p className="text-[10px] leading-tight" style={{ color: "#444" }}>Plataforma M5</p>
+          <p className="text-[10px] leading-tight" style={{ color: "#444" }}>Plataforma Orbe</p>
         </div>
       </div>
 

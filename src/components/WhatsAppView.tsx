@@ -3,9 +3,9 @@ import { MessageSquare, Settings, X, Send, Loader2, Check, Users, Phone, AlertCi
 import { useClients } from "../hooks/useClients";
 import { Footer } from "./Footer";
 
-const WA_URL_KEY = "m5os_evo_url";
-const WA_KEY_KEY = "m5os_evo_key";
-const WA_INST_KEY = "m5os_evo_instance";
+const WA_URL_KEY = "orbe_evo_url";
+const WA_KEY_KEY = "orbe_evo_key";
+const WA_INST_KEY = "orbe_evo_instance";
 
 function getConfig() {
   return {
@@ -19,22 +19,22 @@ const TEMPLATES = [
   {
     id: "followup",
     label: "Follow-up mensal",
-    text: "Olá, {nome}! 👋\n\nPassando para compartilhar as métricas do mês de {mes}.\n\nEstamos com ótimos resultados e gostaríamos de alinhar os próximos passos. Quando podemos conversar?\n\nAtenciosamente,\nEquipe M5 Marketing",
+    text: "Olá, {nome}! 👋\n\nPassando para compartilhar as métricas do mês de {mes}.\n\nEstamos com ótimos resultados e gostaríamos de alinhar os próximos passos. Quando podemos conversar?\n\nAtenciosamente,\nEquipe Orbe Marketing",
   },
   {
     id: "relatorio",
     label: "Envio de relatório",
-    text: "Olá, {nome}! 📊\n\nSeu relatório do mês de {mes} está pronto!\n\nPode acessar pelo link: {link}\n\nQualquer dúvida, estou à disposição.\n\nAtenciosamente,\nEquipe M5 Marketing",
+    text: "Olá, {nome}! 📊\n\nSeu relatório do mês de {mes} está pronto!\n\nPode acessar pelo link: {link}\n\nQualquer dúvida, estou à disposição.\n\nAtenciosamente,\nEquipe Orbe Marketing",
   },
   {
     id: "reuniao",
     label: "Agendamento de reunião",
-    text: "Olá, {nome}! 📅\n\nGostaria de agendar nossa reunião de alinhamento mensal. Você tem disponibilidade esta semana?\n\nPodemos fazer por videochamada em até 30 minutos.\n\nAtenciosamente,\nEquipe M5 Marketing",
+    text: "Olá, {nome}! 📅\n\nGostaria de agendar nossa reunião de alinhamento mensal. Você tem disponibilidade esta semana?\n\nPodemos fazer por videochamada em até 30 minutos.\n\nAtenciosamente,\nEquipe Orbe Marketing",
   },
   {
     id: "boas_vindas",
     label: "Boas-vindas ao cliente",
-    text: "Olá, {nome}! 🎉\n\nSeja muito bem-vindo(a) à M5 Marketing!\n\nEstamos muito animados para trabalhar juntos e alavancar os seus resultados.\n\nNos próximos dias entraremos em contato para alinhar o onboarding.\n\nAtenciosamente,\nEquipe M5 Marketing",
+    text: "Olá, {nome}! 🎉\n\nSeja muito bem-vindo(a) à Orbe Marketing!\n\nEstamos muito animados para trabalhar juntos e alavancar os seus resultados.\n\nNos próximos dias entraremos em contato para alinhar o onboarding.\n\nAtenciosamente,\nEquipe Orbe Marketing",
   },
 ];
 
@@ -49,7 +49,7 @@ function ConfigModal({ onClose, onSave }: ConfigModalProps) {
   const cfg = getConfig();
   const [url, setUrl] = useState(cfg.url);
   const [key, setKey] = useState(cfg.apiKey);
-  const [instance, setInstance] = useState(cfg.instance || "m5-marketing");
+  const [instance, setInstance] = useState(cfg.instance || "orbe-marketing");
   const [step, setStep] = useState<ConnectStep>("form");
   const [loading, setLoading] = useState(false);
   const [qrCode, setQrCode] = useState("");
@@ -168,7 +168,7 @@ function ConfigModal({ onClose, onSave }: ConfigModalProps) {
             </div>
             <div>
               <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "#555" }}>Nome da instância *</label>
-              <input value={instance} onChange={(e) => setInstance(e.target.value)} placeholder="m5-marketing" className={inp} style={inpStyle} />
+              <input value={instance} onChange={(e) => setInstance(e.target.value)} placeholder="orbe-marketing" className={inp} style={inpStyle} />
               <p className="text-[10px] mt-1" style={{ color: "#333" }}>Identificador da sua instância WhatsApp (sem espaços)</p>
             </div>
             {error && (

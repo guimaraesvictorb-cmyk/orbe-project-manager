@@ -1,20 +1,20 @@
-# 🟢 M5 Operating System
+# 🟢 Orbe Operating System
 
-> O sistema operacional interno da M5 Marketing — uma plataforma centralizada que substitui Notion, planilhas e WhatsApp na gestão diária da agência.
+> O sistema operacional interno da Orbe Marketing — uma plataforma centralizada que substitui Notion, planilhas e WhatsApp na gestão diária da agência.
 
 ---
 
-## O que é o M5 OS?
+## O que é o Orbe OS?
 
-O M5 OS é o hub de operações da M5 Marketing. Em vez de informações espalhadas entre Notion, Google Sheets, WhatsApp e e-mail, tudo vive em um único lugar: clientes, tarefas, financeiro, pipeline comercial e inteligência artificial.
+O Orbe OS é o hub de operações da Orbe Marketing. Em vez de informações espalhadas entre Notion, Google Sheets, WhatsApp e e-mail, tudo vive em um único lugar: clientes, tarefas, financeiro, pipeline comercial e inteligência artificial.
 
-A plataforma foi construída do zero para a realidade de uma agência de marketing digital — com os fluxos, nomenclaturas e metodologia da M5.
+A plataforma foi construída do zero para a realidade de uma agência de marketing digital — com os fluxos, nomenclaturas e metodologia da Orbe.
 
 ---
 
 ## Para quem é?
 
-| Quem | O que faz no M5 OS |
+| Quem | O que faz no Orbe OS |
 |------|-------------------|
 | **Sócio / Admin** | Visão total — clientes, financeiro, time, pipeline |
 | **Coordenador** | Gerencia operação, clientes e tarefas do time |
@@ -25,7 +25,7 @@ A plataforma foi construída do zero para a realidade de uma agência de marketi
 
 ## O que a plataforma faz
 
-### 🏠 Home — Assistente M5 AI
+### 🏠 Home — Assistente Orbe AI
 Assistente de IA integrado (Llama 3.3 via Groq) disponível direto na tela inicial. Responde dúvidas, ajuda a redigir textos, analisa situações — tudo no contexto de uma agência de marketing.
 
 ### 📊 Dashboard
@@ -68,13 +68,13 @@ CRM em kanban para controle de oportunidades:
 Templates de tarefas para processos recorrentes da agência (onboarding, início de quarter, fechamento mensal).
 
 ### 🧠 Central
-Repositório de processos e rituais internos da M5.
+Repositório de processos e rituais internos da Orbe.
 
 ---
 
 ## Acesso
 
-**URL de produção:** https://m5-project-manager.vercel.app
+**URL de produção:** https://studio.agenciaorbe.co
 
 O acesso é feito com e-mail e senha cadastrados pelo administrador. Novos usuários são criados diretamente pelo painel do Supabase e recebem a role adequada.
 

@@ -7,7 +7,7 @@ export function Footer() {
           <span
             className="text-sm font-bold leading-none select-none"
             style={{ fontFamily: "Arial, sans-serif", letterSpacing: "-2px" }}
-            aria-label="M5"
+            aria-label="Orbe"
           >
             <span className="text-white">M</span>
             <span style={{ color: "#1FCE4A" }}>5</span>
@@ -21,7 +21,7 @@ export function Footer() {
 
         {/* Right */}
         <p className="text-[10px] tracking-widest uppercase text-[#A3A3A3]">
-          Metodologia M5 ·{" "}
+          Metodologia Orbe ·{" "}
           <span style={{ color: "#1FCE4A" }}>Não Distribuir</span>
         </p>
       </div>

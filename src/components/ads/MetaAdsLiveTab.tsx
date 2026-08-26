@@ -12,7 +12,7 @@ import { fmtCurrency, fmtPct, fmtInt } from '../../lib/formatters'
 
 // ─── constants ───────────────────────────────────────────────────────────────
 
-const META_STORAGE_KEY = 'm5os_meta_token'
+const META_STORAGE_KEY = 'orbe_meta_token'
 const META_GRAPH = 'https://graph.facebook.com/v18.0'
 const BLUE = '#1877F2'
 const CARD_BG = '#0f1220'

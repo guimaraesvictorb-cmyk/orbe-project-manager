@@ -175,7 +175,7 @@ function ClientAI({ client, validated }: { client: Client; validated: KnowledgeE
     const knowledgeText = validated.length
       ? "\n\nBase de conhecimento validada:\n" + validated.map((e) => `- ${e.title}: ${e.content}`).join("\n")
       : ""
-    return `Você é o assistente de IA dedicado ao cliente "${client.name}" da agência M5 Marketing.
+    return `Você é o assistente de IA dedicado ao cliente "${client.name}" da agência Orbe Marketing.
 Responda SEMPRE em português brasileiro. Seja objetivo, profissional e focado em marketing digital.
 
 Dados do cliente:

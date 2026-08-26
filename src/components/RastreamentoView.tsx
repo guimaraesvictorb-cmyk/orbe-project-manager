@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { Copy, Check, Trash2, Link2, QrCode } from 'lucide-react'
 import { Footer } from './Footer'
 
-const STORAGE_KEY = 'm5os_utms'
+const STORAGE_KEY = 'orbe_utms'
 
 interface UTMLink {
   id: string

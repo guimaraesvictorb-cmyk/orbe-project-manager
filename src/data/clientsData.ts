@@ -1,6 +1,6 @@
 export type ClientStatus = "ativo" | "onboarding" | "pausado" | "encerrado";
 
-export interface M5Client {
+export interface OrbeClient {
   id: string;
   name: string;
   category: string;
@@ -15,7 +15,7 @@ export interface M5Client {
   healthFlag: "green" | "yellow" | "red";
 }
 
-export const CLIENTS: M5Client[] = [
+export const CLIENTS: OrbeClient[] = [
   {
     id: "cli_001",
     name: "FitVida Academia",

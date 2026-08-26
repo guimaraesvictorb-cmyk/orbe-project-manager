@@ -37,7 +37,7 @@ export function Header({ profile, onLogout }: HeaderProps) {
               Operating System
             </p>
             <p className="text-xs leading-tight mt-0.5" style={{ color: "#A3A3A3" }}>
-              Plataforma Operacional M5
+              Plataforma Operacional Orbe
             </p>
           </div>
         </div>

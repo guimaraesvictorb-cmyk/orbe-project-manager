@@ -110,7 +110,7 @@ function SegurancaSection() {
   async function startEnroll() {
     setError("");
     setStep("enrolling");
-    const { data, error: err } = await supabase.auth.mfa.enroll({ factorType: "totp", issuer: "M5 OS", friendlyName: "M5 Authenticator" });
+    const { data, error: err } = await supabase.auth.mfa.enroll({ factorType: "totp", issuer: "Orbe OS", friendlyName: "Orbe Authenticator" });
     if (err || !data) { setError(err?.message ?? "Erro ao iniciar 2FA"); setStep("idle"); return; }
     setQrCode(data.totp.qr_code);
     setSecret(data.totp.secret);
@@ -326,7 +326,7 @@ function EquipeSection() {
       <div className="flex items-start justify-between">
         <div>
           <h2 className="text-white font-semibold text-base mb-1">Minha Equipe</h2>
-          <p className="text-xs" style={{ color: "#555" }}>Gerencie os membros e funções da equipe M5.</p>
+          <p className="text-xs" style={{ color: "#555" }}>Gerencie os membros e funções da equipe Orbe.</p>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={loadMembers} className="p-2 rounded-lg transition-colors hover:bg-[#0a0a0a]" style={{ color: "#555" }}>
@@ -385,7 +385,7 @@ function EquipeSection() {
             <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "#555" }}>E-mail</label>
             <input
               type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} required
-              placeholder="email@m5marketing.com.br"
+              placeholder="email@agenciaorbe.co"
               className="w-full rounded-lg px-3 py-2 text-xs text-white placeholder-[#333] focus:outline-none"
               style={{ backgroundColor: "#080808", border: "1px solid #1e1e1e" }}
             />

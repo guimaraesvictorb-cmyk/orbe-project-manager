@@ -110,7 +110,7 @@ export function ProcessosView() {
         </p>
         <h2 className="text-white font-bold text-xl">Processos & Rotinas</h2>
         <p className="text-xs mt-1" style={{ color: "#555" }}>
-          Documentação operacional da M5. Clique em uma rotina para ver o checklist completo.
+          Documentação operacional da Orbe. Clique em uma rotina para ver o checklist completo.
         </p>
       </div>
 

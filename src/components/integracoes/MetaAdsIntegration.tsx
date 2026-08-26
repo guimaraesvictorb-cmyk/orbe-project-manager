@@ -7,7 +7,7 @@ import {
   Unlink, ChevronDown, ChevronUp,
 } from "lucide-react";
 
-const META_STORAGE_KEY = "m5os_meta_token";
+const META_STORAGE_KEY = "orbe_meta_token";
 
 interface AdAccount {
   id: string;

@@ -1,7 +1,7 @@
 import { useState, useEffect, type FormEvent } from "react";
 import { X } from "lucide-react";
-import type { Task, TaskStatus, TaskPriority, M5PhaseId, TaskType } from "../../data/tasks";
-import { TASK_TYPES, M5_CLIENTS, PHASE_SHORT } from "../../data/tasks";
+import type { Task, TaskStatus, TaskPriority, OrbePhaseId, TaskType } from "../../data/tasks";
+import { TASK_TYPES, ORBE_CLIENTS, PHASE_SHORT } from "../../data/tasks";
 
 interface TaskModalProps {
   task: Task | null; // null = create mode
@@ -11,7 +11,7 @@ interface TaskModalProps {
 
 const EMPTY: Omit<Task, "id" | "createdAt" | "updatedAt"> = {
   title: "",
-  client: M5_CLIENTS[0],
+  client: ORBE_CLIENTS[0],
   responsible: "Victor Guimarães",
   phaseId: 6,
   type: "Otimização de Campanha",
@@ -142,7 +142,7 @@ export function TaskModal({ task, onSave, onClose }: TaskModalProps) {
                 value={form.client}
                 onChange={(e) => set("client", e.target.value)}
               >
-                {M5_CLIENTS.map((c) => (
+                {ORBE_CLIENTS.map((c) => (
                   <option key={c} value={c}>{c}</option>
                 ))}
                 <option value="Outro">Outro</option>
@@ -159,13 +159,13 @@ export function TaskModal({ task, onSave, onClose }: TaskModalProps) {
             </Field>
           </div>
 
-          {/* Row: Fase M5 + Tipo */}
+          {/* Row: Fase Orbe + Tipo */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Fase M5">
+            <Field label="Fase Orbe">
               <select
                 className={selectCls}
                 value={form.phaseId}
-                onChange={(e) => set("phaseId", Number(e.target.value) as M5PhaseId)}
+                onChange={(e) => set("phaseId", Number(e.target.value) as OrbePhaseId)}
               >
                 {(Object.entries(PHASE_SHORT) as [string, string][]).map(([id, name]) => (
                   <option key={id} value={id}>F{id} — {name}</option>

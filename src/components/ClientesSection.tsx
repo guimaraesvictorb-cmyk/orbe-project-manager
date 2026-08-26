@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { ExternalLink, Plus, Search, Loader2, X, Check } from "lucide-react";
+import { ExternalLink, Plus, Search, Loader2, X, Check, TrendingDown, ChevronDown, ChevronUp } from "lucide-react";
 import { useClients } from "../hooks/useClients";
 import { useAuth } from "../hooks/useAuth";
 import type { Client } from "../lib/database.types";
@@ -15,7 +15,7 @@ function avatarColor(id: string) {
   return AVATAR_COLORS[n % AVATAR_COLORS.length];
 }
 
-function ClientCard({ client, onHealthChange, onSelect }: { client: Client; onHealthChange: (id: string, flag: Client["health_flag"]) => void; onSelect: (client: Client) => void }) {
+function ClientCard({ client, onHealthChange, onStatusChange, onSelect }: { client: Client; onHealthChange: (id: string, flag: Client["health_flag"]) => void; onStatusChange: (id: string, status: Client["status"]) => void; onSelect: (client: Client) => void }) {
   const flag = FLAG_META[client.health_flag];
   const statusMeta = STATUS_META[client.status];
   const [changingFlag, setChangingFlag] = useState(false);
@@ -94,21 +94,37 @@ function ClientCard({ client, onHealthChange, onSelect }: { client: Client; onHe
         </div>
       </div>
 
-      {client.website && (
-        <a
-          href={client.website}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          className="flex items-center gap-1 text-[11px] transition-colors duration-150 mt-auto"
-          style={{ color: "#444" }}
-          onMouseEnter={(e) => ((e.currentTarget as HTMLAnchorElement).style.color = "#1FCE4A")}
-          onMouseLeave={(e) => ((e.currentTarget as HTMLAnchorElement).style.color = "#444")}
-        >
-          <ExternalLink size={11} />
-          <span className="truncate">{client.website.replace(/^https?:\/\//, "")}</span>
-        </a>
-      )}
+      <div className="flex items-center justify-between mt-auto">
+        {client.website ? (
+          <a
+            href={client.website}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="flex items-center gap-1 text-[11px] transition-colors duration-150"
+            style={{ color: "#444" }}
+            onMouseEnter={(e) => ((e.currentTarget as HTMLAnchorElement).style.color = "#1FCE4A")}
+            onMouseLeave={(e) => ((e.currentTarget as HTMLAnchorElement).style.color = "#444")}
+          >
+            <ExternalLink size={11} />
+            <span className="truncate">{client.website.replace(/^https?:\/\//, "")}</span>
+          </a>
+        ) : <span />}
+
+        {client.status !== "churned" && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onStatusChange(client.id, "churned"); }}
+            className="flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-lg transition-all"
+            style={{ color: "#6B7280", backgroundColor: "transparent" }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#EF4444"; (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#1a0808"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#6B7280"; (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent"; }}
+            title="Marcar como churn"
+          >
+            <TrendingDown size={11} />
+            Churn
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -294,14 +310,19 @@ interface ClientesSectionProps {
 }
 
 export function ClientesSection({ compact = false, onSelectClient }: ClientesSectionProps) {
-  const { clients, loading, createClient, updateHealthFlag } = useClients();
+  const { clients, loading, createClient, updateHealthFlag, updateStatus } = useClients();
   const { user, isAuthenticated } = useAuth();
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("todos");
   const [filterFlag, setFilterFlag] = useState("todos");
   const [showNewModal, setShowNewModal] = useState(false);
+  const [showChurned, setShowChurned] = useState(false);
 
-  const filtered = useMemo(() => clients.filter((c) => {
+  const activeClients = useMemo(() => clients.filter((c) => c.status !== "churned"), [clients]);
+  const churnedClients = useMemo(() => clients.filter((c) => c.status === "churned"), [clients]);
+  const churnRevenueLost = useMemo(() => churnedClients.reduce((sum, c) => sum + (c.monthly_fee ?? 0), 0), [churnedClients]);
+
+  const filtered = useMemo(() => activeClients.filter((c) => {
     if (filterStatus !== "todos" && c.status !== filterStatus) return false;
     if (filterFlag !== "todos" && c.health_flag !== filterFlag) return false;
     if (search.trim()) {
@@ -309,7 +330,7 @@ export function ClientesSection({ compact = false, onSelectClient }: ClientesSec
       return c.name.toLowerCase().includes(q) || (c.segment ?? "").toLowerCase().includes(q) || (c.primary_contact_name ?? "").toLowerCase().includes(q);
     }
     return true;
-  }), [clients, filterStatus, filterFlag, search]);
+  }), [activeClients, filterStatus, filterFlag, search]);
 
   const selectCls = "bg-[#0d0d0d] border border-[#1e1e1e] rounded-lg px-3 py-2 text-xs text-white focus:outline-none transition-colors appearance-none cursor-pointer";
 
@@ -320,8 +341,8 @@ export function ClientesSection({ compact = false, onSelectClient }: ClientesSec
     return result?.error;
   }
 
-  const ativos = useMemo(() => clients.filter((c) => c.status === "ativo").length, [clients]);
-  const emRisco = useMemo(() => clients.filter((c) => c.health_flag === "red").length, [clients]);
+  const ativos = useMemo(() => activeClients.filter((c) => c.status === "ativo").length, [activeClients]);
+  const emRisco = useMemo(() => activeClients.filter((c) => c.health_flag === "red").length, [activeClients]);
 
   if (loading) {
     return (
@@ -386,9 +407,9 @@ export function ClientesSection({ compact = false, onSelectClient }: ClientesSec
         <div className="rounded-xl border border-[#1a1a1a] py-16 text-center" style={{ backgroundColor: "#0a0a0a" }}>
           <p className="text-white font-semibold text-sm mb-1">Nenhum cliente encontrado</p>
           <p className="text-xs mb-4" style={{ color: "#444" }}>
-            {clients.length === 0 ? "Adicione o primeiro cliente da M5" : "Tente ajustar os filtros"}
+            {activeClients.length === 0 ? "Adicione o primeiro cliente da Orbe" : "Tente ajustar os filtros"}
           </p>
-          {clients.length === 0 && isAuthenticated && (
+          {activeClients.length === 0 && isAuthenticated && (
             <button
               onClick={() => setShowNewModal(true)}
               className="text-xs font-semibold px-4 py-2 rounded-lg"
@@ -401,14 +422,49 @@ export function ClientesSection({ compact = false, onSelectClient }: ClientesSec
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
           {filtered.map((client) => (
-            <ClientCard key={client.id} client={client} onHealthChange={updateHealthFlag} onSelect={(c) => onSelectClient?.(c)} />
+            <ClientCard key={client.id} client={client} onHealthChange={updateHealthFlag} onStatusChange={updateStatus} onSelect={(c) => onSelectClient?.(c)} />
           ))}
         </div>
       )}
 
       <p className="text-[11px]" style={{ color: "#333" }}>
-        Mostrando {filtered.length} de {clients.length} cliente{clients.length !== 1 ? "s" : ""}
+        Mostrando {filtered.length} de {activeClients.length} cliente{activeClients.length !== 1 ? "s" : ""}
       </p>
+
+      {/* Churned section */}
+      {churnedClients.length > 0 && (
+        <div className="rounded-xl border border-[#1a1a1a] overflow-hidden" style={{ backgroundColor: "#0a0a0a" }}>
+          <button
+            onClick={() => setShowChurned((v) => !v)}
+            className="w-full flex items-center justify-between px-4 py-3 transition-colors"
+            onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.backgroundColor = "#0f0f0f")}
+            onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent")}
+          >
+            <div className="flex items-center gap-3">
+              <TrendingDown size={14} style={{ color: "#EF4444" }} />
+              <span className="text-sm font-semibold" style={{ color: "#EF4444" }}>
+                Churn — {churnedClients.length} cliente{churnedClients.length !== 1 ? "s" : ""}
+              </span>
+              {churnRevenueLost > 0 && (
+                <span className="text-[11px] px-2 py-0.5 rounded-md" style={{ backgroundColor: "#1a0808", color: "#EF4444" }}>
+                  − R$ {churnRevenueLost.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}/mês
+                </span>
+              )}
+            </div>
+            {showChurned ? <ChevronUp size={14} style={{ color: "#555" }} /> : <ChevronDown size={14} style={{ color: "#555" }} />}
+          </button>
+
+          {showChurned && (
+            <div className="px-4 pb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 border-t border-[#1a1a1a] pt-4">
+              {churnedClients.map((client) => (
+                <div key={client.id} className="opacity-60">
+                  <ClientCard client={client} onHealthChange={updateHealthFlag} onStatusChange={updateStatus} onSelect={(c) => onSelectClient?.(c)} />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {showNewModal && (
         <NewClientModal onClose={() => setShowNewModal(false)} onSave={handleCreate} />

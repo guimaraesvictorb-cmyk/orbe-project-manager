@@ -4,8 +4,8 @@ import { USERS } from "./users";
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const SALT = "M5OS_INTERNAL_SALT_V1";
-const SESSION_KEY = "m5os_session";
-const RATE_KEY_PREFIX = "m5os_rl_";
+const SESSION_KEY = "orbe_session";
+const RATE_KEY_PREFIX = "orbe_rl_";
 
 const SESSION_DURATION_MS = 8 * 60 * 60 * 1000; // 8 hours
 const MAX_ATTEMPTS = 5;

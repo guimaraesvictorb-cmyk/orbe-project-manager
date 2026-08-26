@@ -48,7 +48,7 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
               className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-black text-sm"
               style={{ backgroundColor: "#1FCE4A" }}
             >
-              M5
+              Orbe
             </div>
             <span className="text-white font-bold text-xl tracking-tight">Operating System</span>
           </div>

@@ -16,13 +16,13 @@ const ThemeContext = createContext<ThemeContextValue>({
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(() => {
-    return (localStorage.getItem("m5os_theme") as Theme) ?? "dark";
+    return (localStorage.getItem("orbe_theme") as Theme) ?? "dark";
   });
 
   useEffect(() => {
     const root = document.documentElement;
     root.setAttribute("data-theme", theme);
-    localStorage.setItem("m5os_theme", theme);
+    localStorage.setItem("orbe_theme", theme);
   }, [theme]);
 
   function setTheme(t: Theme) {

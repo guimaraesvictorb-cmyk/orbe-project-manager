@@ -1,4 +1,4 @@
--- M5 Operating System — Schema Completo
+-- Orbe Operating System — Schema Completo
 -- Rode este arquivo no Supabase SQL Editor:
 -- https://supabase.com/dashboard/project/pkncvfssrbjjpgwstelo/sql/new
 

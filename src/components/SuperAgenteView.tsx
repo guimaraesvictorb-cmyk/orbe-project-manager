@@ -4,14 +4,14 @@ import {
 } from "lucide-react";
 import { GROQ_MODEL, GROQ_API_URL, getGroqApiKey } from "../lib/groq";
 
-const BRAVE_STORAGE_KEY = "m5os_brave_key";
-const AGENT_STORAGE_KEY = "m5os_superagente_msgs";
+const BRAVE_STORAGE_KEY = "orbe_brave_key";
+const AGENT_STORAGE_KEY = "orbe_superagente_msgs";
 
 function getBraveKey() {
   return localStorage.getItem(BRAVE_STORAGE_KEY) ?? "";
 }
 
-const SYSTEM_PROMPT = `Você é o Super Agente M5 — um assistente de IA avançado da agência M5 Marketing, especializada em tráfego pago (Meta Ads, Google Ads), gestão de redes sociais e performance digital no Brasil.
+const SYSTEM_PROMPT = `Você é o Super Agente Orbe — um assistente de IA avançado da agência Orbe Marketing, especializada em tráfego pago (Meta Ads, Google Ads), gestão de redes sociais e performance digital no Brasil.
 
 Você tem acesso à ferramenta de busca na internet (web_search) e deve usá-la sempre que o usuário pedir informações recentes, notícias do mercado, benchmarks, mudanças em plataformas de anúncio, tendências ou qualquer dado que você não tenha certeza.
 
@@ -143,7 +143,7 @@ export function SuperAgenteView() {
   }, [messages]);
 
   function saveSettings() {
-    localStorage.setItem("m5os_groq_key", groqDraft.trim());
+    localStorage.setItem("orbe_groq_key", groqDraft.trim());
     localStorage.setItem(BRAVE_STORAGE_KEY, braveDraft.trim());
     setShowSettings(false);
   }
@@ -305,7 +305,7 @@ export function SuperAgenteView() {
               style={{ backgroundColor: "#0d1f14", border: "1px solid #1FCE4A22" }}>
               <Search size={20} style={{ color: "#1FCE4A" }} />
             </div>
-            <p className="text-white font-semibold mb-1">Super Agente M5</p>
+            <p className="text-white font-semibold mb-1">Super Agente Orbe</p>
             <p className="text-xs" style={{ color: "#444" }}>IA com busca web em tempo real. Pergunte sobre campanhas, benchmarks, estratégias e muito mais.</p>
           </div>
         )}

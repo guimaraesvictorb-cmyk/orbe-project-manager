@@ -6,7 +6,7 @@ export type TaskStatus =
   | "cancelada";
 
 export type TaskPriority = "alta" | "media" | "baixa";
-export type M5PhaseId = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+export type OrbePhaseId = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
 export const TASK_TYPES = [
   "Otimização de Campanha",
@@ -23,7 +23,7 @@ export const TASK_TYPES = [
 ] as const;
 export type TaskType = (typeof TASK_TYPES)[number];
 
-export const M5_CLIENTS = [
+export const ORBE_CLIENTS = [
   "Sabor & Arte",
   "FitVida Academia",
   "TechHome E-commerce",
@@ -33,7 +33,7 @@ export const M5_CLIENTS = [
   "NovaBuild Construtora",
 ];
 
-export const PHASE_SHORT: Record<M5PhaseId, string> = {
+export const PHASE_SHORT: Record<OrbePhaseId, string> = {
   0: "Pré-Venda",
   1: "Call 1",
   2: "Radiografia",
@@ -50,7 +50,7 @@ export interface Task {
   title: string;
   client: string;
   responsible: string;
-  phaseId: M5PhaseId;
+  phaseId: OrbePhaseId;
   type: TaskType;
   priority: TaskPriority;
   status: TaskStatus;
@@ -218,7 +218,7 @@ const SEED: Task[] = [
 // ─── localStorage CRUD ────────────────────────────────────────────────────────
 
 // v2 forces fresh seed with the updated phase numbering (Onboarding added)
-const STORAGE_KEY = "m5os_tasks_v2";
+const STORAGE_KEY = "orbe_tasks_v2";
 
 function load(): Task[] {
   try {

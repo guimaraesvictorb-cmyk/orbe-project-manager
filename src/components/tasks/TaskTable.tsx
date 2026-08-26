@@ -181,7 +181,7 @@ export function TaskTable({ tasks, onEdit, onDelete, onStatusChange }: TaskTable
               <Th col="title" label="Título" />
               <Th col="client" label="Cliente" />
               <th className={thCls} scope="col">Responsável</th>
-              <th className={thCls} scope="col">Fase M5</th>
+              <th className={thCls} scope="col">Fase Orbe</th>
               <th className={thCls} scope="col">Tipo</th>
               <Th col="priority" label="Prioridade" />
               <Th col="status" label="Status" />
@@ -241,7 +241,7 @@ export function TaskTable({ tasks, onEdit, onDelete, onStatusChange }: TaskTable
                     <span className="text-xs text-[#A3A3A3]">{task.responsible}</span>
                   </td>
 
-                  {/* Fase M5 */}
+                  {/* Fase Orbe */}
                   <td className="px-3 py-3 whitespace-nowrap">
                     <span
                       className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold tracking-wider"

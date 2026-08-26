@@ -23,7 +23,7 @@ import { LeadsCapturadosView } from "./components/LeadsCapturadosView";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { Loader2 } from "lucide-react";
 
-const VIEW_KEY = "m5os_view";
+const VIEW_KEY = "orbe_view";
 
 function App() {
   const { user, profile, isAuthenticated, isLoading, logout } = useAuth();

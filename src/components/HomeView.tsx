@@ -5,13 +5,13 @@ import type { AppView } from "./AppNav";
 
 import { GROQ_STORAGE_KEY, GROQ_MODEL, GROQ_API_URL } from "../lib/groq";
 
-const SYSTEM_PROMPT = `Você é o M5 AI — assistente interno da M5 Marketing, agência digital brasileira especializada em tráfego pago, gestão de redes sociais e performance.
+const SYSTEM_PROMPT = `Você é o Orbe AI — assistente interno da Orbe Marketing, agência digital brasileira especializada em tráfego pago, gestão de redes sociais e performance.
 
-Você está integrado ao M5 Operating System (M5 OS), a plataforma operacional interna da equipe. Seu papel é ajudar o time a navegar pela plataforma, encontrar informações, entender processos e executar tarefas com mais eficiência.
+Você está integrado ao Orbe Operating System (Orbe OS), a plataforma operacional interna da equipe. Seu papel é ajudar o time a navegar pela plataforma, encontrar informações, entender processos e executar tarefas com mais eficiência.
 
-## Estrutura do M5 OS (3 abas principais):
+## Estrutura do Orbe OS (3 abas principais):
 
-### 🎯 Processos (Metodologia M5)
+### 🎯 Processos (Metodologia Orbe)
 9 fases da jornada do cliente — da prospecção ao pós-venda:
 - F0: Prospecção — Identificação e qualificação de leads
 - F1: Conexão — Primeiro contato e rapport
@@ -59,7 +59,7 @@ Seções com sidebar de navegação:
 - Use markdown básico: **negrito** para ênfase, listas com hífens para múltiplos itens
 - Máximo 3-4 parágrafos por resposta — seja conciso
 - Quando indicar navegação, seja específico sobre o caminho exato
-- Você conhece o time da M5 e fala de forma próxima, profissional mas sem formalidade excessiva`;
+- Você conhece o time da Orbe e fala de forma próxima, profissional mas sem formalidade excessiva`;
 
 const QUICK_ACTIONS = [
   { label: "Ver rotina do GP", prompt: "Me explica a rotina do Gestor de Projetos" },
@@ -84,7 +84,7 @@ interface Message {
 function getGreeting(name: string): string {
   const h = new Date().getHours();
   const period = h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
-  return `${period}, ${name}! Como posso te ajudar hoje?\n\nEstou aqui para te ajudar a navegar pelo M5 OS — seja para encontrar uma rotina, entender uma fase do playbook, checar tarefas ou qualquer processo da plataforma.`;
+  return `${period}, ${name}! Como posso te ajudar hoje?\n\nEstou aqui para te ajudar a navegar pelo Orbe OS — seja para encontrar uma rotina, entender uma fase do playbook, checar tarefas ou qualquer processo da plataforma.`;
 }
 
 function renderMarkdown(text: string) {
@@ -324,7 +324,7 @@ export function HomeView({ profile, onNavigate }: HomeViewProps) {
             <Sparkles size={12} style={{ color: "#1FCE4A" }} />
           </div>
           <span className="text-xs font-bold tracking-widest uppercase" style={{ color: "#1FCE4A" }}>
-            M5 AI
+            Orbe AI
           </span>
           <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{ backgroundColor: "#0d1f14", color: "#555", border: "1px solid #1a1a1a" }}>
             llama 3.3 · groq
@@ -449,7 +449,7 @@ export function HomeView({ profile, onNavigate }: HomeViewProps) {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Pergunte qualquer coisa sobre o M5 OS..."
+              placeholder="Pergunte qualquer coisa sobre o Orbe OS..."
               rows={1}
               className="w-full resize-none rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors duration-150 leading-relaxed"
               style={{
@@ -483,7 +483,7 @@ export function HomeView({ profile, onNavigate }: HomeViewProps) {
         </div>
 
         <p className="text-[10px] text-center" style={{ color: "#2a2a2a" }}>
-          Enter para enviar · Shift+Enter para nova linha · M5 AI pode cometer erros
+          Enter para enviar · Shift+Enter para nova linha · Orbe AI pode cometer erros
         </p>
       </div>
 
@@ -500,7 +500,7 @@ export function HomeView({ profile, onNavigate }: HomeViewProps) {
           >
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-white font-semibold text-sm">Configurar M5 AI</h3>
+                <h3 className="text-white font-semibold text-sm">Configurar Orbe AI</h3>
                 <p className="text-[11px] mt-0.5" style={{ color: "#555" }}>
                   Sua API key é salva localmente, nunca enviada a terceiros.
                 </p>

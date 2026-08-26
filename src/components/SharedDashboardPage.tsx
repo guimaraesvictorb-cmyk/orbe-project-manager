@@ -150,7 +150,7 @@ export function SharedDashboardPage({ token }: { token: string }) {
             </div>
             <div>
               <p className="text-white font-semibold text-xs leading-tight">Dashboard do Cliente</p>
-              <p className="text-[10px]" style={{ color: "#444" }}>M5 Marketing</p>
+              <p className="text-[10px]" style={{ color: "#444" }}>Orbe Marketing</p>
             </div>
           </div>
           <span className="text-[10px] font-bold px-2 py-0.5 rounded" style={{ backgroundColor: flag.bg, color: flag.color }}>{flag.label}</span>
@@ -181,7 +181,7 @@ export function SharedDashboardPage({ token }: { token: string }) {
         )}
 
         <p className="text-center text-[10px]" style={{ color: "#222" }}>
-          Gerado por M5 Operating System • {new Date().toLocaleDateString("pt-BR")}
+          Gerado por Orbe Operating System • {new Date().toLocaleDateString("pt-BR")}
         </p>
       </div>
     </div>

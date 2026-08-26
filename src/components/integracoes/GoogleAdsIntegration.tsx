@@ -6,8 +6,8 @@ import {
   Unlink, ChevronDown, ChevronUp,
 } from "lucide-react";
 
-const GOOGLE_STORAGE_KEY = "m5os_google_token";
-const GOOGLE_DEV_TOKEN_KEY = "m5os_google_dev_token";
+const GOOGLE_STORAGE_KEY = "orbe_google_token";
+const GOOGLE_DEV_TOKEN_KEY = "orbe_google_dev_token";
 
 interface CustomerAccount {
   id: string;
