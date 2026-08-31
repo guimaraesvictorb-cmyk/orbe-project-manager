@@ -15,7 +15,7 @@ function currentMonth() {
 }
 
 const STATUS_CONFIG: Record<PaymentStatus, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
-  pago:      { label: "Pago",     color: "#7B61FF", bg: "#1A1230", icon: <CheckCircle2 size={12} /> },
+  pago:      { label: "Pago",     color: "#22C55E", bg: "#0f2117", icon: <CheckCircle2 size={12} /> },
   pendente:  { label: "Pendente", color: "#F59E0B", bg: "#1a1200", icon: <Clock size={12} /> },
   atrasado:  { label: "Atrasado", color: "#EF4444", bg: "#2a0a0a", icon: <AlertCircle size={12} /> },
   cancelado: { label: "Cancelado",color: "#555",    bg: "#111",    icon: <XCircle size={12} /> },

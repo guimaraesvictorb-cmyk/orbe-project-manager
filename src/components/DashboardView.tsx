@@ -33,7 +33,7 @@ function StatCard({ icon, label, value, sub, accent }: {
 }
 
 const HEALTH_LABEL: Record<string, string> = { green: "Saudável", yellow: "Atenção", red: "Em risco" };
-const HEALTH_COLOR: Record<string, string> = { green: "#7B61FF", yellow: "#F59E0B", red: "#EF4444" };
+const HEALTH_COLOR: Record<string, string> = { green: "#22C55E", yellow: "#F59E0B", red: "#EF4444" };
 
 export function DashboardView() {
   const { clients } = useClients();

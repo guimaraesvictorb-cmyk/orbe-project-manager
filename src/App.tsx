@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./index.css";
 import { useAuth } from "./hooks/useAuth";
+import { canAccessSection } from "./lib/permissions";
 import { LoginPage } from "./components/LoginPage";
 import { AppNav, type AppView } from "./components/AppNav";
 import { HomeView } from "./components/HomeView";
@@ -41,6 +42,18 @@ function App() {
     localStorage.setItem(VIEW_KEY, v);
     setView(v);
   }
+
+  useEffect(() => {
+    if (!profile) return;
+    if (view === "settings" && !(profile.role === "admin" || profile.role === "coordenador")) {
+      navigate("home");
+      return;
+    }
+    if (!canAccessSection(profile, view)) {
+      navigate("home");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile]);
 
   if (isLoading) {
     return (

@@ -6,6 +6,7 @@ import {
   AlertCircle, Monitor, Globe, LogOut, Users, Check, Loader2,
   ChevronDown, Trash2, X,
 } from "lucide-react";
+import { SECTION_ACCESS, SECTION_LABELS } from "../lib/permissions";
 
 const ROLE_LABELS: Record<string, string> = {
   admin: "Administrador",
@@ -15,21 +16,6 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 const ROLE_OPTIONS = Object.entries(ROLE_LABELS).map(([value, label]) => ({ value, label }));
-
-const SECTION_ACCESS: Record<string, string[]> = {
-  admin:      ["dashboard","tarefas","clientes","financeiro","pipeline","processos","central","rastreamento","super-agente","copy-ia","relatorios","whatsapp","integracoes","leads-capturados"],
-  coordenador:["dashboard","tarefas","clientes","financeiro","pipeline","processos","central","rastreamento","super-agente","copy-ia","relatorios","whatsapp","integracoes","leads-capturados"],
-  gp:         ["dashboard","tarefas","clientes","pipeline","processos","central","super-agente","copy-ia","relatorios"],
-  gt:         ["dashboard","tarefas","clientes","pipeline","processos","central","super-agente","copy-ia","relatorios","integracoes"],
-};
-
-const SECTION_LABELS: Record<string, string> = {
-  dashboard: "Dashboard", tarefas: "Tarefas", clientes: "Clientes",
-  financeiro: "Financeiro", pipeline: "Oportunidades", processos: "Processos",
-  central: "Central", rastreamento: "Rastreamento", "super-agente": "Super Agente",
-  "copy-ia": "Copy IA", relatorios: "Relatórios", whatsapp: "WhatsApp",
-  integracoes: "Integrações", "leads-capturados": "Leads Capturados",
-};
 
 interface ProfileViewProps { profile: Profile | null; userEmail: string }
 
@@ -44,7 +30,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 const inputCls = "w-full bg-black border rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-[#333] focus:outline-none transition-colors max-w-sm";
 
-interface TeamMember { id: string; email: string; display_name: string; role: string; is_active: boolean }
+interface TeamMember { id: string; email: string; display_name: string; role: string; is_active: boolean; custom_sections: string[] | null }
 
 function initials(name: string, email: string): string {
   const source = (name || email || "?").trim();
@@ -53,12 +39,15 @@ function initials(name: string, email: string): string {
   return source.slice(0, 2).toUpperCase();
 }
 
+const ALL_SECTIONS = Object.keys(SECTION_LABELS);
+
 function TeamPanel({ currentUserId }: { currentUserId: string }) {
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<Record<string, boolean>>({});
   const [saved, setSaved] = useState<Record<string, boolean>>({});
   const [roleEdits, setRoleEdits] = useState<Record<string, string>>({});
+  const [sectionEdits, setSectionEdits] = useState<Record<string, string[]>>({});
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [confirming, setConfirming] = useState<string | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
@@ -70,22 +59,59 @@ function TeamPanel({ currentUserId }: { currentUserId: string }) {
 
   function loadMembers() {
     setLoading(true);
-    supabase.from("profiles").select("id,email,display_name,role,is_active").order("created_at")
+    supabase.from("profiles").select("id,email,display_name,role,is_active,custom_sections").order("created_at")
       .then(({ data }) => {
         setMembers(data ?? []);
-        const edits: Record<string, string> = {};
-        data?.forEach((m) => { edits[m.id] = m.role; });
-        setRoleEdits(edits);
+        const roles: Record<string, string> = {};
+        const sections: Record<string, string[]> = {};
+        data?.forEach((m) => {
+          roles[m.id] = m.role;
+          sections[m.id] = m.custom_sections ?? SECTION_ACCESS[m.role] ?? [];
+        });
+        setRoleEdits(roles);
+        setSectionEdits(sections);
         setLoading(false);
       });
   }
 
-  async function saveRole(memberId: string) {
+  function toggleSection(memberId: string, section: string) {
+    setSectionEdits((prev) => {
+      const current = prev[memberId] ?? [];
+      const next = current.includes(section)
+        ? current.filter((s) => s !== section)
+        : [...current, section];
+      return { ...prev, [memberId]: next };
+    });
+  }
+
+  function resetSectionsToRoleDefault(memberId: string) {
+    const role = roleEdits[memberId];
+    setSectionEdits((prev) => ({ ...prev, [memberId]: SECTION_ACCESS[role] ?? [] }));
+  }
+
+  function isDirty(member: TeamMember): boolean {
+    const roleChanged = roleEdits[member.id] !== member.role;
+    const savedSections = member.custom_sections ?? SECTION_ACCESS[member.role] ?? [];
+    const pendingSections = sectionEdits[member.id] ?? [];
+    const sectionsChanged =
+      savedSections.length !== pendingSections.length ||
+      !savedSections.every((s) => pendingSections.includes(s));
+    return roleChanged || sectionsChanged;
+  }
+
+  async function saveMember(memberId: string) {
     setSaving((s) => ({ ...s, [memberId]: true }));
-    await supabase.rpc("admin_update_user_role", { target_id: memberId, new_role: roleEdits[memberId] });
+    const member = members.find((m) => m.id === memberId);
+    const newRole = roleEdits[memberId];
+    if (member && newRole !== member.role) {
+      await supabase.rpc("admin_update_user_role", { target_id: memberId, new_role: newRole });
+    }
+    const newSections = sectionEdits[memberId] ?? [];
+    await supabase.from("profiles").update({ custom_sections: newSections }).eq("id", memberId);
+
     setSaving((s) => ({ ...s, [memberId]: false }));
     setSaved((s) => ({ ...s, [memberId]: true }));
-    setMembers((prev) => prev.map((m) => m.id === memberId ? { ...m, role: roleEdits[memberId] } : m));
+    setMembers((prev) => prev.map((m) => m.id === memberId ? { ...m, role: newRole, custom_sections: newSections } : m));
     setTimeout(() => setSaved((s) => ({ ...s, [memberId]: false })), 2000);
   }
 
@@ -134,10 +160,11 @@ function TeamPanel({ currentUserId }: { currentUserId: string }) {
       <div className="space-y-2.5">
         {members.map((member) => {
           const isMe = member.id === currentUserId;
-          const sections = SECTION_ACCESS[roleEdits[member.id]] ?? [];
-          const granted = Object.keys(SECTION_LABELS).filter((s) => sections.includes(s));
+          const sections = sectionEdits[member.id] ?? [];
+          const granted = ALL_SECTIONS.filter((s) => sections.includes(s));
           const isExpanded = !!expanded[member.id];
           const isConfirming = confirming === member.id;
+          const dirty = isDirty(member);
 
           return (
             <div
@@ -168,15 +195,19 @@ function TeamPanel({ currentUserId }: { currentUserId: string }) {
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <select
                     value={roleEdits[member.id] ?? member.role}
-                    onChange={(e) => setRoleEdits((r) => ({ ...r, [member.id]: e.target.value }))}
+                    onChange={(e) => {
+                      const newRole = e.target.value;
+                      setRoleEdits((r) => ({ ...r, [member.id]: newRole }));
+                      setSectionEdits((s) => ({ ...s, [member.id]: SECTION_ACCESS[newRole] ?? [] }));
+                    }}
                     className="rounded-lg px-2 py-1.5 text-xs text-white border appearance-none cursor-pointer focus:outline-none"
                     style={{ backgroundColor: "#080808", borderColor: "#1e1e1e" }}
                   >
                     {ROLE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                   </select>
                   <button
-                    onClick={() => saveRole(member.id)}
-                    disabled={saving[member.id] || roleEdits[member.id] === member.role}
+                    onClick={() => saveMember(member.id)}
+                    disabled={saving[member.id] || !dirty}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-40 transition-all"
                     style={{ backgroundColor: saved[member.id] ? "#1A1230" : "#7B61FF22", color: "#7B61FF", border: "1px solid #7B61FF33" }}
                   >
@@ -229,21 +260,41 @@ function TeamPanel({ currentUserId }: { currentUserId: string }) {
                   style={{ color: "#555", borderTop: "1px solid #111" }}
                 >
                   <ChevronDown size={12} className="transition-transform" style={{ transform: isExpanded ? "rotate(180deg)" : "none" }} />
-                  {granted.length} de {Object.keys(SECTION_LABELS).length} seções liberadas
+                  {granted.length} de {ALL_SECTIONS.length} seções liberadas
+                  {dirty && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded ml-1" style={{ backgroundColor: "#1A1230", color: "#7B61FF" }}>não salvo</span>}
                 </button>
               )}
 
               {isExpanded && !isConfirming && (
-                <div className="px-4 pb-3.5 flex flex-wrap gap-1.5">
-                  {Object.keys(SECTION_LABELS).map((sec) => {
-                    const hasAccess = sections.includes(sec);
-                    return (
-                      <span key={sec} className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
-                        style={{ backgroundColor: hasAccess ? "#1A1230" : "#111", color: hasAccess ? "#7B61FF" : "#333" }}>
-                        {SECTION_LABELS[sec]}
-                      </span>
-                    );
-                  })}
+                <div className="px-4 pb-3.5">
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {ALL_SECTIONS.map((sec) => {
+                      const hasAccess = sections.includes(sec);
+                      return (
+                        <button
+                          key={sec}
+                          type="button"
+                          onClick={() => toggleSection(member.id, sec)}
+                          className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border transition-colors cursor-pointer"
+                          style={{
+                            backgroundColor: hasAccess ? "#1A1230" : "transparent",
+                            color: hasAccess ? "#7B61FF" : "#444",
+                            borderColor: hasAccess ? "#7B61FF44" : "#222",
+                          }}
+                        >
+                          {SECTION_LABELS[sec]}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => resetSectionsToRoleDefault(member.id)}
+                    className="text-[10px] underline"
+                    style={{ color: "#444" }}
+                  >
+                    Restaurar padrão da função
+                  </button>
                 </div>
               )}
             </div>

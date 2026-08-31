@@ -4,6 +4,7 @@ import {
   ChevronRight, Settings, Link2, PenTool, FileText, Bot, MessageSquare, Plug, UserPlus,
 } from "lucide-react";
 import type { Profile } from "../lib/database.types";
+import { getAllowedSections } from "../lib/permissions";
 
 export type AppView =
   | "home" | "dashboard"
@@ -82,6 +83,11 @@ interface AppNavProps {
 }
 
 export function AppNav({ active, onChange, profile, onLogout }: AppNavProps) {
+  const allowed = getAllowedSections(profile);
+  const visibleNav = NAV
+    .map((group) => ({ ...group, items: group.items.filter((i) => i.view === "home" || allowed.includes(i.view)) }))
+    .filter((group) => group.items.length > 0);
+
   return (
     <aside
       className="flex flex-col flex-shrink-0 h-screen overflow-y-auto"
@@ -103,7 +109,7 @@ export function AppNav({ active, onChange, profile, onLogout }: AppNavProps) {
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-5 overflow-y-auto">
-        {NAV.map((group, gi) => (
+        {visibleNav.map((group, gi) => (
           <div key={gi}>
             {group.label && (
               <p className="text-[9px] font-bold tracking-widest uppercase px-2 mb-1.5" style={{ color: "#333" }}>

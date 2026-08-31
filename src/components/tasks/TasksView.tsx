@@ -10,7 +10,7 @@ const STATUS_META: Record<Task["status"], { label: string; color: string; bg: st
   backlog:      { label: "Backlog",      color: "#525252", bg: "#111" },
   em_andamento: { label: "Em Andamento", color: "#3B82F6", bg: "#0d1630" },
   em_revisao:   { label: "Em Revisão",   color: "#F59E0B", bg: "#1a1200" },
-  concluido:    { label: "Concluído",    color: "#7B61FF", bg: "#1A1230" },
+  concluido:    { label: "Concluído",    color: "#22C55E", bg: "#0f2117" },
   cancelado:    { label: "Cancelado",    color: "#EF4444", bg: "#1a0505" },
 };
 

@@ -16,6 +16,7 @@ export interface Profile {
   role: UserRole
   is_active: boolean
   theme: string
+  custom_sections: string[] | null
   created_at: string
   updated_at: string
 }

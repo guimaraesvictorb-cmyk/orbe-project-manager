@@ -12,7 +12,7 @@ function fmt(n: number) {
 const CONTRATO_META: Record<string, { label: string; color: string }> = {
   em_negociacao: { label: "Em negociação", color: "#F59E0B" },
   enviado:       { label: "Enviado",       color: "#2563EB" },
-  assinado:      { label: "Assinado",      color: "#7B61FF" },
+  assinado:      { label: "Assinado",      color: "#22C55E" },
   cancelado:     { label: "Cancelado",     color: "#EF4444" },
 };
 
