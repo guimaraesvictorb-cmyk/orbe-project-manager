@@ -7,32 +7,32 @@ interface PhaseCardProps {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  venda: "#7B61FF",
-  operacao: "#A3A3A3",
-  saida: "#A3A3A3",
+  venda: "var(--accent)",
+  operacao: "var(--text-secondary)",
+  saida: "var(--text-secondary)",
 };
 
 export function PhaseCard({ phase, isActive, onClick }: PhaseCardProps) {
   return (
     <button
       onClick={onClick}
-      className="relative w-full text-left rounded-xl p-4 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7B61FF] group"
+      className="relative w-full text-left rounded-xl p-4 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] group"
       style={{
-        backgroundColor: isActive ? "#1A1A1A" : "#131313",
-        border: `1px solid ${isActive ? "#7B61FF" : "#262626"}`,
+        backgroundColor: isActive ? "var(--border)" : "var(--bg-surface-2)",
+        border: `1px solid ${isActive ? "var(--accent)" : "var(--border-subtle)"}`,
       }}
       onMouseEnter={(e) => {
         if (!isActive) {
-          (e.currentTarget as HTMLButtonElement).style.borderColor = "#7B61FF";
+          (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--accent)";
           (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-            "#1A1A1A";
+            "var(--border)";
         }
       }}
       onMouseLeave={(e) => {
         if (!isActive) {
-          (e.currentTarget as HTMLButtonElement).style.borderColor = "#262626";
+          (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border-subtle)";
           (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-            "#131313";
+            "var(--bg-surface-2)";
         }
       }}
       aria-pressed={isActive}
@@ -42,7 +42,7 @@ export function PhaseCard({ phase, isActive, onClick }: PhaseCardProps) {
       {phase.highlight && (
         <span
           className="absolute top-3 right-3 text-[9px] font-bold tracking-widest px-1.5 py-0.5 rounded"
-          style={{ backgroundColor: "#7B61FF", color: "#000000" }}
+          style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}
         >
           CORE
         </span>
@@ -51,7 +51,7 @@ export function PhaseCard({ phase, isActive, onClick }: PhaseCardProps) {
       {/* Phase number */}
       <p
         className="text-[10px] font-semibold tracking-widest uppercase mb-2"
-        style={{ color: "#A3A3A3" }}
+        style={{ color: "var(--text-secondary)" }}
       >
         {phase.label}
       </p>
@@ -64,7 +64,7 @@ export function PhaseCard({ phase, isActive, onClick }: PhaseCardProps) {
       {/* Meta */}
       <p
         className="text-[11px] leading-tight"
-        style={{ color: "#A3A3A3" }}
+        style={{ color: "var(--text-secondary)" }}
       >
         {phase.meta}
       </p>
@@ -75,7 +75,7 @@ export function PhaseCard({ phase, isActive, onClick }: PhaseCardProps) {
           className="w-1.5 h-1.5 rounded-full"
           style={{ backgroundColor: CATEGORY_COLORS[phase.category] }}
         />
-        <span className="text-[10px] uppercase tracking-wider" style={{ color: "#A3A3A3" }}>
+        <span className="text-[10px] uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>
           {phase.category === "operacao" ? "Operação" : phase.category === "saida" ? "Saída" : "Venda"}
         </span>
       </div>

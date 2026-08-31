@@ -36,8 +36,8 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
     <div
       className="min-h-screen flex items-center justify-center p-4"
       style={{
-        backgroundColor: "#000",
-        backgroundImage: `radial-gradient(ellipse at 50% 50%, #1A123066 0%, transparent 70%)`,
+        backgroundColor: "var(--bg-page)",
+        backgroundImage: `radial-gradient(ellipse at 50% 50%, var(--accent-tint)66 0%, transparent 70%)`,
       }}
     >
       <div className="w-full max-w-sm">
@@ -46,13 +46,13 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
           <div className="inline-flex items-center gap-3 mb-3">
             <div
               className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-black text-sm"
-              style={{ backgroundColor: "#7B61FF" }}
+              style={{ backgroundColor: "var(--accent)" }}
             >
               Orbe
             </div>
             <span className="text-white font-bold text-xl tracking-tight">Operating System</span>
           </div>
-          <p className="text-[11px] tracking-widest uppercase" style={{ color: "#555" }}>
+          <p className="text-[11px] tracking-widest uppercase" style={{ color: "var(--text-tertiary)" }}>
             Plataforma Operacional Interna
           </p>
         </div>
@@ -61,10 +61,10 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
         <form
           onSubmit={handleSubmit}
           className="rounded-2xl p-6 space-y-4"
-          style={{ backgroundColor: "#0a0a0a", border: "1px solid #1a1a1a" }}
+          style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)" }}
         >
           <div className="space-y-1.5">
-            <label className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "#555" }}>
+            <label className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-tertiary)" }}>
               E-mail
             </label>
             <input
@@ -75,15 +75,15 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
               placeholder="seu@email.com"
               autoComplete="email"
               required
-              className="w-full rounded-lg px-3 py-2.5 text-sm text-white placeholder-[#333] focus:outline-none transition-colors"
-              style={{ backgroundColor: "#080808", border: "1px solid #1e1e1e" }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = "#7B61FF44")}
-              onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")}
+              className="w-full rounded-lg px-3 py-2.5 text-sm text-white placeholder-[var(--text-quaternary)] focus:outline-none transition-colors"
+              style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-strong)" }}
+              onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent-a44)")}
+              onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border-strong)")}
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "#555" }}>
+            <label className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-tertiary)" }}>
               Senha
             </label>
             <div className="relative">
@@ -94,16 +94,16 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
                 placeholder="••••••••"
                 autoComplete="current-password"
                 required
-                className="w-full rounded-lg px-3 py-2.5 pr-10 text-sm text-white placeholder-[#333] focus:outline-none transition-colors"
-                style={{ backgroundColor: "#080808", border: "1px solid #1e1e1e" }}
-                onFocus={(e) => (e.currentTarget.style.borderColor = "#7B61FF44")}
-                onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")}
+                className="w-full rounded-lg px-3 py-2.5 pr-10 text-sm text-white placeholder-[var(--text-quaternary)] focus:outline-none transition-colors"
+                style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-strong)" }}
+                onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent-a44)")}
+                onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border-strong)")}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 focus:outline-none"
-                style={{ color: "#555" }}
+                style={{ color: "var(--text-tertiary)" }}
               >
                 {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
               </button>
@@ -111,7 +111,7 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
           </div>
 
           {error && (
-            <p className="text-xs text-center" style={{ color: "#EF4444" }}>
+            <p className="text-xs text-center" style={{ color: "var(--danger)" }}>
               {error}
             </p>
           )}
@@ -119,10 +119,10 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
           <button
             type="submit"
             disabled={loading || !email || !password}
-            className="w-full py-3 rounded-xl text-sm font-bold transition-all duration-150 flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7B61FF]"
+            className="w-full py-3 rounded-xl text-sm font-bold transition-all duration-150 flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
             style={{
-              backgroundColor: loading || !email || !password ? "#1A1230" : "#7B61FF",
-              color: loading || !email || !password ? "#333" : "#000",
+              backgroundColor: loading || !email || !password ? "var(--accent-tint)" : "var(--accent)",
+              color: loading || !email || !password ? "var(--text-quaternary)" : "var(--bg-page)",
             }}
           >
             {loading ? <Loader2 size={15} className="animate-spin" /> : "Entrar"}

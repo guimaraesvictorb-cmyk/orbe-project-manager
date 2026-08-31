@@ -25,23 +25,23 @@ function PipelineStep({
     <div className="flex items-center flex-1 min-w-0">
       <button
         onClick={onClick}
-        className="group flex-1 min-w-0 text-left rounded-xl p-4 transition-all duration-150 border focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7B61FF]"
+        className="group flex-1 min-w-0 text-left rounded-xl p-4 transition-all duration-150 border focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
         style={{
-          backgroundColor: isActive ? "#1A1230" : "#0a0a0a",
-          borderColor: isActive ? "#7B61FF" : "#1a1a1a",
+          backgroundColor: isActive ? "var(--accent-tint)" : "var(--bg-surface)",
+          borderColor: isActive ? "var(--accent)" : "var(--border)",
         }}
         onMouseEnter={(e) => {
           if (!isActive) {
             const el = e.currentTarget as HTMLButtonElement;
-            el.style.borderColor = "#7B61FF44";
-            el.style.backgroundColor = "#0d0d0d";
+            el.style.borderColor = "var(--accent-a44)";
+            el.style.backgroundColor = "var(--bg-surface-2)";
           }
         }}
         onMouseLeave={(e) => {
           if (!isActive) {
             const el = e.currentTarget as HTMLButtonElement;
-            el.style.borderColor = "#1a1a1a";
-            el.style.backgroundColor = "#0a0a0a";
+            el.style.borderColor = "var(--border)";
+            el.style.backgroundColor = "var(--bg-surface)";
           }
         }}
         aria-pressed={isActive}
@@ -52,8 +52,8 @@ function PipelineStep({
             className="text-[10px] font-bold tracking-widest uppercase px-1.5 py-0.5 rounded"
             style={
               isActive
-                ? { backgroundColor: "#7B61FF", color: "#000" }
-                : { backgroundColor: "#1a1a1a", color: "#555" }
+                ? { backgroundColor: "var(--accent)", color: "var(--bg-page)" }
+                : { backgroundColor: "var(--border)", color: "var(--text-tertiary)" }
             }
           >
             {phase.label}
@@ -61,7 +61,7 @@ function PipelineStep({
           {isActive && (
             <span
               className="w-1.5 h-1.5 rounded-full animate-pulse"
-              style={{ backgroundColor: "#7B61FF" }}
+              style={{ backgroundColor: "var(--accent)" }}
               aria-hidden="true"
             />
           )}
@@ -70,13 +70,13 @@ function PipelineStep({
         {/* Phase name */}
         <p
           className="text-sm font-semibold leading-snug mb-1 transition-colors duration-150"
-          style={{ color: isActive ? "#fff" : "#6B7280" }}
+          style={{ color: isActive ? "var(--text-primary)" : "var(--text-secondary)" }}
         >
           {phase.name}
         </p>
 
         {/* Meta */}
-        <p className="text-[11px]" style={{ color: isActive ? "#7B61FF" : "#3a3a3a" }}>
+        <p className="text-[11px]" style={{ color: isActive ? "var(--accent)" : "#3a3a3a" }}>
           {phase.meta}
         </p>
       </button>
@@ -86,7 +86,7 @@ function PipelineStep({
         <ChevronRight
           size={16}
           className="flex-shrink-0 mx-2"
-          style={{ color: "#2a2a2a" }}
+          style={{ color: "var(--border-subtle)" }}
           aria-hidden="true"
         />
       )}
@@ -98,57 +98,57 @@ function PhaseDetail({ phase }: { phase: Phase }) {
   return (
     <div
       className="rounded-2xl border overflow-hidden"
-      style={{ backgroundColor: "#0a0a0a", borderColor: "#1a1a1a" }}
+      style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}
     >
       {/* Detail header */}
       <div
         className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-6 py-4 border-b"
-        style={{ borderBottomColor: "#1a1a1a" }}
+        style={{ borderBottomColor: "var(--border)" }}
       >
         <div className="flex items-center gap-3">
           <span
             className="text-[10px] font-bold tracking-widest uppercase px-2 py-1 rounded"
-            style={{ backgroundColor: "#1A1230", color: "#7B61FF", border: "1px solid #7B61FF33" }}
+            style={{ backgroundColor: "var(--accent-tint)", color: "var(--accent)", border: "1px solid var(--accent-a33)" }}
           >
             {phase.label}
           </span>
           <div>
             <h3 className="text-white font-semibold text-sm leading-tight">{phase.name}</h3>
-            <p className="text-[11px] mt-0.5" style={{ color: "#7B61FF" }}>{phase.meta}</p>
+            <p className="text-[11px] mt-0.5" style={{ color: "var(--accent)" }}>{phase.meta}</p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={() => alert("Em breve")}
-            className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 border focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7B61FF]"
-            style={{ borderColor: "#262626", color: "#A3A3A3" }}
+            className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 border focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+            style={{ borderColor: "var(--border-subtle)", color: "var(--text-secondary)" }}
             onMouseEnter={(e) => {
               const el = e.currentTarget as HTMLButtonElement;
-              el.style.borderColor = "#7B61FF";
-              el.style.color = "#7B61FF";
+              el.style.borderColor = "var(--accent)";
+              el.style.color = "var(--accent)";
             }}
             onMouseLeave={(e) => {
               const el = e.currentTarget as HTMLButtonElement;
-              el.style.borderColor = "#262626";
-              el.style.color = "#A3A3A3";
+              el.style.borderColor = "var(--border-subtle)";
+              el.style.color = "var(--text-secondary)";
             }}
           >
             Detalhar fase
           </button>
           <button
             onClick={() => alert("Em breve")}
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 border focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7B61FF]"
-            style={{ borderColor: "#7B61FF", color: "#7B61FF" }}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 border focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+            style={{ borderColor: "var(--accent)", color: "var(--accent)" }}
             onMouseEnter={(e) => {
               const el = e.currentTarget as HTMLButtonElement;
-              el.style.backgroundColor = "#7B61FF";
-              el.style.color = "#000";
+              el.style.backgroundColor = "var(--accent)";
+              el.style.color = "var(--bg-page)";
             }}
             onMouseLeave={(e) => {
               const el = e.currentTarget as HTMLButtonElement;
               el.style.backgroundColor = "transparent";
-              el.style.color = "#7B61FF";
+              el.style.color = "var(--accent)";
             }}
           >
             Plano de IA
@@ -160,7 +160,7 @@ function PhaseDetail({ phase }: { phase: Phase }) {
       <div
         className="mx-6 mt-4 mb-0 px-4 py-3 rounded-xl italic text-sm leading-relaxed"
         style={{
-          borderLeft: "3px solid #7B61FF",
+          borderLeft: "3px solid var(--accent)",
           backgroundColor: "#060f09",
           color: "#d4d4d4",
         }}
@@ -175,7 +175,7 @@ function PhaseDetail({ phase }: { phase: Phase }) {
             <CheckCircle2
               size={14}
               className="flex-shrink-0 mt-0.5"
-              style={{ color: "#7B61FF" }}
+              style={{ color: "var(--accent)" }}
               aria-hidden="true"
             />
             <span className="text-sm text-white leading-relaxed">{item}</span>
@@ -204,7 +204,7 @@ export function OperacaoView() {
             <div>
               <p
                 className="text-[10px] font-bold tracking-widest uppercase mb-0.5"
-                style={{ color: "#7B61FF" }}
+                style={{ color: "var(--accent)" }}
               >
                 Pipeline Operacional
               </p>
@@ -215,7 +215,7 @@ export function OperacaoView() {
                 Jornada pós-venda do cliente
               </h2>
             </div>
-            <p className="text-[#333] text-xs hidden sm:block">
+            <p className="text-[var(--text-quaternary)] text-xs hidden sm:block">
               Selecione uma fase para ver o checklist
             </p>
           </div>
@@ -241,25 +241,25 @@ export function OperacaoView() {
         {churned.length > 0 && (
           <div className="rounded-2xl border px-6 py-4 flex flex-wrap items-center gap-6" style={{ backgroundColor: "#0d0808", borderColor: "#EF444433" }}>
             <div className="flex items-center gap-3">
-              <TrendingDown size={18} style={{ color: "#EF4444" }} />
+              <TrendingDown size={18} style={{ color: "var(--danger)" }} />
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#EF4444" }}>Churn</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--danger)" }}>Churn</p>
                 <p className="text-white font-bold text-xl leading-tight">{churned.length}</p>
-                <p className="text-[11px]" style={{ color: "#6B7280" }}>cliente{churned.length !== 1 ? "s" : ""} perdido{churned.length !== 1 ? "s" : ""}</p>
+                <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>cliente{churned.length !== 1 ? "s" : ""} perdido{churned.length !== 1 ? "s" : ""}</p>
               </div>
             </div>
             <div className="w-px h-10 hidden sm:block" style={{ backgroundColor: "#EF444433" }} />
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#EF4444" }}>Perda de Receita</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--danger)" }}>Perda de Receita</p>
               <p className="text-white font-bold text-xl leading-tight">
                 R$ {churnRevenueLost.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
               </p>
-              <p className="text-[11px]" style={{ color: "#6B7280" }}>por mês</p>
+              <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>por mês</p>
             </div>
             <div className="w-px h-10 hidden sm:block" style={{ backgroundColor: "#EF444433" }} />
             <div className="flex flex-wrap gap-2">
               {churned.map((c) => (
-                <span key={c.id} className="text-[11px] px-2.5 py-1 rounded-lg font-medium" style={{ backgroundColor: "#1a0808", color: "#EF4444", border: "1px solid #EF444422" }}>
+                <span key={c.id} className="text-[11px] px-2.5 py-1 rounded-lg font-medium" style={{ backgroundColor: "#1a0808", color: "var(--danger)", border: "1px solid #EF444422" }}>
                   {c.name}
                 </span>
               ))}
@@ -269,11 +269,11 @@ export function OperacaoView() {
 
         {/* ── Divider ─────────────────────────────────────────────────────── */}
         <div className="flex items-center gap-4">
-          <div className="flex-1 h-px" style={{ backgroundColor: "#1a1a1a" }} />
-          <span className="text-[10px] font-bold tracking-widest uppercase" style={{ color: "#333" }}>
+          <div className="flex-1 h-px" style={{ backgroundColor: "var(--border)" }} />
+          <span className="text-[10px] font-bold tracking-widest uppercase" style={{ color: "var(--text-quaternary)" }}>
             Gestão de entregas
           </span>
-          <div className="flex-1 h-px" style={{ backgroundColor: "#1a1a1a" }} />
+          <div className="flex-1 h-px" style={{ backgroundColor: "var(--border)" }} />
         </div>
 
         {/* ── Tarefas ─────────────────────────────────────────────────────── */}
@@ -281,11 +281,11 @@ export function OperacaoView() {
 
         {/* ── Divider ─────────────────────────────────────────────────────── */}
         <div className="flex items-center gap-4">
-          <div className="flex-1 h-px" style={{ backgroundColor: "#1a1a1a" }} />
-          <span className="text-[10px] font-bold tracking-widest uppercase" style={{ color: "#333" }}>
+          <div className="flex-1 h-px" style={{ backgroundColor: "var(--border)" }} />
+          <span className="text-[10px] font-bold tracking-widest uppercase" style={{ color: "var(--text-quaternary)" }}>
             Carteira de clientes
           </span>
-          <div className="flex-1 h-px" style={{ backgroundColor: "#1a1a1a" }} />
+          <div className="flex-1 h-px" style={{ backgroundColor: "var(--border)" }} />
         </div>
 
         {/* ── Clientes ────────────────────────────────────────────────────── */}

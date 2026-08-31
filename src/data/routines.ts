@@ -75,7 +75,7 @@ export const ROUTINES: Routine[] = [
       },
       {
         frequency: "Semanalmente",
-        freqColor: "#7B61FF",
+        freqColor: "var(--accent)",
         items: [
           {
             text: "Reunião de Designers",
@@ -101,7 +101,7 @@ export const ROUTINES: Routine[] = [
       },
       {
         frequency: "Mensalmente",
-        freqColor: "#F59E0B",
+        freqColor: "var(--warning)",
         items: [
           {
             text: "Revisão Mensal de Performance",
@@ -170,7 +170,7 @@ export const ROUTINES: Routine[] = [
       },
       {
         frequency: "Semanalmente",
-        freqColor: "#7B61FF",
+        freqColor: "var(--accent)",
         items: [
           {
             text: "Reunião de Estratégia — WOR",
@@ -192,7 +192,7 @@ export const ROUTINES: Routine[] = [
       },
       {
         frequency: "Mensalmente",
-        freqColor: "#F59E0B",
+        freqColor: "var(--warning)",
         items: [
           {
             text: "Revisão Mensal de Performance",
@@ -251,7 +251,7 @@ export const ROUTINES: Routine[] = [
       },
       {
         frequency: "Semanalmente",
-        freqColor: "#7B61FF",
+        freqColor: "var(--accent)",
         items: [
           {
             text: "Acessar o B.I. de cada cliente pelo menos 4x por semana",
@@ -276,7 +276,7 @@ export const ROUTINES: Routine[] = [
       },
       {
         frequency: "Quinzenalmente",
-        freqColor: "#F59E0B",
+        freqColor: "var(--warning)",
         items: [
           {
             text: "Otimização de públicos e criativos com base em",
@@ -334,7 +334,7 @@ export const ROUTINES: Routine[] = [
       },
       {
         frequency: "Semanalmente",
-        freqColor: "#7B61FF",
+        freqColor: "var(--accent)",
         items: [
           {
             text: "Atualizar o Drive dos clientes com",
@@ -357,7 +357,7 @@ export const ROUTINES: Routine[] = [
       },
       {
         frequency: "Quinzenalmente",
-        freqColor: "#F59E0B",
+        freqColor: "var(--warning)",
         items: [
           {
             text: "Check-in Quinzenal",
@@ -439,7 +439,7 @@ export const ROUTINES: Routine[] = [
       },
       {
         frequency: "Semanalmente",
-        freqColor: "#7B61FF",
+        freqColor: "var(--accent)",
         items: [
           {
             text: "WOR de Estratégias — Weekly/Quinzenal",
@@ -506,7 +506,7 @@ export const ROUTINES: Routine[] = [
       },
       {
         frequency: "Quinzenalmente",
-        freqColor: "#F59E0B",
+        freqColor: "var(--warning)",
         items: [
           { text: "Treinamentos com o Time — cronograma baseado em gaps de performance e cultura" },
           { text: "1:1 com cada Player (agenda fixa — semanal para onboard/red flag)" },
@@ -573,7 +573,7 @@ export const ROUTINES: Routine[] = [
       },
       {
         frequency: "Semanalmente",
-        freqColor: "#7B61FF",
+        freqColor: "var(--accent)",
         items: [
           {
             text: "Quality Control — Reunião com cada Coordenador",
@@ -603,7 +603,7 @@ export const ROUTINES: Routine[] = [
       },
       {
         frequency: "Conforme necessidade",
-        freqColor: "#F59E0B",
+        freqColor: "var(--warning)",
         items: [
           {
             text: "Onboarding — Acompanhamento de Ponta a Ponta",
@@ -677,7 +677,7 @@ export const ROUTINES: Routine[] = [
     blocks: [
       {
         frequency: "Semanalmente",
-        freqColor: "#7B61FF",
+        freqColor: "var(--accent)",
         items: [
           {
             text: "Weekly com Coordenadores",
@@ -699,7 +699,7 @@ export const ROUTINES: Routine[] = [
       },
       {
         frequency: "Quinzenalmente",
-        freqColor: "#F59E0B",
+        freqColor: "var(--warning)",
         items: [
           { text: "1:1 com Coordenadores — revisar performance, desafios e planos de ação" },
           { text: "1:1 com Diretoria — atualizar status de clientes e demandas estratégicas" },

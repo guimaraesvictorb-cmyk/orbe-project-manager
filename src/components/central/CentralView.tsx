@@ -56,14 +56,14 @@ const SECTIONS: SidebarSection[] = [
     id: "clientes",
     label: "Clientes",
     icon: <Users2 size={14} />,
-    color: "#7B61FF",
+    color: "var(--accent)",
     items: [{ id: "clientes-carteira", label: "Carteira de Clientes", icon: <Users2 size={12} /> }],
   },
   {
     id: "ops",
     label: "OPS",
     icon: <Package size={14} />,
-    color: "#F59E0B",
+    color: "var(--warning)",
     items: [
       { id: "ops-projetos", label: "Central de Projetos", icon: <FolderOpen size={12} /> },
       { id: "ops-processos", label: "Processos", icon: <List size={12} /> },
@@ -96,7 +96,7 @@ const SECTIONS: SidebarSection[] = [
     label: "Financeiro",
     verified: true,
     icon: <DollarSign size={14} />,
-    color: "#22C55E",
+    color: "var(--success)",
     items: [
       { id: "pp-main", label: "Processo de Remuneração", icon: <List size={12} /> },
       { id: "pp-main", label: "Adiantamento e Reembolso", icon: <List size={12} /> },
@@ -124,12 +124,12 @@ function PlaceholderContent({ label }: { label: string }) {
     <div className="flex flex-col items-center justify-center h-64 space-y-3">
       <div
         className="w-12 h-12 rounded-xl flex items-center justify-center"
-        style={{ backgroundColor: "#111", border: "1px solid #1e1e1e" }}
+        style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" }}
       >
-        <Lock size={20} style={{ color: "#333" }} aria-hidden="true" />
+        <Lock size={20} style={{ color: "var(--text-quaternary)" }} aria-hidden="true" />
       </div>
       <p className="text-white font-semibold">{label}</p>
-      <p className="text-xs" style={{ color: "#444" }}>
+      <p className="text-xs" style={{ color: "var(--text-quaternary)" }}>
         Em construção — em breve disponível
       </p>
     </div>
@@ -169,12 +169,12 @@ export function CentralView() {
       {/* ── Sidebar ─────────────────────────────────────────────────────── */}
       <aside
         className="w-52 flex-shrink-0 border-r overflow-y-auto"
-        style={{ borderColor: "#1a1a1a", backgroundColor: "#060606" }}
+        style={{ borderColor: "var(--border)", backgroundColor: "#060606" }}
         aria-label="Central de Operação — navegação"
       >
         {/* Sidebar header */}
-        <div className="px-4 py-4 border-b" style={{ borderColor: "#1a1a1a" }}>
-          <p className="text-[10px] font-bold tracking-widest uppercase" style={{ color: "#7B61FF" }}>
+        <div className="px-4 py-4 border-b" style={{ borderColor: "var(--border)" }}>
+          <p className="text-[10px] font-bold tracking-widest uppercase" style={{ color: "var(--accent)" }}>
             Central de Operação
           </p>
         </div>
@@ -188,13 +188,13 @@ export function CentralView() {
                 <button
                   onClick={() => toggleSection(section.id)}
                   className="w-full flex items-center gap-2 px-4 py-2.5 text-left transition-colors duration-150 focus:outline-none group"
-                  style={{ color: isOpen ? "#ffffff" : "#6B7280" }}
+                  style={{ color: isOpen ? "var(--text-primary)" : "var(--text-secondary)" }}
                   onMouseEnter={(e) =>
-                    ((e.currentTarget as HTMLButtonElement).style.color = "#ffffff")
+                    ((e.currentTarget as HTMLButtonElement).style.color = "var(--text-primary)")
                   }
                   onMouseLeave={(e) => {
                     if (!isOpen)
-                      (e.currentTarget as HTMLButtonElement).style.color = "#6B7280";
+                      (e.currentTarget as HTMLButtonElement).style.color = "var(--text-secondary)";
                   }}
                 >
                   <span style={{ color: section.color }}>{section.icon}</span>
@@ -210,9 +210,9 @@ export function CentralView() {
                     )}
                   </span>
                   {isOpen ? (
-                    <ChevronDown size={12} style={{ color: "#444" }} aria-hidden="true" />
+                    <ChevronDown size={12} style={{ color: "var(--text-quaternary)" }} aria-hidden="true" />
                   ) : (
-                    <ChevronRight size={12} style={{ color: "#444" }} aria-hidden="true" />
+                    <ChevronRight size={12} style={{ color: "var(--text-quaternary)" }} aria-hidden="true" />
                   )}
                 </button>
 
@@ -228,17 +228,17 @@ export function CentralView() {
                           onClick={() => selectItem(item.id, item.label)}
                           className="w-full flex items-center gap-2 pl-9 pr-4 py-2 text-left text-xs transition-all duration-150 focus:outline-none"
                           style={{
-                            color: isActive ? "#ffffff" : "#555",
-                            backgroundColor: isActive ? "#111" : "transparent",
+                            color: isActive ? "var(--text-primary)" : "var(--text-tertiary)",
+                            backgroundColor: isActive ? "var(--bg-surface-2)" : "transparent",
                             borderLeft: isActive ? `2px solid ${section.color}` : "2px solid transparent",
                           }}
                           onMouseEnter={(e) => {
                             if (!isActive)
-                              (e.currentTarget as HTMLButtonElement).style.color = "#A3A3A3";
+                              (e.currentTarget as HTMLButtonElement).style.color = "var(--text-secondary)";
                           }}
                           onMouseLeave={(e) => {
                             if (!isActive)
-                              (e.currentTarget as HTMLButtonElement).style.color = "#555";
+                              (e.currentTarget as HTMLButtonElement).style.color = "var(--text-tertiary)";
                           }}
                         >
                           <span style={{ color: isActive ? section.color : "inherit" }}>
@@ -248,7 +248,7 @@ export function CentralView() {
                           {!isBuilt && (
                             <span
                               className="text-[8px] font-bold tracking-widest"
-                              style={{ color: "#2a2a2a" }}
+                              style={{ color: "var(--border-subtle)" }}
                             >
                               EM BREVE
                             </span>

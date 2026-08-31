@@ -10,10 +10,10 @@ function fmt(n: number) {
 }
 
 const CONTRATO_META: Record<string, { label: string; color: string }> = {
-  em_negociacao: { label: "Em negociação", color: "#F59E0B" },
+  em_negociacao: { label: "Em negociação", color: "var(--warning)" },
   enviado:       { label: "Enviado",       color: "#2563EB" },
-  assinado:      { label: "Assinado",      color: "#22C55E" },
-  cancelado:     { label: "Cancelado",     color: "#EF4444" },
+  assinado:      { label: "Assinado",      color: "var(--success)" },
+  cancelado:     { label: "Cancelado",     color: "var(--danger)" },
 };
 
 function LeadCard({
@@ -28,52 +28,52 @@ function LeadCard({
   return (
     <div
       className="rounded-xl border p-3 cursor-pointer transition-all duration-150 group"
-      style={{ backgroundColor: "#0d0d0d", borderColor: "#1a1a1a" }}
+      style={{ backgroundColor: "var(--bg-surface-2)", borderColor: "var(--border)" }}
       onClick={() => onClick(lead)}
-      onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = "#2a2a2a"; }}
-      onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = "#1a1a1a"; }}
+      onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = "var(--border-subtle)"; }}
+      onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = "var(--border)"; }}
     >
       <div className="flex items-start justify-between gap-2 mb-2">
         <p className="text-sm font-semibold text-white leading-snug">{lead.name}</p>
         <button
           onClick={(e) => { e.stopPropagation(); setShowMove((p) => !p); }}
           className="flex-shrink-0 p-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-          style={{ color: "#555" }}
+          style={{ color: "var(--text-tertiary)" }}
         >
           <ChevronDown size={12} />
         </button>
       </div>
 
       {lead.contact_name && (
-        <p className="text-[11px] mb-1" style={{ color: "#666" }}>{lead.contact_name}</p>
+        <p className="text-[11px] mb-1" style={{ color: "var(--text-tertiary)" }}>{lead.contact_name}</p>
       )}
 
       {lead.tipo_servico && (
-        <p className="text-[10px] mb-1.5 font-medium" style={{ color: "#555" }}>{lead.tipo_servico}</p>
+        <p className="text-[10px] mb-1.5 font-medium" style={{ color: "var(--text-tertiary)" }}>{lead.tipo_servico}</p>
       )}
 
       {(lead.valor_proposta ?? lead.potential_mrr) && (
-        <p className="text-xs font-semibold mb-2" style={{ color: "#7B61FF" }}>
+        <p className="text-xs font-semibold mb-2" style={{ color: "var(--accent)" }}>
           {fmt(lead.valor_proposta ?? lead.potential_mrr ?? 0)}
         </p>
       )}
 
       <div className="flex items-center gap-2 flex-wrap">
         {lead.probability > 0 && (
-          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: "#1a1a1a", color: "#888" }}>
+          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: "var(--border)", color: "var(--text-tertiary)" }}>
             {lead.probability}%
           </span>
         )}
         {lead.status_contrato && CONTRATO_META[lead.status_contrato] && (
           <span
             className="text-[10px] font-bold px-1.5 py-0.5 rounded"
-            style={{ color: CONTRATO_META[lead.status_contrato].color, backgroundColor: "#111" }}
+            style={{ color: CONTRATO_META[lead.status_contrato].color, backgroundColor: "var(--bg-surface-2)" }}
           >
             {CONTRATO_META[lead.status_contrato].label}
           </span>
         )}
         {lead.data_fechamento && (
-          <span className="text-[10px] flex items-center gap-1" style={{ color: "#444" }}>
+          <span className="text-[10px] flex items-center gap-1" style={{ color: "var(--text-quaternary)" }}>
             <Calendar size={9} />
             {new Date(lead.data_fechamento).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
           </span>
@@ -83,17 +83,17 @@ function LeadCard({
       {showMove && (
         <div
           className="mt-2 pt-2 border-t space-y-1"
-          style={{ borderColor: "#1a1a1a" }}
+          style={{ borderColor: "var(--border)" }}
           onClick={(e) => e.stopPropagation()}
         >
-          <p className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: "#444" }}>Mover para</p>
+          <p className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: "var(--text-quaternary)" }}>Mover para</p>
           {stages.map((s) => (
             <button
               key={s.id}
               onClick={() => { onMove(lead.id, s.id, lead.stage_id); setShowMove(false); }}
               disabled={s.id === lead.stage_id}
               className="w-full text-left text-[11px] px-2 py-1 rounded hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed"
-              style={{ color: s.id === lead.stage_id ? "#555" : "#A3A3A3" }}
+              style={{ color: s.id === lead.stage_id ? "var(--text-tertiary)" : "var(--text-secondary)" }}
             >
               {s.name}
             </button>
@@ -111,13 +111,13 @@ function LeadModal({ lead, stages, onClose }: { lead: Lead; stages: PipelineStag
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.85)" }}
       onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="w-full max-w-lg rounded-2xl border p-6 space-y-4 max-h-[90vh] overflow-y-auto" style={{ backgroundColor: "#0d0d0d", borderColor: "#1a1a1a" }}>
+      <div className="w-full max-w-lg rounded-2xl border p-6 space-y-4 max-h-[90vh] overflow-y-auto" style={{ backgroundColor: "var(--bg-surface-2)", borderColor: "var(--border)" }}>
         <div className="flex items-start justify-between">
           <div>
             <p className="text-white font-semibold text-base">{lead.name}</p>
-            <p className="text-xs mt-0.5" style={{ color: "#7B61FF" }}>{stage?.name ?? "—"}</p>
+            <p className="text-xs mt-0.5" style={{ color: "var(--accent)" }}>{stage?.name ?? "—"}</p>
           </div>
-          <button onClick={onClose} style={{ color: "#555" }}><X size={16} /></button>
+          <button onClick={onClose} style={{ color: "var(--text-tertiary)" }}><X size={16} /></button>
         </div>
 
         <div className="grid grid-cols-2 gap-3 text-xs">
@@ -131,34 +131,34 @@ function LeadModal({ lead, stages, onClose }: { lead: Lead; stages: PipelineStag
             { label: "Fonte", value: lead.source },
           ].filter((r) => r.value).map(({ label, value, green }) => (
             <div key={label}>
-              <p className="text-[10px] font-bold uppercase tracking-widest mb-0.5" style={{ color: "#444" }}>{label}</p>
-              <p style={{ color: green ? "#7B61FF" : "#A3A3A3" }} className="font-medium">{value}</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest mb-0.5" style={{ color: "var(--text-quaternary)" }}>{label}</p>
+              <p style={{ color: green ? "var(--accent)" : "var(--text-secondary)" }} className="font-medium">{value}</p>
             </div>
           ))}
         </div>
 
         {contrato && (
           <div className="flex items-center gap-2 text-xs">
-            <span style={{ color: "#555" }}>Contrato</span>
+            <span style={{ color: "var(--text-tertiary)" }}>Contrato</span>
             <span className="font-bold px-2 py-0.5 rounded text-[10px]"
-              style={{ backgroundColor: "#111", color: contrato.color }}>{contrato.label}</span>
+              style={{ backgroundColor: "var(--bg-surface-2)", color: contrato.color }}>{contrato.label}</span>
           </div>
         )}
 
         <div className="space-y-2 text-xs">
           {lead.contact_name && (
-            <div className="flex items-center gap-2" style={{ color: "#A3A3A3" }}>
-              <span style={{ color: "#555" }}>Contato</span>{lead.contact_name}
+            <div className="flex items-center gap-2" style={{ color: "var(--text-secondary)" }}>
+              <span style={{ color: "var(--text-tertiary)" }}>Contato</span>{lead.contact_name}
             </div>
           )}
           {lead.contact_email && (
-            <div className="flex items-center gap-2" style={{ color: "#A3A3A3" }}>
-              <Mail size={11} style={{ color: "#555" }} />{lead.contact_email}
+            <div className="flex items-center gap-2" style={{ color: "var(--text-secondary)" }}>
+              <Mail size={11} style={{ color: "var(--text-tertiary)" }} />{lead.contact_email}
             </div>
           )}
           {lead.contact_phone && (
-            <div className="flex items-center gap-2" style={{ color: "#A3A3A3" }}>
-              <Phone size={11} style={{ color: "#555" }} />{lead.contact_phone}
+            <div className="flex items-center gap-2" style={{ color: "var(--text-secondary)" }}>
+              <Phone size={11} style={{ color: "var(--text-tertiary)" }} />{lead.contact_phone}
             </div>
           )}
           {lead.link_proposta && (
@@ -166,8 +166,8 @@ function LeadModal({ lead, stages, onClose }: { lead: Lead; stages: PipelineStag
               href={lead.link_proposta}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 transition-colors hover:text-[#7B61FF]"
-              style={{ color: "#555" }}
+              className="flex items-center gap-2 transition-colors hover:text-[var(--accent)]"
+              style={{ color: "var(--text-tertiary)" }}
             >
               <ExternalLink size={11} />Ver proposta
             </a>
@@ -175,13 +175,13 @@ function LeadModal({ lead, stages, onClose }: { lead: Lead; stages: PipelineStag
         </div>
 
         {lead.notes && (
-          <div className="pt-3 border-t" style={{ borderColor: "#1a1a1a" }}>
-            <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "#444" }}>Observações</p>
-            <p className="text-xs leading-relaxed" style={{ color: "#666" }}>{lead.notes}</p>
+          <div className="pt-3 border-t" style={{ borderColor: "var(--border)" }}>
+            <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "var(--text-quaternary)" }}>Observações</p>
+            <p className="text-xs leading-relaxed" style={{ color: "var(--text-tertiary)" }}>{lead.notes}</p>
           </div>
         )}
 
-        <button onClick={onClose} className="w-full py-2 rounded-xl text-xs border" style={{ borderColor: "#262626", color: "#A3A3A3" }}>
+        <button onClick={onClose} className="w-full py-2 rounded-xl text-xs border" style={{ borderColor: "var(--border-subtle)", color: "var(--text-secondary)" }}>
           Fechar
         </button>
       </div>
@@ -242,13 +242,13 @@ function NewLeadModal({
 
   const inp = (label: string, key: keyof typeof form, type = "text", placeholder = "") => (
     <div>
-      <label className="text-[10px] font-bold uppercase tracking-widest mb-1 block" style={{ color: "#555" }}>{label}</label>
+      <label className="text-[10px] font-bold uppercase tracking-widest mb-1 block" style={{ color: "var(--text-tertiary)" }}>{label}</label>
       <input
         type={type} value={form[key]}
         onChange={(e) => setForm((p) => ({ ...p, [key]: e.target.value }))}
         placeholder={placeholder}
-        className="w-full bg-black border rounded-lg px-3 py-2 text-xs text-white placeholder:text-[#333] focus:outline-none focus:border-[#7B61FF]"
-        style={{ borderColor: "#262626" }}
+        className="w-full bg-black border rounded-lg px-3 py-2 text-xs text-white placeholder:text-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent)]"
+        style={{ borderColor: "var(--border-subtle)" }}
       />
     </div>
   );
@@ -256,7 +256,7 @@ function NewLeadModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.85)" }}
       onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="w-full max-w-lg rounded-2xl border p-6 space-y-3 max-h-[90vh] overflow-y-auto" style={{ backgroundColor: "#0d0d0d", borderColor: "#1a1a1a" }}>
+      <div className="w-full max-w-lg rounded-2xl border p-6 space-y-3 max-h-[90vh] overflow-y-auto" style={{ backgroundColor: "var(--bg-surface-2)", borderColor: "var(--border)" }}>
         <h3 className="text-white font-semibold text-sm">Novo lead</h3>
         <form onSubmit={submit} className="space-y-3">
           {inp("Nome da empresa *", "name", "text", "ex: Empresa XYZ")}
@@ -286,12 +286,12 @@ function NewLeadModal({
           </div>
 
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-widest mb-1 block" style={{ color: "#555" }}>Status do contrato</label>
+            <label className="text-[10px] font-bold uppercase tracking-widest mb-1 block" style={{ color: "var(--text-tertiary)" }}>Status do contrato</label>
             <select
               value={form.status_contrato}
               onChange={(e) => setForm((p) => ({ ...p, status_contrato: e.target.value }))}
-              className="w-full bg-black border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#7B61FF]"
-              style={{ borderColor: "#262626" }}
+              className="w-full bg-black border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[var(--accent)]"
+              style={{ borderColor: "var(--border-subtle)" }}
             >
               <option value="">Nenhum</option>
               <option value="em_negociacao">Em negociação</option>
@@ -302,12 +302,12 @@ function NewLeadModal({
           </div>
 
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-widest mb-1 block" style={{ color: "#555" }}>Etapa</label>
+            <label className="text-[10px] font-bold uppercase tracking-widest mb-1 block" style={{ color: "var(--text-tertiary)" }}>Etapa</label>
             <select
               value={form.stage_id}
               onChange={(e) => setForm((p) => ({ ...p, stage_id: e.target.value }))}
-              className="w-full bg-black border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#7B61FF]"
-              style={{ borderColor: "#262626" }}
+              className="w-full bg-black border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[var(--accent)]"
+              style={{ borderColor: "var(--border-subtle)" }}
               required
             >
               {stages.filter((s) => !s.is_won && !s.is_lost).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -317,22 +317,22 @@ function NewLeadModal({
           {inp("Fonte", "source", "text", "ex: Indicação, Instagram...")}
 
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-widest mb-1 block" style={{ color: "#555" }}>Observações</label>
+            <label className="text-[10px] font-bold uppercase tracking-widest mb-1 block" style={{ color: "var(--text-tertiary)" }}>Observações</label>
             <textarea
               value={form.notes}
               onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))}
               rows={2}
               placeholder="Contexto do lead..."
-              className="w-full bg-black border rounded-lg px-3 py-2 text-xs text-white placeholder:text-[#333] focus:outline-none focus:border-[#7B61FF] resize-none"
-              style={{ borderColor: "#262626" }}
+              className="w-full bg-black border rounded-lg px-3 py-2 text-xs text-white placeholder:text-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent)] resize-none"
+              style={{ borderColor: "var(--border-subtle)" }}
             />
           </div>
 
           <div className="flex gap-2 pt-1">
-            <button type="button" onClick={onClose} className="flex-1 py-2 rounded-xl text-xs border" style={{ borderColor: "#262626", color: "#A3A3A3" }}>
+            <button type="button" onClick={onClose} className="flex-1 py-2 rounded-xl text-xs border" style={{ borderColor: "var(--border-subtle)", color: "var(--text-secondary)" }}>
               Cancelar
             </button>
-            <button type="submit" className="flex-1 py-2 rounded-xl text-xs font-semibold" style={{ backgroundColor: "#7B61FF", color: "#000" }}>
+            <button type="submit" className="flex-1 py-2 rounded-xl text-xs font-semibold" style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}>
               Salvar lead
             </button>
           </div>
@@ -367,7 +367,7 @@ export function PipelineView() {
 
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "#7B61FF" }}>
+            <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "var(--accent)" }}>
               Pipeline comercial
             </p>
             <h2 className="text-white font-bold text-lg leading-tight">Gestão de leads</h2>
@@ -375,7 +375,7 @@ export function PipelineView() {
           <button
             onClick={() => setShowNew(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg flex-shrink-0"
-            style={{ backgroundColor: "#7B61FF", color: "#000" }}
+            style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}
           >
             <Plus size={13} />
             Novo lead
@@ -384,21 +384,21 @@ export function PipelineView() {
 
         <div className="flex gap-6 text-xs flex-wrap">
           <div>
-            <span style={{ color: "#555" }}>Leads ativos</span>
+            <span style={{ color: "var(--text-tertiary)" }}>Leads ativos</span>
             <span className="ml-2 font-bold text-white">{activeLeads.length}</span>
           </div>
           <div>
-            <span style={{ color: "#555" }}>MRR potencial</span>
-            <span className="ml-2 font-bold" style={{ color: "#7B61FF" }}>{fmt(totalPotentialMrr)}</span>
+            <span style={{ color: "var(--text-tertiary)" }}>MRR potencial</span>
+            <span className="ml-2 font-bold" style={{ color: "var(--accent)" }}>{fmt(totalPotentialMrr)}</span>
           </div>
           <div>
-            <span style={{ color: "#555" }}>MRR ponderado</span>
+            <span style={{ color: "var(--text-tertiary)" }}>MRR ponderado</span>
             <span className="ml-2 font-bold text-white">{fmt(weightedMrr)}</span>
           </div>
         </div>
 
         {loading ? (
-          <p className="text-sm" style={{ color: "#555" }}>Carregando...</p>
+          <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>Carregando...</p>
         ) : (
           <div className="flex gap-4 overflow-x-auto pb-4">
             {activeStages.map((stage) => {
@@ -410,12 +410,12 @@ export function PipelineView() {
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: stage.color }} />
                       <span className="text-xs font-semibold text-white">{stage.name}</span>
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "#1a1a1a", color: "#666" }}>
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "var(--border)", color: "var(--text-tertiary)" }}>
                         {stageLeads.length}
                       </span>
                     </div>
                     {stageMrr > 0 && (
-                      <span className="text-[10px]" style={{ color: "#7B61FF" }}>{fmt(stageMrr)}</span>
+                      <span className="text-[10px]" style={{ color: "var(--accent)" }}>{fmt(stageMrr)}</span>
                     )}
                   </div>
 
@@ -424,8 +424,8 @@ export function PipelineView() {
                       <LeadCard key={lead.id} lead={lead} stages={stages} onMove={handleMove} onClick={setSelectedLead} />
                     ))}
                     {stageLeads.length === 0 && (
-                      <div className="rounded-xl border border-dashed p-4 text-center" style={{ borderColor: "#1a1a1a" }}>
-                        <p className="text-[11px]" style={{ color: "#333" }}>Sem leads</p>
+                      <div className="rounded-xl border border-dashed p-4 text-center" style={{ borderColor: "var(--border)" }}>
+                        <p className="text-[11px]" style={{ color: "var(--text-quaternary)" }}>Sem leads</p>
                       </div>
                     )}
                   </div>

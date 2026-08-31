@@ -7,7 +7,7 @@ export function ActionsSection() {
       <h2
         id="actions-title"
         className="text-xs font-bold tracking-widest uppercase mb-4"
-        style={{ color: "#7B61FF" }}
+        style={{ color: "var(--accent)" }}
       >
         Próximas Ações
       </h2>
@@ -17,28 +17,28 @@ export function ActionsSection() {
           <button
             key={action.label}
             onClick={() => alert("Em breve")}
-            className="group flex items-center justify-between gap-3 rounded-xl px-4 py-4 text-left transition-all duration-150 border focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7B61FF]"
+            className="group flex items-center justify-between gap-3 rounded-xl px-4 py-4 text-left transition-all duration-150 border focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
             style={{
-              backgroundColor: "#131313",
-              borderColor: "#262626",
-              color: "#ffffff",
+              backgroundColor: "var(--bg-surface-2)",
+              borderColor: "var(--border-subtle)",
+              color: "var(--text-primary)",
             }}
             onMouseEnter={(e) => {
               const el = e.currentTarget as HTMLButtonElement;
-              el.style.borderColor = "#7B61FF";
-              el.style.backgroundColor = "#1A1A1A";
+              el.style.borderColor = "var(--accent)";
+              el.style.backgroundColor = "var(--border)";
             }}
             onMouseLeave={(e) => {
               const el = e.currentTarget as HTMLButtonElement;
-              el.style.borderColor = "#262626";
-              el.style.backgroundColor = "#131313";
+              el.style.borderColor = "var(--border-subtle)";
+              el.style.backgroundColor = "var(--bg-surface-2)";
             }}
           >
             <span className="text-sm font-medium leading-snug">{action.label}</span>
             <ArrowRight
               size={14}
               className="flex-shrink-0 transition-transform duration-150 group-hover:translate-x-0.5"
-              style={{ color: "#7B61FF" }}
+              style={{ color: "var(--accent)" }}
               aria-hidden="true"
             />
           </button>

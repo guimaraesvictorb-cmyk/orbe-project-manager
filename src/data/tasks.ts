@@ -281,20 +281,20 @@ export const STATUS_META: Record<
   TaskStatus,
   { label: string; bg: string; color: string; dot: string }
 > = {
-  ativa:        { label: "Ativa",        bg: "#140D24", color: "#7B61FF", dot: "#7B61FF" },
+  ativa:        { label: "Ativa",        bg: "#140D24", color: "var(--accent)", dot: "var(--accent)" },
   em_andamento: { label: "Em andamento", bg: "#071422", color: "#60A5FA", dot: "#60A5FA" },
-  concluida:    { label: "Concluída",    bg: "#111",    color: "#6B7280", dot: "#6B7280" },
-  pausada:      { label: "Pausada",      bg: "#1a1200", color: "#F59E0B", dot: "#F59E0B" },
-  cancelada:    { label: "Cancelada",    bg: "#180808", color: "#EF4444", dot: "#EF4444" },
+  concluida:    { label: "Concluída",    bg: "var(--bg-surface-2)",    color: "var(--text-secondary)", dot: "var(--text-secondary)" },
+  pausada:      { label: "Pausada",      bg: "#1a1200", color: "var(--warning)", dot: "var(--warning)" },
+  cancelada:    { label: "Cancelada",    bg: "#180808", color: "var(--danger)", dot: "var(--danger)" },
 };
 
 export const PRIORITY_META: Record<
   TaskPriority,
   { label: string; color: string; bg: string }
 > = {
-  alta:  { label: "Alta",  color: "#EF4444", bg: "#1f0808" },
-  media: { label: "Média", color: "#F59E0B", bg: "#1a1100" },
-  baixa: { label: "Baixa", color: "#6B7280", bg: "#111" },
+  alta:  { label: "Alta",  color: "var(--danger)", bg: "#1f0808" },
+  media: { label: "Média", color: "var(--warning)", bg: "#1a1100" },
+  baixa: { label: "Baixa", color: "var(--text-secondary)", bg: "var(--bg-surface-2)" },
 };
 
 export const MONTH_NAMES = [

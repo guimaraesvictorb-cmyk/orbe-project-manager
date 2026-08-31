@@ -55,10 +55,10 @@ function Bubble({ msg }: { msg: Message }) {
 
   if (isSearch) {
     return (
-      <div className="flex items-center gap-2 text-xs py-1" style={{ color: "#555" }}>
-        <Globe size={12} style={{ color: "#7B61FF" }} />
-        <span>Buscando: <em style={{ color: "#888" }}>{msg.content}</em></span>
-        {msg.isSearching && <Loader2 size={10} className="animate-spin" style={{ color: "#555" }} />}
+      <div className="flex items-center gap-2 text-xs py-1" style={{ color: "var(--text-tertiary)" }}>
+        <Globe size={12} style={{ color: "var(--accent)" }} />
+        <span>Buscando: <em style={{ color: "var(--text-tertiary)" }}>{msg.content}</em></span>
+        {msg.isSearching && <Loader2 size={10} className="animate-spin" style={{ color: "var(--text-tertiary)" }} />}
       </div>
     );
   }
@@ -68,21 +68,21 @@ function Bubble({ msg }: { msg: Message }) {
     <div className={`flex gap-3 ${isUser ? "flex-row-reverse" : "flex-row"}`}>
       {!isUser && (
         <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
-          style={{ backgroundColor: "#1A1230", border: "1px solid #7B61FF33" }}>
-          <Sparkles size={13} style={{ color: "#7B61FF" }} />
+          style={{ backgroundColor: "var(--accent-tint)", border: "1px solid var(--accent-a33)" }}>
+          <Sparkles size={13} style={{ color: "var(--accent)" }} />
         </div>
       )}
       <div
         className="max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed"
         style={isUser
-          ? { backgroundColor: "#111", color: "#e5e5e5", border: "1px solid #1e1e1e" }
-          : { backgroundColor: "#0a0a0a", color: "#d4d4d4", border: "1px solid #1a1a1a" }}
+          ? { backgroundColor: "var(--bg-surface-2)", color: "#e5e5e5", border: "1px solid var(--border-strong)" }
+          : { backgroundColor: "var(--bg-surface)", color: "#d4d4d4", border: "1px solid var(--border)" }}
       >
         {lines.map((line, i) => {
           if (line.trimStart().startsWith("- ")) {
             return (
               <div key={i} className="flex items-start gap-2 mt-1">
-                <span style={{ color: "#7B61FF", marginTop: "0.35rem", flexShrink: 0 }}>▸</span>
+                <span style={{ color: "var(--accent)", marginTop: "0.35rem", flexShrink: 0 }}>▸</span>
                 <span>{renderMarkdown(line.replace(/^(\s*)-\s/, ""))}</span>
               </div>
             );
@@ -93,7 +93,7 @@ function Bubble({ msg }: { msg: Message }) {
           <span className="inline-flex gap-1 items-center">
             {[0, 1, 2].map((i) => (
               <span key={i} className="w-1.5 h-1.5 rounded-full"
-                style={{ backgroundColor: "#7B61FF", animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }} />
+                style={{ backgroundColor: "var(--accent)", animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }} />
             ))}
           </span>
         )}
@@ -251,33 +251,33 @@ export function SuperAgenteView() {
   return (
     <div className="flex flex-col h-screen" style={{ backgroundColor: "#040404" }}>
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-3 border-b flex-shrink-0" style={{ borderColor: "#111" }}>
+      <div className="flex items-center justify-between px-6 py-3 border-b flex-shrink-0" style={{ borderColor: "var(--bg-surface-2)" }}>
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ backgroundColor: "#1A1230", border: "1px solid #7B61FF44" }}>
-            <Sparkles size={12} style={{ color: "#7B61FF" }} />
+          <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ backgroundColor: "var(--accent-tint)", border: "1px solid var(--accent-a44)" }}>
+            <Sparkles size={12} style={{ color: "var(--accent)" }} />
           </div>
-          <span className="text-xs font-bold tracking-widest uppercase" style={{ color: "#7B61FF" }}>Super Agente</span>
-          <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "#1A1230", color: "#555", border: "1px solid #1a1a1a" }}>
+          <span className="text-xs font-bold tracking-widest uppercase" style={{ color: "var(--accent)" }}>Super Agente</span>
+          <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "var(--accent-tint)", color: "var(--text-tertiary)", border: "1px solid var(--border)" }}>
             llama 3.3 · groq
           </span>
           {braveKey && (
-            <span className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "#0a1a0d", color: "#7B61FF", border: "1px solid #7B61FF22" }}>
+            <span className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "#0a1a0d", color: "var(--accent)", border: "1px solid var(--accent-a22)" }}>
               <Globe size={9} /> busca web ativa
             </span>
           )}
         </div>
         <div className="flex items-center gap-1">
           {messages.length > 0 && (
-            <button onClick={() => setMessages([])} className="p-1.5 rounded-lg transition-colors" style={{ color: "#333" }}
-              onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "#888")}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "#333")}>
+            <button onClick={() => setMessages([])} className="p-1.5 rounded-lg transition-colors" style={{ color: "var(--text-quaternary)" }}
+              onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "var(--text-tertiary)")}
+              onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "var(--text-quaternary)")}>
               <Trash2 size={14} />
             </button>
           )}
           <button onClick={() => { setGroqDraft(getGroqApiKey()); setBraveDraft(getBraveKey()); setShowSettings(true); }}
-            className="p-1.5 rounded-lg transition-colors" style={{ color: groqKey ? "#333" : "#DC2626" }}
-            onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "#888")}
-            onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = groqKey ? "#333" : "#DC2626")}>
+            className="p-1.5 rounded-lg transition-colors" style={{ color: groqKey ? "var(--text-quaternary)" : "#DC2626" }}
+            onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "var(--text-tertiary)")}
+            onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = groqKey ? "var(--text-quaternary)" : "#DC2626")}>
             <Settings size={14} />
           </button>
         </div>
@@ -286,27 +286,27 @@ export function SuperAgenteView() {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4 min-h-0">
         {!groqKey && (
-          <div className="rounded-xl px-4 py-3 text-xs" style={{ backgroundColor: "#1a0a0a", border: "1px solid #DC262633", color: "#ef4444" }}>
+          <div className="rounded-xl px-4 py-3 text-xs" style={{ backgroundColor: "#1a0a0a", border: "1px solid #DC262633", color: "var(--danger)" }}>
             Configure sua chave Groq (gratuita em console.groq.com) clicando em ⚙ acima.
           </div>
         )}
         {!braveKey && groqKey && (
           <div className="rounded-xl px-4 py-3 text-xs flex items-center justify-between" style={{ backgroundColor: "#0a0d12", border: "1px solid #2563EB33" }}>
-            <span style={{ color: "#A3A3A3" }}>
+            <span style={{ color: "var(--text-secondary)" }}>
               Configure sua chave <strong>Brave Search</strong> (gratuita em brave.com/search/api) para ativar a busca na internet.
             </span>
             <button onClick={() => setShowSettings(true)} className="ml-4 flex-shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-lg"
-              style={{ backgroundColor: "#2563EB", color: "#fff" }}>Configurar</button>
+              style={{ backgroundColor: "#2563EB", color: "var(--text-primary)" }}>Configurar</button>
           </div>
         )}
         {messages.length === 0 && (
           <div className="py-8 text-center">
             <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4"
-              style={{ backgroundColor: "#1A1230", border: "1px solid #7B61FF22" }}>
-              <Search size={20} style={{ color: "#7B61FF" }} />
+              style={{ backgroundColor: "var(--accent-tint)", border: "1px solid var(--accent-a22)" }}>
+              <Search size={20} style={{ color: "var(--accent)" }} />
             </div>
             <p className="text-white font-semibold mb-1">Super Agente Orbe</p>
-            <p className="text-xs" style={{ color: "#444" }}>IA com busca web em tempo real. Pergunte sobre campanhas, benchmarks, estratégias e muito mais.</p>
+            <p className="text-xs" style={{ color: "var(--text-quaternary)" }}>IA com busca web em tempo real. Pergunte sobre campanhas, benchmarks, estratégias e muito mais.</p>
           </div>
         )}
         {messages.map((m) => <Bubble key={m.id} msg={m} />)}
@@ -314,15 +314,15 @@ export function SuperAgenteView() {
       </div>
 
       {/* Input */}
-      <div className="flex-shrink-0 border-t px-6 py-4 space-y-3" style={{ borderColor: "#111", backgroundColor: "#040404" }}>
+      <div className="flex-shrink-0 border-t px-6 py-4 space-y-3" style={{ borderColor: "var(--bg-surface-2)", backgroundColor: "#040404" }}>
         {messages.length === 0 && (
           <div className="flex flex-wrap gap-2">
             {QUICK.map((q) => (
               <button key={q.label} onClick={() => send(q.prompt)}
                 className="text-[11px] px-3 py-1.5 rounded-lg border transition-all"
-                style={{ borderColor: "#1a1a1a", color: "#666", backgroundColor: "#080808" }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#7B61FF44"; (e.currentTarget as HTMLButtonElement).style.color = "#A3A3A3"; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#1a1a1a"; (e.currentTarget as HTMLButtonElement).style.color = "#666"; }}>
+                style={{ borderColor: "var(--border)", color: "var(--text-tertiary)", backgroundColor: "var(--bg-input)" }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--accent-a44)"; (e.currentTarget as HTMLButtonElement).style.color = "var(--text-secondary)"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border)"; (e.currentTarget as HTMLButtonElement).style.color = "var(--text-tertiary)"; }}>
                 {q.label}
               </button>
             ))}
@@ -338,20 +338,20 @@ export function SuperAgenteView() {
             rows={1}
             disabled={running}
             className="flex-1 resize-none rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors leading-relaxed"
-            style={{ backgroundColor: "#0d0d0d", border: "1px solid #1e1e1e", color: "#e5e5e5", maxHeight: "120px" }}
-            onFocus={(e) => (e.currentTarget.style.borderColor = "#7B61FF44")}
-            onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")}
+            style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)", color: "#e5e5e5", maxHeight: "120px" }}
+            onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent-a44)")}
+            onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border-strong)")}
             onInput={(e) => { const el = e.currentTarget; el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight, 120) + "px"; }}
           />
           <button
             onClick={() => send(input)}
             disabled={!input.trim() || running}
             className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-all disabled:opacity-30"
-            style={{ backgroundColor: input.trim() && !running ? "#7B61FF" : "#111", color: input.trim() && !running ? "#000" : "#333", border: "1px solid #1a1a1a" }}>
+            style={{ backgroundColor: input.trim() && !running ? "var(--accent)" : "var(--bg-surface-2)", color: input.trim() && !running ? "var(--bg-page)" : "var(--text-quaternary)", border: "1px solid var(--border)" }}>
             {running ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
           </button>
         </div>
-        <p className="text-[10px] text-center" style={{ color: "#2a2a2a" }}>
+        <p className="text-[10px] text-center" style={{ color: "var(--border-subtle)" }}>
           Enter para enviar · Shift+Enter para quebrar linha
         </p>
       </div>
@@ -360,29 +360,29 @@ export function SuperAgenteView() {
       {showSettings && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.85)" }}
           onClick={(e) => e.target === e.currentTarget && setShowSettings(false)}>
-          <div className="w-full max-w-md rounded-2xl p-6 space-y-4" style={{ backgroundColor: "#0d0d0d", border: "1px solid #1e1e1e" }}>
+          <div className="w-full max-w-md rounded-2xl p-6 space-y-4" style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" }}>
             <div className="flex items-center justify-between">
               <h3 className="text-white font-semibold text-sm">Configurar Super Agente</h3>
-              <button onClick={() => setShowSettings(false)} style={{ color: "#555" }}><X size={16} /></button>
+              <button onClick={() => setShowSettings(false)} style={{ color: "var(--text-tertiary)" }}><X size={16} /></button>
             </div>
             {[
               { label: "Groq API Key (IA — gratuito em console.groq.com)", value: groqDraft, set: setGroqDraft, placeholder: "gsk_..." },
               { label: "Brave Search API Key (busca web — gratuito em brave.com/search/api)", value: braveDraft, set: setBraveDraft, placeholder: "BSA..." },
             ].map(({ label, value, set, placeholder }) => (
               <div key={label} className="space-y-1">
-                <label className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "#555" }}>{label}</label>
+                <label className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-tertiary)" }}>{label}</label>
                 <input
                   type="password" value={value} onChange={(e) => set(e.target.value)} placeholder={placeholder}
                   className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors"
-                  style={{ backgroundColor: "#080808", border: "1px solid #1e1e1e", color: "#e5e5e5" }}
-                  onFocus={(e) => (e.currentTarget.style.borderColor = "#7B61FF44")}
-                  onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")}
+                  style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-strong)", color: "#e5e5e5" }}
+                  onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent-a44)")}
+                  onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border-strong)")}
                 />
               </div>
             ))}
             <div className="flex gap-3 pt-1">
-              <button onClick={() => setShowSettings(false)} className="flex-1 py-2.5 rounded-xl text-xs font-semibold border" style={{ borderColor: "#1e1e1e", color: "#555" }}>Cancelar</button>
-              <button onClick={saveSettings} className="flex-1 py-2.5 rounded-xl text-xs font-semibold" style={{ backgroundColor: "#7B61FF", color: "#000" }}>Salvar</button>
+              <button onClick={() => setShowSettings(false)} className="flex-1 py-2.5 rounded-xl text-xs font-semibold border" style={{ borderColor: "var(--border-strong)", color: "var(--text-tertiary)" }}>Cancelar</button>
+              <button onClick={saveSettings} className="flex-1 py-2.5 rounded-xl text-xs font-semibold" style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}>Salvar</button>
             </div>
           </div>
         </div>

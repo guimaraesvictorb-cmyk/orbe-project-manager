@@ -177,20 +177,20 @@ export function MetaAdsIntegration() {
     }
   }
 
-  const inp = "w-full rounded-lg px-3 py-2 text-xs text-white placeholder-[#333] focus:outline-none";
-  const inpStyle = { backgroundColor: "#0d0d0d", border: "1px solid #1e1e1e" };
+  const inp = "w-full rounded-lg px-3 py-2 text-xs text-white placeholder-[var(--text-quaternary)] focus:outline-none";
+  const inpStyle = { backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" };
 
   return (
     <div className="space-y-6">
       {/* Token section */}
-      <div className="rounded-2xl border p-5 space-y-4" style={{ backgroundColor: "#0a0a0a", borderColor: "#1a1a1a" }}>
+      <div className="rounded-2xl border p-5 space-y-4" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-bold text-white">Meta Ads</p>
-            <p className="text-xs mt-0.5" style={{ color: "#555" }}>Conecte sua conta para sincronizar métricas automaticamente</p>
+            <p className="text-xs mt-0.5" style={{ color: "var(--text-tertiary)" }}>Conecte sua conta para sincronizar métricas automaticamente</p>
           </div>
           {savedToken && accounts.length > 0 && (
-            <span className="flex items-center gap-1.5 text-xs" style={{ color: "#7B61FF" }}>
+            <span className="flex items-center gap-1.5 text-xs" style={{ color: "var(--accent)" }}>
               <Check size={12} />Conectado ({accounts.length} conta{accounts.length !== 1 ? "s" : ""})
             </span>
           )}
@@ -204,11 +204,11 @@ export function MetaAdsIntegration() {
         {showInstructions && (
           <div className="rounded-xl p-4 space-y-2 text-xs" style={{ backgroundColor: "#0a0f1a", border: "1px solid #1877F222" }}>
             <p className="font-bold" style={{ color: "#1877F2" }}>Passo a passo:</p>
-            <p style={{ color: "#555" }}>1. Acesse <a href="https://developers.facebook.com/tools/explorer" target="_blank" rel="noopener noreferrer" className="underline" style={{ color: "#1877F2" }}>developers.facebook.com/tools/explorer <ExternalLink size={10} className="inline" /></a></p>
-            <p style={{ color: "#555" }}>2. Clique em "Generate Access Token"</p>
-            <p style={{ color: "#555" }}>3. Selecione as permissões: <strong className="text-white">ads_read</strong>, <strong className="text-white">ads_management</strong></p>
-            <p style={{ color: "#555" }}>4. Copie o token gerado e cole abaixo</p>
-            <p className="text-[10px] mt-1" style={{ color: "#333" }}>O token expira em 60 dias. Para tokens permanentes, configure um App próprio no Meta Developers.</p>
+            <p style={{ color: "var(--text-tertiary)" }}>1. Acesse <a href="https://developers.facebook.com/tools/explorer" target="_blank" rel="noopener noreferrer" className="underline" style={{ color: "#1877F2" }}>developers.facebook.com/tools/explorer <ExternalLink size={10} className="inline" /></a></p>
+            <p style={{ color: "var(--text-tertiary)" }}>2. Clique em "Generate Access Token"</p>
+            <p style={{ color: "var(--text-tertiary)" }}>3. Selecione as permissões: <strong className="text-white">ads_read</strong>, <strong className="text-white">ads_management</strong></p>
+            <p style={{ color: "var(--text-tertiary)" }}>4. Copie o token gerado e cole abaixo</p>
+            <p className="text-[10px] mt-1" style={{ color: "var(--text-quaternary)" }}>O token expira em 60 dias. Para tokens permanentes, configure um App próprio no Meta Developers.</p>
           </div>
         )}
 
@@ -223,27 +223,27 @@ export function MetaAdsIntegration() {
           />
           <button onClick={saveToken} disabled={!token || token === savedToken}
             className="px-4 py-2 rounded-lg text-xs font-semibold transition-all disabled:opacity-40"
-            style={{ backgroundColor: "#1877F2", color: "#fff" }}>
+            style={{ backgroundColor: "#1877F2", color: "var(--text-primary)" }}>
             {loading ? <Loader2 size={12} className="animate-spin" /> : "Conectar"}
           </button>
           {savedToken && (
-            <button onClick={disconnect} className="p-2 rounded-lg border transition-colors" style={{ borderColor: "#1e1e1e", color: "#555" }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#EF4444"; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#555"; }}>
+            <button onClick={disconnect} className="p-2 rounded-lg border transition-colors" style={{ borderColor: "var(--border-strong)", color: "var(--text-tertiary)" }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--danger)"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--text-tertiary)"; }}>
               <Unlink size={14} />
             </button>
           )}
         </div>
 
-        {error && <p className="text-xs flex items-center gap-1.5" style={{ color: "#EF4444" }}><AlertCircle size={12} />{error}</p>}
+        {error && <p className="text-xs flex items-center gap-1.5" style={{ color: "var(--danger)" }}><AlertCircle size={12} />{error}</p>}
       </div>
 
       {/* Client sync table */}
       {accounts.length > 0 && (
-        <div className="rounded-2xl border overflow-hidden" style={{ backgroundColor: "#0a0a0a", borderColor: "#1a1a1a" }}>
-          <div className="px-5 py-3 border-b" style={{ borderColor: "#111" }}>
+        <div className="rounded-2xl border overflow-hidden" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
+          <div className="px-5 py-3 border-b" style={{ borderColor: "var(--bg-surface-2)" }}>
             <p className="text-xs font-bold text-white">Sincronizar clientes</p>
-            <p className="text-[10px] mt-0.5" style={{ color: "#555" }}>
+            <p className="text-[10px] mt-0.5" style={{ color: "var(--text-tertiary)" }}>
               Para cada cliente, escolha a conta de anúncios correspondente e clique em Sincronizar
             </p>
           </div>
@@ -253,12 +253,12 @@ export function MetaAdsIntegration() {
               <Loader2 size={18} className="animate-spin" style={{ color: "#1877F2" }} />
             </div>
           ) : activeClients.length === 0 ? (
-            <div className="py-10 text-center space-y-2" style={{ color: "#444" }}>
+            <div className="py-10 text-center space-y-2" style={{ color: "var(--text-quaternary)" }}>
               <p className="text-xs font-semibold text-white">Nenhum cliente cadastrado</p>
               <p className="text-[11px]">Vá para a seção <strong className="text-white">Clientes</strong> e adicione seus clientes primeiro.</p>
             </div>
           ) : (
-            <div className="divide-y" style={{ borderColor: "#111" }}>
+            <div className="divide-y" style={{ borderColor: "var(--bg-surface-2)" }}>
               {activeClients.map((client) => {
                 const mapped = clientAccountMap[client.id] ?? client.meta_ads_account_id ?? "";
                 const isSyncing = syncing[client.id];
@@ -268,8 +268,8 @@ export function MetaAdsIntegration() {
                   <div key={client.id} className="px-5 py-4 flex items-center gap-3">
                     <div className="w-36 flex-shrink-0">
                       <p className="text-xs font-medium text-white truncate">{client.name}</p>
-                      {result === "ok" && <p className="text-[10px] flex items-center gap-1 mt-0.5" style={{ color: "#7B61FF" }}><Check size={10} />Sincronizado</p>}
-                      {result === "fail" && <p className="text-[10px] mt-0.5" style={{ color: "#EF4444" }}>Falhou</p>}
+                      {result === "ok" && <p className="text-[10px] flex items-center gap-1 mt-0.5" style={{ color: "var(--accent)" }}><Check size={10} />Sincronizado</p>}
+                      {result === "fail" && <p className="text-[10px] mt-0.5" style={{ color: "var(--danger)" }}>Falhou</p>}
                     </div>
                     <select
                       value={mapped}

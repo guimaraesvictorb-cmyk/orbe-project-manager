@@ -30,10 +30,10 @@ function formatDate(iso: string): string {
 }
 
 function SortIcon({ col, sortKey, dir }: { col: SortKey; sortKey: SortKey; dir: SortDir }) {
-  if (col !== sortKey) return <ChevronsUpDown size={12} className="text-[#444]" />;
+  if (col !== sortKey) return <ChevronsUpDown size={12} className="text-[var(--text-quaternary)]" />;
   return dir === "asc"
-    ? <ChevronUp size={12} style={{ color: "#7B61FF" }} />
-    : <ChevronDown size={12} style={{ color: "#7B61FF" }} />;
+    ? <ChevronUp size={12} style={{ color: "var(--accent)" }} />
+    : <ChevronDown size={12} style={{ color: "var(--accent)" }} />;
 }
 
 // Inline status dropdown
@@ -51,7 +51,7 @@ function StatusBadge({
     <div className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold whitespace-nowrap transition-all duration-150 focus:outline-none focus-visible:ring-1 focus-visible:ring-[#7B61FF]"
+        className="flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold whitespace-nowrap transition-all duration-150 focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
         style={{
           backgroundColor: meta.bg,
           color: meta.color,
@@ -74,7 +74,7 @@ function StatusBadge({
           {/* Dropdown */}
           <div
             className="absolute left-0 top-full mt-1 z-20 rounded-lg overflow-hidden shadow-xl w-36"
-            style={{ backgroundColor: "#1a1a1a", border: "1px solid #333" }}
+            style={{ backgroundColor: "var(--border)", border: "1px solid var(--text-quaternary)" }}
             role="listbox"
           >
             {(Object.entries(STATUS_META) as [TaskStatus, typeof STATUS_META[TaskStatus]][]).map(
@@ -89,7 +89,7 @@ function StatusBadge({
                   }}
                   className="w-full text-left px-3 py-2 text-xs font-medium transition-colors duration-100 flex items-center gap-2"
                   style={{
-                    color: task.status === key ? m.color : "#A3A3A3",
+                    color: task.status === key ? m.color : "var(--text-secondary)",
                     backgroundColor: task.status === key ? m.bg : "transparent",
                   }}
                   onMouseEnter={(e) =>
@@ -144,11 +144,11 @@ export function TaskTable({ tasks, onEdit, onDelete, onStatusChange }: TaskTable
   if (tasks.length === 0) {
     return (
       <div
-        className="rounded-xl border border-[#262626] py-16 text-center"
-        style={{ backgroundColor: "#131313" }}
+        className="rounded-xl border border-[var(--border-subtle)] py-16 text-center"
+        style={{ backgroundColor: "var(--bg-surface-2)" }}
       >
-        <p className="text-[#A3A3A3] text-sm">Nenhuma tarefa encontrada.</p>
-        <p className="text-[#555] text-xs mt-1">
+        <p className="text-[var(--text-secondary)] text-sm">Nenhuma tarefa encontrada.</p>
+        <p className="text-[var(--text-tertiary)] text-xs mt-1">
           Ajuste os filtros ou crie uma nova tarefa.
         </p>
       </div>
@@ -156,7 +156,7 @@ export function TaskTable({ tasks, onEdit, onDelete, onStatusChange }: TaskTable
   }
 
   const thCls =
-    "px-3 py-3 text-left text-[10px] font-semibold tracking-widest uppercase text-[#A3A3A3] whitespace-nowrap select-none cursor-pointer hover:text-white transition-colors duration-150";
+    "px-3 py-3 text-left text-[10px] font-semibold tracking-widest uppercase text-[var(--text-secondary)] whitespace-nowrap select-none cursor-pointer hover:text-white transition-colors duration-150";
 
   function Th({ col, label }: { col: SortKey; label: string }) {
     return (
@@ -171,13 +171,13 @@ export function TaskTable({ tasks, onEdit, onDelete, onStatusChange }: TaskTable
 
   return (
     <div
-      className="rounded-xl border border-[#262626] overflow-hidden"
-      style={{ backgroundColor: "#131313" }}
+      className="rounded-xl border border-[var(--border-subtle)] overflow-hidden"
+      style={{ backgroundColor: "var(--bg-surface-2)" }}
     >
       <div className="overflow-x-auto">
         <table className="w-full border-collapse min-w-[900px]" role="table">
           <thead>
-            <tr style={{ borderBottom: "1px solid #262626" }}>
+            <tr style={{ borderBottom: "1px solid var(--border-subtle)" }}>
               <Th col="title" label="Título" />
               <Th col="client" label="Cliente" />
               <th className={thCls} scope="col">Responsável</th>
@@ -193,16 +193,16 @@ export function TaskTable({ tasks, onEdit, onDelete, onStatusChange }: TaskTable
           <tbody>
             {sorted.map((task, idx) => {
               const overdue = isOverdue(task);
-              const rowBg = idx % 2 === 0 ? "#131313" : "#111";
+              const rowBg = idx % 2 === 0 ? "var(--bg-surface-2)" : "var(--bg-surface-2)";
               const priority = PRIORITY_META[task.priority];
 
               return (
                 <tr
                   key={task.id}
-                  style={{ backgroundColor: rowBg, borderBottom: "1px solid #1e1e1e" }}
-                  className="group transition-colors duration-100 hover:bg-[#1a1a1a]"
+                  style={{ backgroundColor: rowBg, borderBottom: "1px solid var(--border-strong)" }}
+                  className="group transition-colors duration-100 hover:bg-[var(--border)]"
                   onMouseEnter={(e) =>
-                    ((e.currentTarget as HTMLTableRowElement).style.backgroundColor = "#1a1a1a")
+                    ((e.currentTarget as HTMLTableRowElement).style.backgroundColor = "var(--border)")
                   }
                   onMouseLeave={(e) =>
                     ((e.currentTarget as HTMLTableRowElement).style.backgroundColor = rowBg)
@@ -217,7 +217,7 @@ export function TaskTable({ tasks, onEdit, onDelete, onStatusChange }: TaskTable
                       {overdue && (
                         <span
                           className="inline-block w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 align-middle mb-0.5"
-                          style={{ backgroundColor: "#EF4444" }}
+                          style={{ backgroundColor: "var(--danger)" }}
                           title="Atrasada"
                           aria-label="Tarefa atrasada"
                         />
@@ -225,7 +225,7 @@ export function TaskTable({ tasks, onEdit, onDelete, onStatusChange }: TaskTable
                       {task.title}
                     </p>
                     {task.notes && (
-                      <p className="text-[11px] text-[#555] mt-0.5 truncate" title={task.notes}>
+                      <p className="text-[11px] text-[var(--text-tertiary)] mt-0.5 truncate" title={task.notes}>
                         {task.notes}
                       </p>
                     )}
@@ -233,12 +233,12 @@ export function TaskTable({ tasks, onEdit, onDelete, onStatusChange }: TaskTable
 
                   {/* Cliente */}
                   <td className="px-3 py-3 whitespace-nowrap">
-                    <span className="text-xs text-[#A3A3A3]">{task.client}</span>
+                    <span className="text-xs text-[var(--text-secondary)]">{task.client}</span>
                   </td>
 
                   {/* Responsável */}
                   <td className="px-3 py-3 whitespace-nowrap">
-                    <span className="text-xs text-[#A3A3A3]">{task.responsible}</span>
+                    <span className="text-xs text-[var(--text-secondary)]">{task.responsible}</span>
                   </td>
 
                   {/* Fase Orbe */}
@@ -246,9 +246,9 @@ export function TaskTable({ tasks, onEdit, onDelete, onStatusChange }: TaskTable
                     <span
                       className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold tracking-wider"
                       style={{
-                        backgroundColor: "#1A1230",
-                        color: "#7B61FF",
-                        border: "1px solid #7B61FF33",
+                        backgroundColor: "var(--accent-tint)",
+                        color: "var(--accent)",
+                        border: "1px solid var(--accent-a33)",
                       }}
                       title={PHASE_SHORT[task.phaseId]}
                     >
@@ -259,8 +259,8 @@ export function TaskTable({ tasks, onEdit, onDelete, onStatusChange }: TaskTable
                   {/* Tipo */}
                   <td className="px-3 py-3 max-w-[140px]">
                     <span
-                      className="inline-block px-2 py-0.5 rounded text-[10px] text-[#A3A3A3] truncate"
-                      style={{ backgroundColor: "#1a1a1a", maxWidth: "130px" }}
+                      className="inline-block px-2 py-0.5 rounded text-[10px] text-[var(--text-secondary)] truncate"
+                      style={{ backgroundColor: "var(--border)", maxWidth: "130px" }}
                       title={task.type}
                     >
                       {task.type}
@@ -286,7 +286,7 @@ export function TaskTable({ tasks, onEdit, onDelete, onStatusChange }: TaskTable
                   <td className="px-3 py-3 whitespace-nowrap">
                     <span
                       className="text-xs font-medium"
-                      style={{ color: overdue ? "#EF4444" : "#A3A3A3" }}
+                      style={{ color: overdue ? "var(--danger)" : "var(--text-secondary)" }}
                       title={overdue ? "Tarefa atrasada" : undefined}
                     >
                       {formatDate(task.dueDate)}
@@ -296,7 +296,7 @@ export function TaskTable({ tasks, onEdit, onDelete, onStatusChange }: TaskTable
 
                   {/* Est. horas */}
                   <td className="px-3 py-3 whitespace-nowrap">
-                    <span className="text-xs text-[#A3A3A3]">{task.estimatedHours}h</span>
+                    <span className="text-xs text-[var(--text-secondary)]">{task.estimatedHours}h</span>
                   </td>
 
                   {/* Ações */}
@@ -304,7 +304,7 @@ export function TaskTable({ tasks, onEdit, onDelete, onStatusChange }: TaskTable
                     <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={() => onEdit(task)}
-                        className="w-7 h-7 rounded flex items-center justify-center text-[#A3A3A3] hover:text-white hover:bg-[#262626] transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7B61FF]"
+                        className="w-7 h-7 rounded flex items-center justify-center text-[var(--text-secondary)] hover:text-white hover:bg-[var(--border-subtle)] transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
                         aria-label={`Editar ${task.title}`}
                       >
                         <Pencil size={13} />
@@ -313,7 +313,7 @@ export function TaskTable({ tasks, onEdit, onDelete, onStatusChange }: TaskTable
                         onClick={() => {
                           if (confirm(`Excluir "${task.title}"?`)) onDelete(task.id);
                         }}
-                        className="w-7 h-7 rounded flex items-center justify-center text-[#A3A3A3] hover:text-red-400 hover:bg-[#1f0d0d] transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+                        className="w-7 h-7 rounded flex items-center justify-center text-[var(--text-secondary)] hover:text-red-400 hover:bg-[#1f0d0d] transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
                         aria-label={`Excluir ${task.title}`}
                       >
                         <Trash2 size={13} />
@@ -329,12 +329,12 @@ export function TaskTable({ tasks, onEdit, onDelete, onStatusChange }: TaskTable
 
       {/* Footer count */}
       <div
-        className="px-4 py-2 border-t border-[#1e1e1e]"
-        style={{ backgroundColor: "#0d0d0d" }}
+        className="px-4 py-2 border-t border-[var(--border-strong)]"
+        style={{ backgroundColor: "var(--bg-surface-2)" }}
       >
-        <p className="text-[11px] text-[#555]">
+        <p className="text-[11px] text-[var(--text-tertiary)]">
           Mostrando{" "}
-          <span className="text-[#A3A3A3] font-medium">{tasks.length}</span>{" "}
+          <span className="text-[var(--text-secondary)] font-medium">{tasks.length}</span>{" "}
           tarefa{tasks.length !== 1 ? "s" : ""}
         </p>
       </div>

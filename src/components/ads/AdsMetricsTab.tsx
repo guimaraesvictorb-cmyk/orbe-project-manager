@@ -11,7 +11,7 @@ function Trend({ curr, prev }: { curr: number | null; prev: number | null }) {
   const pct = ((curr - prev) / prev) * 100
   const up = pct > 0
   const Icon = pct === 0 ? Minus : up ? TrendingUp : TrendingDown
-  const color = pct === 0 ? '#555' : up ? '#7B61FF' : '#EF4444'
+  const color = pct === 0 ? 'var(--text-tertiary)' : up ? 'var(--accent)' : 'var(--danger)'
   return (
     <span className="flex items-center gap-0.5 text-[10px] font-bold ml-1" style={{ color }}>
       <Icon size={10} />{Math.abs(pct).toFixed(1)}%
@@ -49,8 +49,8 @@ type FieldKey = typeof META_FIELDS[number]['key'] | typeof GOOGLE_FIELDS[number]
 function MetricRow({ label, curr, prev, format }: { label: string; curr: number | null; prev: number | null; format: 'currency' | 'number' | 'pct' }) {
   const display = format === 'currency' ? fmtCurrency(curr) : format === 'pct' ? fmtPct(curr) : fmt(curr)
   return (
-    <div className="flex items-center justify-between py-2.5" style={{ borderBottom: '1px solid #111' }}>
-      <span className="text-xs" style={{ color: '#666' }}>{label}</span>
+    <div className="flex items-center justify-between py-2.5" style={{ borderBottom: '1px solid var(--bg-surface-2)' }}>
+      <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{label}</span>
       <div className="flex items-center gap-1">
         <span className="text-sm font-semibold text-white">{display}</span>
         <Trend curr={curr} prev={prev} />
@@ -105,19 +105,19 @@ function EntryForm({ platform, clientId, existing, onSave, onCancel }: {
     setSaving(false)
   }
 
-  const inputCls = 'w-full rounded-lg px-3 py-2 text-xs text-white placeholder-[#333] focus:outline-none focus:border-[#7B61FF44] transition-colors'
-  const inputStyle = { backgroundColor: '#080808', border: '1px solid #1e1e1e' }
+  const inputCls = 'w-full rounded-lg px-3 py-2 text-xs text-white placeholder-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent-a44)] transition-colors'
+  const inputStyle = { backgroundColor: 'var(--bg-input)', border: '1px solid var(--border-strong)' }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-xl border p-4 space-y-3" style={{ backgroundColor: '#0a0a0a', borderColor: '#1a1a1a' }}>
+    <form onSubmit={handleSubmit} className="rounded-xl border p-4 space-y-3" style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border)' }}>
       <div>
-        <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: '#555' }}>Período (mês)</label>
+        <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: 'var(--text-tertiary)' }}>Período (mês)</label>
         <input type="month" value={period} onChange={(e) => setPeriod(e.target.value)} required className={inputCls} style={inputStyle} />
       </div>
       <div className="grid grid-cols-2 gap-3">
         {fields.map(({ key, label }) => (
           <div key={key}>
-            <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: '#555' }}>{label}</label>
+            <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: 'var(--text-tertiary)' }}>{label}</label>
             <input
               type="number" step="any" value={vals[key]}
               onChange={(e) => setVals((p) => ({ ...p, [key]: e.target.value }))}
@@ -128,11 +128,11 @@ function EntryForm({ platform, clientId, existing, onSave, onCancel }: {
         ))}
       </div>
       <div className="flex gap-2 pt-1">
-        <button type="button" onClick={onCancel} className="flex-1 py-2 rounded-lg text-xs border" style={{ borderColor: '#1e1e1e', color: '#555' }}>
+        <button type="button" onClick={onCancel} className="flex-1 py-2 rounded-lg text-xs border" style={{ borderColor: 'var(--border-strong)', color: 'var(--text-tertiary)' }}>
           Cancelar
         </button>
         <button type="submit" disabled={saving} className="flex-1 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
-          style={{ backgroundColor: '#7B61FF', color: '#000' }}>
+          style={{ backgroundColor: 'var(--accent)', color: 'var(--bg-page)' }}>
           {saving ? <Loader2 size={12} className="animate-spin" /> : null}
           {saving ? 'Salvando...' : 'Salvar métricas'}
         </button>
@@ -154,20 +154,20 @@ function PeriodCard({ metric, prevMetric, platform, onDelete, onEdit }: {
   const label = new Date(`${year}-${month}-01`).toLocaleString('pt-BR', { month: 'long', year: 'numeric' })
 
   return (
-    <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: '#0a0a0a', borderColor: '#1a1a1a' }}>
+    <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border)' }}>
       <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-3">
           <button onClick={() => setOpen((v) => !v)} className="flex items-center gap-2">
-            {open ? <ChevronUp size={14} style={{ color: '#555' }} /> : <ChevronDown size={14} style={{ color: '#555' }} />}
+            {open ? <ChevronUp size={14} style={{ color: 'var(--text-tertiary)' }} /> : <ChevronDown size={14} style={{ color: 'var(--text-tertiary)' }} />}
             <p className="text-sm font-semibold text-white capitalize">{label}</p>
           </button>
           {metric.investimento && (
-            <span className="text-xs font-bold" style={{ color: '#7B61FF' }}>{fmtCurrency(metric.investimento)}</span>
+            <span className="text-xs font-bold" style={{ color: 'var(--accent)' }}>{fmtCurrency(metric.investimento)}</span>
           )}
         </div>
         <div className="flex items-center gap-1">
-          <button onClick={onEdit} className="text-[11px] px-2 py-1 rounded transition-colors hover:text-white" style={{ color: '#555' }}>Editar</button>
-          <button onClick={onDelete} className="p-1.5 rounded transition-colors hover:text-red-500" style={{ color: '#333' }}>
+          <button onClick={onEdit} className="text-[11px] px-2 py-1 rounded transition-colors hover:text-white" style={{ color: 'var(--text-tertiary)' }}>Editar</button>
+          <button onClick={onDelete} className="p-1.5 rounded transition-colors hover:text-red-500" style={{ color: 'var(--text-quaternary)' }}>
             <Trash2 size={12} />
           </button>
         </div>
@@ -214,7 +214,7 @@ export function AdsMetricsTab({ clientId, platform }: AdsMetricsTabProps) {
 
   if (loading) return (
     <div className="flex justify-center py-12">
-      <Loader2 size={18} className="animate-spin" style={{ color: '#7B61FF' }} />
+      <Loader2 size={18} className="animate-spin" style={{ color: 'var(--accent)' }} />
     </div>
   )
 
@@ -225,13 +225,13 @@ export function AdsMetricsTab({ clientId, platform }: AdsMetricsTabProps) {
           <span className="text-xs font-bold px-2 py-0.5 rounded" style={{ backgroundColor: platformColor + '22', color: platformColor }}>
             {platformLabel}
           </span>
-          <span className="text-xs" style={{ color: '#555' }}>{data.length} {data.length === 1 ? 'período' : 'períodos'} registrados</span>
+          <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{data.length} {data.length === 1 ? 'período' : 'períodos'} registrados</span>
         </div>
         {canEdit && !showForm && !editing && (
           <button
             onClick={() => setShowForm(true)}
             className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg"
-            style={{ backgroundColor: '#7B61FF', color: '#000' }}
+            style={{ backgroundColor: 'var(--accent)', color: 'var(--bg-page)' }}
           >
             <Plus size={12} />Adicionar mês
           </button>
@@ -255,14 +255,14 @@ export function AdsMetricsTab({ clientId, platform }: AdsMetricsTabProps) {
       )}
 
       {data.length === 0 && !showForm ? (
-        <div className="rounded-xl border border-[#1a1a1a] py-16 text-center" style={{ backgroundColor: '#0a0a0a' }}>
+        <div className="rounded-xl border border-[var(--border)] py-16 text-center" style={{ backgroundColor: 'var(--bg-surface)' }}>
           <p className="text-sm font-semibold text-white mb-1">Nenhuma métrica registrada</p>
-          <p className="text-xs mb-4" style={{ color: '#444' }}>
+          <p className="text-xs mb-4" style={{ color: 'var(--text-quaternary)' }}>
             Adicione as métricas mensais do {platformLabel} para acompanhar a evolução
           </p>
           {canEdit && (
             <button onClick={() => setShowForm(true)} className="text-xs font-semibold px-4 py-2 rounded-lg"
-              style={{ backgroundColor: '#7B61FF', color: '#000' }}>
+              style={{ backgroundColor: 'var(--accent)', color: 'var(--bg-page)' }}>
               + Adicionar primeiro mês
             </button>
           )}

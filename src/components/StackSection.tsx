@@ -7,7 +7,7 @@ export function StackSection() {
       <h2
         id="stack-title"
         className="text-xs font-bold tracking-widest uppercase mb-4"
-        style={{ color: "#7B61FF" }}
+        style={{ color: "var(--accent)" }}
       >
         Stack de IA Orbe
       </h2>
@@ -18,15 +18,15 @@ export function StackSection() {
             key={skill.name}
             className="relative rounded-xl p-4 transition-all duration-150"
             style={{
-              backgroundColor: "#131313",
-              border: `1px solid ${skill.isNew ? "#7B61FF" : "#262626"}`,
+              backgroundColor: "var(--bg-surface-2)",
+              border: `1px solid ${skill.isNew ? "var(--accent)" : "var(--border-subtle)"}`,
             }}
           >
             {/* NEW badge */}
             {skill.isNew && (
               <span
                 className="absolute top-3 right-3 text-[9px] font-bold tracking-widest px-1.5 py-0.5 rounded flex items-center gap-1"
-                style={{ backgroundColor: "#7B61FF", color: "#000000" }}
+                style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}
               >
                 <Sparkles size={8} aria-hidden="true" />
                 NEW
@@ -36,7 +36,7 @@ export function StackSection() {
             <p className="text-white font-semibold text-sm leading-snug mb-1 pr-12">
               {skill.name}
             </p>
-            <p className="text-[#A3A3A3] text-xs leading-relaxed">
+            <p className="text-[var(--text-secondary)] text-xs leading-relaxed">
               {skill.phases}
             </p>
           </div>

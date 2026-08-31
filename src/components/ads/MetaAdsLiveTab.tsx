@@ -255,17 +255,17 @@ function KpiCard({
     >
       <div className="flex items-start justify-between gap-1">
         <div className="flex items-center gap-1 flex-1 min-w-0">
-          <span className="text-[11px] font-medium truncate" style={{ color: '#8892a4' }}>{def.label}</span>
+          <span className="text-[11px] font-medium truncate" style={{ color: 'var(--text-secondary)' }}>{def.label}</span>
           <button
             className="flex-shrink-0 relative"
             onMouseEnter={() => setTip(true)}
             onMouseLeave={() => setTip(false)}
           >
-            <Info size={10} style={{ color: '#444' }} />
+            <Info size={10} style={{ color: 'var(--text-quaternary)' }} />
             {tip && (
               <div
                 className="absolute left-0 top-5 z-50 rounded-lg px-2 py-1.5 text-[10px] w-48 leading-relaxed"
-                style={{ backgroundColor: '#1a2030', border: `1px solid ${BORDER}`, color: '#aaa' }}
+                style={{ backgroundColor: '#1a2030', border: `1px solid ${BORDER}`, color: 'var(--text-secondary)' }}
               >
                 {def.tip}
               </div>
@@ -275,13 +275,13 @@ function KpiCard({
         <div className="flex items-center gap-1 flex-shrink-0">
           <button onClick={onToggle} className="p-0.5" title={hidden ? 'Exibir' : 'Ocultar'}>
             {hidden
-              ? <EyeOff size={11} style={{ color: '#444' }} />
-              : <Eye size={11} style={{ color: '#444' }} />}
+              ? <EyeOff size={11} style={{ color: 'var(--text-quaternary)' }} />
+              : <Eye size={11} style={{ color: 'var(--text-quaternary)' }} />}
           </button>
-          <span style={{ color: '#444' }}>{def.icon}</span>
+          <span style={{ color: 'var(--text-quaternary)' }}>{def.icon}</span>
         </div>
       </div>
-      <div className="text-lg font-bold" style={{ color: hidden ? '#333' : '#fff' }}>
+      <div className="text-lg font-bold" style={{ color: hidden ? 'var(--text-quaternary)' : 'var(--text-primary)' }}>
         {hidden ? '••••' : fmtKpi(value, def.format)}
       </div>
     </div>
@@ -319,14 +319,14 @@ function PerformanceChart({
                 className="px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors"
                 style={{
                   backgroundColor: metric === m.key ? BLUE : 'transparent',
-                  color: metric === m.key ? '#fff' : '#6b7a8d',
+                  color: metric === m.key ? 'var(--text-primary)' : 'var(--text-secondary)',
                   border: `1px solid ${metric === m.key ? BLUE : BORDER}`,
                 }}
               >
                 {m.label}
               </button>
             ))}
-            <button onClick={onLoad} disabled={loading} className="ml-2 p-1.5 rounded-lg" style={{ border: `1px solid ${BORDER}`, color: '#6b7a8d' }}>
+            <button onClick={onLoad} disabled={loading} className="ml-2 p-1.5 rounded-lg" style={{ border: `1px solid ${BORDER}`, color: 'var(--text-secondary)' }}>
               {loading ? <Loader2 size={11} className="animate-spin" /> : <RefreshCw size={11} />}
             </button>
           </div>
@@ -336,14 +336,14 @@ function PerformanceChart({
       {data.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 gap-4">
           <BarChart2 size={32} style={{ color: '#2a3040' }} />
-          <p className="text-sm text-center" style={{ color: '#555' }}>
+          <p className="text-sm text-center" style={{ color: 'var(--text-tertiary)' }}>
             Clique no botão abaixo para gerar o gráfico com os dados diários
           </p>
           <button
             onClick={onLoad}
             disabled={loading}
             className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-opacity disabled:opacity-60"
-            style={{ backgroundColor: BLUE, color: '#fff' }}
+            style={{ backgroundColor: BLUE, color: 'var(--text-primary)' }}
           >
             {loading ? <Loader2 size={14} className="animate-spin" /> : null}
             Gerar Gráfico
@@ -352,10 +352,10 @@ function PerformanceChart({
       ) : (
         <div className="px-4 py-3">
           <div className="flex items-end justify-between mb-2">
-            <span className="text-[10px]" style={{ color: '#444' }}>
+            <span className="text-[10px]" style={{ color: 'var(--text-quaternary)' }}>
               {CHART_METRICS.find(m => m.key === metric)?.label}
             </span>
-            <span className="text-[10px]" style={{ color: '#444' }}>
+            <span className="text-[10px]" style={{ color: 'var(--text-quaternary)' }}>
               Máx: {metric === 'spend' ? fmtCurrency(maxVal) : fmtInt(maxVal)}
             </span>
           </div>
@@ -374,8 +374,8 @@ function PerformanceChart({
           <div className="flex justify-between mt-1">
             {data.length > 0 && (
               <>
-                <span className="text-[9px]" style={{ color: '#444' }}>{fmtBR(data[0].date)}</span>
-                <span className="text-[9px]" style={{ color: '#444' }}>{fmtBR(data[data.length - 1].date)}</span>
+                <span className="text-[9px]" style={{ color: 'var(--text-quaternary)' }}>{fmtBR(data[0].date)}</span>
+                <span className="text-[9px]" style={{ color: 'var(--text-quaternary)' }}>{fmtBR(data[data.length - 1].date)}</span>
               </>
             )}
           </div>
@@ -433,28 +433,28 @@ function CampaignTableSection({
   const activeCols = TABLE_COLS.filter(c => visibleCols.has(c.key))
 
   function getCellValue(row: CampaignRow, key: TableColKey): React.ReactNode {
-    if (key === 'objective') return <span className="text-[10px]" style={{ color: '#8892a4' }}>{OBJECTIVE_LABEL[row.objective] ?? row.objective ?? '—'}</span>
+    if (key === 'objective') return <span className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>{OBJECTIVE_LABEL[row.objective] ?? row.objective ?? '—'}</span>
     if (key === 'name') return <span className="text-white font-medium text-xs truncate block" style={{ maxWidth: 210 }}>{row.name}</span>
     if (key === 'status') {
       const active = row.status === 'ACTIVE'
       return (
         <div className="flex items-center gap-1">
-          <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: active ? '#10b981' : '#555' }} />
-          <span className="text-[10px]" style={{ color: active ? '#10b981' : '#6b7a8d' }}>{active ? 'Ativo' : 'Pausado'}</span>
+          <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: active ? '#10b981' : 'var(--text-tertiary)' }} />
+          <span className="text-[10px]" style={{ color: active ? '#10b981' : 'var(--text-secondary)' }}>{active ? 'Ativo' : 'Pausado'}</span>
         </div>
       )
     }
-    if (key === 'startTime') return <span className="text-[10px]" style={{ color: '#6b7a8d' }}>{fmtBR(row.startTime?.slice(0, 10) ?? '')}</span>
-    if (key === 'budget') return <span className="text-[10px]" style={{ color: '#aaa' }}>{fmtBudget(row.dailyBudget, row.lifetimeBudget)}</span>
+    if (key === 'startTime') return <span className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>{fmtBR(row.startTime?.slice(0, 10) ?? '')}</span>
+    if (key === 'budget') return <span className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>{fmtBudget(row.dailyBudget, row.lifetimeBudget)}</span>
     if (key === 'spend') return <span className="text-xs font-semibold text-white">{fmtCurrency(row.spend)}</span>
-    if (key === 'cpc') return <span className="text-xs" style={{ color: '#aaa' }}>{row.cpc > 0 ? fmtCurrency(row.cpc) : '—'}</span>
-    if (key === 'ctr') return <span className="text-xs" style={{ color: '#aaa' }}>{fmtPct(row.ctr)}</span>
-    if (key === 'cpcLink') return <span className="text-xs" style={{ color: '#aaa' }}>{row.cpcLink > 0 ? fmtCurrency(row.cpcLink) : '—'}</span>
-    if (key === 'cpm') return <span className="text-xs" style={{ color: '#aaa' }}>{row.cpm > 0 ? fmtCurrency(row.cpm) : '—'}</span>
-    if (key === 'impressions') return <span className="text-xs" style={{ color: '#aaa' }}>{fmtInt(row.impressions)}</span>
-    if (key === 'reach') return <span className="text-xs" style={{ color: '#aaa' }}>{fmtInt(row.reach)}</span>
-    if (key === 'results') return <span className="text-xs" style={{ color: '#aaa' }}>{fmtInt(row.results)}</span>
-    if (key === 'costPerResult') return <span className="text-xs" style={{ color: '#aaa' }}>{row.costPerResult > 0 ? fmtCurrency(row.costPerResult) : '—'}</span>
+    if (key === 'cpc') return <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{row.cpc > 0 ? fmtCurrency(row.cpc) : '—'}</span>
+    if (key === 'ctr') return <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{fmtPct(row.ctr)}</span>
+    if (key === 'cpcLink') return <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{row.cpcLink > 0 ? fmtCurrency(row.cpcLink) : '—'}</span>
+    if (key === 'cpm') return <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{row.cpm > 0 ? fmtCurrency(row.cpm) : '—'}</span>
+    if (key === 'impressions') return <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{fmtInt(row.impressions)}</span>
+    if (key === 'reach') return <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{fmtInt(row.reach)}</span>
+    if (key === 'results') return <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{fmtInt(row.results)}</span>
+    if (key === 'costPerResult') return <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{row.costPerResult > 0 ? fmtCurrency(row.costPerResult) : '—'}</span>
     return null
   }
 
@@ -487,7 +487,7 @@ function CampaignTableSection({
       {/* toolbar */}
       <div className="flex items-center gap-2 px-3 py-2.5 flex-wrap" style={{ borderBottom: `1px solid ${BORDER}` }}>
         <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg flex-1 min-w-40" style={{ backgroundColor: '#0a0d14', border: `1px solid ${BORDER}` }}>
-          <Search size={11} style={{ color: '#444' }} />
+          <Search size={11} style={{ color: 'var(--text-quaternary)' }} />
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
@@ -499,7 +499,7 @@ function CampaignTableSection({
         <button
           onClick={() => setShowPaused(v => !v)}
           className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] border transition-all"
-          style={{ borderColor: showPaused ? `${BLUE}55` : BORDER, color: showPaused ? BLUE : '#6b7a8d', backgroundColor: showPaused ? `${BLUE}11` : 'transparent' }}
+          style={{ borderColor: showPaused ? `${BLUE}55` : BORDER, color: showPaused ? BLUE : 'var(--text-secondary)', backgroundColor: showPaused ? `${BLUE}11` : 'transparent' }}
         >
           {showPaused && <Check size={9} />}
           Exibir pausadas
@@ -510,7 +510,7 @@ function CampaignTableSection({
           <button
             onClick={() => setShowPeriod(v => !v)}
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] border"
-            style={{ borderColor: BORDER, color: '#6b7a8d' }}
+            style={{ borderColor: BORDER, color: 'var(--text-secondary)' }}
           >
             <Calendar size={11} />
             {PERIODS[period].label}
@@ -523,7 +523,7 @@ function CampaignTableSection({
                   key={p.label}
                   onClick={() => { onPeriodChange(i); setShowPeriod(false) }}
                   className="w-full text-left px-3 py-2 text-[11px] hover:bg-white/5 transition-colors flex items-center justify-between"
-                  style={{ color: period === i ? BLUE : '#aaa' }}
+                  style={{ color: period === i ? BLUE : 'var(--text-secondary)' }}
                 >
                   {p.label}
                   {period === i && <Check size={9} style={{ color: BLUE }} />}
@@ -538,7 +538,7 @@ function CampaignTableSection({
           <button
             onClick={() => setShowColPicker(v => !v)}
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] border"
-            style={{ borderColor: BORDER, color: '#6b7a8d' }}
+            style={{ borderColor: BORDER, color: 'var(--text-secondary)' }}
           >
             <Settings size={11} />
             Organizar
@@ -559,13 +559,13 @@ function CampaignTableSection({
                     })
                   }}
                   className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left text-[11px] transition-colors hover:bg-white/5"
-                  style={{ color: visibleCols.has(col.key) ? '#fff' : '#555' }}
+                  style={{ color: visibleCols.has(col.key) ? 'var(--text-primary)' : 'var(--text-tertiary)' }}
                 >
                   <div
                     className="w-3 h-3 rounded-sm border flex items-center justify-center flex-shrink-0"
-                    style={{ borderColor: visibleCols.has(col.key) ? BLUE : '#333', backgroundColor: visibleCols.has(col.key) ? BLUE : 'transparent' }}
+                    style={{ borderColor: visibleCols.has(col.key) ? BLUE : 'var(--text-quaternary)', backgroundColor: visibleCols.has(col.key) ? BLUE : 'transparent' }}
                   >
-                    {visibleCols.has(col.key) && <Check size={8} style={{ color: '#fff' }} />}
+                    {visibleCols.has(col.key) && <Check size={8} style={{ color: 'var(--text-primary)' }} />}
                   </div>
                   {col.label}
                 </button>
@@ -586,18 +586,18 @@ function CampaignTableSection({
                 <th
                   key={col.key}
                   className="px-3 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest whitespace-nowrap"
-                  style={{ color: '#444', width: col.width, minWidth: col.width }}
+                  style={{ color: 'var(--text-quaternary)', width: col.width, minWidth: col.width }}
                 >
                   {col.label}
                 </th>
               ))}
-              <th className="px-3 py-2.5 text-[10px] font-bold uppercase tracking-widest text-right" style={{ color: '#444' }}>Ação</th>
+              <th className="px-3 py-2.5 text-[10px] font-bold uppercase tracking-widest text-right" style={{ color: 'var(--text-quaternary)' }}>Ação</th>
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={activeCols.length + 1} className="text-center py-12 text-sm" style={{ color: '#444' }}>
+                <td colSpan={activeCols.length + 1} className="text-center py-12 text-sm" style={{ color: 'var(--text-quaternary)' }}>
                   {loading ? 'Carregando campanhas...' : 'Nenhuma campanha encontrada para o período'}
                 </td>
               </tr>
@@ -621,7 +621,7 @@ function CampaignTableSection({
                     title={row.status === 'ACTIVE' ? 'Pausar' : 'Ativar'}
                     className="p-1 rounded-md transition-colors disabled:opacity-50"
                     style={{
-                      color: row.status === 'ACTIVE' ? '#ef4444' : '#10b981',
+                      color: row.status === 'ACTIVE' ? 'var(--danger)' : '#10b981',
                       border: `1px solid ${row.status === 'ACTIVE' ? '#ef444433' : '#10b98133'}`,
                     }}
                   >
@@ -672,7 +672,7 @@ function ConversionFunnel({ metrics }: { metrics: AccountMetrics | null }) {
     <div className="rounded-xl overflow-hidden" style={{ backgroundColor: CARD_BG, border: `1px solid ${BORDER}` }}>
       <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: `1px solid ${BORDER}` }}>
         <span className="text-sm font-semibold text-white">Funil de Conversão</span>
-        <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px]" style={{ border: `1px solid ${BORDER}`, color: '#6b7a8d' }}>
+        <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px]" style={{ border: `1px solid ${BORDER}`, color: 'var(--text-secondary)' }}>
           <Download size={11} /> Exportar PDF
         </button>
       </div>
@@ -691,7 +691,7 @@ function ConversionFunnel({ metrics }: { metrics: AccountMetrics | null }) {
               {step.pct !== null && (
                 <div className="flex items-center gap-1 py-1.5">
                   <div className="h-px flex-1" style={{ width: 20, backgroundColor: '#1e2535' }} />
-                  <span className="text-[10px] font-semibold" style={{ color: '#6b7a8d' }}>
+                  <span className="text-[10px] font-semibold" style={{ color: 'var(--text-secondary)' }}>
                     {step.pct.toFixed(1)}% Conversão
                   </span>
                   <div className="h-px flex-1" style={{ width: 20, backgroundColor: '#1e2535' }} />
@@ -708,7 +708,7 @@ function ConversionFunnel({ metrics }: { metrics: AccountMetrics | null }) {
                 <span className="text-sm font-bold text-white">{step.label}</span>
                 <div className="text-right">
                   <div className="text-base font-bold text-white">{fmtInt(step.value)}</div>
-                  <div className="text-[10px]" style={{ color: '#8892a4' }}>{fmtCurrency(step.cost)}</div>
+                  <div className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>{fmtCurrency(step.cost)}</div>
                 </div>
               </div>
             </div>
@@ -829,9 +829,9 @@ export function MetaAdsLiveTab({ client }: Props) {
   if (!token || !accountId) {
     return (
       <div className="rounded-xl py-16 text-center" style={{ backgroundColor: CARD_BG, border: `1px solid ${BORDER}` }}>
-        <AlertCircle size={28} className="mx-auto mb-4" style={{ color: '#333' }} />
+        <AlertCircle size={28} className="mx-auto mb-4" style={{ color: 'var(--text-quaternary)' }} />
         <p className="text-sm font-semibold text-white mb-2">Conta não conectada</p>
-        <p className="text-xs" style={{ color: '#555' }}>
+        <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
           {!token
             ? 'Configure o token Meta em Integrações → Meta Ads.'
             : 'Vincule uma conta de anúncios a este cliente.'}
@@ -854,7 +854,7 @@ export function MetaAdsLiveTab({ client }: Props) {
 
         <div className="flex items-center gap-2">
           {/* Account pill */}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium" style={{ backgroundColor: CARD_BG, border: `1px solid ${BORDER}`, color: '#8892a4' }}>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium" style={{ backgroundColor: CARD_BG, border: `1px solid ${BORDER}`, color: 'var(--text-secondary)' }}>
             {accountId}
             <ChevronDown size={10} />
           </div>
@@ -864,7 +864,7 @@ export function MetaAdsLiveTab({ client }: Props) {
             <button
               onClick={() => setShowPeriodMenu(v => !v)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium"
-              style={{ backgroundColor: CARD_BG, border: `1px solid ${BORDER}`, color: '#8892a4' }}
+              style={{ backgroundColor: CARD_BG, border: `1px solid ${BORDER}`, color: 'var(--text-secondary)' }}
             >
               <Calendar size={11} />
               {dateLabel}
@@ -880,7 +880,7 @@ export function MetaAdsLiveTab({ client }: Props) {
                     key={p.label}
                     onClick={() => { setPeriodIdx(i); setShowPeriodMenu(false); setDailyData([]) }}
                     className="w-full text-left px-3 py-2 text-[11px] hover:bg-white/5 transition-colors flex items-center justify-between"
-                    style={{ color: periodIdx === i ? BLUE : '#aaa' }}
+                    style={{ color: periodIdx === i ? BLUE : 'var(--text-secondary)' }}
                   >
                     {p.label}
                     {periodIdx === i && <Check size={9} style={{ color: BLUE }} />}
@@ -894,7 +894,7 @@ export function MetaAdsLiveTab({ client }: Props) {
             onClick={loadMain}
             disabled={loadingMain}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] disabled:opacity-50"
-            style={{ backgroundColor: CARD_BG, border: `1px solid ${BORDER}`, color: '#6b7a8d' }}
+            style={{ backgroundColor: CARD_BG, border: `1px solid ${BORDER}`, color: 'var(--text-secondary)' }}
           >
             {loadingMain ? <Loader2 size={11} className="animate-spin" /> : <RefreshCw size={11} />}
             Atualizar
@@ -912,7 +912,7 @@ export function MetaAdsLiveTab({ client }: Props) {
 
       {/* ── Error ── */}
       {error && (
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs" style={{ backgroundColor: '#1a0808', color: '#ef4444', border: '1px solid #ef444433' }}>
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs" style={{ backgroundColor: '#1a0808', color: 'var(--danger)', border: '1px solid #ef444433' }}>
           <AlertCircle size={12} />{error}
           <button onClick={() => setError('')} className="ml-auto text-xs underline">Fechar</button>
         </div>
@@ -947,19 +947,19 @@ export function MetaAdsLiveTab({ client }: Props) {
       {/* ── PDF de Campanhas ── */}
       <div className="rounded-xl p-4" style={{ backgroundColor: CARD_BG, border: `1px solid ${BORDER}` }}>
         <div className="font-semibold text-white text-sm mb-2">PDF de Campanhas</div>
-        <p className="text-[11px] leading-relaxed mb-3" style={{ color: '#6b7a8d' }}>
+        <p className="text-[11px] leading-relaxed mb-3" style={{ color: 'var(--text-secondary)' }}>
           Personalize as métricas que deseja exportar das campanhas diretamente na tabela acima. Reorganize as métricas, filtre pela ordem desejada, oculte campanhas, oculte métricas desnecessárias para a elaboração do relatório na opção "Organizar" e salve essas configurações sempre que necessário, de forma simples e intuitiva.
         </p>
         <div className="flex items-center gap-2">
           <button
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[11px] font-semibold"
-            style={{ backgroundColor: BLUE, color: '#fff' }}
+            style={{ backgroundColor: BLUE, color: 'var(--text-primary)' }}
           >
             <Download size={11} /> Baixar PDF de campanhas
           </button>
           <button
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[11px] font-medium"
-            style={{ border: `1px solid ${BORDER}`, color: '#6b7a8d' }}
+            style={{ border: `1px solid ${BORDER}`, color: 'var(--text-secondary)' }}
           >
             <FileText size={11} /> Abrir como texto
           </button>
@@ -970,14 +970,14 @@ export function MetaAdsLiveTab({ client }: Props) {
       <div className="rounded-xl p-4" style={{ backgroundColor: CARD_BG, border: `1px solid ${BORDER}` }}>
         <div className="flex items-center justify-between mb-4">
           <span className="font-semibold text-white text-sm">Melhores Anúncios</span>
-          <span className="text-[11px]" style={{ color: '#6b7a8d' }}>{fmtBR(until)}</span>
+          <span className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>{fmtBR(until)}</span>
         </div>
         <div className="flex flex-col items-center justify-center py-8 gap-4">
           <TrendingUp size={28} style={{ color: '#2a3040' }} />
-          <p className="text-sm" style={{ color: '#555' }}>Clique para carregar e analisar todos os anúncios</p>
+          <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>Clique para carregar e analisar todos os anúncios</p>
           <button
             className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold"
-            style={{ backgroundColor: BLUE, color: '#fff' }}
+            style={{ backgroundColor: BLUE, color: 'var(--text-primary)' }}
           >
             Carregar anúncios
           </button>
@@ -992,12 +992,12 @@ export function MetaAdsLiveTab({ client }: Props) {
         <div className="font-semibold text-white text-sm mb-4">Dados Demográficos</div>
         <div className="flex flex-col items-center justify-center py-8 gap-4">
           <Users size={28} style={{ color: '#2a3040' }} />
-          <p className="text-sm text-center" style={{ color: '#555' }}>
+          <p className="text-sm text-center" style={{ color: 'var(--text-tertiary)' }}>
             Clique para buscar a distribuição por idade e gênero da conta no período selecionado
           </p>
           <button
             className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold"
-            style={{ backgroundColor: BLUE, color: '#fff' }}
+            style={{ backgroundColor: BLUE, color: 'var(--text-primary)' }}
           >
             Carregar dados demográficos
           </button>
@@ -1008,16 +1008,16 @@ export function MetaAdsLiveTab({ client }: Props) {
       <div className="rounded-xl p-4" style={{ backgroundColor: CARD_BG, border: `1px solid ${BORDER}` }}>
         <div className="flex items-center justify-between mb-4">
           <span className="font-semibold text-white text-sm">Meta de Investimento</span>
-          <span className="text-[11px]" style={{ color: '#6b7a8d' }}>
+          <span className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>
             {new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
           </span>
         </div>
         <div className="flex items-center gap-2 mb-4">
-          <span className="text-[11px] px-3 py-1.5 rounded-lg" style={{ border: `1px solid ${BORDER}`, color: '#6b7a8d' }}>Nível de Conta</span>
+          <span className="text-[11px] px-3 py-1.5 rounded-lg" style={{ border: `1px solid ${BORDER}`, color: 'var(--text-secondary)' }}>Nível de Conta</span>
         </div>
         <div className="flex flex-col items-center justify-center py-8 gap-3">
           <Target size={28} style={{ color: '#2a3040' }} />
-          <p className="text-sm" style={{ color: '#555' }}>Selecione um item acima para visualizar ou definir metas</p>
+          <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>Selecione um item acima para visualizar ou definir metas</p>
         </div>
       </div>
 
@@ -1025,19 +1025,19 @@ export function MetaAdsLiveTab({ client }: Props) {
       <div className="flex items-center gap-2 justify-end flex-wrap pb-2">
         <button
           className="flex items-center gap-2 px-4 py-2 rounded-lg text-[11px] font-medium"
-          style={{ border: `1px solid ${BORDER}`, color: '#6b7a8d' }}
+          style={{ border: `1px solid ${BORDER}`, color: 'var(--text-secondary)' }}
         >
           <Settings size={11} /> Organizar seções
         </button>
         <button
           className="flex items-center gap-2 px-4 py-2 rounded-lg text-[11px] font-medium"
-          style={{ border: `1px solid ${BORDER}`, color: '#6b7a8d' }}
+          style={{ border: `1px solid ${BORDER}`, color: 'var(--text-secondary)' }}
         >
           <Wallet size={11} /> Verificar Saldo
         </button>
         <button
           className="flex items-center gap-2 px-4 py-2 rounded-lg text-[11px] font-semibold"
-          style={{ backgroundColor: BLUE, color: '#fff' }}
+          style={{ backgroundColor: BLUE, color: 'var(--text-primary)' }}
         >
           <FileText size={11} /> PDF Avançado
         </button>

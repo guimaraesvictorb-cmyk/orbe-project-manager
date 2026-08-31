@@ -94,8 +94,8 @@ Gere um relatório mensal completo e profissional em HTML (apenas o corpo, sem <
 - <p> para parágrafos
 - <ul><li> para listas
 - <strong> para destaques
-- <span style="color:#7B61FF"> para números positivos
-- <span style="color:#EF4444"> para alertas
+- <span style="color:var(--accent)"> para números positivos
+- <span style="color:var(--danger)"> para alertas
 
 O relatório deve ter:
 1. Resumo executivo (2-3 frases)
@@ -127,50 +127,50 @@ Tom profissional, em português brasileiro. Seja específico com os dados fornec
         <div className="flex items-center gap-3">
           <span className="text-[10px] font-bold px-2 py-0.5 rounded" style={{ backgroundColor: flag.bg, color: flag.color }}>{flag.label}</span>
           <span className="text-[11px]" style={{ color: status.color }}>{status.label}</span>
-          {client.monthly_fee && <span className="text-[11px]" style={{ color: "#7B61FF" }}>{fmtCurrency(client.monthly_fee)}/mês</span>}
+          {client.monthly_fee && <span className="text-[11px]" style={{ color: "var(--accent)" }}>{fmtCurrency(client.monthly_fee)}/mês</span>}
         </div>
         <div className="flex items-center gap-2">
           {report && (
             <button onClick={() => window.print()} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors"
-              style={{ borderColor: "#1e1e1e", color: "#555" }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#fff"; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#555"; }}>
+              style={{ borderColor: "var(--border-strong)", color: "var(--text-tertiary)" }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--text-primary)"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--text-tertiary)"; }}>
               <Printer size={12} />Imprimir
             </button>
           )}
           <button onClick={generate} disabled={loading || !apiKey}
             className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all disabled:opacity-40"
-            style={{ backgroundColor: "#7B61FF", color: "#000" }}>
+            style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}>
             {loading ? <Loader2 size={12} className="animate-spin" /> : report ? <RefreshCw size={12} /> : <Sparkles size={12} />}
             {loading ? "Gerando..." : report ? "Regerar" : "Gerar relatório com IA"}
           </button>
         </div>
       </div>
 
-      {error && <p className="text-xs" style={{ color: "#EF4444" }}>{error}</p>}
+      {error && <p className="text-xs" style={{ color: "var(--danger)" }}>{error}</p>}
 
       {!report && !loading && (
-        <div className="rounded-xl border border-[#1a1a1a] py-16 text-center" style={{ backgroundColor: "#0a0a0a" }}>
+        <div className="rounded-xl border border-[var(--border)] py-16 text-center" style={{ backgroundColor: "var(--bg-surface)" }}>
           <FileText size={28} className="mx-auto mb-3" style={{ color: "#222" }} />
           <p className="text-sm font-semibold text-white mb-1">Relatório não gerado</p>
-          <p className="text-xs" style={{ color: "#444" }}>
+          <p className="text-xs" style={{ color: "var(--text-quaternary)" }}>
             Clique em "Gerar relatório com IA" para criar um relatório completo baseado nos dados do cliente
           </p>
-          {!apiKey && <p className="text-xs mt-2" style={{ color: "#EF4444" }}>Configure sua chave Groq primeiro</p>}
+          {!apiKey && <p className="text-xs mt-2" style={{ color: "var(--danger)" }}>Configure sua chave Groq primeiro</p>}
         </div>
       )}
 
       {loading && (
         <div className="flex items-center justify-center py-16">
           <div className="text-center space-y-3">
-            <Loader2 size={24} className="animate-spin mx-auto" style={{ color: "#7B61FF" }} />
-            <p className="text-sm" style={{ color: "#555" }}>Analisando dados e gerando relatório...</p>
+            <Loader2 size={24} className="animate-spin mx-auto" style={{ color: "var(--accent)" }} />
+            <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>Analisando dados e gerando relatório...</p>
           </div>
         </div>
       )}
 
       {report && !loading && (
-        <div className="rounded-xl border p-6 print:p-0 print:border-0" style={{ backgroundColor: "#0a0a0a", borderColor: "#1a1a1a" }}>
+        <div className="rounded-xl border p-6 print:p-0 print:border-0" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
           <ReportContent html={report} />
         </div>
       )}
@@ -189,20 +189,20 @@ export function RelatoriosView() {
     <div className="flex flex-col min-h-0">
       <div className="max-w-screen-xl mx-auto w-full px-6 py-8 space-y-6">
         <div>
-          <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "#7B61FF" }}>Relatórios</p>
+          <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "var(--accent)" }}>Relatórios</p>
           <h2 className="text-white font-bold text-lg leading-tight">Relatório de Cliente</h2>
-          <p className="text-xs mt-1" style={{ color: "#555" }}>
+          <p className="text-xs mt-1" style={{ color: "var(--text-tertiary)" }}>
             Selecione um cliente para gerar um relatório mensal completo com IA — inclui performance de anúncios, tarefas e recomendações.
           </p>
         </div>
 
         <div className="flex items-center gap-4 flex-wrap">
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "#555" }}>Cliente</label>
+            <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "var(--text-tertiary)" }}>Cliente</label>
             <select
               value={selectedId} onChange={(e) => setSelectedId(e.target.value)}
               className="rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none appearance-none min-w-[220px]"
-              style={{ backgroundColor: "#0d0d0d", border: "1px solid #1e1e1e" }}
+              style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" }}
             >
               <option value="">Selecione um cliente...</option>
               {loading ? <option disabled>Carregando...</option> : activeClients.map((c) => (
@@ -211,7 +211,7 @@ export function RelatoriosView() {
             </select>
           </div>
           {selected && (
-            <div className="text-xs" style={{ color: "#555" }}>
+            <div className="text-xs" style={{ color: "var(--text-tertiary)" }}>
               Período: <strong className="text-white">{new Date().toLocaleString("pt-BR", { month: "long", year: "numeric" })}</strong>
             </div>
           )}
@@ -220,10 +220,10 @@ export function RelatoriosView() {
         {selected ? (
           <ClientReport client={selected} />
         ) : (
-          <div className="rounded-xl border border-[#1a1a1a] py-20 flex flex-col items-center" style={{ backgroundColor: "#0a0a0a" }}>
+          <div className="rounded-xl border border-[var(--border)] py-20 flex flex-col items-center" style={{ backgroundColor: "var(--bg-surface)" }}>
             <FileText size={32} className="mb-3" style={{ color: "#222" }} />
             <p className="text-sm font-semibold text-white">Selecione um cliente acima</p>
-            <p className="text-xs mt-1" style={{ color: "#444" }}>O relatório será gerado com base nos dados cadastrados</p>
+            <p className="text-xs mt-1" style={{ color: "var(--text-quaternary)" }}>O relatório será gerado com base nos dados cadastrados</p>
           </div>
         )}
       </div>

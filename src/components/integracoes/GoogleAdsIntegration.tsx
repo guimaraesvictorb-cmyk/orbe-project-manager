@@ -164,19 +164,19 @@ export function GoogleAdsIntegration() {
     }
   }
 
-  const inp = "w-full rounded-lg px-3 py-2 text-xs text-white placeholder-[#333] focus:outline-none";
-  const inpStyle = { backgroundColor: "#0d0d0d", border: "1px solid #1e1e1e" };
+  const inp = "w-full rounded-lg px-3 py-2 text-xs text-white placeholder-[var(--text-quaternary)] focus:outline-none";
+  const inpStyle = { backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" };
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border p-5 space-y-4" style={{ backgroundColor: "#0a0a0a", borderColor: "#1a1a1a" }}>
+      <div className="rounded-2xl border p-5 space-y-4" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-bold text-white">Google Ads</p>
-            <p className="text-xs mt-0.5" style={{ color: "#555" }}>Conecte via OAuth para sincronizar campanhas e métricas</p>
+            <p className="text-xs mt-0.5" style={{ color: "var(--text-tertiary)" }}>Conecte via OAuth para sincronizar campanhas e métricas</p>
           </div>
           {savedToken && (
-            <span className="flex items-center gap-1.5 text-xs" style={{ color: "#7B61FF" }}>
+            <span className="flex items-center gap-1.5 text-xs" style={{ color: "var(--accent)" }}>
               <Check size={12} />Conectado
             </span>
           )}
@@ -190,20 +190,20 @@ export function GoogleAdsIntegration() {
         {showInstructions && (
           <div className="rounded-xl p-4 space-y-2 text-xs" style={{ backgroundColor: "#1a0a0a", border: "1px solid #EA433522" }}>
             <p className="font-bold" style={{ color: "#EA4335" }}>Passo a passo:</p>
-            <p style={{ color: "#555" }}>1. Acesse <a href="https://developers.google.com/oauthplayground" target="_blank" rel="noopener noreferrer" className="underline" style={{ color: "#EA4335" }}>Google OAuth Playground <ExternalLink size={10} className="inline" /></a></p>
-            <p style={{ color: "#555" }}>2. Selecione o escopo: <strong className="text-white">https://www.googleapis.com/auth/adwords</strong></p>
-            <p style={{ color: "#555" }}>3. Autorize e obtenha o <strong className="text-white">Access Token</strong></p>
-            <p style={{ color: "#555" }}>4. Para o Developer Token, acesse Google Ads → Ferramentas → API Center</p>
-            <p className="text-[10px] mt-1" style={{ color: "#333" }}>O access token expira em 1 hora. Para uso contínuo, é necessário implementar refresh token via backend.</p>
+            <p style={{ color: "var(--text-tertiary)" }}>1. Acesse <a href="https://developers.google.com/oauthplayground" target="_blank" rel="noopener noreferrer" className="underline" style={{ color: "#EA4335" }}>Google OAuth Playground <ExternalLink size={10} className="inline" /></a></p>
+            <p style={{ color: "var(--text-tertiary)" }}>2. Selecione o escopo: <strong className="text-white">https://www.googleapis.com/auth/adwords</strong></p>
+            <p style={{ color: "var(--text-tertiary)" }}>3. Autorize e obtenha o <strong className="text-white">Access Token</strong></p>
+            <p style={{ color: "var(--text-tertiary)" }}>4. Para o Developer Token, acesse Google Ads → Ferramentas → API Center</p>
+            <p className="text-[10px] mt-1" style={{ color: "var(--text-quaternary)" }}>O access token expira em 1 hora. Para uso contínuo, é necessário implementar refresh token via backend.</p>
           </div>
         )}
 
         <div>
-          <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "#555" }}>Access Token OAuth</label>
+          <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "var(--text-tertiary)" }}>Access Token OAuth</label>
           <div className="flex gap-2">
             <input value={token} onChange={(e) => setToken(e.target.value)} placeholder="ya29...." type="password" className={inp + " flex-1"} style={inpStyle} />
             {savedToken && (
-              <button onClick={disconnect} className="p-2 rounded-lg border" style={{ borderColor: "#1e1e1e", color: "#555" }}>
+              <button onClick={disconnect} className="p-2 rounded-lg border" style={{ borderColor: "var(--border-strong)", color: "var(--text-tertiary)" }}>
                 <Unlink size={14} />
               </button>
             )}
@@ -211,25 +211,25 @@ export function GoogleAdsIntegration() {
         </div>
 
         <div>
-          <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "#555" }}>Developer Token</label>
+          <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "var(--text-tertiary)" }}>Developer Token</label>
           <input value={devToken} onChange={(e) => setDevToken(e.target.value)} placeholder="Seu developer token do Google Ads API Center..." type="password" className={inp} style={inpStyle} />
         </div>
 
         <button onClick={saveToken} disabled={!token}
           className="w-full py-2.5 rounded-xl text-xs font-semibold transition-all disabled:opacity-40"
-          style={{ backgroundColor: "#EA4335", color: "#fff" }}>
+          style={{ backgroundColor: "#EA4335", color: "var(--text-primary)" }}>
           {loading ? <Loader2 size={12} className="animate-spin mx-auto" /> : "Conectar Google Ads"}
         </button>
 
-        {error && <p className="text-xs flex items-center gap-1.5" style={{ color: "#EF4444" }}><AlertCircle size={12} />{error}</p>}
+        {error && <p className="text-xs flex items-center gap-1.5" style={{ color: "var(--danger)" }}><AlertCircle size={12} />{error}</p>}
       </div>
 
       {savedToken && (
-        <div className="rounded-2xl border overflow-hidden" style={{ backgroundColor: "#0a0a0a", borderColor: "#1a1a1a" }}>
-          <div className="px-5 py-3 border-b" style={{ borderColor: "#111" }}>
+        <div className="rounded-2xl border overflow-hidden" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
+          <div className="px-5 py-3 border-b" style={{ borderColor: "var(--bg-surface-2)" }}>
             <p className="text-xs font-bold text-white">Sincronizar clientes</p>
           </div>
-          <div className="divide-y" style={{ borderColor: "#111" }}>
+          <div className="divide-y" style={{ borderColor: "var(--bg-surface-2)" }}>
             {activeClients.map((client) => {
               const expanded = expandedClient === client.id;
               const accountId = clientAccountMap[client.id] ?? client.google_ads_account_id ?? manualAccountId[client.id] ?? "";
@@ -241,16 +241,16 @@ export function GoogleAdsIntegration() {
                   <div className="flex items-center gap-3 px-5 py-3 cursor-pointer" onClick={() => setExpandedClient(expanded ? null : client.id)}>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-white truncate">{client.name}</p>
-                      {accountId && <p className="text-[10px]" style={{ color: "#444" }}>Customer ID: {accountId}</p>}
+                      {accountId && <p className="text-[10px]" style={{ color: "var(--text-quaternary)" }}>Customer ID: {accountId}</p>}
                     </div>
-                    {result === "ok" && <span className="text-[10px] flex items-center gap-1" style={{ color: "#7B61FF" }}><Check size={11} />Sincronizado</span>}
-                    {expanded ? <ChevronUp size={13} style={{ color: "#555" }} /> : <ChevronDown size={13} style={{ color: "#555" }} />}
+                    {result === "ok" && <span className="text-[10px] flex items-center gap-1" style={{ color: "var(--accent)" }}><Check size={11} />Sincronizado</span>}
+                    {expanded ? <ChevronUp size={13} style={{ color: "var(--text-tertiary)" }} /> : <ChevronDown size={13} style={{ color: "var(--text-tertiary)" }} />}
                   </div>
 
                   {expanded && (
-                    <div className="px-5 pb-4 space-y-2" style={{ backgroundColor: "#080808" }}>
+                    <div className="px-5 pb-4 space-y-2" style={{ backgroundColor: "var(--bg-input)" }}>
                       <div>
-                        <label className="text-[10px] uppercase tracking-widest mb-1 block" style={{ color: "#444" }}>Customer ID (ex: 123-456-7890)</label>
+                        <label className="text-[10px] uppercase tracking-widest mb-1 block" style={{ color: "var(--text-quaternary)" }}>Customer ID (ex: 123-456-7890)</label>
                         <div className="flex gap-2">
                           <input
                             value={accountId}

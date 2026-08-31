@@ -91,10 +91,10 @@ export function AppNav({ active, onChange, profile, onLogout }: AppNavProps) {
   return (
     <aside
       className="flex flex-col flex-shrink-0 h-screen overflow-y-auto"
-      style={{ width: 260, backgroundColor: "#050505", borderRight: "1px solid #111" }}
+      style={{ width: 260, backgroundColor: "#050505", borderRight: "1px solid var(--bg-surface-2)" }}
     >
       {/* Logo */}
-      <div className="flex items-center gap-3 px-5 py-5 flex-shrink-0" style={{ borderBottom: "1px solid #111" }}>
+      <div className="flex items-center gap-3 px-5 py-5 flex-shrink-0" style={{ borderBottom: "1px solid var(--bg-surface-2)" }}>
         <div
           className="text-xl font-bold leading-none select-none flex-shrink-0"
           style={{ fontFamily: "Arial, sans-serif", letterSpacing: "-2px" }}
@@ -103,7 +103,7 @@ export function AppNav({ active, onChange, profile, onLogout }: AppNavProps) {
         </div>
         <div>
           <p className="text-white font-semibold text-xs leading-tight">Operating System</p>
-          <p className="text-[10px] leading-tight" style={{ color: "#444" }}>Plataforma Orbe</p>
+          <p className="text-[10px] leading-tight" style={{ color: "var(--text-quaternary)" }}>Plataforma Orbe</p>
         </div>
       </div>
 
@@ -112,7 +112,7 @@ export function AppNav({ active, onChange, profile, onLogout }: AppNavProps) {
         {visibleNav.map((group, gi) => (
           <div key={gi}>
             {group.label && (
-              <p className="text-[9px] font-bold tracking-widest uppercase px-2 mb-1.5" style={{ color: "#333" }}>
+              <p className="text-[9px] font-bold tracking-widest uppercase px-2 mb-1.5" style={{ color: "var(--text-quaternary)" }}>
                 {group.label}
               </p>
             )}
@@ -123,29 +123,29 @@ export function AppNav({ active, onChange, profile, onLogout }: AppNavProps) {
                   <button
                     key={view}
                     onClick={() => onChange(view)}
-                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-xs font-medium transition-all duration-100 focus:outline-none focus-visible:ring-1 focus-visible:ring-[#7B61FF]"
+                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-xs font-medium transition-all duration-100 focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
                     style={{
-                      backgroundColor: isActive ? "#1A1230" : "transparent",
-                      color: isActive ? "#fff" : "#555",
+                      backgroundColor: isActive ? "var(--accent-tint)" : "transparent",
+                      color: isActive ? "var(--text-primary)" : "var(--text-tertiary)",
                     }}
                     onMouseEnter={(e) => {
                       if (!isActive) {
-                        (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#0a0a0a";
-                        (e.currentTarget as HTMLButtonElement).style.color = "#A3A3A3";
+                        (e.currentTarget as HTMLButtonElement).style.backgroundColor = "var(--bg-surface)";
+                        (e.currentTarget as HTMLButtonElement).style.color = "var(--text-secondary)";
                       }
                     }}
                     onMouseLeave={(e) => {
                       if (!isActive) {
                         (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
-                        (e.currentTarget as HTMLButtonElement).style.color = "#555";
+                        (e.currentTarget as HTMLButtonElement).style.color = "var(--text-tertiary)";
                       }
                     }}
                     aria-current={isActive ? "page" : undefined}
                   >
-                    <span style={{ color: isActive ? "#7B61FF" : "inherit" }}>{icon}</span>
+                    <span style={{ color: isActive ? "var(--accent)" : "inherit" }}>{icon}</span>
                     {label}
                     {isActive && (
-                      <ChevronRight size={11} className="ml-auto flex-shrink-0" style={{ color: "#7B61FF" }} />
+                      <ChevronRight size={11} className="ml-auto flex-shrink-0" style={{ color: "var(--accent)" }} />
                     )}
                   </button>
                 );
@@ -156,41 +156,41 @@ export function AppNav({ active, onChange, profile, onLogout }: AppNavProps) {
       </nav>
 
       {/* User section */}
-      <div className="flex-shrink-0 px-3 pb-4 pt-3 space-y-0.5" style={{ borderTop: "1px solid #111" }}>
+      <div className="flex-shrink-0 px-3 pb-4 pt-3 space-y-0.5" style={{ borderTop: "1px solid var(--bg-surface-2)" }}>
         <button
           onClick={() => onChange("profile")}
           className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left transition-all duration-100 focus:outline-none"
           style={{
-            backgroundColor: active === "profile" ? "#1A1230" : "transparent",
-            color: active === "profile" ? "#fff" : "#555",
+            backgroundColor: active === "profile" ? "var(--accent-tint)" : "transparent",
+            color: active === "profile" ? "var(--text-primary)" : "var(--text-tertiary)",
           }}
           onMouseEnter={(e) => {
             if (active !== "profile") {
-              (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#0a0a0a";
-              (e.currentTarget as HTMLButtonElement).style.color = "#A3A3A3";
+              (e.currentTarget as HTMLButtonElement).style.backgroundColor = "var(--bg-surface)";
+              (e.currentTarget as HTMLButtonElement).style.color = "var(--text-secondary)";
             }
           }}
           onMouseLeave={(e) => {
             if (active !== "profile") {
               (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
-              (e.currentTarget as HTMLButtonElement).style.color = "#555";
+              (e.currentTarget as HTMLButtonElement).style.color = "var(--text-tertiary)";
             }
           }}
         >
-          <UserCircle size={15} style={{ color: active === "profile" ? "#7B61FF" : "inherit", flexShrink: 0 }} />
+          <UserCircle size={15} style={{ color: active === "profile" ? "var(--accent)" : "inherit", flexShrink: 0 }} />
           <div className="min-w-0 flex-1">
             <p className="text-xs font-medium leading-tight truncate" style={{ color: "inherit" }}>
               {profile?.display_name ?? "Meu perfil"}
             </p>
             <div className="flex items-center gap-1 mt-0.5">
-              {profile?.role === "admin" && <ShieldCheck size={9} style={{ color: "#7B61FF" }} />}
-              <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: "#333" }}>
+              {profile?.role === "admin" && <ShieldCheck size={9} style={{ color: "var(--accent)" }} />}
+              <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: "var(--text-quaternary)" }}>
                 {ROLE_LABELS[profile?.role ?? ""] ?? profile?.role}
               </p>
             </div>
           </div>
           {active === "profile" && (
-            <ChevronRight size={11} className="flex-shrink-0" style={{ color: "#7B61FF" }} />
+            <ChevronRight size={11} className="flex-shrink-0" style={{ color: "var(--accent)" }} />
           )}
         </button>
 
@@ -199,26 +199,26 @@ export function AppNav({ active, onChange, profile, onLogout }: AppNavProps) {
             onClick={() => onChange("settings")}
             className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-xs transition-all duration-100 focus:outline-none"
             style={{
-              backgroundColor: active === "settings" ? "#1A1230" : "transparent",
-              color: active === "settings" ? "#fff" : "#555",
+              backgroundColor: active === "settings" ? "var(--accent-tint)" : "transparent",
+              color: active === "settings" ? "var(--text-primary)" : "var(--text-tertiary)",
             }}
             onMouseEnter={(e) => {
               if (active !== "settings") {
-                (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#0a0a0a";
-                (e.currentTarget as HTMLButtonElement).style.color = "#A3A3A3";
+                (e.currentTarget as HTMLButtonElement).style.backgroundColor = "var(--bg-surface)";
+                (e.currentTarget as HTMLButtonElement).style.color = "var(--text-secondary)";
               }
             }}
             onMouseLeave={(e) => {
               if (active !== "settings") {
                 (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
-                (e.currentTarget as HTMLButtonElement).style.color = "#555";
+                (e.currentTarget as HTMLButtonElement).style.color = "var(--text-tertiary)";
               }
             }}
           >
-            <Settings size={13} style={{ color: active === "settings" ? "#7B61FF" : "inherit" }} />
+            <Settings size={13} style={{ color: active === "settings" ? "var(--accent)" : "inherit" }} />
             Configurações
             {active === "settings" && (
-              <ChevronRight size={11} className="ml-auto flex-shrink-0" style={{ color: "#7B61FF" }} />
+              <ChevronRight size={11} className="ml-auto flex-shrink-0" style={{ color: "var(--accent)" }} />
             )}
           </button>
         )}
@@ -226,13 +226,13 @@ export function AppNav({ active, onChange, profile, onLogout }: AppNavProps) {
         <button
           onClick={onLogout}
           className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-xs transition-all duration-100 focus:outline-none"
-          style={{ color: "#333" }}
+          style={{ color: "var(--text-quaternary)" }}
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.color = "#ef4444";
+            (e.currentTarget as HTMLButtonElement).style.color = "var(--danger)";
             (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#1a0505";
           }}
           onMouseLeave={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.color = "#333";
+            (e.currentTarget as HTMLButtonElement).style.color = "var(--text-quaternary)";
             (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
           }}
         >

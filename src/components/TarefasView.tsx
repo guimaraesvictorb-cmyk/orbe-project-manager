@@ -6,7 +6,7 @@ export function TarefasView() {
     <div className="flex flex-col min-h-0">
       <div className="max-w-screen-xl mx-auto w-full px-6 py-8">
         <div className="mb-6">
-          <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "#7B61FF" }}>
+          <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "var(--accent)" }}>
             Operação
           </p>
           <h2 className="text-white font-bold text-lg leading-tight">Gestão de tarefas</h2>

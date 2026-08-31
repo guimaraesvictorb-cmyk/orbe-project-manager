@@ -20,20 +20,20 @@ function StatCard({ icon, label, value, sub, accent }: {
   return (
     <div
       className="rounded-2xl border p-5 flex flex-col gap-3"
-      style={{ backgroundColor: "#0a0a0a", borderColor: accent ? "#7B61FF33" : "#1a1a1a" }}
+      style={{ backgroundColor: "var(--bg-surface)", borderColor: accent ? "var(--accent-a33)" : "var(--border)" }}
     >
       <div className="flex items-center justify-between">
-        <span className="text-xs font-bold tracking-widest uppercase" style={{ color: "#555" }}>{label}</span>
-        <span style={{ color: accent ? "#7B61FF" : "#333" }}>{icon}</span>
+        <span className="text-xs font-bold tracking-widest uppercase" style={{ color: "var(--text-tertiary)" }}>{label}</span>
+        <span style={{ color: accent ? "var(--accent)" : "var(--text-quaternary)" }}>{icon}</span>
       </div>
       <p className="text-2xl font-bold text-white leading-none">{value}</p>
-      {sub && <p className="text-xs" style={{ color: "#555" }}>{sub}</p>}
+      {sub && <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>{sub}</p>}
     </div>
   );
 }
 
 const HEALTH_LABEL: Record<string, string> = { green: "Saudável", yellow: "Atenção", red: "Em risco" };
-const HEALTH_COLOR: Record<string, string> = { green: "#22C55E", yellow: "#F59E0B", red: "#EF4444" };
+const HEALTH_COLOR: Record<string, string> = { green: "var(--success)", yellow: "var(--warning)", red: "var(--danger)" };
 
 export function DashboardView() {
   const { clients } = useClients();
@@ -59,7 +59,7 @@ export function DashboardView() {
 
         {/* Header */}
         <div>
-          <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "#7B61FF" }}>
+          <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "var(--accent)" }}>
             Dashboard
           </p>
           <h2 className="text-white font-bold text-lg leading-tight">Visão geral da operação</h2>
@@ -98,22 +98,22 @@ export function DashboardView() {
 
         {/* Financial month summary */}
         <section>
-          <p className="text-[10px] font-bold tracking-widest uppercase mb-4" style={{ color: "#555" }}>
+          <p className="text-[10px] font-bold tracking-widest uppercase mb-4" style={{ color: "var(--text-tertiary)" }}>
             Financeiro — {new Date().toLocaleString("pt-BR", { month: "long", year: "numeric" })}
           </p>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {[
-              { label: "Total faturado", value: fmt(totalAmount), color: "#A3A3A3" },
-              { label: "Recebido", value: fmt(totalPaid), color: "#7B61FF" },
-              { label: "Pendente", value: fmt(totalPending), color: "#F59E0B" },
-              { label: "Atrasado", value: fmt(totalOverdue), color: "#EF4444" },
+              { label: "Total faturado", value: fmt(totalAmount), color: "var(--text-secondary)" },
+              { label: "Recebido", value: fmt(totalPaid), color: "var(--accent)" },
+              { label: "Pendente", value: fmt(totalPending), color: "var(--warning)" },
+              { label: "Atrasado", value: fmt(totalOverdue), color: "var(--danger)" },
             ].map(({ label, value, color }) => (
               <div
                 key={label}
                 className="rounded-xl border p-4"
-                style={{ backgroundColor: "#0a0a0a", borderColor: "#1a1a1a" }}
+                style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}
               >
-                <p className="text-[10px] font-bold tracking-widest uppercase mb-2" style={{ color: "#555" }}>{label}</p>
+                <p className="text-[10px] font-bold tracking-widest uppercase mb-2" style={{ color: "var(--text-tertiary)" }}>{label}</p>
                 <p className="text-lg font-bold" style={{ color }}>{value}</p>
               </div>
             ))}
@@ -126,18 +126,18 @@ export function DashboardView() {
           {/* Overdue tasks */}
           <section>
             <div className="flex items-center gap-2 mb-4">
-              <Clock size={14} style={{ color: "#EF4444" }} />
-              <p className="text-[10px] font-bold tracking-widest uppercase" style={{ color: "#EF4444" }}>
+              <Clock size={14} style={{ color: "var(--danger)" }} />
+              <p className="text-[10px] font-bold tracking-widest uppercase" style={{ color: "var(--danger)" }}>
                 Tarefas atrasadas ({overdueTasks.length})
               </p>
             </div>
             <div
               className="rounded-2xl border divide-y overflow-hidden"
-              style={{ backgroundColor: "#0a0a0a", borderColor: "#1a1a1a" }}
+              style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}
             >
               {overdueTasks.length === 0 ? (
                 <div className="px-5 py-8 text-center">
-                  <p className="text-sm" style={{ color: "#555" }}>Nenhuma tarefa atrasada</p>
+                  <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>Nenhuma tarefa atrasada</p>
                 </div>
               ) : (
                 overdueTasks.slice(0, 8).map((task) => {
@@ -146,14 +146,14 @@ export function DashboardView() {
                     (Date.now() - new Date(task.deadline!).getTime()) / 86400000
                   );
                   return (
-                    <div key={task.id} className="flex items-center justify-between px-4 py-3 gap-3" style={{ borderColor: "#1a1a1a" }}>
+                    <div key={task.id} className="flex items-center justify-between px-4 py-3 gap-3" style={{ borderColor: "var(--border)" }}>
                       <div className="min-w-0">
                         <p className="text-sm text-white truncate font-medium">{task.title}</p>
-                        <p className="text-[11px]" style={{ color: "#555" }}>{client?.name ?? "—"}</p>
+                        <p className="text-[11px]" style={{ color: "var(--text-tertiary)" }}>{client?.name ?? "—"}</p>
                       </div>
                       <span
                         className="flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded"
-                        style={{ backgroundColor: "#2a0a0a", color: "#EF4444" }}
+                        style={{ backgroundColor: "#2a0a0a", color: "var(--danger)" }}
                       >
                         {daysLate}d atraso
                       </span>
@@ -167,25 +167,25 @@ export function DashboardView() {
           {/* Clients at risk */}
           <section>
             <div className="flex items-center gap-2 mb-4">
-              <AlertTriangle size={14} style={{ color: "#F59E0B" }} />
-              <p className="text-[10px] font-bold tracking-widest uppercase" style={{ color: "#F59E0B" }}>
+              <AlertTriangle size={14} style={{ color: "var(--warning)" }} />
+              <p className="text-[10px] font-bold tracking-widest uppercase" style={{ color: "var(--warning)" }}>
                 Clientes em atenção ({atRiskClients.length})
               </p>
             </div>
             <div
               className="rounded-2xl border divide-y overflow-hidden"
-              style={{ backgroundColor: "#0a0a0a", borderColor: "#1a1a1a" }}
+              style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}
             >
               {atRiskClients.length === 0 ? (
                 <div className="px-5 py-8 text-center">
-                  <p className="text-sm" style={{ color: "#555" }}>Todos os clientes estão saudáveis</p>
+                  <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>Todos os clientes estão saudáveis</p>
                 </div>
               ) : (
                 atRiskClients.map((client) => (
-                  <div key={client.id} className="flex items-center justify-between px-4 py-3 gap-3" style={{ borderColor: "#1a1a1a" }}>
+                  <div key={client.id} className="flex items-center justify-between px-4 py-3 gap-3" style={{ borderColor: "var(--border)" }}>
                     <div className="min-w-0">
                       <p className="text-sm text-white truncate font-medium">{client.name}</p>
-                      <p className="text-[11px]" style={{ color: "#555" }}>{client.segment ?? "—"}</p>
+                      <p className="text-[11px]" style={{ color: "var(--text-tertiary)" }}>{client.segment ?? "—"}</p>
                     </div>
                     <span
                       className="flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full"

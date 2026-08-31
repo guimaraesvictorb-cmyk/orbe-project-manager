@@ -23,7 +23,7 @@ export function RoutineDetail({ routine, onBack }: RoutineDetailProps) {
       <div>
         <button
           onClick={onBack}
-          className="flex items-center gap-2 text-xs text-[#555] hover:text-white transition-colors duration-150 mb-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7B61FF] rounded"
+          className="flex items-center gap-2 text-xs text-[var(--text-tertiary)] hover:text-white transition-colors duration-150 mb-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded"
         >
           <ArrowLeft size={13} aria-hidden="true" />
           Voltar para Processos
@@ -42,7 +42,7 @@ export function RoutineDetail({ routine, onBack }: RoutineDetailProps) {
             </p>
             <h2 className="text-white font-bold text-xl leading-tight">{routine.role}</h2>
             {routine.objective && (
-              <p className="text-xs mt-1 leading-relaxed max-w-2xl" style={{ color: "#A3A3A3" }}>
+              <p className="text-xs mt-1 leading-relaxed max-w-2xl" style={{ color: "var(--text-secondary)" }}>
                 {routine.objective}
               </p>
             )}
@@ -95,10 +95,10 @@ export function RoutineDetail({ routine, onBack }: RoutineDetailProps) {
                         <li key={sIdx} className="flex items-start gap-2">
                           <span
                             className="mt-1.5 w-1 h-1 rounded-full flex-shrink-0"
-                            style={{ backgroundColor: "#444" }}
+                            style={{ backgroundColor: "var(--text-quaternary)" }}
                             aria-hidden="true"
                           />
-                          <span className="text-xs leading-relaxed" style={{ color: "#A3A3A3" }}>
+                          <span className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }}>
                             {sub}
                           </span>
                         </li>
@@ -116,17 +116,17 @@ export function RoutineDetail({ routine, onBack }: RoutineDetailProps) {
       {routine.goals && routine.goals.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <Target size={14} style={{ color: "#7B61FF" }} aria-hidden="true" />
-            <h3 className="text-xs font-bold tracking-widest uppercase" style={{ color: "#7B61FF" }}>
+            <Target size={14} style={{ color: "var(--accent)" }} aria-hidden="true" />
+            <h3 className="text-xs font-bold tracking-widest uppercase" style={{ color: "var(--accent)" }}>
               Metas do {routine.shortRole}
             </h3>
           </div>
-          <div className="rounded-xl overflow-hidden border border-[#1e1e1e]">
+          <div className="rounded-xl overflow-hidden border border-[var(--border-strong)]">
             <table className="w-full" role="table">
               <thead>
-                <tr style={{ backgroundColor: "#0d0d0d", borderBottom: "1px solid #1e1e1e" }}>
-                  <th className="px-4 py-2.5 text-left text-[10px] font-bold tracking-widest uppercase text-[#555]" scope="col">Indicador</th>
-                  <th className="px-4 py-2.5 text-right text-[10px] font-bold tracking-widest uppercase text-[#555]" scope="col">Meta</th>
+                <tr style={{ backgroundColor: "var(--bg-surface-2)", borderBottom: "1px solid var(--border-strong)" }}>
+                  <th className="px-4 py-2.5 text-left text-[10px] font-bold tracking-widest uppercase text-[var(--text-tertiary)]" scope="col">Indicador</th>
+                  <th className="px-4 py-2.5 text-right text-[10px] font-bold tracking-widest uppercase text-[var(--text-tertiary)]" scope="col">Meta</th>
                 </tr>
               </thead>
               <tbody>
@@ -134,13 +134,13 @@ export function RoutineDetail({ routine, onBack }: RoutineDetailProps) {
                   <tr
                     key={idx}
                     style={{
-                      backgroundColor: idx % 2 === 0 ? "#080808" : "#0a0a0a",
-                      borderBottom: idx < routine.goals!.length - 1 ? "1px solid #111" : "none",
+                      backgroundColor: idx % 2 === 0 ? "var(--bg-input)" : "var(--bg-surface)",
+                      borderBottom: idx < routine.goals!.length - 1 ? "1px solid var(--bg-surface-2)" : "none",
                     }}
                   >
                     <td className="px-4 py-2.5 text-sm text-white">{goal.indicator}</td>
                     <td className="px-4 py-2.5 text-right">
-                      <span className="text-xs font-semibold" style={{ color: "#7B61FF" }}>
+                      <span className="text-xs font-semibold" style={{ color: "var(--accent)" }}>
                         {goal.target}
                       </span>
                     </td>
@@ -155,14 +155,14 @@ export function RoutineDetail({ routine, onBack }: RoutineDetailProps) {
       {/* Notes */}
       {routine.notes && routine.notes.length > 0 && (
         <div
-          className="rounded-xl p-4 space-y-2 border border-[#1e1e1e]"
-          style={{ backgroundColor: "#080808" }}
+          className="rounded-xl p-4 space-y-2 border border-[var(--border-strong)]"
+          style={{ backgroundColor: "var(--bg-input)" }}
         >
-          <p className="text-[10px] font-bold tracking-widest uppercase mb-2" style={{ color: "#555" }}>
+          <p className="text-[10px] font-bold tracking-widest uppercase mb-2" style={{ color: "var(--text-tertiary)" }}>
             Observações
           </p>
           {routine.notes.map((note, idx) => (
-            <p key={idx} className="text-xs leading-relaxed" style={{ color: "#A3A3A3" }}>
+            <p key={idx} className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }}>
               — {note}
             </p>
           ))}

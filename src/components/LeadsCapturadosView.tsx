@@ -9,14 +9,14 @@ import {
 import { Footer } from "./Footer";
 
 function utmColor(source: string | null) {
-  if (!source) return "#555";
+  if (!source) return "var(--text-tertiary)";
   const s = source.toLowerCase();
   if (s.includes("facebook") || s.includes("fb") || s.includes("meta")) return "#1877F2";
   if (s.includes("google")) return "#EA4335";
   if (s.includes("instagram")) return "#E1306C";
   if (s.includes("whatsapp")) return "#25D366";
-  if (s.includes("organic") || s.includes("organico")) return "#7B61FF";
-  return "#F59E0B";
+  if (s.includes("organic") || s.includes("organico")) return "var(--accent)";
+  return "var(--warning)";
 }
 
 function CaptureRow({ capture, onConvert, onDelete }: {
@@ -28,11 +28,11 @@ function CaptureRow({ capture, onConvert, onDelete }: {
   const date = new Date(capture.captured_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 
   return (
-    <div className="flex items-center gap-3 px-5 py-3 border-b group" style={{ borderColor: "#111" }}>
+    <div className="flex items-center gap-3 px-5 py-3 border-b group" style={{ borderColor: "var(--bg-surface-2)" }}>
       <div className="flex-1 min-w-0 grid grid-cols-[1fr_1fr_140px_100px] gap-3 items-center">
         <div className="min-w-0">
           <p className="text-xs font-medium text-white truncate">{capture.name ?? "—"}</p>
-          <p className="text-[10px] truncate" style={{ color: "#444" }}>{capture.email ?? capture.phone ?? "sem contato"}</p>
+          <p className="text-[10px] truncate" style={{ color: "var(--text-quaternary)" }}>{capture.email ?? capture.phone ?? "sem contato"}</p>
         </div>
         <div className="min-w-0">
           {capture.utm_source && (
@@ -40,22 +40,22 @@ function CaptureRow({ capture, onConvert, onDelete }: {
               {capture.utm_source}
             </span>
           )}
-          {capture.utm_campaign && <p className="text-[10px] mt-0.5 truncate" style={{ color: "#444" }}>{capture.utm_campaign}</p>}
+          {capture.utm_campaign && <p className="text-[10px] mt-0.5 truncate" style={{ color: "var(--text-quaternary)" }}>{capture.utm_campaign}</p>}
         </div>
         <div>
-          <p className="text-[10px]" style={{ color: "#444" }}>{date}</p>
-          {capture.lead_id && <p className="text-[10px] font-bold" style={{ color: "#7B61FF" }}>Convertido</p>}
+          <p className="text-[10px]" style={{ color: "var(--text-quaternary)" }}>{date}</p>
+          {capture.lead_id && <p className="text-[10px] font-bold" style={{ color: "var(--accent)" }}>Convertido</p>}
         </div>
         <div className="flex items-center gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
           {!capture.lead_id && (
             <button onClick={() => onConvert(capture)} className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg transition-colors"
-              style={{ backgroundColor: "#1A1230", color: "#7B61FF", border: "1px solid #7B61FF33" }}>
+              style={{ backgroundColor: "var(--accent-tint)", color: "var(--accent)", border: "1px solid var(--accent-a33)" }}>
               <ArrowRight size={10} />Pipeline
             </button>
           )}
-          <button onClick={() => onDelete(capture.id)} className="p-1 rounded transition-colors" style={{ color: "#333" }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#EF4444" }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#333" }}>
+          <button onClick={() => onDelete(capture.id)} className="p-1 rounded transition-colors" style={{ color: "var(--text-quaternary)" }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--danger)" }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--text-quaternary)" }}>
             <Trash2 size={13} />
           </button>
         </div>
@@ -96,26 +96,26 @@ function ConvertModal({ capture, onClose, onConverted }: {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.8)" }}>
-      <div className="rounded-2xl border w-full max-w-sm" style={{ backgroundColor: "#0a0a0a", borderColor: "#1a1a1a" }}>
+      <div className="rounded-2xl border w-full max-w-sm" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
         <div className="px-6 py-5 space-y-4">
           <p className="text-sm font-semibold text-white">Mover para pipeline</p>
           <div>
-            <p className="text-xs mb-1" style={{ color: "#555" }}>Lead: <strong className="text-white">{capture.name}</strong></p>
-            {capture.utm_source && <p className="text-xs" style={{ color: "#555" }}>Fonte: {capture.utm_source} / {capture.utm_medium}</p>}
+            <p className="text-xs mb-1" style={{ color: "var(--text-tertiary)" }}>Lead: <strong className="text-white">{capture.name}</strong></p>
+            {capture.utm_source && <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>Fonte: {capture.utm_source} / {capture.utm_medium}</p>}
           </div>
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "#555" }}>Etapa inicial</label>
+            <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "var(--text-tertiary)" }}>Etapa inicial</label>
             <select value={stageId} onChange={(e) => setStageId(e.target.value)}
               className="w-full rounded-lg px-3 py-2 text-xs text-white appearance-none focus:outline-none"
-              style={{ backgroundColor: "#0d0d0d", border: "1px solid #1e1e1e" }}>
+              style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" }}>
               {stages.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
           </div>
           <div className="flex gap-2">
-            <button onClick={onClose} className="flex-1 py-2 rounded-xl text-xs border" style={{ borderColor: "#1e1e1e", color: "#555" }}>Cancelar</button>
+            <button onClick={onClose} className="flex-1 py-2 rounded-xl text-xs border" style={{ borderColor: "var(--border-strong)", color: "var(--text-tertiary)" }}>Cancelar</button>
             <button onClick={doConvert} disabled={converting || !stageId}
               className="flex-1 py-2 rounded-xl text-xs font-semibold disabled:opacity-40 flex items-center justify-center gap-1.5"
-              style={{ backgroundColor: "#7B61FF", color: "#000" }}>
+              style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}>
               {converting ? <Loader2 size={12} className="animate-spin" /> : <ChevronRight size={12} />}Mover
             </button>
           </div>
@@ -157,18 +157,18 @@ fetch("${url}", {
   }
 
   return (
-    <div className="rounded-2xl border overflow-hidden" style={{ backgroundColor: "#0a0a0a", borderColor: "#1a1a1a" }}>
-      <div className="flex items-center justify-between px-5 py-3 border-b" style={{ borderColor: "#111" }}>
+    <div className="rounded-2xl border overflow-hidden" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
+      <div className="flex items-center justify-between px-5 py-3 border-b" style={{ borderColor: "var(--bg-surface-2)" }}>
         <div className="flex items-center gap-2">
-          <Code size={14} style={{ color: "#7B61FF" }} />
+          <Code size={14} style={{ color: "var(--accent)" }} />
           <p className="text-xs font-bold text-white">Código de integração para seu site</p>
         </div>
-        <button onClick={copy} className="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-lg" style={{ backgroundColor: "#111", color: copied ? "#7B61FF" : "#555" }}>
+        <button onClick={copy} className="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-lg" style={{ backgroundColor: "var(--bg-surface-2)", color: copied ? "var(--accent)" : "var(--text-tertiary)" }}>
           {copied ? <Check size={11} /> : <Copy size={11} />}{copied ? "Copiado!" : "Copiar"}
         </button>
       </div>
-      <pre className="px-5 py-4 text-[11px] overflow-x-auto leading-relaxed" style={{ color: "#888", fontFamily: "monospace" }}>{snippet}</pre>
-      <div className="px-5 py-3 border-t text-xs" style={{ borderColor: "#111", color: "#444" }}>
+      <pre className="px-5 py-4 text-[11px] overflow-x-auto leading-relaxed" style={{ color: "var(--text-tertiary)", fontFamily: "monospace" }}>{snippet}</pre>
+      <div className="px-5 py-3 border-t text-xs" style={{ borderColor: "var(--bg-surface-2)", color: "var(--text-quaternary)" }}>
         Cole este código no submit do formulário da sua landing page. Os leads aparecerão automaticamente aqui com os dados UTM capturados.
       </div>
     </div>
@@ -212,12 +212,12 @@ export function LeadsCapturadosView() {
       <div className="max-w-screen-xl mx-auto w-full px-6 py-8 space-y-6">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "#7B61FF" }}>Geração de Leads</p>
+            <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "var(--accent)" }}>Geração de Leads</p>
             <h2 className="text-white font-bold text-lg leading-tight">Leads Capturados</h2>
-            <p className="text-xs mt-1" style={{ color: "#555" }}>Leads capturados via formulários com rastreamento UTM completo.</p>
+            <p className="text-xs mt-1" style={{ color: "var(--text-tertiary)" }}>Leads capturados via formulários com rastreamento UTM completo.</p>
           </div>
           <button onClick={() => setShowCode(!showCode)} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border"
-            style={{ borderColor: "#1e1e1e", color: "#7B61FF" }}>
+            style={{ borderColor: "var(--border-strong)", color: "var(--accent)" }}>
             <Code size={13} />Código de integração
           </button>
         </div>
@@ -226,12 +226,12 @@ export function LeadsCapturadosView() {
         <div className="grid grid-cols-3 gap-4">
           {[
             { label: "Total capturados", value: captures.length },
-            { label: "Convertidos", value: converted, color: "#7B61FF" },
-            { label: "Aguardando", value: captures.length - converted, color: "#F59E0B" },
+            { label: "Convertidos", value: converted, color: "var(--accent)" },
+            { label: "Aguardando", value: captures.length - converted, color: "var(--warning)" },
           ].map((s) => (
-            <div key={s.label} className="rounded-xl border p-4" style={{ backgroundColor: "#0a0a0a", borderColor: "#1a1a1a" }}>
-              <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: "#444" }}>{s.label}</p>
-              <p className="text-2xl font-bold" style={{ color: s.color ?? "#fff" }}>{s.value}</p>
+            <div key={s.label} className="rounded-xl border p-4" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
+              <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: "var(--text-quaternary)" }}>{s.label}</p>
+              <p className="text-2xl font-bold" style={{ color: s.color ?? "var(--text-primary)" }}>{s.value}</p>
             </div>
           ))}
         </div>
@@ -241,17 +241,17 @@ export function LeadsCapturadosView() {
         {/* Filters */}
         <div className="flex items-center gap-3 flex-wrap">
           <div className="relative">
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "#333" }} />
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--text-quaternary)" }} />
             <input value={search} onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar leads..." className="pl-8 pr-3 py-2 rounded-lg text-xs text-white focus:outline-none"
-              style={{ backgroundColor: "#0d0d0d", border: "1px solid #1e1e1e", width: 220 }} />
+              style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)", width: 220 }} />
           </div>
           {sources.length > 0 && (
             <div className="relative">
-              <Filter size={12} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "#333" }} />
+              <Filter size={12} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--text-quaternary)" }} />
               <select value={filterSource} onChange={(e) => setFilterSource(e.target.value)}
                 className="pl-8 pr-3 py-2 rounded-lg text-xs text-white appearance-none focus:outline-none"
-                style={{ backgroundColor: "#0d0d0d", border: "1px solid #1e1e1e" }}>
+                style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" }}>
                 <option value="">Todas as fontes</option>
                 {sources.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
@@ -260,23 +260,23 @@ export function LeadsCapturadosView() {
         </div>
 
         {/* Table */}
-        <div className="rounded-2xl border overflow-hidden" style={{ backgroundColor: "#0a0a0a", borderColor: "#1a1a1a" }}>
-          <div className="grid grid-cols-[1fr_1fr_140px_100px] gap-3 px-5 py-2 border-b" style={{ borderColor: "#111" }}>
-            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#333" }}>Nome / Contato</p>
-            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#333" }}>Fonte UTM</p>
-            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#333" }}>Data</p>
-            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#333" }}>Ações</p>
+        <div className="rounded-2xl border overflow-hidden" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
+          <div className="grid grid-cols-[1fr_1fr_140px_100px] gap-3 px-5 py-2 border-b" style={{ borderColor: "var(--bg-surface-2)" }}>
+            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--text-quaternary)" }}>Nome / Contato</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--text-quaternary)" }}>Fonte UTM</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--text-quaternary)" }}>Data</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--text-quaternary)" }}>Ações</p>
           </div>
 
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 size={20} className="animate-spin" style={{ color: "#7B61FF" }} />
+              <Loader2 size={20} className="animate-spin" style={{ color: "var(--accent)" }} />
             </div>
           ) : filtered.length === 0 ? (
             <div className="py-16 text-center">
               <Users size={24} className="mx-auto mb-3" style={{ color: "#222" }} />
               <p className="text-sm font-semibold text-white mb-1">Nenhum lead capturado ainda</p>
-              <p className="text-xs" style={{ color: "#444" }}>
+              <p className="text-xs" style={{ color: "var(--text-quaternary)" }}>
                 Integre o código no seu site para capturar leads automaticamente com dados UTM
               </p>
             </div>

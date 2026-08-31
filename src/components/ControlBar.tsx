@@ -23,13 +23,13 @@ export function ControlBar({
   onFilterChange,
 }: ControlBarProps) {
   return (
-    <div className="px-6 py-4 border-b border-[#262626]">
+    <div className="px-6 py-4 border-b border-[var(--border-subtle)]">
       <div className="max-w-screen-xl mx-auto flex flex-col sm:flex-row gap-3">
         {/* Search */}
         <div className="relative flex-1">
           <Search
             size={15}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A3A3A3] pointer-events-none"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] pointer-events-none"
             aria-hidden="true"
           />
           <input
@@ -38,7 +38,7 @@ export function ControlBar({
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Buscar fase, ritual ou skill..."
             aria-label="Buscar fase, ritual ou skill"
-            className="w-full bg-[#131313] border border-[#262626] rounded-md pl-9 pr-4 py-2 text-sm text-white placeholder-[#A3A3A3] focus:outline-none focus:border-[#7B61FF] transition-colors duration-150"
+            className="w-full bg-[var(--bg-surface-2)] border border-[var(--border-subtle)] rounded-md pl-9 pr-4 py-2 text-sm text-white placeholder-[var(--text-secondary)] focus:outline-none focus:border-[var(--accent)] transition-colors duration-150"
           />
         </div>
 
@@ -50,29 +50,29 @@ export function ControlBar({
               <button
                 key={f.value}
                 onClick={() => onFilterChange(f.value)}
-                className="px-3 py-2 rounded-md text-xs font-medium tracking-wide transition-all duration-150 border focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7B61FF]"
+                className="px-3 py-2 rounded-md text-xs font-medium tracking-wide transition-all duration-150 border focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
                 style={
                   isActive
                     ? {
-                        backgroundColor: "#7B61FF",
-                        color: "#000000",
-                        borderColor: "#7B61FF",
+                        backgroundColor: "var(--accent)",
+                        color: "var(--bg-page)",
+                        borderColor: "var(--accent)",
                       }
                     : {
                         backgroundColor: "transparent",
-                        color: "#ffffff",
-                        borderColor: "#262626",
+                        color: "var(--text-primary)",
+                        borderColor: "var(--border-subtle)",
                       }
                 }
                 onMouseEnter={(e) => {
                   if (!isActive)
                     (e.currentTarget as HTMLButtonElement).style.borderColor =
-                      "#7B61FF";
+                      "var(--accent)";
                 }}
                 onMouseLeave={(e) => {
                   if (!isActive)
                     (e.currentTarget as HTMLButtonElement).style.borderColor =
-                      "#262626";
+                      "var(--border-subtle)";
                 }}
                 aria-pressed={isActive}
               >

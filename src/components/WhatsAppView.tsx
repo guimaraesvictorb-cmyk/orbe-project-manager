@@ -133,26 +133,26 @@ function ConfigModal({ onClose, onSave }: ConfigModalProps) {
     }
   }
 
-  const inp = "w-full rounded-lg px-3 py-2 text-xs text-white placeholder-[#333] focus:outline-none";
-  const inpStyle = { backgroundColor: "#0d0d0d", border: "1px solid #1e1e1e" };
+  const inp = "w-full rounded-lg px-3 py-2 text-xs text-white placeholder-[var(--text-quaternary)] focus:outline-none";
+  const inpStyle = { backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.85)" }}>
-      <div className="rounded-2xl border w-full max-w-md" style={{ backgroundColor: "#0a0a0a", borderColor: "#1a1a1a" }}>
-        <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: "#1a1a1a" }}>
+      <div className="rounded-2xl border w-full max-w-md" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
+        <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: "var(--border)" }}>
           <p className="text-sm font-semibold text-white">Conectar WhatsApp</p>
-          <button onClick={() => { stopPolling(); onClose(); }}><X size={16} style={{ color: "#555" }} /></button>
+          <button onClick={() => { stopPolling(); onClose(); }}><X size={16} style={{ color: "var(--text-tertiary)" }} /></button>
         </div>
 
         {/* ── Step: form ── */}
         {step === "form" && (
           <div className="px-6 py-5 space-y-4">
-            <div className="rounded-xl px-4 py-3 text-xs space-y-1" style={{ backgroundColor: "#0d1a0d", border: "1px solid #7B61FF22" }}>
-              <p className="font-bold" style={{ color: "#7B61FF" }}>Pré-requisito: Evolution API no ar</p>
+            <div className="rounded-xl px-4 py-3 text-xs space-y-1" style={{ backgroundColor: "#0d1a0d", border: "1px solid var(--accent-a22)" }}>
+              <p className="font-bold" style={{ color: "var(--accent)" }}>Pré-requisito: Evolution API no ar</p>
               <p style={{ color: "#777" }}>Acesse <strong className="text-white">evolution-api.com</strong> e faça deploy gratuito no Railway ou Render. Depois cole a URL e a chave abaixo.</p>
             </div>
             <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "#555" }}>URL da API *</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "var(--text-tertiary)" }}>URL da API *</label>
               <input
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
@@ -160,19 +160,19 @@ function ConfigModal({ onClose, onSave }: ConfigModalProps) {
                 className={inp}
                 style={inpStyle}
               />
-              <p className="text-[10px] mt-1" style={{ color: "#333" }}>Não é e-mail — é a URL do seu servidor Evolution API</p>
+              <p className="text-[10px] mt-1" style={{ color: "var(--text-quaternary)" }}>Não é e-mail — é a URL do seu servidor Evolution API</p>
             </div>
             <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "#555" }}>Chave API (Global API Key) *</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "var(--text-tertiary)" }}>Chave API (Global API Key) *</label>
               <input value={key} onChange={(e) => setKey(e.target.value)} placeholder="sua-chave-secreta" type="password" className={inp} style={inpStyle} />
             </div>
             <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "#555" }}>Nome da instância *</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "var(--text-tertiary)" }}>Nome da instância *</label>
               <input value={instance} onChange={(e) => setInstance(e.target.value)} placeholder="orbe-marketing" className={inp} style={inpStyle} />
-              <p className="text-[10px] mt-1" style={{ color: "#333" }}>Identificador da sua instância WhatsApp (sem espaços)</p>
+              <p className="text-[10px] mt-1" style={{ color: "var(--text-quaternary)" }}>Identificador da sua instância WhatsApp (sem espaços)</p>
             </div>
             {error && (
-              <p className="text-xs flex items-center gap-1.5" style={{ color: "#EF4444" }}>
+              <p className="text-xs flex items-center gap-1.5" style={{ color: "var(--danger)" }}>
                 <AlertCircle size={12} />{error}
               </p>
             )}
@@ -180,7 +180,7 @@ function ConfigModal({ onClose, onSave }: ConfigModalProps) {
               onClick={connect}
               disabled={loading || !url || !key || !instance}
               className="w-full py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-40"
-              style={{ backgroundColor: "#7B61FF", color: "#000" }}
+              style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}
             >
               {loading ? <Loader2 size={14} className="animate-spin" /> : <Wifi size={14} />}
               {loading ? "Conectando..." : "Conectar WhatsApp"}
@@ -191,20 +191,20 @@ function ConfigModal({ onClose, onSave }: ConfigModalProps) {
         {/* ── Step: QR ── */}
         {step === "qr" && (
           <div className="px-6 py-6 flex flex-col items-center gap-4 text-center">
-            <div className="flex items-center gap-1.5 text-xs" style={{ color: "#7B61FF" }}>
+            <div className="flex items-center gap-1.5 text-xs" style={{ color: "var(--accent)" }}>
               <Loader2 size={12} className="animate-spin" />
               Aguardando leitura do QR Code...
             </div>
             {qrCode ? (
-              <div className="rounded-xl overflow-hidden border" style={{ borderColor: "#1e1e1e" }}>
-                <img src={qrCode} alt="QR Code WhatsApp" className="w-56 h-56 object-contain" style={{ backgroundColor: "#fff" }} />
+              <div className="rounded-xl overflow-hidden border" style={{ borderColor: "var(--border-strong)" }}>
+                <img src={qrCode} alt="QR Code WhatsApp" className="w-56 h-56 object-contain" style={{ backgroundColor: "var(--text-primary)" }} />
               </div>
             ) : (
-              <div className="w-56 h-56 rounded-xl flex items-center justify-center" style={{ backgroundColor: "#0d0d0d", border: "1px solid #1e1e1e" }}>
-                <Loader2 size={24} className="animate-spin" style={{ color: "#333" }} />
+              <div className="w-56 h-56 rounded-xl flex items-center justify-center" style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" }}>
+                <Loader2 size={24} className="animate-spin" style={{ color: "var(--text-quaternary)" }} />
               </div>
             )}
-            <div className="text-xs space-y-1" style={{ color: "#555" }}>
+            <div className="text-xs space-y-1" style={{ color: "var(--text-tertiary)" }}>
               <p>1. Abra o WhatsApp no celular</p>
               <p>2. Vá em <strong className="text-white">Dispositivos conectados → Conectar dispositivo</strong></p>
               <p>3. Aponte a câmera para o QR Code acima</p>
@@ -213,14 +213,14 @@ function ConfigModal({ onClose, onSave }: ConfigModalProps) {
               <button
                 onClick={() => { stopPolling(); setStep("form"); setQrCode(""); }}
                 className="flex-1 py-2 rounded-xl text-xs border"
-                style={{ borderColor: "#1e1e1e", color: "#555" }}
+                style={{ borderColor: "var(--border-strong)", color: "var(--text-tertiary)" }}
               >
                 Voltar
               </button>
               <button
                 onClick={fetchQr}
                 className="flex-1 py-2 rounded-xl text-xs flex items-center justify-center gap-1 border"
-                style={{ borderColor: "#1e1e1e", color: "#555" }}
+                style={{ borderColor: "var(--border-strong)", color: "var(--text-tertiary)" }}
               >
                 <RefreshCw size={11} /> Novo QR
               </button>
@@ -231,11 +231,11 @@ function ConfigModal({ onClose, onSave }: ConfigModalProps) {
         {/* ── Step: connected ── */}
         {step === "connected" && (
           <div className="px-6 py-10 flex flex-col items-center gap-3 text-center">
-            <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ backgroundColor: "#0d1f0d", border: "1px solid #7B61FF44" }}>
-              <Check size={26} style={{ color: "#7B61FF" }} />
+            <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ backgroundColor: "#0d1f0d", border: "1px solid var(--accent-a44)" }}>
+              <Check size={26} style={{ color: "var(--accent)" }} />
             </div>
             <p className="text-sm font-bold text-white">WhatsApp conectado!</p>
-            <p className="text-xs" style={{ color: "#555" }}>Configuração salva. Você já pode enviar mensagens.</p>
+            <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>Configuração salva. Você já pode enviar mensagens.</p>
           </div>
         )}
       </div>
@@ -309,8 +309,8 @@ export function WhatsAppView() {
     }
   }
 
-  const inp = "w-full rounded-lg px-3 py-2 text-xs text-white placeholder-[#333] focus:outline-none";
-  const inpStyle = { backgroundColor: "#0d0d0d", border: "1px solid #1e1e1e" };
+  const inp = "w-full rounded-lg px-3 py-2 text-xs text-white placeholder-[var(--text-quaternary)] focus:outline-none";
+  const inpStyle = { backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" };
 
   return (
     <div className="flex flex-col min-h-0">
@@ -318,12 +318,12 @@ export function WhatsAppView() {
       <div className="max-w-screen-xl mx-auto w-full px-6 py-8 space-y-6">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "#7B61FF" }}>Comunicação</p>
+            <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "var(--accent)" }}>Comunicação</p>
             <h2 className="text-white font-bold text-lg leading-tight">WhatsApp</h2>
-            <p className="text-xs mt-1" style={{ color: "#555" }}>Envie mensagens e templates para clientes via Evolution API.</p>
+            <p className="text-xs mt-1" style={{ color: "var(--text-tertiary)" }}>Envie mensagens e templates para clientes via Evolution API.</p>
           </div>
           <button onClick={() => setShowConfig(true)} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors"
-            style={{ borderColor: "#1e1e1e", color: isConfigured ? "#7B61FF" : "#EF4444" }}>
+            style={{ borderColor: "var(--border-strong)", color: isConfigured ? "var(--accent)" : "var(--danger)" }}>
             <Settings size={13} />
             {isConfigured ? "Configurado" : "Configurar API"}
           </button>
@@ -331,8 +331,8 @@ export function WhatsAppView() {
 
         {!isConfigured && (
           <div className="rounded-xl px-4 py-4 text-xs" style={{ backgroundColor: "#1a0a0a", border: "1px solid #DC262633" }}>
-            <p className="font-bold mb-1" style={{ color: "#ef4444" }}>Evolution API não configurada</p>
-            <p style={{ color: "#555" }}>Clique em "Configurar API" para conectar seu WhatsApp Business. É gratuito via Railway ou Render.</p>
+            <p className="font-bold mb-1" style={{ color: "var(--danger)" }}>Evolution API não configurada</p>
+            <p style={{ color: "var(--text-tertiary)" }}>Clique em "Configurar API" para conectar seu WhatsApp Business. É gratuito via Railway ou Render.</p>
           </div>
         )}
 
@@ -340,7 +340,7 @@ export function WhatsAppView() {
           {/* Form */}
           <div className="space-y-4">
             <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "#555" }}>
+              <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "var(--text-tertiary)" }}>
                 <Users size={10} className="inline mr-1" />Selecionar cliente
               </label>
               <select onChange={(e) => handleClientSelect(e.target.value)} defaultValue=""
@@ -353,16 +353,16 @@ export function WhatsAppView() {
             </div>
 
             <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "#555" }}>
+              <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "var(--text-tertiary)" }}>
                 <Phone size={10} className="inline mr-1" />Número (com DDD e código do país)
               </label>
               <input value={selectedPhone} onChange={(e) => setSelectedPhone(e.target.value)}
                 placeholder="5511999999999" className={inp} style={inpStyle} />
-              <p className="text-[10px] mt-0.5" style={{ color: "#333" }}>Ex: 5511999999999 (55 = Brasil)</p>
+              <p className="text-[10px] mt-0.5" style={{ color: "var(--text-quaternary)" }}>Ex: 5511999999999 (55 = Brasil)</p>
             </div>
 
             <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "#555" }}>Template</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "var(--text-tertiary)" }}>Template</label>
               <select value={selectedTemplate} onChange={(e) => setSelectedTemplate(e.target.value)}
                 className={inp + " appearance-none cursor-pointer"} style={inpStyle}>
                 {TEMPLATES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
@@ -371,16 +371,16 @@ export function WhatsAppView() {
             </div>
 
             <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "#555" }}>Nome do contato</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "var(--text-tertiary)" }}>Nome do contato</label>
               <input value={clientName} onChange={(e) => setClientName(e.target.value)}
                 placeholder="Nome para substituir {nome}" className={inp} style={inpStyle} />
             </div>
 
-            {error && <p className="text-xs" style={{ color: "#EF4444" }}>{error}</p>}
+            {error && <p className="text-xs" style={{ color: "var(--danger)" }}>{error}</p>}
 
             <button onClick={send} disabled={sending || !isConfigured || !selectedPhone}
               className="w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-40"
-              style={{ backgroundColor: sentOk ? "#1A1230" : "#25D366", color: sentOk ? "#7B61FF" : "#000", border: sentOk ? "1px solid #7B61FF44" : "none" }}>
+              style={{ backgroundColor: sentOk ? "var(--accent-tint)" : "#25D366", color: sentOk ? "var(--accent)" : "var(--bg-page)", border: sentOk ? "1px solid var(--accent-a44)" : "none" }}>
               {sending ? <Loader2 size={16} className="animate-spin" /> : sentOk ? <Check size={16} /> : <Send size={16} />}
               {sending ? "Enviando..." : sentOk ? "Enviado!" : "Enviar mensagem"}
             </button>
@@ -388,9 +388,9 @@ export function WhatsAppView() {
 
           {/* Preview */}
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: "#555" }}>Preview da mensagem</p>
-            <div className="rounded-2xl border" style={{ backgroundColor: "#0a0a0a", borderColor: "#1a1a1a" }}>
-              <div className="px-4 py-2 border-b flex items-center gap-2" style={{ borderColor: "#111", backgroundColor: "#25D36611" }}>
+            <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: "var(--text-tertiary)" }}>Preview da mensagem</p>
+            <div className="rounded-2xl border" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
+              <div className="px-4 py-2 border-b flex items-center gap-2" style={{ borderColor: "var(--bg-surface-2)", backgroundColor: "#25D36611" }}>
                 <MessageSquare size={13} style={{ color: "#25D366" }} />
                 <span className="text-[11px] font-semibold" style={{ color: "#25D366" }}>WhatsApp</span>
               </div>
@@ -404,8 +404,8 @@ export function WhatsAppView() {
                 />
               </div>
               <div className="px-5 pb-4">
-                <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "#333" }}>Preview com variáveis substituídas:</p>
-                <div className="rounded-xl p-3 text-xs leading-relaxed whitespace-pre-wrap" style={{ backgroundColor: "#111", color: "#d4d4d4" }}>
+                <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "var(--text-quaternary)" }}>Preview com variáveis substituídas:</p>
+                <div className="rounded-xl p-3 text-xs leading-relaxed whitespace-pre-wrap" style={{ backgroundColor: "var(--bg-surface-2)", color: "#d4d4d4" }}>
                   {buildMessage()}
                 </div>
               </div>

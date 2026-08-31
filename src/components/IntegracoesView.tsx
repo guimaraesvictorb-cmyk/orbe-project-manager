@@ -17,15 +17,15 @@ export function IntegracoesView() {
     <div className="flex flex-col min-h-0">
       <div className="max-w-screen-xl mx-auto w-full px-6 py-8 space-y-6">
         <div>
-          <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "#7B61FF" }}>Integrações</p>
+          <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "var(--accent)" }}>Integrações</p>
           <h2 className="text-white font-bold text-lg leading-tight">Plataformas de Anúncio</h2>
-          <p className="text-xs mt-1" style={{ color: "#555" }}>
+          <p className="text-xs mt-1" style={{ color: "var(--text-tertiary)" }}>
             Conecte suas contas de anúncios para sincronizar métricas automaticamente nos dashboards dos clientes.
           </p>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 p-1 rounded-xl" style={{ backgroundColor: "#0a0a0a", border: "1px solid #1a1a1a" }}>
+        <div className="flex gap-1 p-1 rounded-xl" style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)" }}>
           {tabs.map((t) => (
             <button
               key={t.id}
@@ -33,7 +33,7 @@ export function IntegracoesView() {
               className="flex-1 py-2 rounded-lg text-xs font-semibold transition-all"
               style={{
                 backgroundColor: tab === t.id ? t.color + "22" : "transparent",
-                color: tab === t.id ? t.color : "#555",
+                color: tab === t.id ? t.color : "var(--text-tertiary)",
                 border: tab === t.id ? `1px solid ${t.color}44` : "1px solid transparent",
               }}>
               {t.label}

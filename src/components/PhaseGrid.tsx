@@ -11,7 +11,7 @@ export function PhaseGrid({ phases, activePhaseId, onPhaseSelect }: PhaseGridPro
   if (phases.length === 0) {
     return (
       <div className="py-16 text-center">
-        <p className="text-[#A3A3A3] text-sm">Nenhuma fase encontrada.</p>
+        <p className="text-[var(--text-secondary)] text-sm">Nenhuma fase encontrada.</p>
       </div>
     );
   }

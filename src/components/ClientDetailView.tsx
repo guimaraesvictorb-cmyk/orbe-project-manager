@@ -18,7 +18,7 @@ import { MetaAdsLiveTab } from "./ads/MetaAdsLiveTab"
 const SOURCE_META = {
   manual:       { label: "Manual", color: "#2563EB", bg: "#0a0f1a" },
   ai_suggested: { label: "IA",     color: "#8B5CF6", bg: "#0f0a1a" },
-  web:          { label: "Web",    color: "#F59E0B", bg: "#1a1200" },
+  web:          { label: "Web",    color: "var(--warning)", bg: "#1a1200" },
 }
 
 type Tab = "overview" | "checklist" | "meta" | "google" | "compilado" | "knowledge" | "ai"
@@ -28,8 +28,8 @@ interface ChatMessage { role: "user" | "assistant"; content: string }
 function Field({ label, value }: { label: React.ReactNode; value: React.ReactNode }) {
   if (!value) return null
   return (
-    <div className="grid grid-cols-[160px_1fr] items-start gap-4 py-3" style={{ borderBottom: "1px solid #111" }}>
-      <p className="text-xs pt-0.5" style={{ color: "#555" }}>{label}</p>
+    <div className="grid grid-cols-[160px_1fr] items-start gap-4 py-3" style={{ borderBottom: "1px solid var(--bg-surface-2)" }}>
+      <p className="text-xs pt-0.5" style={{ color: "var(--text-tertiary)" }}>{label}</p>
       <div className="text-sm text-white">{value}</div>
     </div>
   )
@@ -42,7 +42,7 @@ function KnowledgeCard({ entry, onValidate, onDelete }: {
 }) {
   const src = SOURCE_META[entry.source]
   return (
-    <div className="rounded-xl p-4 border" style={{ backgroundColor: "#0a0a0a", borderColor: "#1a1a1a" }}>
+    <div className="rounded-xl p-4 border" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -54,15 +54,15 @@ function KnowledgeCard({ entry, onValidate, onDelete }: {
               {src.label}
             </span>
           </div>
-          <p className="text-xs leading-relaxed" style={{ color: "#888" }}>{entry.content}</p>
+          <p className="text-xs leading-relaxed" style={{ color: "var(--text-tertiary)" }}>{entry.content}</p>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
           {onValidate && (
             <button
               onClick={onValidate}
               title="Validar"
-              className="p-1.5 rounded-lg transition-colors hover:bg-[#1A1230]"
-              style={{ color: "#7B61FF" }}
+              className="p-1.5 rounded-lg transition-colors hover:bg-[var(--accent-tint)]"
+              style={{ color: "var(--accent)" }}
             >
               <Check size={14} />
             </button>
@@ -71,7 +71,7 @@ function KnowledgeCard({ entry, onValidate, onDelete }: {
             onClick={onDelete}
             title="Excluir"
             className="p-1.5 rounded-lg transition-colors hover:text-red-500"
-            style={{ color: "#444" }}
+            style={{ color: "var(--text-quaternary)" }}
           >
             <Trash2 size={14} />
           </button>
@@ -98,8 +98,8 @@ function AddEntryModal({ onClose, onSave }: {
     onClose()
   }
 
-  const inputCls = "w-full rounded-lg px-3 py-2.5 text-sm text-white placeholder-[#333] focus:outline-none focus:border-[#7B61FF44] transition-colors"
-  const inputStyle = { backgroundColor: "#080808", border: "1px solid #1e1e1e" }
+  const inputCls = "w-full rounded-lg px-3 py-2.5 text-sm text-white placeholder-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent-a44)] transition-colors"
+  const inputStyle = { backgroundColor: "var(--bg-input)", border: "1px solid var(--border-strong)" }
 
   return (
     <div
@@ -107,14 +107,14 @@ function AddEntryModal({ onClose, onSave }: {
       style={{ backgroundColor: "rgba(0,0,0,0.85)" }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="w-full max-w-lg rounded-2xl p-6 space-y-4" style={{ backgroundColor: "#0d0d0d", border: "1px solid #1e1e1e" }}>
+      <div className="w-full max-w-lg rounded-2xl p-6 space-y-4" style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" }}>
         <div className="flex items-center justify-between">
           <h3 className="text-white font-semibold text-sm">Adicionar Informação</h3>
-          <button onClick={onClose} style={{ color: "#555" }}><X size={16} /></button>
+          <button onClick={onClose} style={{ color: "var(--text-tertiary)" }}><X size={16} /></button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="space-y-1">
-            <label className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "#555" }}>Título</label>
+            <label className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-tertiary)" }}>Título</label>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -125,7 +125,7 @@ function AddEntryModal({ onClose, onSave }: {
             />
           </div>
           <div className="space-y-1">
-            <label className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "#555" }}>Conteúdo</label>
+            <label className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-tertiary)" }}>Conteúdo</label>
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
@@ -137,14 +137,14 @@ function AddEntryModal({ onClose, onSave }: {
             />
           </div>
           <div className="flex gap-3 pt-1">
-            <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-xl text-xs font-semibold border" style={{ borderColor: "#1e1e1e", color: "#555" }}>
+            <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-xl text-xs font-semibold border" style={{ borderColor: "var(--border-strong)", color: "var(--text-tertiary)" }}>
               Cancelar
             </button>
             <button
               type="submit"
               disabled={saving || !title.trim() || !content.trim()}
               className="flex-1 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 disabled:opacity-40"
-              style={{ backgroundColor: "#7B61FF", color: "#000" }}
+              style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}
             >
               {saving ? <Loader2 size={13} className="animate-spin" /> : "Salvar"}
             </button>
@@ -258,9 +258,9 @@ Use APENAS as informações acima. Não invente dados. Se não souber algo sobre
     return (
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center max-w-xs">
-          <Brain size={32} className="mx-auto mb-3" style={{ color: "#333" }} />
+          <Brain size={32} className="mx-auto mb-3" style={{ color: "var(--text-quaternary)" }} />
           <p className="text-sm font-semibold text-white mb-1">IA não configurada</p>
-          <p className="text-xs" style={{ color: "#555" }}>
+          <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
             Configure sua chave Groq no assistente principal (aba Home) para ativar a IA por cliente.
           </p>
         </div>
@@ -270,9 +270,9 @@ Use APENAS as informações acima. Não invente dados. Se não souber algo sobre
 
   return (
     <div className="flex flex-col h-full" style={{ minHeight: 0 }}>
-      <div className="flex items-center gap-2 px-4 py-2 rounded-xl mb-4" style={{ backgroundColor: "#0a0f0d", border: "1px solid #1A1230" }}>
-        <BookOpen size={12} style={{ color: "#7B61FF" }} />
-        <p className="text-[11px]" style={{ color: "#555" }}>
+      <div className="flex items-center gap-2 px-4 py-2 rounded-xl mb-4" style={{ backgroundColor: "#0a0f0d", border: "1px solid var(--accent-tint)" }}>
+        <BookOpen size={12} style={{ color: "var(--accent)" }} />
+        <p className="text-[11px]" style={{ color: "var(--text-tertiary)" }}>
           IA especializada em <span className="text-white font-medium">{client.name}</span> —{" "}
           {validated.length} {validated.length === 1 ? "informação validada" : "informações validadas"}
         </p>
@@ -283,7 +283,7 @@ Use APENAS as informações acima. Não invente dados. Se não souber algo sobre
           <div className="text-center py-12">
             <Brain size={28} className="mx-auto mb-3" style={{ color: "#222" }} />
             <p className="text-sm font-semibold text-white mb-1">IA do Cliente</p>
-            <p className="text-xs" style={{ color: "#444" }}>
+            <p className="text-xs" style={{ color: "var(--text-quaternary)" }}>
               Pergunte qualquer coisa sobre {client.name}. Uso apenas informações validadas.
             </p>
           </div>
@@ -294,8 +294,8 @@ Use APENAS as informações acima. Não invente dados. Se não souber algo sobre
               className="rounded-2xl px-4 py-3 text-sm max-w-[85%] leading-relaxed whitespace-pre-wrap"
               style={
                 msg.role === "user"
-                  ? { backgroundColor: "#1A1230", color: "#fff", borderBottomRightRadius: 4 }
-                  : { backgroundColor: "#111", color: "#ddd", borderBottomLeftRadius: 4 }
+                  ? { backgroundColor: "var(--accent-tint)", color: "var(--text-primary)", borderBottomRightRadius: 4 }
+                  : { backgroundColor: "var(--bg-surface-2)", color: "#ddd", borderBottomLeftRadius: 4 }
               }
             >
               {msg.content || (streaming && i === messages.length - 1
@@ -309,7 +309,7 @@ Use APENAS as informações acima. Não invente dados. Se não souber algo sobre
             </div>
           </div>
         ))}
-        {error && <p className="text-xs text-center" style={{ color: "#EF4444" }}>{error}</p>}
+        {error && <p className="text-xs text-center" style={{ color: "var(--danger)" }}>{error}</p>}
         <div ref={bottomRef} />
       </div>
 
@@ -322,14 +322,14 @@ Use APENAS as informações acima. Não invente dados. Se não souber algo sobre
           onChange={(e) => setInput(e.target.value)}
           placeholder={`Pergunte sobre ${client.name}...`}
           disabled={streaming}
-          className="flex-1 rounded-xl px-4 py-3 text-sm text-white placeholder-[#333] focus:outline-none focus:border-[#7B61FF44] transition-colors"
-          style={{ backgroundColor: "#0d0d0d", border: "1px solid #1e1e1e" }}
+          className="flex-1 rounded-xl px-4 py-3 text-sm text-white placeholder-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent-a44)] transition-colors"
+          style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" }}
         />
         <button
           type="submit"
           disabled={!input.trim() || streaming}
           className="p-3 rounded-xl flex items-center justify-center transition-all disabled:opacity-30"
-          style={{ backgroundColor: "#7B61FF", color: "#000" }}
+          style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}
         >
           <Send size={15} />
         </button>
@@ -439,34 +439,34 @@ export function ClientDetailView({ client, onBack }: ClientDetailViewProps) {
     <div className="flex flex-col h-full" style={{ backgroundColor: "#060606" }}>
       {showShareModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.8)" }}>
-          <div className="rounded-2xl border w-full max-w-md" style={{ backgroundColor: "#0a0a0a", borderColor: "#1a1a1a" }}>
-            <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: "#1a1a1a" }}>
+          <div className="rounded-2xl border w-full max-w-md" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
+            <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: "var(--border)" }}>
               <p className="text-sm font-semibold text-white">Links de acesso do cliente</p>
-              <button onClick={() => setShowShareModal(false)}><X size={16} style={{ color: "#555" }} /></button>
+              <button onClick={() => setShowShareModal(false)}><X size={16} style={{ color: "var(--text-tertiary)" }} /></button>
             </div>
             <div className="px-6 py-5 space-y-4">
-              <p className="text-xs" style={{ color: "#555" }}>Gere um link para o cliente visualizar suas métricas de anúncios sem precisar fazer login.</p>
+              <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>Gere um link para o cliente visualizar suas métricas de anúncios sem precisar fazer login.</p>
               <button onClick={() => createToken("Link do cliente")}
                 className="w-full py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all"
-                style={{ backgroundColor: "#7B61FF", color: "#000" }}>
+                style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}>
                 <Link size={13} />Gerar novo link
               </button>
               {tokens.length === 0 && (
-                <p className="text-center text-xs py-4" style={{ color: "#333" }}>Nenhum link gerado ainda</p>
+                <p className="text-center text-xs py-4" style={{ color: "var(--text-quaternary)" }}>Nenhum link gerado ainda</p>
               )}
               {tokens.map((t) => (
-                <div key={t.id} className="rounded-xl border p-3 flex items-center gap-3" style={{ borderColor: "#1a1a1a" }}>
+                <div key={t.id} className="rounded-xl border p-3 flex items-center gap-3" style={{ borderColor: "var(--border)" }}>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-white truncate">{t.label ?? "Link"}</p>
-                    <p className="text-[10px] truncate" style={{ color: "#444" }}>{window.location.origin}?share={t.token}</p>
-                    {t.expires_at && <p className="text-[10px]" style={{ color: "#EF4444" }}>Expira: {new Date(t.expires_at).toLocaleDateString("pt-BR")}</p>}
+                    <p className="text-[10px] truncate" style={{ color: "var(--text-quaternary)" }}>{window.location.origin}?share={t.token}</p>
+                    {t.expires_at && <p className="text-[10px]" style={{ color: "var(--danger)" }}>Expira: {new Date(t.expires_at).toLocaleDateString("pt-BR")}</p>}
                   </div>
-                  <button onClick={() => copyShareLink(t.token)} className="p-1.5 rounded-lg transition-colors" style={{ color: copiedToken === t.token ? "#7B61FF" : "#555" }}>
+                  <button onClick={() => copyShareLink(t.token)} className="p-1.5 rounded-lg transition-colors" style={{ color: copiedToken === t.token ? "var(--accent)" : "var(--text-tertiary)" }}>
                     {copiedToken === t.token ? <Check size={14} /> : <Copy size={14} />}
                   </button>
-                  <button onClick={() => deleteToken(t.id)} className="p-1.5 rounded-lg transition-colors" style={{ color: "#333" }}
-                    onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#EF4444" }}
-                    onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#333" }}>
+                  <button onClick={() => deleteToken(t.id)} className="p-1.5 rounded-lg transition-colors" style={{ color: "var(--text-quaternary)" }}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--danger)" }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--text-quaternary)" }}>
                     <Trash2 size={14} />
                   </button>
                 </div>
@@ -475,24 +475,24 @@ export function ClientDetailView({ client, onBack }: ClientDetailViewProps) {
           </div>
         </div>
       )}
-      <div className="flex items-center gap-4 px-8 py-5" style={{ borderBottom: "1px solid #111" }}>
+      <div className="flex items-center gap-4 px-8 py-5" style={{ borderBottom: "1px solid var(--bg-surface-2)" }}>
         <button
           onClick={onBack}
-          className="p-1.5 rounded-lg transition-colors hover:bg-[#111] hover:text-white"
-          style={{ color: "#555" }}
+          className="p-1.5 rounded-lg transition-colors hover:bg-[var(--bg-surface-2)] hover:text-white"
+          style={{ color: "var(--text-tertiary)" }}
         >
           <ArrowLeft size={16} />
         </button>
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <div
             className="w-9 h-9 rounded-lg flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
-            style={{ backgroundColor: "#7B61FF22", border: "1px solid #7B61FF33" }}
+            style={{ backgroundColor: "var(--accent-a22)", border: "1px solid var(--accent-a33)" }}
           >
             {client.name.charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0">
             <h1 className="text-white font-semibold text-base leading-tight truncate">{client.name}</h1>
-            {client.segment && <p className="text-xs truncate" style={{ color: "#555" }}>{client.segment}</p>}
+            {client.segment && <p className="text-xs truncate" style={{ color: "var(--text-tertiary)" }}>{client.segment}</p>}
           </div>
           <span
             className="text-[9px] font-bold tracking-widest uppercase px-2 py-0.5 rounded flex-shrink-0"
@@ -504,25 +504,25 @@ export function ClientDetailView({ client, onBack }: ClientDetailViewProps) {
             {status.label}
           </span>
           <button onClick={() => setShowShareModal(true)} className="ml-auto flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors flex-shrink-0"
-            style={{ borderColor: "#1e1e1e", color: "#555" }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#7B61FF"; (e.currentTarget as HTMLButtonElement).style.borderColor = "#7B61FF44"; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#555"; (e.currentTarget as HTMLButtonElement).style.borderColor = "#1e1e1e"; }}>
+            style={{ borderColor: "var(--border-strong)", color: "var(--text-tertiary)" }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--accent)"; (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--accent-a44)"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--text-tertiary)"; (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border-strong)"; }}>
             <Share2 size={12} />Compartilhar
           </button>
         </div>
       </div>
 
-      <div className="flex items-center px-8" style={{ borderBottom: "1px solid #111" }}>
+      <div className="flex items-center px-8" style={{ borderBottom: "1px solid var(--bg-surface-2)" }}>
         {tabs.map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
             className="px-4 py-3 text-xs font-medium transition-colors relative"
-            style={{ color: tab === t.id ? "#fff" : "#555" }}
+            style={{ color: tab === t.id ? "var(--text-primary)" : "var(--text-tertiary)" }}
           >
             {t.label}
             {tab === t.id && (
-              <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-t" style={{ backgroundColor: "#7B61FF" }} />
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-t" style={{ backgroundColor: "var(--accent)" }} />
             )}
           </button>
         ))}
@@ -533,25 +533,25 @@ export function ClientDetailView({ client, onBack }: ClientDetailViewProps) {
         {tab === "overview" && (
           <div className="max-w-2xl">
             <Field label={<><User size={11} className="inline mr-1" />Contato</>}         value={client.primary_contact_name} />
-            <Field label={<><Mail size={11} className="inline mr-1" />E-mail</>}           value={client.primary_contact_email && <a href={`mailto:${client.primary_contact_email}`} style={{ color: "#7B61FF" }}>{client.primary_contact_email}</a>} />
+            <Field label={<><Mail size={11} className="inline mr-1" />E-mail</>}           value={client.primary_contact_email && <a href={`mailto:${client.primary_contact_email}`} style={{ color: "var(--accent)" }}>{client.primary_contact_email}</a>} />
             <Field label={<><Phone size={11} className="inline mr-1" />Telefone</>}        value={client.primary_contact_phone} />
-            <Field label={<><Globe size={11} className="inline mr-1" />Website</>}         value={client.website && <a href={client.website} target="_blank" rel="noopener noreferrer" style={{ color: "#7B61FF" }}>{client.website.replace(/^https?:\/\//, "")}</a>} />
+            <Field label={<><Globe size={11} className="inline mr-1" />Website</>}         value={client.website && <a href={client.website} target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent)" }}>{client.website.replace(/^https?:\/\//, "")}</a>} />
             <Field label={<><Tag size={11} className="inline mr-1" />Segmento</>}          value={client.segment} />
-            <Field label={<><DollarSign size={11} className="inline mr-1" />Mensalidade</>} value={client.monthly_fee && <span style={{ color: "#7B61FF" }} className="font-medium">R$ {client.monthly_fee.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>} />
+            <Field label={<><DollarSign size={11} className="inline mr-1" />Mensalidade</>} value={client.monthly_fee && <span style={{ color: "var(--accent)" }} className="font-medium">R$ {client.monthly_fee.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>} />
             <Field label={<><Tag size={11} className="inline mr-1" />Tipo de serviço</>}   value={client.tipo_servico} />
             <Field label="Origem do lead"      value={client.origem_lead} />
             <Field label={<><Calendar size={11} className="inline mr-1" />Próxima reunião</>} value={client.proxima_reuniao && new Date(client.proxima_reuniao).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })} />
             <Field label="Início do contrato" value={client.contract_start && new Date(client.contract_start).toLocaleDateString("pt-BR")} />
             {client.notes && (
-              <div className="py-4" style={{ borderBottom: "1px solid #111" }}>
-                <p className="text-xs mb-2" style={{ color: "#555" }}>Observações</p>
+              <div className="py-4" style={{ borderBottom: "1px solid var(--bg-surface-2)" }}>
+                <p className="text-xs mb-2" style={{ color: "var(--text-tertiary)" }}>Observações</p>
                 <p className="text-sm text-white leading-relaxed whitespace-pre-wrap">{client.notes}</p>
               </div>
             )}
             {!client.primary_contact_name && !client.website && !client.segment && !client.monthly_fee && !client.notes && (
               <div className="text-center py-12">
                 <p className="text-sm font-semibold text-white mb-1">Nenhum dado adicional</p>
-                <p className="text-xs" style={{ color: "#444" }}>As informações do cliente aparecerão aqui</p>
+                <p className="text-xs" style={{ color: "var(--text-quaternary)" }}>As informações do cliente aparecerão aqui</p>
               </div>
             )}
           </div>
@@ -562,14 +562,14 @@ export function ClientDetailView({ client, onBack }: ClientDetailViewProps) {
             {/* Progress bar */}
             {items.length > 0 && (
               <div className="space-y-1">
-                <div className="flex justify-between text-[11px]" style={{ color: "#555" }}>
+                <div className="flex justify-between text-[11px]" style={{ color: "var(--text-tertiary)" }}>
                   <span>{done.length} de {items.length} concluídos</span>
                   <span>{Math.round((done.length / items.length) * 100)}%</span>
                 </div>
-                <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "#1a1a1a" }}>
+                <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "var(--border)" }}>
                   <div
                     className="h-full rounded-full transition-all duration-300"
-                    style={{ width: `${(done.length / items.length) * 100}%`, backgroundColor: "#7B61FF" }}
+                    style={{ width: `${(done.length / items.length) * 100}%`, backgroundColor: "var(--accent)" }}
                   />
                 </div>
               </div>
@@ -580,7 +580,7 @@ export function ClientDetailView({ client, onBack }: ClientDetailViewProps) {
               <button
                 onClick={() => setShowAddChecklist(true)}
                 className="flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-lg"
-                style={{ backgroundColor: "#7B61FF", color: "#000" }}
+                style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}
               >
                 <Plus size={13} />
                 Adicionar item
@@ -596,22 +596,22 @@ export function ClientDetailView({ client, onBack }: ClientDetailViewProps) {
                     placeholder="Título do item..."
                     required
                     autoFocus
-                    className="w-full rounded-lg px-3 py-2 text-sm text-white placeholder-[#333] focus:outline-none focus:border-[#7B61FF44] transition-colors"
-                    style={{ backgroundColor: "#0d0d0d", border: "1px solid #1e1e1e" }}
+                    className="w-full rounded-lg px-3 py-2 text-sm text-white placeholder-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent-a44)] transition-colors"
+                    style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" }}
                   />
                   <input
                     value={newItemCategory}
                     onChange={(e) => setNewItemCategory(e.target.value)}
                     placeholder="Categoria (opcional)"
-                    className="w-full rounded-lg px-3 py-2 text-xs text-white placeholder-[#333] focus:outline-none focus:border-[#7B61FF44] transition-colors"
-                    style={{ backgroundColor: "#0d0d0d", border: "1px solid #1e1e1e" }}
+                    className="w-full rounded-lg px-3 py-2 text-xs text-white placeholder-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent-a44)] transition-colors"
+                    style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" }}
                   />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <button type="submit" className="px-3 py-2 rounded-lg text-xs font-semibold" style={{ backgroundColor: "#7B61FF", color: "#000" }}>
+                  <button type="submit" className="px-3 py-2 rounded-lg text-xs font-semibold" style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}>
                     Salvar
                   </button>
-                  <button type="button" onClick={() => setShowAddChecklist(false)} className="px-3 py-2 rounded-lg text-xs border" style={{ borderColor: "#1e1e1e", color: "#555" }}>
+                  <button type="button" onClick={() => setShowAddChecklist(false)} className="px-3 py-2 rounded-lg text-xs border" style={{ borderColor: "var(--border-strong)", color: "var(--text-tertiary)" }}>
                     Cancelar
                   </button>
                 </div>
@@ -620,10 +620,10 @@ export function ClientDetailView({ client, onBack }: ClientDetailViewProps) {
 
             {/* Items list */}
             {items.length === 0 ? (
-              <div className="rounded-xl border border-[#1a1a1a] py-16 text-center" style={{ backgroundColor: "#0a0a0a" }}>
+              <div className="rounded-xl border border-[var(--border)] py-16 text-center" style={{ backgroundColor: "var(--bg-surface)" }}>
                 <ListChecks size={28} className="mx-auto mb-3" style={{ color: "#222" }} />
                 <p className="text-sm font-semibold text-white mb-1">Checklist vazio</p>
-                <p className="text-xs" style={{ color: "#444" }}>Adicione itens para acompanhar o progresso do cliente</p>
+                <p className="text-xs" style={{ color: "var(--text-quaternary)" }}>Adicione itens para acompanhar o progresso do cliente</p>
               </div>
             ) : (
               <div className="space-y-1">
@@ -631,28 +631,28 @@ export function ClientDetailView({ client, onBack }: ClientDetailViewProps) {
                   <div
                     key={item.id}
                     className="flex items-center gap-3 px-3 py-2.5 rounded-xl group"
-                    style={{ backgroundColor: item.completed ? "#080808" : "#0d0d0d" }}
+                    style={{ backgroundColor: item.completed ? "var(--bg-input)" : "var(--bg-surface-2)" }}
                   >
                     <button
                       onClick={() => profile && toggleItem(item.id, profile.id)}
                       className="w-5 h-5 rounded-md border flex-shrink-0 flex items-center justify-center transition-all"
                       style={{
-                        backgroundColor: item.completed ? "#7B61FF" : "transparent",
-                        borderColor: item.completed ? "#7B61FF" : "#2a2a2a",
+                        backgroundColor: item.completed ? "var(--accent)" : "transparent",
+                        borderColor: item.completed ? "var(--accent)" : "var(--border-subtle)",
                       }}
                     >
-                      {item.completed && <Check size={11} color="#000" />}
+                      {item.completed && <Check size={11} color="var(--bg-page)" />}
                     </button>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm" style={{ color: item.completed ? "#444" : "#fff", textDecoration: item.completed ? "line-through" : "none" }}>
+                      <p className="text-sm" style={{ color: item.completed ? "var(--text-quaternary)" : "var(--text-primary)", textDecoration: item.completed ? "line-through" : "none" }}>
                         {item.title}
                       </p>
                       <div className="flex items-center gap-2 mt-0.5">
                         {item.category && (
-                          <span className="text-[10px] font-medium" style={{ color: "#555" }}>{item.category}</span>
+                          <span className="text-[10px] font-medium" style={{ color: "var(--text-tertiary)" }}>{item.category}</span>
                         )}
                         {item.completed_at && (
-                          <span className="text-[10px] flex items-center gap-1" style={{ color: "#333" }}>
+                          <span className="text-[10px] flex items-center gap-1" style={{ color: "var(--text-quaternary)" }}>
                             <Calendar size={9} />
                             {new Date(item.completed_at).toLocaleDateString("pt-BR")}
                           </span>
@@ -663,7 +663,7 @@ export function ClientDetailView({ client, onBack }: ClientDetailViewProps) {
                       <button
                         onClick={() => deleteItem(item.id)}
                         className="opacity-0 group-hover:opacity-100 p-1 rounded transition-all hover:text-red-500"
-                        style={{ color: "#333" }}
+                        style={{ color: "var(--text-quaternary)" }}
                       >
                         <Trash2 size={13} />
                       </button>
@@ -686,7 +686,7 @@ export function ClientDetailView({ client, onBack }: ClientDetailViewProps) {
                 <button
                   onClick={() => setShowAddModal(true)}
                   className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold"
-                  style={{ backgroundColor: "#7B61FF", color: "#000" }}
+                  style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}
                 >
                   <Plus size={13} />
                   Adicionar informação
@@ -700,7 +700,7 @@ export function ClientDetailView({ client, onBack }: ClientDetailViewProps) {
                   {suggesting ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
                   {suggesting ? "Gerando sugestões..." : "Sugerir com IA"}
                 </button>
-                {suggestError && <p className="text-xs w-full" style={{ color: "#EF4444" }}>{suggestError}</p>}
+                {suggestError && <p className="text-xs w-full" style={{ color: "var(--danger)" }}>{suggestError}</p>}
               </div>
             )}
 
@@ -725,7 +725,7 @@ export function ClientDetailView({ client, onBack }: ClientDetailViewProps) {
             <div>
               {validated.length > 0 && (
                 <>
-                  <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "#7B61FF" }}>
+                  <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "var(--accent)" }}>
                     Validado ({validated.length})
                   </p>
                   <div className="space-y-3">
@@ -736,17 +736,17 @@ export function ClientDetailView({ client, onBack }: ClientDetailViewProps) {
                 </>
               )}
               {validated.length === 0 && pending.length === 0 && (
-                <div className="text-center py-16 rounded-xl border border-[#1a1a1a]" style={{ backgroundColor: "#0a0a0a" }}>
+                <div className="text-center py-16 rounded-xl border border-[var(--border)]" style={{ backgroundColor: "var(--bg-surface)" }}>
                   <BookOpen size={28} className="mx-auto mb-3" style={{ color: "#222" }} />
                   <p className="text-sm font-semibold text-white mb-1">Base de conhecimento vazia</p>
-                  <p className="text-xs mb-4" style={{ color: "#444" }}>
+                  <p className="text-xs mb-4" style={{ color: "var(--text-quaternary)" }}>
                     Adicione informações manualmente ou use a IA para sugerir conteúdo relevante
                   </p>
                   {canEdit && (
                     <button
                       onClick={() => setShowAddModal(true)}
                       className="text-xs font-semibold px-4 py-2 rounded-lg"
-                      style={{ backgroundColor: "#7B61FF", color: "#000" }}
+                      style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}
                     >
                       + Adicionar primeira informação
                     </button>

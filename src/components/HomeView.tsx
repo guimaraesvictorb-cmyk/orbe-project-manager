@@ -91,7 +91,7 @@ function renderMarkdown(text: string) {
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
   return parts.map((part, i) => {
     if (part.startsWith("**") && part.endsWith("**")) {
-      return <strong key={i} style={{ color: "#fff" }}>{part.slice(2, -2)}</strong>;
+      return <strong key={i} style={{ color: "var(--text-primary)" }}>{part.slice(2, -2)}</strong>;
     }
     return <span key={i}>{part}</span>;
   });
@@ -107,9 +107,9 @@ function MessageBubble({ message }: { message: Message }) {
       {!isUser && (
         <div
           className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
-          style={{ backgroundColor: "#1A1230", border: "1px solid #7B61FF33" }}
+          style={{ backgroundColor: "var(--accent-tint)", border: "1px solid var(--accent-a33)" }}
         >
-          <Sparkles size={13} style={{ color: "#7B61FF" }} aria-hidden="true" />
+          <Sparkles size={13} style={{ color: "var(--accent)" }} aria-hidden="true" />
         </div>
       )}
 
@@ -117,8 +117,8 @@ function MessageBubble({ message }: { message: Message }) {
         className="max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed"
         style={
           isUser
-            ? { backgroundColor: "#111", color: "#e5e5e5", border: "1px solid #1e1e1e" }
-            : { backgroundColor: "#0a0a0a", color: "#d4d4d4", border: "1px solid #1a1a1a" }
+            ? { backgroundColor: "var(--bg-surface-2)", color: "#e5e5e5", border: "1px solid var(--border-strong)" }
+            : { backgroundColor: "var(--bg-surface)", color: "#d4d4d4", border: "1px solid var(--border)" }
         }
       >
         {lines.map((line, i) => {
@@ -126,7 +126,7 @@ function MessageBubble({ message }: { message: Message }) {
           if (isBullet) {
             return (
               <div key={i} className="flex items-start gap-2 mt-1">
-                <span style={{ color: "#7B61FF", marginTop: "0.35rem", flexShrink: 0 }}>▸</span>
+                <span style={{ color: "var(--accent)", marginTop: "0.35rem", flexShrink: 0 }}>▸</span>
                 <span>{renderMarkdown(line.replace(/^(\s*)-\s/, ""))}</span>
               </div>
             );
@@ -148,20 +148,20 @@ function TypingIndicator() {
     <div className="flex gap-3">
       <div
         className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-        style={{ backgroundColor: "#1A1230", border: "1px solid #7B61FF33" }}
+        style={{ backgroundColor: "var(--accent-tint)", border: "1px solid var(--accent-a33)" }}
       >
-        <Sparkles size={13} style={{ color: "#7B61FF" }} />
+        <Sparkles size={13} style={{ color: "var(--accent)" }} />
       </div>
       <div
         className="rounded-2xl px-4 py-3 flex items-center gap-1"
-        style={{ backgroundColor: "#0a0a0a", border: "1px solid #1a1a1a" }}
+        style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)" }}
       >
         {[0, 1, 2].map((i) => (
           <span
             key={i}
             className="w-1.5 h-1.5 rounded-full"
             style={{
-              backgroundColor: "#7B61FF",
+              backgroundColor: "var(--accent)",
               animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite`,
             }}
           />
@@ -314,19 +314,19 @@ export function HomeView({ profile, onNavigate }: HomeViewProps) {
       {/* ── Top bar ────────────────────────────────────────────────────────── */}
       <div
         className="flex items-center justify-between px-6 py-3 border-b flex-shrink-0"
-        style={{ borderColor: "#111" }}
+        style={{ borderColor: "var(--bg-surface-2)" }}
       >
         <div className="flex items-center gap-2">
           <div
             className="w-6 h-6 rounded-md flex items-center justify-center"
-            style={{ backgroundColor: "#1A1230", border: "1px solid #7B61FF44" }}
+            style={{ backgroundColor: "var(--accent-tint)", border: "1px solid var(--accent-a44)" }}
           >
-            <Sparkles size={12} style={{ color: "#7B61FF" }} />
+            <Sparkles size={12} style={{ color: "var(--accent)" }} />
           </div>
-          <span className="text-xs font-bold tracking-widest uppercase" style={{ color: "#7B61FF" }}>
+          <span className="text-xs font-bold tracking-widest uppercase" style={{ color: "var(--accent)" }}>
             Orbe AI
           </span>
-          <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{ backgroundColor: "#1A1230", color: "#555", border: "1px solid #1a1a1a" }}>
+          <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{ backgroundColor: "var(--accent-tint)", color: "var(--text-tertiary)", border: "1px solid var(--border)" }}>
             llama 3.3 · groq
           </span>
         </div>
@@ -339,13 +339,13 @@ export function HomeView({ profile, onNavigate }: HomeViewProps) {
                 key={s.view}
                 onClick={() => onNavigate(s.view)}
                 className="flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-lg transition-colors duration-150 focus:outline-none"
-                style={{ color: "#555", backgroundColor: "transparent" }}
+                style={{ color: "var(--text-tertiary)", backgroundColor: "transparent" }}
                 onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.color = "#fff";
-                  (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#111";
+                  (e.currentTarget as HTMLButtonElement).style.color = "var(--text-primary)";
+                  (e.currentTarget as HTMLButtonElement).style.backgroundColor = "var(--bg-surface-2)";
                 }}
                 onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.color = "#555";
+                  (e.currentTarget as HTMLButtonElement).style.color = "var(--text-tertiary)";
                   (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
                 }}
               >
@@ -359,10 +359,10 @@ export function HomeView({ profile, onNavigate }: HomeViewProps) {
             <button
               onClick={clearChat}
               className="p-1.5 rounded-lg transition-colors duration-150 focus:outline-none"
-              style={{ color: "#333" }}
+              style={{ color: "var(--text-quaternary)" }}
               title="Limpar conversa"
-              onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "#888")}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "#333")}
+              onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "var(--text-tertiary)")}
+              onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "var(--text-quaternary)")}
             >
               <Trash2 size={14} />
             </button>
@@ -370,10 +370,10 @@ export function HomeView({ profile, onNavigate }: HomeViewProps) {
           <button
             onClick={() => { setKeyDraft(apiKey); setShowSettings(true); }}
             className="p-1.5 rounded-lg transition-colors duration-150 focus:outline-none"
-            style={{ color: apiKey ? "#333" : "#DC2626" }}
+            style={{ color: apiKey ? "var(--text-quaternary)" : "#DC2626" }}
             title="Configurar API key"
-            onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "#888")}
-            onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = apiKey ? "#333" : "#DC2626")}
+            onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "var(--text-tertiary)")}
+            onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = apiKey ? "var(--text-quaternary)" : "#DC2626")}
           >
             <Settings size={14} />
           </button>
@@ -388,13 +388,13 @@ export function HomeView({ profile, onNavigate }: HomeViewProps) {
             className="rounded-xl px-4 py-3 flex items-center justify-between gap-4"
             style={{ backgroundColor: "#1a0a0a", border: "1px solid #DC262633" }}
           >
-            <p className="text-xs" style={{ color: "#ef4444" }}>
+            <p className="text-xs" style={{ color: "var(--danger)" }}>
               Configure sua chave gratuita do Groq para ativar o assistente. Crie em console.groq.com (sem cartão).
             </p>
             <button
               onClick={() => { setKeyDraft(""); setShowSettings(true); }}
               className="text-[11px] font-semibold px-3 py-1.5 rounded-lg flex-shrink-0 transition-all duration-150"
-              style={{ backgroundColor: "#DC2626", color: "#fff" }}
+              style={{ backgroundColor: "#DC2626", color: "var(--text-primary)" }}
             >
               Configurar
             </button>
@@ -413,7 +413,7 @@ export function HomeView({ profile, onNavigate }: HomeViewProps) {
       {/* ── Input area ─────────────────────────────────────────────────────── */}
       <div
         className="flex-shrink-0 border-t px-6 py-4 space-y-3"
-        style={{ borderColor: "#111", backgroundColor: "#040404" }}
+        style={{ borderColor: "var(--bg-surface-2)", backgroundColor: "#040404" }}
       >
         {/* Quick actions */}
         {!hasConversation && (
@@ -423,16 +423,16 @@ export function HomeView({ profile, onNavigate }: HomeViewProps) {
                 key={qa.label}
                 onClick={() => sendMessage(qa.prompt)}
                 className="text-[11px] px-3 py-1.5 rounded-lg border transition-all duration-150 focus:outline-none"
-                style={{ borderColor: "#1a1a1a", color: "#666", backgroundColor: "#080808" }}
+                style={{ borderColor: "var(--border)", color: "var(--text-tertiary)", backgroundColor: "var(--bg-input)" }}
                 onMouseEnter={(e) => {
                   const el = e.currentTarget as HTMLButtonElement;
-                  el.style.borderColor = "#7B61FF44";
-                  el.style.color = "#A3A3A3";
+                  el.style.borderColor = "var(--accent-a44)";
+                  el.style.color = "var(--text-secondary)";
                 }}
                 onMouseLeave={(e) => {
                   const el = e.currentTarget as HTMLButtonElement;
-                  el.style.borderColor = "#1a1a1a";
-                  el.style.color = "#666";
+                  el.style.borderColor = "var(--border)";
+                  el.style.color = "var(--text-tertiary)";
                 }}
               >
                 {qa.label}
@@ -453,13 +453,13 @@ export function HomeView({ profile, onNavigate }: HomeViewProps) {
               rows={1}
               className="w-full resize-none rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors duration-150 leading-relaxed"
               style={{
-                backgroundColor: "#0d0d0d",
-                border: "1px solid #1e1e1e",
+                backgroundColor: "var(--bg-surface-2)",
+                border: "1px solid var(--border-strong)",
                 color: "#e5e5e5",
                 maxHeight: "120px",
               }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = "#7B61FF44")}
-              onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")}
+              onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent-a44)")}
+              onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border-strong)")}
               onInput={(e) => {
                 const el = e.currentTarget;
                 el.style.height = "auto";
@@ -471,18 +471,18 @@ export function HomeView({ profile, onNavigate }: HomeViewProps) {
           <button
             onClick={() => sendMessage(input)}
             disabled={!input.trim() || isStreaming}
-            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7B61FF]"
+            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
             style={{
-              backgroundColor: input.trim() && !isStreaming ? "#7B61FF" : "#111",
-              color: input.trim() && !isStreaming ? "#000" : "#333",
-              border: "1px solid #1a1a1a",
+              backgroundColor: input.trim() && !isStreaming ? "var(--accent)" : "var(--bg-surface-2)",
+              color: input.trim() && !isStreaming ? "var(--bg-page)" : "var(--text-quaternary)",
+              border: "1px solid var(--border)",
             }}
           >
             <Send size={15} />
           </button>
         </div>
 
-        <p className="text-[10px] text-center" style={{ color: "#2a2a2a" }}>
+        <p className="text-[10px] text-center" style={{ color: "var(--border-subtle)" }}>
           Enter para enviar · Shift+Enter para nova linha · Orbe AI pode cometer erros
         </p>
       </div>
@@ -496,28 +496,28 @@ export function HomeView({ profile, onNavigate }: HomeViewProps) {
         >
           <div
             className="w-full max-w-md rounded-2xl p-6 space-y-4"
-            style={{ backgroundColor: "#0d0d0d", border: "1px solid #1e1e1e" }}
+            style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" }}
           >
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-white font-semibold text-sm">Configurar Orbe AI</h3>
-                <p className="text-[11px] mt-0.5" style={{ color: "#555" }}>
+                <p className="text-[11px] mt-0.5" style={{ color: "var(--text-tertiary)" }}>
                   Sua API key é salva localmente, nunca enviada a terceiros.
                 </p>
               </div>
               <button
                 onClick={() => setShowSettings(false)}
                 className="p-1.5 rounded-lg transition-colors"
-                style={{ color: "#555" }}
-                onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "#fff")}
-                onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "#555")}
+                style={{ color: "var(--text-tertiary)" }}
+                onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "var(--text-primary)")}
+                onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "var(--text-tertiary)")}
               >
                 <X size={16} />
               </button>
             </div>
 
             <div className="space-y-2">
-              <label className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "#555" }}>
+              <label className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-tertiary)" }}>
                 Groq API Key (gratuito)
               </label>
               <input
@@ -529,14 +529,14 @@ export function HomeView({ profile, onNavigate }: HomeViewProps) {
                 autoFocus
                 className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors"
                 style={{
-                  backgroundColor: "#080808",
-                  border: "1px solid #1e1e1e",
+                  backgroundColor: "var(--bg-input)",
+                  border: "1px solid var(--border-strong)",
                   color: "#e5e5e5",
                 }}
-                onFocus={(e) => (e.currentTarget.style.borderColor = "#7B61FF44")}
-                onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")}
+                onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent-a44)")}
+                onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border-strong)")}
               />
-              <p className="text-[10px]" style={{ color: "#333" }}>
+              <p className="text-[10px]" style={{ color: "var(--text-quaternary)" }}>
                 Gratuito em console.groq.com — sem cartão de crédito
               </p>
             </div>
@@ -545,16 +545,16 @@ export function HomeView({ profile, onNavigate }: HomeViewProps) {
               <button
                 onClick={() => setShowSettings(false)}
                 className="flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 border"
-                style={{ borderColor: "#1e1e1e", color: "#555" }}
+                style={{ borderColor: "var(--border-strong)", color: "var(--text-tertiary)" }}
               >
                 Cancelar
               </button>
               <button
                 onClick={saveApiKey}
                 className="flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150"
-                style={{ backgroundColor: "#7B61FF", color: "#000" }}
-                onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.backgroundColor = "#6247E5")}
-                onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.backgroundColor = "#7B61FF")}
+                style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}
+                onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.backgroundColor = "var(--accent-hover)")}
+                onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.backgroundColor = "var(--accent)")}
               >
                 Salvar
               </button>

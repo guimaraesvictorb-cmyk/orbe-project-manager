@@ -61,13 +61,13 @@ export function PlaybookView() {
           <PhaseDetail phase={activePhase} />
         </div>
 
-        <div className="border-t border-[#262626]" />
+        <div className="border-t border-[var(--border-subtle)]" />
         <RitualSection />
 
-        <div className="border-t border-[#262626]" />
+        <div className="border-t border-[var(--border-subtle)]" />
         <StackSection />
 
-        <div className="border-t border-[#262626]" />
+        <div className="border-t border-[var(--border-subtle)]" />
         <ActionsSection />
       </main>
 

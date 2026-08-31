@@ -25,7 +25,7 @@ const EMPTY: Omit<Task, "id" | "createdAt" | "updatedAt"> = {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-[10px] font-semibold tracking-widest uppercase text-[#A3A3A3] mb-1.5">
+      <label className="block text-[10px] font-semibold tracking-widest uppercase text-[var(--text-secondary)] mb-1.5">
         {label}
       </label>
       {children}
@@ -34,7 +34,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 const inputCls =
-  "w-full rounded-lg px-3 py-2 text-sm text-white bg-[#0d0d0d] border border-[#333] focus:outline-none focus:border-[#7B61FF] transition-colors duration-150";
+  "w-full rounded-lg px-3 py-2 text-sm text-white bg-[var(--bg-surface-2)] border border-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent)] transition-colors duration-150";
 
 const selectCls = inputCls + " appearance-none cursor-pointer";
 
@@ -93,15 +93,15 @@ export function TaskModal({ task, onSave, onClose }: TaskModalProps) {
     >
       <div
         className="relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl overflow-hidden"
-        style={{ backgroundColor: "#131313", border: "1px solid #262626" }}
+        style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-subtle)" }}
       >
         {/* Header */}
         <div
           className="flex items-center justify-between px-6 py-4 border-b flex-shrink-0"
-          style={{ borderBottomColor: "#262626" }}
+          style={{ borderBottomColor: "var(--border-subtle)" }}
         >
           <div>
-            <p className="text-[10px] font-semibold tracking-widest uppercase text-[#7B61FF] mb-0.5">
+            <p className="text-[10px] font-semibold tracking-widest uppercase text-[var(--accent)] mb-0.5">
               {isEdit ? "Editar Tarefa" : "Nova Tarefa"}
             </p>
             <h2 className="text-white font-bold text-base leading-tight">
@@ -110,7 +110,7 @@ export function TaskModal({ task, onSave, onClose }: TaskModalProps) {
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-[#A3A3A3] hover:text-white hover:bg-[#262626] transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7B61FF]"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-secondary)] hover:text-white hover:bg-[var(--border-subtle)] transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
             aria-label="Fechar"
           >
             <X size={16} />
@@ -255,24 +255,24 @@ export function TaskModal({ task, onSave, onClose }: TaskModalProps) {
         {/* Footer */}
         <div
           className="flex items-center justify-end gap-3 px-6 py-4 border-t flex-shrink-0"
-          style={{ borderTopColor: "#262626" }}
+          style={{ borderTopColor: "var(--border-subtle)" }}
         >
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-lg text-sm font-medium text-[#A3A3A3] hover:text-white transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7B61FF]"
+            className="px-4 py-2 rounded-lg text-sm font-medium text-[var(--text-secondary)] hover:text-white transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
           >
             Cancelar
           </button>
           <button
             onClick={handleSubmit as unknown as React.MouseEventHandler<HTMLButtonElement>}
-            className="px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7B61FF]"
-            style={{ backgroundColor: "#7B61FF", color: "#000000" }}
+            className="px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+            style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}
             onMouseEnter={(e) =>
-              ((e.currentTarget as HTMLButtonElement).style.backgroundColor = "#6247E5")
+              ((e.currentTarget as HTMLButtonElement).style.backgroundColor = "var(--accent-hover)")
             }
             onMouseLeave={(e) =>
-              ((e.currentTarget as HTMLButtonElement).style.backgroundColor = "#7B61FF")
+              ((e.currentTarget as HTMLButtonElement).style.backgroundColor = "var(--accent)")
             }
           >
             {isEdit ? "Salvar alterações" : "Criar tarefa"}

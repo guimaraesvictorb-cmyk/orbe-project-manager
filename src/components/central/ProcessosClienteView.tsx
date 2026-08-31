@@ -14,7 +14,7 @@ export function ProcessosClienteView() {
     <div className="space-y-4">
       <div>
         <h2 className="text-white font-semibold text-base">Processos de Cliente</h2>
-        <p className="text-xs mt-0.5" style={{ color: "#555" }}>
+        <p className="text-xs mt-0.5" style={{ color: "var(--text-tertiary)" }}>
           Selecione um cliente para ver e gerenciar checklists, base de conhecimento e IA dedicada.
         </p>
       </div>

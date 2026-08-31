@@ -21,14 +21,14 @@ interface ProfileViewProps { profile: Profile | null; userEmail: string }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="grid grid-cols-[180px_1fr] items-start gap-4 py-4" style={{ borderBottom: "1px solid #111" }}>
-      <p className="text-xs pt-2.5 font-medium" style={{ color: "#555" }}>{label}</p>
+    <div className="grid grid-cols-[180px_1fr] items-start gap-4 py-4" style={{ borderBottom: "1px solid var(--bg-surface-2)" }}>
+      <p className="text-xs pt-2.5 font-medium" style={{ color: "var(--text-tertiary)" }}>{label}</p>
       <div>{children}</div>
     </div>
   );
 }
 
-const inputCls = "w-full bg-black border rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-[#333] focus:outline-none transition-colors max-w-sm";
+const inputCls = "w-full bg-black border rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-[var(--text-quaternary)] focus:outline-none transition-colors max-w-sm";
 
 interface TeamMember { id: string; email: string; display_name: string; role: string; is_active: boolean; custom_sections: string[] | null }
 
@@ -139,20 +139,20 @@ function TeamPanel({ currentUserId }: { currentUserId: string }) {
     }
   }
 
-  if (loading) return <div className="flex justify-center py-12"><Loader2 size={18} className="animate-spin" style={{ color: "#7B61FF" }} /></div>;
+  if (loading) return <div className="flex justify-center py-12"><Loader2 size={18} className="animate-spin" style={{ color: "var(--accent)" }} /></div>;
 
   return (
     <div className="space-y-4">
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-1">
-          <Users size={14} style={{ color: "#7B61FF" }} />
+          <Users size={14} style={{ color: "var(--accent)" }} />
           <p className="text-sm font-semibold text-white">Membros da equipe</p>
         </div>
-        <p className="text-xs" style={{ color: "#555" }}>Gerencie as funções e acessos do time. A função define quais seções cada membro pode ver.</p>
+        <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>Gerencie as funções e acessos do time. A função define quais seções cada membro pode ver.</p>
       </div>
 
       {removeError && (
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs" style={{ backgroundColor: "#1a0505", border: "1px solid #EF444433", color: "#EF4444" }}>
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs" style={{ backgroundColor: "#1a0505", border: "1px solid #EF444433", color: "var(--danger)" }}>
           <AlertCircle size={12} />{removeError}
         </div>
       )}
@@ -170,13 +170,13 @@ function TeamPanel({ currentUserId }: { currentUserId: string }) {
             <div
               key={member.id}
               className="rounded-xl border overflow-hidden transition-colors"
-              style={{ borderColor: isConfirming ? "#EF444444" : "#1a1a1a", backgroundColor: "#0a0a0a" }}
+              style={{ borderColor: isConfirming ? "#EF444444" : "var(--border)", backgroundColor: "var(--bg-surface)" }}
             >
               <div className="flex flex-wrap items-center gap-3 px-4 py-3.5">
                 {/* Avatar */}
                 <div
                   className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-[11px] font-bold"
-                  style={{ backgroundColor: "#1A1230", color: "#7B61FF" }}
+                  style={{ backgroundColor: "var(--accent-tint)", color: "var(--accent)" }}
                 >
                   {initials(member.display_name, member.email)}
                 </div>
@@ -185,10 +185,10 @@ function TeamPanel({ currentUserId }: { currentUserId: string }) {
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-semibold text-white flex items-center gap-2 truncate">
                     <span className="truncate">{member.display_name || member.email}</span>
-                    {isMe && <span className="flex-shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: "#1A1230", color: "#7B61FF" }}>Você</span>}
-                    {!member.is_active && <span className="flex-shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: "#1a0505", color: "#EF4444" }}>Inativo</span>}
+                    {isMe && <span className="flex-shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: "var(--accent-tint)", color: "var(--accent)" }}>Você</span>}
+                    {!member.is_active && <span className="flex-shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: "#1a0505", color: "var(--danger)" }}>Inativo</span>}
                   </p>
-                  <p className="text-[11px] mt-0.5 truncate" style={{ color: "#444" }}>{member.email}</p>
+                  <p className="text-[11px] mt-0.5 truncate" style={{ color: "var(--text-quaternary)" }}>{member.email}</p>
                 </div>
 
                 {/* Role + actions */}
@@ -201,7 +201,7 @@ function TeamPanel({ currentUserId }: { currentUserId: string }) {
                       setSectionEdits((s) => ({ ...s, [member.id]: SECTION_ACCESS[newRole] ?? [] }));
                     }}
                     className="rounded-lg px-2 py-1.5 text-xs text-white border appearance-none cursor-pointer focus:outline-none"
-                    style={{ backgroundColor: "#080808", borderColor: "#1e1e1e" }}
+                    style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border-strong)" }}
                   >
                     {ROLE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                   </select>
@@ -209,7 +209,7 @@ function TeamPanel({ currentUserId }: { currentUserId: string }) {
                     onClick={() => saveMember(member.id)}
                     disabled={saving[member.id] || !dirty}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-40 transition-all"
-                    style={{ backgroundColor: saved[member.id] ? "#1A1230" : "#7B61FF22", color: "#7B61FF", border: "1px solid #7B61FF33" }}
+                    style={{ backgroundColor: saved[member.id] ? "var(--accent-tint)" : "var(--accent-a22)", color: "var(--accent)", border: "1px solid var(--accent-a33)" }}
                   >
                     {saving[member.id] ? <Loader2 size={11} className="animate-spin" /> : saved[member.id] ? <Check size={11} /> : <Save size={11} />}
                     {saved[member.id] ? "Salvo" : "Salvar"}
@@ -219,9 +219,9 @@ function TeamPanel({ currentUserId }: { currentUserId: string }) {
                       onClick={() => setConfirming(member.id)}
                       title="Remover acesso"
                       className="flex items-center justify-center w-8 h-8 rounded-lg border transition-colors"
-                      style={{ borderColor: "#1e1e1e", color: "#555" }}
-                      onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#ef444444"; (e.currentTarget as HTMLButtonElement).style.color = "#ef4444"; }}
-                      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#1e1e1e"; (e.currentTarget as HTMLButtonElement).style.color = "#555"; }}
+                      style={{ borderColor: "var(--border-strong)", color: "var(--text-tertiary)" }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#ef444444"; (e.currentTarget as HTMLButtonElement).style.color = "var(--danger)"; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border-strong)"; (e.currentTarget as HTMLButtonElement).style.color = "var(--text-tertiary)"; }}
                     >
                       <Trash2 size={12} />
                     </button>
@@ -231,14 +231,14 @@ function TeamPanel({ currentUserId }: { currentUserId: string }) {
 
               {isConfirming ? (
                 <div className="flex items-center justify-between gap-3 px-4 py-3 flex-wrap" style={{ backgroundColor: "#1a0505", borderTop: "1px solid #EF444422" }}>
-                  <p className="text-xs" style={{ color: "#EF4444" }}>
+                  <p className="text-xs" style={{ color: "var(--danger)" }}>
                     Remover o acesso de <strong>{member.display_name || member.email}</strong>? O login dele será bloqueado.
                   </p>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <button
                       onClick={() => setConfirming(null)}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border"
-                      style={{ borderColor: "#333", color: "#A3A3A3" }}
+                      style={{ borderColor: "var(--text-quaternary)", color: "var(--text-secondary)" }}
                     >
                       <X size={11} />Cancelar
                     </button>
@@ -246,7 +246,7 @@ function TeamPanel({ currentUserId }: { currentUserId: string }) {
                       onClick={() => removeMember(member.id)}
                       disabled={removing === member.id}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-50"
-                      style={{ backgroundColor: "#EF4444", color: "#000" }}
+                      style={{ backgroundColor: "var(--danger)", color: "var(--bg-page)" }}
                     >
                       {removing === member.id ? <Loader2 size={11} className="animate-spin" /> : <Trash2 size={11} />}
                       Confirmar remoção
@@ -257,11 +257,11 @@ function TeamPanel({ currentUserId }: { currentUserId: string }) {
                 <button
                   onClick={() => setExpanded((e) => ({ ...e, [member.id]: !e[member.id] }))}
                   className="w-full flex items-center gap-1.5 px-4 py-2 text-[11px] transition-colors"
-                  style={{ color: "#555", borderTop: "1px solid #111" }}
+                  style={{ color: "var(--text-tertiary)", borderTop: "1px solid var(--bg-surface-2)" }}
                 >
                   <ChevronDown size={12} className="transition-transform" style={{ transform: isExpanded ? "rotate(180deg)" : "none" }} />
                   {granted.length} de {ALL_SECTIONS.length} seções liberadas
-                  {dirty && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded ml-1" style={{ backgroundColor: "#1A1230", color: "#7B61FF" }}>não salvo</span>}
+                  {dirty && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded ml-1" style={{ backgroundColor: "var(--accent-tint)", color: "var(--accent)" }}>não salvo</span>}
                 </button>
               )}
 
@@ -277,9 +277,9 @@ function TeamPanel({ currentUserId }: { currentUserId: string }) {
                           onClick={() => toggleSection(member.id, sec)}
                           className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border transition-colors cursor-pointer"
                           style={{
-                            backgroundColor: hasAccess ? "#1A1230" : "transparent",
-                            color: hasAccess ? "#7B61FF" : "#444",
-                            borderColor: hasAccess ? "#7B61FF44" : "#222",
+                            backgroundColor: hasAccess ? "var(--accent-tint)" : "transparent",
+                            color: hasAccess ? "var(--accent)" : "var(--text-quaternary)",
+                            borderColor: hasAccess ? "var(--accent-a44)" : "#222",
                           }}
                         >
                           {SECTION_LABELS[sec]}
@@ -291,7 +291,7 @@ function TeamPanel({ currentUserId }: { currentUserId: string }) {
                     type="button"
                     onClick={() => resetSectionsToRoleDefault(member.id)}
                     className="text-[10px] underline"
-                    style={{ color: "#444" }}
+                    style={{ color: "var(--text-quaternary)" }}
                   >
                     Restaurar padrão da função
                   </button>
@@ -302,7 +302,7 @@ function TeamPanel({ currentUserId }: { currentUserId: string }) {
         })}
       </div>
 
-      <p className="text-[10px]" style={{ color: "#333" }}>
+      <p className="text-[10px]" style={{ color: "var(--text-quaternary)" }}>
         As permissões entram em vigor no próximo login do membro.
       </p>
     </div>
@@ -351,9 +351,9 @@ export function ProfileView({ profile, userEmail }: ProfileViewProps) {
     setTimeout(() => setPwSuccess(false), 3000);
   }
 
-  const inputStyle = { borderColor: "#1e1e1e" };
-  const focusInput = (e: React.FocusEvent<HTMLInputElement>) => (e.currentTarget.style.borderColor = "#7B61FF44");
-  const blurInput = (e: React.FocusEvent<HTMLInputElement>) => (e.currentTarget.style.borderColor = "#1e1e1e");
+  const inputStyle = { borderColor: "var(--border-strong)" };
+  const focusInput = (e: React.FocusEvent<HTMLInputElement>) => (e.currentTarget.style.borderColor = "var(--accent-a44)");
+  const blurInput = (e: React.FocusEvent<HTMLInputElement>) => (e.currentTarget.style.borderColor = "var(--border-strong)");
 
   const navItems = [
     { id: "perfil", label: "Configurações de perfil" },
@@ -364,17 +364,17 @@ export function ProfileView({ profile, userEmail }: ProfileViewProps) {
   return (
     <div className="flex h-full" style={{ backgroundColor: "#060606" }}>
       {/* Sub-sidebar */}
-      <aside className="flex-shrink-0 flex flex-col py-6 overflow-y-auto" style={{ width: 200, borderRight: "1px solid #111", backgroundColor: "#060606" }}>
-        <p className="text-[9px] font-bold tracking-widest uppercase px-4 mb-1" style={{ color: "#333" }}>Conta</p>
+      <aside className="flex-shrink-0 flex flex-col py-6 overflow-y-auto" style={{ width: 200, borderRight: "1px solid var(--bg-surface-2)", backgroundColor: "#060606" }}>
+        <p className="text-[9px] font-bold tracking-widest uppercase px-4 mb-1" style={{ color: "var(--text-quaternary)" }}>Conta</p>
         {navItems.map((item) => (
           <button
             key={item.id}
             onClick={() => setSection(item.id as typeof section)}
             className="w-full text-left px-4 py-2 text-xs transition-colors duration-100"
             style={{
-              color: section === item.id ? "#fff" : "#555",
-              backgroundColor: section === item.id ? "#1A1230" : "transparent",
-              borderLeft: section === item.id ? "2px solid #7B61FF" : "2px solid transparent",
+              color: section === item.id ? "var(--text-primary)" : "var(--text-tertiary)",
+              backgroundColor: section === item.id ? "var(--accent-tint)" : "transparent",
+              borderLeft: section === item.id ? "2px solid var(--accent)" : "2px solid transparent",
             }}
           >
             {item.label}
@@ -395,25 +395,25 @@ export function ProfileView({ profile, userEmail }: ProfileViewProps) {
                   onClick={handleSaveName}
                   disabled={saving || !displayName.trim() || displayName.trim() === (profile?.display_name ?? "")}
                   className="flex items-center gap-2 px-5 py-2 rounded-lg text-xs font-semibold transition-all disabled:opacity-40"
-                  style={{ backgroundColor: savedName ? "#1A1230" : "#7B61FF", color: savedName ? "#7B61FF" : "#000" }}
+                  style={{ backgroundColor: savedName ? "var(--accent-tint)" : "var(--accent)", color: savedName ? "var(--accent)" : "var(--bg-page)" }}
                 >
                   {savedName ? <CheckCircle2 size={13} /> : <Save size={13} />}
                   {saving ? "Salvando..." : savedName ? "Salvo!" : "Salvar"}
                 </button>
               </div>
 
-              <div className="flex items-center gap-6 mb-8 pb-6" style={{ borderBottom: "1px solid #111" }}>
+              <div className="flex items-center gap-6 mb-8 pb-6" style={{ borderBottom: "1px solid var(--bg-surface-2)" }}>
                 <div className="w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0 text-2xl font-bold"
-                  style={{ backgroundColor: "#1A1230", color: "#7B61FF", border: "2px solid #7B61FF33" }}>
+                  style={{ backgroundColor: "var(--accent-tint)", color: "var(--accent)", border: "2px solid var(--accent-a33)" }}>
                   {(displayName || email).charAt(0).toUpperCase()}
                 </div>
                 <div>
                   <p className="text-white font-semibold text-sm">{displayName || "—"}</p>
-                  <p className="text-xs mt-0.5" style={{ color: "#555" }}>{email}</p>
+                  <p className="text-xs mt-0.5" style={{ color: "var(--text-tertiary)" }}>{email}</p>
                   {profile && (
                     <div className="flex items-center gap-1 mt-2">
-                      {profile.role === "admin" && <ShieldCheck size={11} style={{ color: "#7B61FF" }} />}
-                      <span className="text-[10px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded" style={{ backgroundColor: "#1A1230", color: "#7B61FF" }}>
+                      {profile.role === "admin" && <ShieldCheck size={11} style={{ color: "var(--accent)" }} />}
+                      <span className="text-[10px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded" style={{ backgroundColor: "var(--accent-tint)", color: "var(--accent)" }}>
                         {ROLE_LABELS[profile.role] ?? profile.role}
                       </span>
                     </div>
@@ -423,7 +423,7 @@ export function ProfileView({ profile, userEmail }: ProfileViewProps) {
 
               <div>
                 <Field label="E-mail">
-                  <p className="text-sm py-2.5 px-3 rounded-lg" style={{ color: "#555", backgroundColor: "#0a0a0a", border: "1px solid #111" }}>
+                  <p className="text-sm py-2.5 px-3 rounded-lg" style={{ color: "var(--text-tertiary)", backgroundColor: "var(--bg-surface)", border: "1px solid var(--bg-surface-2)" }}>
                     {email}
                   </p>
                 </Field>
@@ -442,19 +442,19 @@ export function ProfileView({ profile, userEmail }: ProfileViewProps) {
                 </Field>
 
                 <Field label="Função">
-                  <p className="text-sm py-2.5 px-3 rounded-lg max-w-sm" style={{ color: "#888", backgroundColor: "#0a0a0a", border: "1px solid #111" }}>
+                  <p className="text-sm py-2.5 px-3 rounded-lg max-w-sm" style={{ color: "var(--text-tertiary)", backgroundColor: "var(--bg-surface)", border: "1px solid var(--bg-surface-2)" }}>
                     {ROLE_LABELS[profile?.role ?? ""] ?? profile?.role ?? "—"}
                   </p>
                   {isAdmin && (
-                    <p className="text-[10px] mt-1.5" style={{ color: "#444" }}>
-                      Para alterar a função de um membro, acesse <button onClick={() => setSection("equipe")} className="underline" style={{ color: "#7B61FF" }}>Equipe & Acessos</button>.
+                    <p className="text-[10px] mt-1.5" style={{ color: "var(--text-quaternary)" }}>
+                      Para alterar a função de um membro, acesse <button onClick={() => setSection("equipe")} className="underline" style={{ color: "var(--accent)" }}>Equipe & Acessos</button>.
                     </p>
                   )}
                 </Field>
 
                 {profile?.id && (
                   <Field label="ID do usuário">
-                    <p className="text-xs py-2.5 font-mono" style={{ color: "#333" }}>{profile.id}</p>
+                    <p className="text-xs py-2.5 font-mono" style={{ color: "var(--text-quaternary)" }}>{profile.id}</p>
                   </Field>
                 )}
 
@@ -463,7 +463,7 @@ export function ProfileView({ profile, userEmail }: ProfileViewProps) {
                   <div className="flex flex-wrap gap-1.5 pt-1">
                     {(SECTION_ACCESS[profile?.role ?? ""] ?? []).map((sec) => (
                       <span key={sec} className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
-                        style={{ backgroundColor: "#1A1230", color: "#7B61FF" }}>
+                        style={{ backgroundColor: "var(--accent-tint)", color: "var(--accent)" }}>
                         {SECTION_LABELS[sec]}
                       </span>
                     ))}
@@ -488,10 +488,10 @@ export function ProfileView({ profile, userEmail }: ProfileViewProps) {
 
               <div className="mb-8">
                 <div className="flex items-center gap-2 mb-1">
-                  <KeyRound size={14} style={{ color: "#7B61FF" }} />
+                  <KeyRound size={14} style={{ color: "var(--accent)" }} />
                   <p className="text-sm font-semibold text-white">Alterar senha</p>
                 </div>
-                <p className="text-xs mb-6" style={{ color: "#555" }}>Após alterar, você será desconectado de todos os dispositivos.</p>
+                <p className="text-xs mb-6" style={{ color: "var(--text-tertiary)" }}>Após alterar, você será desconectado de todos os dispositivos.</p>
 
                 <form onSubmit={handleChangePassword}>
                   <div className="space-y-4">
@@ -507,68 +507,68 @@ export function ProfileView({ profile, userEmail }: ProfileViewProps) {
 
                   {pwError && (
                     <div className="flex items-center gap-2 mt-4 px-3 py-2 rounded-lg max-w-sm" style={{ backgroundColor: "#1a0505", border: "1px solid #ef444433" }}>
-                      <AlertCircle size={13} style={{ color: "#ef4444", flexShrink: 0 }} />
-                      <p className="text-xs" style={{ color: "#ef4444" }}>{pwError}</p>
+                      <AlertCircle size={13} style={{ color: "var(--danger)", flexShrink: 0 }} />
+                      <p className="text-xs" style={{ color: "var(--danger)" }}>{pwError}</p>
                     </div>
                   )}
                   {pwSuccess && (
-                    <div className="flex items-center gap-2 mt-4 px-3 py-2 rounded-lg max-w-sm" style={{ backgroundColor: "#1A1230", border: "1px solid #7B61FF33" }}>
-                      <CheckCircle2 size={13} style={{ color: "#7B61FF", flexShrink: 0 }} />
-                      <p className="text-xs" style={{ color: "#7B61FF" }}>Senha alterada com sucesso!</p>
+                    <div className="flex items-center gap-2 mt-4 px-3 py-2 rounded-lg max-w-sm" style={{ backgroundColor: "var(--accent-tint)", border: "1px solid var(--accent-a33)" }}>
+                      <CheckCircle2 size={13} style={{ color: "var(--accent)", flexShrink: 0 }} />
+                      <p className="text-xs" style={{ color: "var(--accent)" }}>Senha alterada com sucesso!</p>
                     </div>
                   )}
                   <button type="submit" disabled={savingPw || !newPw || !confirmPw}
                     className="flex items-center gap-2 mt-6 px-5 py-2 rounded-lg text-xs font-semibold disabled:opacity-40"
-                    style={{ backgroundColor: "#7B61FF", color: "#000" }}>
+                    style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}>
                     <KeyRound size={13} />
                     {savingPw ? "Alterando..." : "Alterar senha"}
                   </button>
                 </form>
               </div>
 
-              <div style={{ borderTop: "1px solid #111", paddingTop: "2rem" }}>
+              <div style={{ borderTop: "1px solid var(--bg-surface-2)", paddingTop: "2rem" }}>
                 <div className="flex items-center gap-2 mb-1">
-                  <Globe size={14} style={{ color: "#7B61FF" }} />
+                  <Globe size={14} style={{ color: "var(--accent)" }} />
                   <p className="text-sm font-semibold text-white">Sessões ativas</p>
                 </div>
-                <p className="text-xs mb-6" style={{ color: "#555" }}>Dispositivos com acesso à sua conta.</p>
-                <div className="rounded-xl border overflow-hidden" style={{ borderColor: "#111" }}>
-                  <div className="grid grid-cols-4 px-4 py-2" style={{ backgroundColor: "#0a0a0a", borderBottom: "1px solid #111" }}>
+                <p className="text-xs mb-6" style={{ color: "var(--text-tertiary)" }}>Dispositivos com acesso à sua conta.</p>
+                <div className="rounded-xl border overflow-hidden" style={{ borderColor: "var(--bg-surface-2)" }}>
+                  <div className="grid grid-cols-4 px-4 py-2" style={{ backgroundColor: "var(--bg-surface)", borderBottom: "1px solid var(--bg-surface-2)" }}>
                     {["Sessão", "Último acesso", "Região", ""].map((h) => (
-                      <p key={h} className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#333" }}>{h}</p>
+                      <p key={h} className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--text-quaternary)" }}>{h}</p>
                     ))}
                   </div>
                   <div className="grid grid-cols-4 items-center px-4 py-3 gap-2">
                     <div className="flex items-center gap-2">
-                      <Monitor size={13} style={{ color: "#7B61FF" }} />
+                      <Monitor size={13} style={{ color: "var(--accent)" }} />
                       <span className="text-xs text-white">Este dispositivo</span>
                     </div>
-                    <span className="text-xs" style={{ color: "#555" }}>Agora</span>
-                    <span className="text-xs" style={{ color: "#555" }}>Brasil</span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full w-fit" style={{ backgroundColor: "#1A1230", color: "#7B61FF" }}>Atual</span>
+                    <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>Agora</span>
+                    <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>Brasil</span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full w-fit" style={{ backgroundColor: "var(--accent-tint)", color: "var(--accent)" }}>Atual</span>
                   </div>
                 </div>
                 <button onClick={() => supabase.auth.signOut({ scope: "others" })}
                   className="flex items-center gap-2 mt-4 px-4 py-2 rounded-lg text-xs border transition-colors"
-                  style={{ borderColor: "#1e1e1e", color: "#555" }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#ef4444"; (e.currentTarget as HTMLButtonElement).style.color = "#ef4444"; }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#1e1e1e"; (e.currentTarget as HTMLButtonElement).style.color = "#555"; }}>
+                  style={{ borderColor: "var(--border-strong)", color: "var(--text-tertiary)" }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--danger)"; (e.currentTarget as HTMLButtonElement).style.color = "var(--danger)"; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border-strong)"; (e.currentTarget as HTMLButtonElement).style.color = "var(--text-tertiary)"; }}>
                   <LogOut size={13} />Encerrar todas as outras sessões
                 </button>
               </div>
 
-              <div style={{ borderTop: "1px solid #111", paddingTop: "2rem", marginTop: "2rem" }}>
+              <div style={{ borderTop: "1px solid var(--bg-surface-2)", paddingTop: "2rem", marginTop: "2rem" }}>
                 <div className="flex items-center gap-2 mb-1">
-                  <ShieldCheck size={14} style={{ color: "#7B61FF" }} />
+                  <ShieldCheck size={14} style={{ color: "var(--accent)" }} />
                   <p className="text-sm font-semibold text-white">Verificação em 2 etapas</p>
                 </div>
-                <p className="text-xs mb-4" style={{ color: "#555" }}>Adicione uma camada extra de segurança à sua conta.</p>
-                <div className="flex items-center justify-between px-4 py-3 rounded-xl border" style={{ backgroundColor: "#0a0a0a", borderColor: "#111" }}>
+                <p className="text-xs mb-4" style={{ color: "var(--text-tertiary)" }}>Adicione uma camada extra de segurança à sua conta.</p>
+                <div className="flex items-center justify-between px-4 py-3 rounded-xl border" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--bg-surface-2)" }}>
                   <div>
                     <p className="text-xs text-white font-medium">Autenticação por aplicativo</p>
-                    <p className="text-[11px] mt-0.5" style={{ color: "#444" }}>Google Authenticator, Authy, etc.</p>
+                    <p className="text-[11px] mt-0.5" style={{ color: "var(--text-quaternary)" }}>Google Authenticator, Authy, etc.</p>
                   </div>
-                  <span className="text-[10px] font-bold px-2 py-1 rounded" style={{ backgroundColor: "#111", color: "#444" }}>Em breve</span>
+                  <span className="text-[10px] font-bold px-2 py-1 rounded" style={{ backgroundColor: "var(--bg-surface-2)", color: "var(--text-quaternary)" }}>Em breve</span>
                 </div>
               </div>
             </>

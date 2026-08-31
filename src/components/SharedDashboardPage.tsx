@@ -31,11 +31,11 @@ interface SharedClient {
 
 
 function Trend({ curr, prev }: { curr: number | null; prev: number | null }) {
-  if (curr == null || prev == null || prev === 0) return <Minus size={12} style={{ color: "#555" }} />;
+  if (curr == null || prev == null || prev === 0) return <Minus size={12} style={{ color: "var(--text-tertiary)" }} />;
   const pct = ((curr - prev) / prev) * 100;
-  if (Math.abs(pct) < 0.5) return <Minus size={12} style={{ color: "#555" }} />;
-  if (pct > 0) return <span className="flex items-center gap-0.5 text-[10px]" style={{ color: "#7B61FF" }}><TrendingUp size={11} />{pct.toFixed(1)}%</span>;
-  return <span className="flex items-center gap-0.5 text-[10px]" style={{ color: "#EF4444" }}><TrendingDown size={11} />{Math.abs(pct).toFixed(1)}%</span>;
+  if (Math.abs(pct) < 0.5) return <Minus size={12} style={{ color: "var(--text-tertiary)" }} />;
+  if (pct > 0) return <span className="flex items-center gap-0.5 text-[10px]" style={{ color: "var(--accent)" }}><TrendingUp size={11} />{pct.toFixed(1)}%</span>;
+  return <span className="flex items-center gap-0.5 text-[10px]" style={{ color: "var(--danger)" }}><TrendingDown size={11} />{Math.abs(pct).toFixed(1)}%</span>;
 }
 
 function PlatformSection({ metrics, platform }: { metrics: SharedMetric[]; platform: "meta" | "google" }) {
@@ -53,43 +53,43 @@ function PlatformSection({ metrics, platform }: { metrics: SharedMetric[]; platf
           const prev = filtered[i + 1];
           const period = new Date(`${m.period}-01`).toLocaleString("pt-BR", { month: "long", year: "numeric" });
           return (
-            <div key={m.id} className="rounded-xl border p-4" style={{ backgroundColor: "#0d0d0d", borderColor: "#1a1a1a" }}>
+            <div key={m.id} className="rounded-xl border p-4" style={{ backgroundColor: "var(--bg-surface-2)", borderColor: "var(--border)" }}>
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-bold text-white capitalize">{period}</p>
                 <Trend curr={m.investimento} prev={prev?.investimento ?? null} />
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div>
-                  <p className="text-[10px] uppercase tracking-widest mb-0.5" style={{ color: "#444" }}>Investimento</p>
+                  <p className="text-[10px] uppercase tracking-widest mb-0.5" style={{ color: "var(--text-quaternary)" }}>Investimento</p>
                   <p className="text-sm font-bold text-white">{fmt(m.investimento, "R$ ")}</p>
                 </div>
                 {platform === "meta" ? (
                   <>
                     <div>
-                      <p className="text-[10px] uppercase tracking-widest mb-0.5" style={{ color: "#444" }}>Resultados</p>
+                      <p className="text-[10px] uppercase tracking-widest mb-0.5" style={{ color: "var(--text-quaternary)" }}>Resultados</p>
                       <p className="text-sm font-bold text-white">{fmtInt(m.resultados)}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] uppercase tracking-widest mb-0.5" style={{ color: "#444" }}>Custo/resultado</p>
+                      <p className="text-[10px] uppercase tracking-widest mb-0.5" style={{ color: "var(--text-quaternary)" }}>Custo/resultado</p>
                       <p className="text-sm font-bold text-white">{fmt(m.custo_por_resultado, "R$ ")}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] uppercase tracking-widest mb-0.5" style={{ color: "#444" }}>CTR</p>
+                      <p className="text-[10px] uppercase tracking-widest mb-0.5" style={{ color: "var(--text-quaternary)" }}>CTR</p>
                       <p className="text-sm font-bold text-white">{m.ctr != null ? m.ctr + "%" : "—"}</p>
                     </div>
                   </>
                 ) : (
                   <>
                     <div>
-                      <p className="text-[10px] uppercase tracking-widest mb-0.5" style={{ color: "#444" }}>Cliques</p>
+                      <p className="text-[10px] uppercase tracking-widest mb-0.5" style={{ color: "var(--text-quaternary)" }}>Cliques</p>
                       <p className="text-sm font-bold text-white">{fmtInt(m.cliques)}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] uppercase tracking-widest mb-0.5" style={{ color: "#444" }}>Conversões</p>
+                      <p className="text-[10px] uppercase tracking-widest mb-0.5" style={{ color: "var(--text-quaternary)" }}>Conversões</p>
                       <p className="text-sm font-bold text-white">{fmtInt(m.conversoes)}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] uppercase tracking-widest mb-0.5" style={{ color: "#444" }}>ROAS</p>
+                      <p className="text-[10px] uppercase tracking-widest mb-0.5" style={{ color: "var(--text-quaternary)" }}>ROAS</p>
                       <p className="text-sm font-bold text-white">{m.roas ?? "—"}</p>
                     </div>
                   </>
@@ -122,7 +122,7 @@ export function SharedDashboardPage({ token }: { token: string }) {
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <Loader2 size={24} className="animate-spin" style={{ color: "#7B61FF" }} />
+        <Loader2 size={24} className="animate-spin" style={{ color: "var(--accent)" }} />
       </div>
     );
   }
@@ -131,18 +131,18 @@ export function SharedDashboardPage({ token }: { token: string }) {
     return (
       <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-3">
         <p className="text-white font-semibold">Link inválido</p>
-        <p className="text-sm" style={{ color: "#555" }}>{error || "Este link não existe ou expirou."}</p>
+        <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>{error || "Este link não existe ou expirou."}</p>
       </div>
     );
   }
 
-  const flag = FLAG_META[client.health_flag as keyof typeof FLAG_META] ?? { label: "—", color: "#555", bg: "#111" };
-  const status = STATUS_META[client.status as keyof typeof STATUS_META] ?? { label: "—", color: "#555" };
+  const flag = FLAG_META[client.health_flag as keyof typeof FLAG_META] ?? { label: "—", color: "var(--text-tertiary)", bg: "var(--bg-surface-2)" };
+  const status = STATUS_META[client.status as keyof typeof STATUS_META] ?? { label: "—", color: "var(--text-tertiary)" };
 
   return (
     <div className="min-h-screen bg-black text-white font-sans">
       {/* Header */}
-      <div style={{ backgroundColor: "#050505", borderBottom: "1px solid #111" }}>
+      <div style={{ backgroundColor: "#050505", borderBottom: "1px solid var(--bg-surface-2)" }}>
         <div className="max-w-3xl mx-auto px-6 py-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="text-xl font-bold leading-none" style={{ fontFamily: "Arial, sans-serif", letterSpacing: "-2px" }}>
@@ -150,7 +150,7 @@ export function SharedDashboardPage({ token }: { token: string }) {
             </div>
             <div>
               <p className="text-white font-semibold text-xs leading-tight">Dashboard do Cliente</p>
-              <p className="text-[10px]" style={{ color: "#444" }}>Orbe Marketing</p>
+              <p className="text-[10px]" style={{ color: "var(--text-quaternary)" }}>Orbe Marketing</p>
             </div>
           </div>
           <span className="text-[10px] font-bold px-2 py-0.5 rounded" style={{ backgroundColor: flag.bg, color: flag.color }}>{flag.label}</span>
@@ -162,16 +162,16 @@ export function SharedDashboardPage({ token }: { token: string }) {
         <div>
           <h1 className="text-2xl font-bold text-white mb-1">{client.name}</h1>
           <div className="flex items-center gap-3 flex-wrap">
-            {client.segment && <span className="text-xs" style={{ color: "#555" }}>{client.segment}</span>}
-            {client.tipo_servico && <span className="text-xs" style={{ color: "#555" }}>• {client.tipo_servico}</span>}
+            {client.segment && <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>{client.segment}</span>}
+            {client.tipo_servico && <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>• {client.tipo_servico}</span>}
             <span className="text-xs font-semibold" style={{ color: status.color }}>{status.label}</span>
           </div>
         </div>
 
         {/* Metrics */}
         {metrics.length === 0 ? (
-          <div className="rounded-xl border border-[#1a1a1a] py-16 text-center" style={{ backgroundColor: "#0a0a0a" }}>
-            <p className="text-sm" style={{ color: "#444" }}>Nenhuma métrica disponível ainda</p>
+          <div className="rounded-xl border border-[var(--border)] py-16 text-center" style={{ backgroundColor: "var(--bg-surface)" }}>
+            <p className="text-sm" style={{ color: "var(--text-quaternary)" }}>Nenhuma métrica disponível ainda</p>
           </div>
         ) : (
           <div className="space-y-8">

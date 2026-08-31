@@ -17,7 +17,7 @@ export function Header({ profile, onLogout }: HeaderProps) {
   return (
     <header
       className="sticky top-0 z-50 bg-black border-b-2 px-6 py-4"
-      style={{ borderBottomColor: "#7B61FF" }}
+      style={{ borderBottomColor: "var(--accent)" }}
     >
       <div className="max-w-screen-xl mx-auto flex items-center justify-between gap-4">
         {/* Left: Logo + title */}
@@ -29,13 +29,13 @@ export function Header({ profile, onLogout }: HeaderProps) {
             <span className="text-white">Orbe</span>
           </div>
 
-          <div className="hidden sm:block w-px h-8 bg-[#262626]" />
+          <div className="hidden sm:block w-px h-8 bg-[var(--border-subtle)]" />
 
           <div className="min-w-0">
             <p className="text-white font-semibold text-sm leading-tight tracking-wide">
               Operating System
             </p>
-            <p className="text-xs leading-tight mt-0.5" style={{ color: "#A3A3A3" }}>
+            <p className="text-xs leading-tight mt-0.5" style={{ color: "var(--text-secondary)" }}>
               Plataforma Operacional Orbe
             </p>
           </div>
@@ -43,41 +43,41 @@ export function Header({ profile, onLogout }: HeaderProps) {
 
         {/* Right side */}
         <div className="flex items-center gap-4 flex-shrink-0">
-          <p className="hidden lg:block text-right text-xs leading-snug" style={{ color: "#A3A3A3" }}>
+          <p className="hidden lg:block text-right text-xs leading-snug" style={{ color: "var(--text-secondary)" }}>
             Não vendemos anúncios.{" "}
-            <span style={{ color: "#7B61FF" }}>Vendemos infraestrutura de crescimento.</span>
+            <span style={{ color: "var(--accent)" }}>Vendemos infraestrutura de crescimento.</span>
           </p>
 
           {profile && (
             <>
-              <div className="hidden sm:block w-px h-6 bg-[#262626]" />
+              <div className="hidden sm:block w-px h-6 bg-[var(--border-subtle)]" />
               <div className="flex items-center gap-2">
                 {/* Role badge */}
                 <span
                   className="hidden sm:flex items-center gap-1 text-[9px] font-bold tracking-widest px-2 py-1 rounded uppercase"
-                  style={{ backgroundColor: "#1A1230", color: "#7B61FF", border: "1px solid #7B61FF33" }}
+                  style={{ backgroundColor: "var(--accent-tint)", color: "var(--accent)", border: "1px solid var(--accent-a33)" }}
                 >
                   {profile.role === "admin" && <ShieldCheck size={10} />}
                   {ROLE_LABELS[profile.role] ?? profile.role}
                 </span>
 
-                <span className="text-xs hidden md:block max-w-[140px] truncate" style={{ color: "#A3A3A3" }}>
+                <span className="text-xs hidden md:block max-w-[140px] truncate" style={{ color: "var(--text-secondary)" }}>
                   {profile.display_name}
                 </span>
 
                 <button
                   onClick={onLogout}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 border focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7B61FF]"
-                  style={{ borderColor: "#262626", color: "#A3A3A3", backgroundColor: "transparent" }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 border focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+                  style={{ borderColor: "var(--border-subtle)", color: "var(--text-secondary)", backgroundColor: "transparent" }}
                   onMouseEnter={(e) => {
                     const el = e.currentTarget as HTMLButtonElement;
-                    el.style.borderColor = "#ef4444";
-                    el.style.color = "#ef4444";
+                    el.style.borderColor = "var(--danger)";
+                    el.style.color = "var(--danger)";
                   }}
                   onMouseLeave={(e) => {
                     const el = e.currentTarget as HTMLButtonElement;
-                    el.style.borderColor = "#262626";
-                    el.style.color = "#A3A3A3";
+                    el.style.borderColor = "var(--border-subtle)";
+                    el.style.color = "var(--text-secondary)";
                   }}
                 >
                   <LogOut size={12} />
