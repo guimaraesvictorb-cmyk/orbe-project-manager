@@ -22,6 +22,8 @@ import { WhatsAppView } from "./components/WhatsAppView";
 import { IntegracoesView } from "./components/IntegracoesView";
 import { LeadsCapturadosView } from "./components/LeadsCapturadosView";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { ClientsProvider } from "./contexts/ClientsContext";
+import { TasksProvider } from "./contexts/TasksContext";
 import { CommandPalette } from "./components/CommandPalette";
 import { NotificationBell } from "./components/NotificationBell";
 import { Loader2, Menu, Search } from "lucide-react";
@@ -86,6 +88,8 @@ function App() {
 
   return (
     <ThemeProvider>
+    <ClientsProvider>
+    <TasksProvider>
       <div className="flex h-screen bg-[var(--bg-page)] text-[var(--text-primary)] font-sans overflow-hidden">
         <AppNav
           active={view}
@@ -156,6 +160,8 @@ function App() {
         onSelectClient={(id) => { setPendingClientId(id); navigate("clientes"); }}
         onSelectTask={(id) => { setPendingTaskId(id); navigate("tarefas"); }}
       />
+    </TasksProvider>
+    </ClientsProvider>
     </ThemeProvider>
   );
 }
