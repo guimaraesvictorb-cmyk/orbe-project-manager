@@ -6,6 +6,15 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+function generateTempPassword(): string {
+  const bytes = new Uint8Array(14);
+  crypto.getRandomValues(bytes);
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+  let out = "";
+  for (const b of bytes) out += alphabet[b % alphabet.length];
+  return out + "!1";
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -19,15 +28,10 @@ serve(async (req) => {
 
     const authHeader = req.headers.get("authorization");
     if (!authHeader) return json({ error: "Não autorizado" }, 401);
+    const jwt = authHeader.replace(/^Bearer\s+/i, "");
 
-    const supabaseUser = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      { global: { headers: { authorization: authHeader } } },
-    );
-
-    const { data: { user } } = await supabaseUser.auth.getUser();
-    if (!user) return json({ error: "Token inválido" }, 401);
+    const { data: { user }, error: userErr } = await supabaseAdmin.auth.getUser(jwt);
+    if (userErr || !user) return json({ error: "Token inválido" }, 401);
 
     const { data: callerProfile } = await supabaseAdmin
       .from("profiles")
@@ -42,8 +46,13 @@ serve(async (req) => {
     const { email, display_name, role } = await req.json();
     if (!email || !display_name || !role) return json({ error: "Campos obrigatórios: email, display_name, role" }, 400);
 
-    const { data: newUser, error: createErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-      data: { display_name, role },
+    const tempPassword = generateTempPassword();
+
+    const { data: newUser, error: createErr } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password: tempPassword,
+      email_confirm: true,
+      user_metadata: { display_name, role },
     });
     if (createErr) return json({ error: createErr.message }, 400);
 
@@ -56,7 +65,7 @@ serve(async (req) => {
       theme: "dark",
     });
 
-    return json({ ok: true, userId: newUser.user.id });
+    return json({ ok: true, userId: newUser.user.id, tempPassword });
   } catch (err) {
     return json({ error: String(err) }, 500);
   }

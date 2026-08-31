@@ -4,7 +4,7 @@ import type { Profile } from "../lib/database.types";
 import {
   ShieldCheck, Save, KeyRound, CheckCircle2,
   AlertCircle, Monitor, Globe, LogOut, Users, Check, Loader2,
-  ChevronDown, Trash2, X,
+  ChevronDown, Trash2, X, UserPlus, Copy, Mail,
 } from "lucide-react";
 import { SECTION_ACCESS, SECTION_LABELS } from "../lib/permissions";
 
@@ -52,6 +52,14 @@ function TeamPanel({ currentUserId }: { currentUserId: string }) {
   const [confirming, setConfirming] = useState<string | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
   const [removeError, setRemoveError] = useState("");
+  const [showInvite, setShowInvite] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteName, setInviteName] = useState("");
+  const [inviteRole, setInviteRole] = useState("gt");
+  const [inviting, setInviting] = useState(false);
+  const [inviteError, setInviteError] = useState("");
+  const [createdCreds, setCreatedCreds] = useState<{ email: string; password: string } | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     loadMembers();
@@ -139,17 +147,120 @@ function TeamPanel({ currentUserId }: { currentUserId: string }) {
     }
   }
 
+  async function handleInvite(e: React.FormEvent) {
+    e.preventDefault();
+    setInviting(true);
+    setInviteError("");
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/invite-user`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${session?.access_token ?? ""}`,
+        },
+        body: JSON.stringify({ email: inviteEmail, display_name: inviteName, role: inviteRole }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Erro ao adicionar membro");
+      setCreatedCreds({ email: inviteEmail, password: json.tempPassword });
+      setInviteEmail(""); setInviteName(""); setInviteRole("gt");
+      setShowInvite(false);
+      loadMembers();
+    } catch (err: unknown) {
+      setInviteError((err as Error).message);
+    } finally {
+      setInviting(false);
+    }
+  }
+
+  function copyCreds() {
+    if (!createdCreds) return;
+    navigator.clipboard.writeText(`URL: studio.agenciaorbe.co\nE-mail: ${createdCreds.email}\nSenha temporária: ${createdCreds.password}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
   if (loading) return <div className="flex justify-center py-12"><Loader2 size={18} className="animate-spin" style={{ color: "var(--accent)" }} /></div>;
 
   return (
     <div className="space-y-4">
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-1">
-          <Users size={14} style={{ color: "var(--accent)" }} />
-          <p className="text-sm font-semibold text-[var(--text-primary)]">Membros da equipe</p>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <Users size={14} style={{ color: "var(--accent)" }} />
+            <p className="text-sm font-semibold text-[var(--text-primary)]">Membros da equipe</p>
+          </div>
+          <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>Gerencie as funções e acessos do time. A função define quais seções cada membro pode ver.</p>
         </div>
-        <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>Gerencie as funções e acessos do time. A função define quais seções cada membro pode ver.</p>
+        <button
+          onClick={() => setShowInvite(true)}
+          className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
+          style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}
+        >
+          <UserPlus size={13} />Adicionar membro
+        </button>
       </div>
+
+      {createdCreds && (
+        <div className="rounded-xl border p-4 space-y-2" style={{ backgroundColor: "var(--accent-tint)", borderColor: "var(--accent-a33)" }}>
+          <p className="text-xs font-semibold text-[var(--text-primary)]">Membro criado! Repasse esses dados com segurança:</p>
+          <div className="text-xs space-y-0.5 font-mono" style={{ color: "var(--text-secondary)" }}>
+            <p>URL: studio.agenciaorbe.co</p>
+            <p>E-mail: {createdCreds.email}</p>
+            <p>Senha temporária: {createdCreds.password}</p>
+          </div>
+          <div className="flex items-center gap-2 pt-1">
+            <button onClick={copyCreds} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold" style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}>
+              {copied ? <Check size={12} /> : <Copy size={12} />}{copied ? "Copiado!" : "Copiar"}
+            </button>
+            <button onClick={() => setCreatedCreds(null)} className="px-3 py-1.5 rounded-lg text-xs" style={{ color: "var(--text-tertiary)" }}>Fechar</button>
+          </div>
+        </div>
+      )}
+
+      {showInvite && (
+        <form onSubmit={handleInvite} className="rounded-xl border p-4 space-y-3" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
+          <p className="text-sm font-semibold text-[var(--text-primary)]">Adicionar novo membro</p>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "var(--text-tertiary)" }}>Nome</label>
+              <input value={inviteName} onChange={(e) => setInviteName(e.target.value)} required placeholder="Nome completo"
+                className="w-full rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] placeholder-[var(--text-quaternary)] focus:outline-none"
+                style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-strong)" }} />
+            </div>
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "var(--text-tertiary)" }}>Função</label>
+              <select value={inviteRole} onChange={(e) => setInviteRole(e.target.value)}
+                className="w-full rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] focus:outline-none"
+                style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-strong)" }}>
+                {ROLE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "var(--text-tertiary)" }}>E-mail</label>
+            <input type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} required placeholder="email@agenciaorbe.co"
+              className="w-full rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] placeholder-[var(--text-quaternary)] focus:outline-none"
+              style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-strong)" }} />
+          </div>
+          {inviteError && (
+            <div className="flex items-center gap-2 text-xs" style={{ color: "var(--danger)" }}>
+              <AlertCircle size={12} />{inviteError}
+            </div>
+          )}
+          <div className="flex gap-2 pt-1">
+            <button type="button" onClick={() => setShowInvite(false)} className="flex-1 py-2 rounded-lg text-xs border" style={{ borderColor: "var(--border-strong)", color: "var(--text-tertiary)" }}>
+              Cancelar
+            </button>
+            <button type="submit" disabled={inviting} className="flex-1 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
+              style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}>
+              {inviting ? <Loader2 size={12} className="animate-spin" /> : <Mail size={12} />}
+              {inviting ? "Criando..." : "Adicionar"}
+            </button>
+          </div>
+        </form>
+      )}
 
       {removeError && (
         <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs" style={{ backgroundColor: "#1a0505", border: "1px solid #EF444433", color: "var(--danger)" }}>
