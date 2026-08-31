@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Loader2, ChevronDown, LayoutList, Kanban, X, Trash2 } from "lucide-react";
+import { Plus, Loader2, ChevronDown, LayoutList, Kanban, X, Trash2, Copy } from "lucide-react";
 import { useTasks } from "../../hooks/useTasks";
 import { useClients } from "../../hooks/useClients";
 import { useAuth } from "../../hooks/useAuth";
@@ -50,15 +50,16 @@ function StatusBadge({ status, onChange }: { status: Task["status"]; onChange: (
   );
 }
 
-function TaskModal({ task, clients, profiles, onClose, onSave, onDelete, currentUserId }: {
+function TaskModal({ task, clients, profiles, onClose, onSave, onDelete, onDuplicate, currentUserId }: {
   task: Task | null; clients: Client[]; profiles: Profile[];
   onClose: () => void; onSave: (d: Partial<Task>) => Promise<void>;
-  onDelete?: (id: string) => Promise<void>; currentUserId: string;
+  onDelete?: (id: string) => Promise<void>; onDuplicate?: (task: Task) => Promise<void>; currentUserId: string;
 }) {
   const [form, setForm] = useState<Partial<Task>>(
     task ?? { status: "backlog", priority: "media", client_id: "", title: "", created_by: currentUserId, data_source: "manual" }
   );
   const [saving, setSaving] = useState(false);
+  const [duplicating, setDuplicating] = useState(false);
   const inputStyle = { backgroundColor: "var(--bg-input)", border: "1px solid var(--border-strong)" };
   const inputCls = "w-full rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-quaternary)] focus:outline-none transition-colors";
 
@@ -145,6 +146,13 @@ function TaskModal({ task, clients, profiles, onClose, onSave, onDelete, current
                 Deletar
               </button>
             )}
+            {task && onDuplicate && (
+              <button type="button" disabled={duplicating} onClick={async () => { setDuplicating(true); await onDuplicate(task); setDuplicating(false); onClose(); }}
+                className="px-4 py-2.5 rounded-xl text-xs font-semibold border disabled:opacity-50 flex items-center gap-1.5" style={{ borderColor: "var(--border-strong)", color: "var(--text-tertiary)" }}>
+                {duplicating ? <Loader2 size={12} className="animate-spin" /> : <Copy size={12} />}
+                Duplicar
+              </button>
+            )}
             <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-xl text-xs font-semibold border" style={{ borderColor: "var(--border-strong)", color: "var(--text-tertiary)" }}>
               Cancelar
             </button>
@@ -226,6 +234,31 @@ export function TasksView({ clientId, initialTaskId, onConsumeInitial }: { clien
     if (!profile) return;
     if (editing === "new") await createTask({ ...data, created_by: profile.id, data_source: "manual", sort_order: 0 } as never);
     else if (editing) await updateTask(editing.id, data);
+  }
+
+  async function handleDuplicate(task: Task) {
+    if (!profile) return;
+    await createTask({
+      client_id: task.client_id,
+      quarter_id: task.quarter_id,
+      playbook_step_id: task.playbook_step_id,
+      workflow_trigger_id: task.workflow_trigger_id,
+      parent_task_id: null,
+      title: `${task.title} (cópia)`,
+      description: task.description,
+      status: "backlog",
+      priority: task.priority,
+      assignee_id: task.assignee_id,
+      deadline: task.deadline,
+      estimated_hours: task.estimated_hours,
+      actual_hours: null,
+      sort_order: task.sort_order,
+      data_source: "manual",
+      external_id: null,
+      last_synced_at: null,
+      recurrence: task.recurrence,
+      created_by: profile.id,
+    });
   }
 
   const completedCount = tasks.filter((t) => t.status === "concluido").length;
@@ -471,6 +504,7 @@ export function TasksView({ clientId, initialTaskId, onConsumeInitial }: { clien
           onClose={() => setEditing(null)}
           onSave={handleSave}
           onDelete={async (id) => { await deleteTask(id); }}
+          onDuplicate={handleDuplicate}
           currentUserId={profile?.id ?? ""}
         />
       )}
