@@ -187,6 +187,7 @@ export function TasksView({ clientId, initialTaskId, onConsumeInitial }: { clien
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [filterStatus, setFilterStatus] = useState<Task["status"] | "todos">("todos");
   const [filterDate, setFilterDate] = useState<"todas" | "hoje" | "semana" | "mes" | "atrasadas">("todas");
+  const [filterAssignee, setFilterAssignee] = useState<string>("todos");
   const [confirmingClear, setConfirmingClear] = useState(false);
   const [clearing, setClearing] = useState(false);
 
@@ -197,6 +198,8 @@ export function TasksView({ clientId, initialTaskId, onConsumeInitial }: { clien
   const filtered = tasks.filter((t) => {
     if (t.parent_task_id) return false;
     if (filterStatus !== "todos" && t.status !== filterStatus) return false;
+    if (filterAssignee === "eu" && t.assignee_id !== profile?.id) return false;
+    if (filterAssignee !== "todos" && filterAssignee !== "eu" && t.assignee_id !== filterAssignee) return false;
     if (filterDate !== "todas") {
       const now = new Date()
       const todayStr = now.toDateString()
@@ -313,21 +316,35 @@ export function TasksView({ clientId, initialTaskId, onConsumeInitial }: { clien
         ))}
       </div>
 
-      {/* Date filter chips */}
-      <div className="flex items-center gap-2 flex-wrap">
-        {([
-          ["todas",     "Todas as datas", "var(--text-tertiary)",    "transparent"],
-          ["hoje",      "Hoje",           "#3B82F6", "#0d1630"],
-          ["semana",    "Esta semana",    "#8B5CF6", "#130d1f"],
-          ["mes",       "Este mês",       "var(--warning)", "#1a1200"],
-          ["atrasadas", "Atrasadas",      "var(--danger)", "#1a0505"],
-        ] as [typeof filterDate, string, string, string][]).map(([v, label, color, bg]) => (
-          <button key={v} onClick={() => setFilterDate(v)}
-            className="text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider transition-all"
-            style={filterDate === v ? { color, backgroundColor: bg, border: `1px solid ${color}44` } : { color: "var(--text-quaternary)", backgroundColor: "transparent", border: "1px solid transparent" }}>
-            {label}
-          </button>
-        ))}
+      {/* Date filter chips + assignee filter */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
+          {([
+            ["todas",     "Todas as datas", "var(--text-tertiary)",    "transparent"],
+            ["hoje",      "Hoje",           "#3B82F6", "#0d1630"],
+            ["semana",    "Esta semana",    "#8B5CF6", "#130d1f"],
+            ["mes",       "Este mês",       "var(--warning)", "#1a1200"],
+            ["atrasadas", "Atrasadas",      "var(--danger)", "#1a0505"],
+          ] as [typeof filterDate, string, string, string][]).map(([v, label, color, bg]) => (
+            <button key={v} onClick={() => setFilterDate(v)}
+              className="text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider transition-all"
+              style={filterDate === v ? { color, backgroundColor: bg, border: `1px solid ${color}44` } : { color: "var(--text-quaternary)", backgroundColor: "transparent", border: "1px solid transparent" }}>
+              {label}
+            </button>
+          ))}
+        </div>
+        <select
+          value={filterAssignee}
+          onChange={(e) => setFilterAssignee(e.target.value)}
+          className="rounded-lg px-2.5 py-1.5 text-[11px] text-[var(--text-primary)] border appearance-none cursor-pointer focus:outline-none"
+          style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border-strong)" }}
+        >
+          <option value="todos">Todos os responsáveis</option>
+          {profile && <option value="eu">Minhas tarefas</option>}
+          {profiles.filter((p) => p.id !== profile?.id).map((p) => (
+            <option key={p.id} value={p.id}>{p.display_name}</option>
+          ))}
+        </select>
       </div>
 
       {/* List view */}
