@@ -1,5 +1,5 @@
 
-import { Users, CheckSquare, DollarSign, TrendingUp, AlertTriangle, Clock } from "lucide-react";
+import { Users, CheckSquare, DollarSign, TrendingUp, AlertTriangle, Clock, Trophy, MoonStar } from "lucide-react";
 import { useClients } from "../hooks/useClients";
 import { useTasks } from "../hooks/useTasks";
 import { useFinancial } from "../hooks/useFinancial";
@@ -53,6 +53,23 @@ export function DashboardView() {
   );
   const activeLeads = leads.filter((l) => !l.converted_to_client_id && !l.deleted_at);
   const mrr = activeClients.reduce((s, c) => s + (c.monthly_fee ?? 0), 0);
+
+  const topByMrr = [...activeClients]
+    .sort((a, b) => (b.monthly_fee ?? 0) - (a.monthly_fee ?? 0))
+    .slice(0, 5);
+
+  const STALE_DAYS = 14;
+  const staleClients = activeClients
+    .map((c) => {
+      const lastTaskMs = tasks
+        .filter((t) => t.client_id === c.id)
+        .reduce((max, t) => Math.max(max, new Date(t.updated_at).getTime()), 0);
+      const lastActivityMs = Math.max(lastTaskMs, new Date(c.updated_at).getTime());
+      return { client: c, daysSince: Math.floor((Date.now() - lastActivityMs) / 86400000) };
+    })
+    .filter((x) => x.daysSince > STALE_DAYS)
+    .sort((a, b) => b.daysSince - a.daysSince)
+    .slice(0, 5);
 
   return (
     <div className="flex flex-col min-h-0">
@@ -196,6 +213,70 @@ export function DashboardView() {
                       }}
                     >
                       {HEALTH_LABEL[client.health_flag]}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+        </div>
+
+        {/* Two columns: top MRR + stale clients */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <section>
+            <div className="flex items-center gap-2 mb-4">
+              <Trophy size={14} style={{ color: "var(--accent)" }} />
+              <p className="text-[10px] font-bold tracking-widest uppercase" style={{ color: "var(--accent)" }}>
+                Top 5 clientes por MRR
+              </p>
+            </div>
+            <div className="rounded-2xl border divide-y overflow-hidden" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
+              {topByMrr.length === 0 ? (
+                <div className="px-5 py-8 text-center">
+                  <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>Nenhum cliente com mensalidade cadastrada</p>
+                </div>
+              ) : (
+                topByMrr.map((client, i) => (
+                  <div key={client.id} className="flex items-center justify-between px-4 py-3 gap-3" style={{ borderColor: "var(--border)" }}>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="flex-shrink-0 text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: "var(--accent-a22)", color: "var(--accent)" }}>
+                        {i + 1}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-sm text-[var(--text-primary)] truncate font-medium">{client.name}</p>
+                        <p className="text-[11px]" style={{ color: "var(--text-tertiary)" }}>{client.segment ?? "—"}</p>
+                      </div>
+                    </div>
+                    <span className="flex-shrink-0 text-sm font-bold" style={{ color: "var(--accent)" }}>
+                      {fmt(client.monthly_fee ?? 0)}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+
+          <section>
+            <div className="flex items-center gap-2 mb-4">
+              <MoonStar size={14} style={{ color: "var(--text-tertiary)" }} />
+              <p className="text-[10px] font-bold tracking-widest uppercase" style={{ color: "var(--text-tertiary)" }}>
+                Sem atividade recente ({staleClients.length})
+              </p>
+            </div>
+            <div className="rounded-2xl border divide-y overflow-hidden" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
+              {staleClients.length === 0 ? (
+                <div className="px-5 py-8 text-center">
+                  <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>Todos os clientes ativos tiveram atividade recente</p>
+                </div>
+              ) : (
+                staleClients.map(({ client, daysSince }) => (
+                  <div key={client.id} className="flex items-center justify-between px-4 py-3 gap-3" style={{ borderColor: "var(--border)" }}>
+                    <div className="min-w-0">
+                      <p className="text-sm text-[var(--text-primary)] truncate font-medium">{client.name}</p>
+                      <p className="text-[11px]" style={{ color: "var(--text-tertiary)" }}>{client.segment ?? "—"}</p>
+                    </div>
+                    <span className="flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded" style={{ backgroundColor: "var(--bg-surface-2)", color: "var(--text-secondary)" }}>
+                      {daysSince}d parado
                     </span>
                   </div>
                 ))
