@@ -341,14 +341,17 @@ Use APENAS as informações acima. Não invente dados. Se não souber algo sobre
 interface ClientDetailViewProps {
   client: Client
   onBack: () => void
+  onDelete?: () => Promise<void>
 }
 
-export function ClientDetailView({ client, onBack }: ClientDetailViewProps) {
+export function ClientDetailView({ client, onBack, onDelete }: ClientDetailViewProps) {
   const { profile } = useAuth()
   const [tab, setTab] = useState<Tab>("overview")
   const [showAddModal, setShowAddModal] = useState(false)
   const [showAddChecklist, setShowAddChecklist] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [newItemTitle, setNewItemTitle] = useState("")
   const [newItemCategory, setNewItemCategory] = useState("")
   const [suggesting, setSuggesting] = useState(false)
@@ -509,8 +512,42 @@ export function ClientDetailView({ client, onBack }: ClientDetailViewProps) {
             onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--text-tertiary)"; (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border-strong)"; }}>
             <Share2 size={12} />Compartilhar
           </button>
+          {canEdit && onDelete && (
+            <button onClick={() => setConfirmingDelete(true)} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors flex-shrink-0"
+              style={{ borderColor: "var(--border-strong)", color: "var(--text-tertiary)" }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--danger)"; (e.currentTarget as HTMLButtonElement).style.borderColor = "#ef444444"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--text-tertiary)"; (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border-strong)"; }}>
+              <Trash2 size={12} />Excluir cliente
+            </button>
+          )}
         </div>
       </div>
+
+      {confirmingDelete && (
+        <div className="flex items-center justify-between gap-3 px-8 py-3 flex-wrap" style={{ backgroundColor: "#1a0505", borderBottom: "1px solid #EF444422" }}>
+          <p className="text-xs" style={{ color: "var(--danger)" }}>
+            Excluir <strong>{client.name}</strong>? O cliente sai da carteira ativa, mas o histórico é preservado.
+          </p>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              onClick={() => setConfirmingDelete(false)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border"
+              style={{ borderColor: "#333", color: "var(--text-secondary)" }}
+            >
+              <X size={11} />Cancelar
+            </button>
+            <button
+              onClick={async () => { setDeleting(true); await onDelete?.(); }}
+              disabled={deleting}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-50"
+              style={{ backgroundColor: "var(--danger)", color: "#000" }}
+            >
+              {deleting ? <Loader2 size={11} className="animate-spin" /> : <Trash2 size={11} />}
+              Confirmar exclusão
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="flex items-center px-8" style={{ borderBottom: "1px solid var(--bg-surface-2)" }}>
         {tabs.map((t) => (

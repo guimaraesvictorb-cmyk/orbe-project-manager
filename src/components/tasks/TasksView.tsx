@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Loader2, ChevronDown, LayoutList, Kanban, X } from "lucide-react";
+import { Plus, Loader2, ChevronDown, LayoutList, Kanban, X, Trash2 } from "lucide-react";
 import { useTasks } from "../../hooks/useTasks";
 import { useClients } from "../../hooks/useClients";
 import { useAuth } from "../../hooks/useAuth";
@@ -168,6 +168,8 @@ export function TasksView({ clientId }: { clientId?: string }) {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [filterStatus, setFilterStatus] = useState<Task["status"] | "todos">("todos");
   const [filterDate, setFilterDate] = useState<"todas" | "hoje" | "semana" | "mes" | "atrasadas">("todas");
+  const [confirmingClear, setConfirmingClear] = useState(false);
+  const [clearing, setClearing] = useState(false);
 
   useEffect(() => {
     supabase.from("profiles").select("*").eq("is_active", true).then(({ data }) => setProfiles(data ?? []));
@@ -204,6 +206,16 @@ export function TasksView({ clientId }: { clientId?: string }) {
     else if (editing) await updateTask(editing.id, data);
   }
 
+  const completedCount = tasks.filter((t) => t.status === "concluido").length;
+
+  async function clearCompleted() {
+    setClearing(true);
+    const completed = tasks.filter((t) => t.status === "concluido");
+    await Promise.all(completed.map((t) => deleteTask(t.id)));
+    setClearing(false);
+    setConfirmingClear(false);
+  }
+
   if (loading) return (
     <div className="flex items-center justify-center h-40">
       <Loader2 size={20} className="animate-spin" style={{ color: "var(--accent)" }} />
@@ -235,6 +247,15 @@ export function TasksView({ clientId }: { clientId?: string }) {
               </button>
             ))}
           </div>
+          {completedCount > 0 && (
+            <button onClick={() => setConfirmingClear(true)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold border transition-colors"
+              style={{ borderColor: "var(--border-strong)", color: "var(--text-tertiary)" }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--danger)"; (e.currentTarget as HTMLButtonElement).style.borderColor = "#ef444444"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--text-tertiary)"; (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border-strong)"; }}>
+              <Trash2 size={13} /> Limpar concluídas ({completedCount})
+            </button>
+          )}
           <button onClick={() => setEditing("new")}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all"
             style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}
@@ -244,6 +265,23 @@ export function TasksView({ clientId }: { clientId?: string }) {
           </button>
         </div>
       </div>
+
+      {confirmingClear && (
+        <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl flex-wrap" style={{ backgroundColor: "#1a0505", border: "1px solid #EF444422" }}>
+          <p className="text-xs" style={{ color: "var(--danger)" }}>
+            Excluir as {completedCount} tarefas concluídas? Essa ação não pode ser desfeita.
+          </p>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button onClick={() => setConfirmingClear(false)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border" style={{ borderColor: "#333", color: "var(--text-secondary)" }}>
+              <X size={11} />Cancelar
+            </button>
+            <button onClick={clearCompleted} disabled={clearing} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-50" style={{ backgroundColor: "var(--danger)", color: "#000" }}>
+              {clearing ? <Loader2 size={11} className="animate-spin" /> : <Trash2 size={11} />}
+              Confirmar exclusão
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Status filter chips */}
       <div className="flex items-center gap-2 flex-wrap">

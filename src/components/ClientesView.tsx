@@ -2,15 +2,24 @@ import { useState } from "react"
 import { ClientesSection } from "./ClientesSection"
 import { ClientDetailView } from "./ClientDetailView"
 import { Footer } from "./Footer"
+import { useClients } from "../hooks/useClients"
 import type { Client } from "../lib/database.types"
 
 export function ClientesView() {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
+  const { deleteClient } = useClients()
 
   if (selectedClient) {
     return (
       <div className="flex flex-col min-h-0 h-full">
-        <ClientDetailView client={selectedClient} onBack={() => setSelectedClient(null)} />
+        <ClientDetailView
+          client={selectedClient}
+          onBack={() => setSelectedClient(null)}
+          onDelete={async () => {
+            await deleteClient(selectedClient.id)
+            setSelectedClient(null)
+          }}
+        />
       </div>
     )
   }
