@@ -7,7 +7,7 @@ import type { Client } from "../lib/database.types"
 
 export function ClientesView({ initialClientId, onConsumeInitial }: { initialClientId?: string; onConsumeInitial?: () => void }) {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
-  const { clients, deleteClient } = useClients()
+  const { clients, deleteClient, updateClient } = useClients()
 
   useEffect(() => {
     if (!initialClientId) return
@@ -28,6 +28,11 @@ export function ClientesView({ initialClientId, onConsumeInitial }: { initialCli
           onDelete={async () => {
             await deleteClient(selectedClient.id)
             setSelectedClient(null)
+          }}
+          onUpdate={async (updates) => {
+            const result = await updateClient(selectedClient.id, updates)
+            if (result.data) setSelectedClient(result.data)
+            return result
           }}
         />
       </div>

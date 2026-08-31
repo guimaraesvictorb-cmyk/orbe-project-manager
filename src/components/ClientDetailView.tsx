@@ -3,6 +3,7 @@ import {
   ArrowLeft, Globe, User, Phone, Mail, DollarSign, Tag,
   Plus, Check, Trash2, Brain, Send, Loader2, Sparkles,
   BookOpen, X, ListChecks, Calendar, Share2, Copy, Link,
+  Pencil, Save, Hash,
 } from "lucide-react"
 import type { Client } from "../lib/database.types"
 import { useClientKnowledge, type KnowledgeEntry } from "../hooks/useClientKnowledge"
@@ -342,11 +343,33 @@ interface ClientDetailViewProps {
   client: Client
   onBack: () => void
   onDelete?: () => Promise<void>
+  onUpdate?: (updates: Partial<Client>) => Promise<{ data?: Client; error?: string }>
 }
 
-export function ClientDetailView({ client, onBack, onDelete }: ClientDetailViewProps) {
+const OVERVIEW_FIELDS: Array<{ key: keyof Client; label: string; type: string; placeholder?: string }> = [
+  { key: "primary_contact_name", label: "Contato", type: "text", placeholder: "Nome do contato" },
+  { key: "primary_contact_email", label: "E-mail", type: "email", placeholder: "email@empresa.com" },
+  { key: "primary_contact_phone", label: "Telefone", type: "text", placeholder: "(11) 99999-9999" },
+  { key: "website", label: "Website", type: "text", placeholder: "https://..." },
+  { key: "segment", label: "Segmento", type: "text", placeholder: "ecommerce, saas..." },
+  { key: "tipo_servico", label: "Tipo de serviço", type: "text", placeholder: "Tráfego pago, Social..." },
+  { key: "monthly_fee", label: "Mensalidade (R$)", type: "number" },
+  { key: "monthly_investment", label: "Investimento em mídia (R$)", type: "number" },
+  { key: "origem_lead", label: "Origem do lead", type: "text", placeholder: "Indicação, Instagram..." },
+  { key: "proxima_reuniao", label: "Próxima reunião", type: "datetime-local" },
+  { key: "contract_start", label: "Início do contrato", type: "date" },
+  { key: "contract_end", label: "Fim do contrato", type: "date" },
+  { key: "meta_ads_account_id", label: "ID conta Meta Ads", type: "text", placeholder: "act_..." },
+  { key: "google_ads_account_id", label: "ID conta Google Ads", type: "text", placeholder: "XXX-XXX-XXXX" },
+  { key: "ga4_property_id", label: "ID propriedade GA4", type: "text", placeholder: "properties/..." },
+]
+
+export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientDetailViewProps) {
   const { profile } = useAuth()
   const [tab, setTab] = useState<Tab>("overview")
+  const [editingOverview, setEditingOverview] = useState(false)
+  const [overviewForm, setOverviewForm] = useState<Partial<Client>>({})
+  const [savingOverview, setSavingOverview] = useState(false)
   const [showAddModal, setShowAddModal] = useState(false)
   const [showAddChecklist, setShowAddChecklist] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
@@ -370,6 +393,26 @@ export function ClientDetailView({ client, onBack, onDelete }: ClientDetailViewP
   const flag = FLAG_META[client.health_flag]
   const status = STATUS_META[client.status]
   const canEdit = profile?.role === "admin" || profile?.role === "coordenador"
+
+  function startEditOverview() {
+    setOverviewForm({ ...client, notes: client.notes ?? "" })
+    setEditingOverview(true)
+  }
+
+  async function saveOverview() {
+    if (!onUpdate) return
+    setSavingOverview(true)
+    const { monthly_fee, monthly_investment, ...rest } = overviewForm
+    const feeStr = monthly_fee as unknown as string | number | null | undefined
+    const investStr = monthly_investment as unknown as string | number | null | undefined
+    await onUpdate({
+      ...rest,
+      monthly_fee: feeStr === "" || feeStr == null ? null : Number(feeStr),
+      monthly_investment: investStr === "" || investStr == null ? null : Number(investStr),
+    })
+    setSavingOverview(false)
+    setEditingOverview(false)
+  }
 
   async function handleAddManual(title: string, content: string) {
     await addEntry({ client_id: client.id, title, content, source: "manual", validated: true, created_by: profile?.id ?? null })
@@ -569,27 +612,87 @@ export function ClientDetailView({ client, onBack, onDelete }: ClientDetailViewP
 
         {tab === "overview" && (
           <div className="max-w-2xl">
-            <Field label={<><User size={11} className="inline mr-1" />Contato</>}         value={client.primary_contact_name} />
-            <Field label={<><Mail size={11} className="inline mr-1" />E-mail</>}           value={client.primary_contact_email && <a href={`mailto:${client.primary_contact_email}`} style={{ color: "var(--accent)" }}>{client.primary_contact_email}</a>} />
-            <Field label={<><Phone size={11} className="inline mr-1" />Telefone</>}        value={client.primary_contact_phone} />
-            <Field label={<><Globe size={11} className="inline mr-1" />Website</>}         value={client.website && <a href={client.website} target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent)" }}>{client.website.replace(/^https?:\/\//, "")}</a>} />
-            <Field label={<><Tag size={11} className="inline mr-1" />Segmento</>}          value={client.segment} />
-            <Field label={<><DollarSign size={11} className="inline mr-1" />Mensalidade</>} value={client.monthly_fee && <span style={{ color: "var(--accent)" }} className="font-medium">R$ {client.monthly_fee.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>} />
-            <Field label={<><Tag size={11} className="inline mr-1" />Tipo de serviço</>}   value={client.tipo_servico} />
-            <Field label="Origem do lead"      value={client.origem_lead} />
-            <Field label={<><Calendar size={11} className="inline mr-1" />Próxima reunião</>} value={client.proxima_reuniao && new Date(client.proxima_reuniao).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })} />
-            <Field label="Início do contrato" value={client.contract_start && new Date(client.contract_start).toLocaleDateString("pt-BR")} />
-            {client.notes && (
-              <div className="py-4" style={{ borderBottom: "1px solid var(--bg-surface-2)" }}>
-                <p className="text-xs mb-2" style={{ color: "var(--text-tertiary)" }}>Observações</p>
-                <p className="text-sm text-[var(--text-primary)] leading-relaxed whitespace-pre-wrap">{client.notes}</p>
+            {canEdit && onUpdate && (
+              <div className="flex justify-end mb-4">
+                {editingOverview ? (
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => setEditingOverview(false)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border" style={{ borderColor: "var(--border-strong)", color: "var(--text-tertiary)" }}>
+                      <X size={12} />Cancelar
+                    </button>
+                    <button onClick={saveOverview} disabled={savingOverview} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-50" style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}>
+                      {savingOverview ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+                      Salvar
+                    </button>
+                  </div>
+                ) : (
+                  <button onClick={startEditOverview} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border transition-colors" style={{ borderColor: "var(--border-strong)", color: "var(--text-tertiary)" }}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--accent)"; (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--accent-a44)"; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--text-tertiary)"; (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border-strong)"; }}>
+                    <Pencil size={12} />Editar informações
+                  </button>
+                )}
               </div>
             )}
-            {!client.primary_contact_name && !client.website && !client.segment && !client.monthly_fee && !client.notes && (
-              <div className="text-center py-12">
-                <p className="text-sm font-semibold text-[var(--text-primary)] mb-1">Nenhum dado adicional</p>
-                <p className="text-xs" style={{ color: "var(--text-quaternary)" }}>As informações do cliente aparecerão aqui</p>
+
+            {editingOverview ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  {OVERVIEW_FIELDS.map((f) => (
+                    <div key={f.key} className={f.type === "datetime-local" || f.key === "meta_ads_account_id" || f.key === "google_ads_account_id" || f.key === "ga4_property_id" ? "col-span-2 sm:col-span-1" : ""}>
+                      <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "var(--text-tertiary)" }}>{f.label}</label>
+                      <input
+                        type={f.type}
+                        value={(overviewForm[f.key] as string | number | null | undefined) ?? ""}
+                        onChange={(e) => setOverviewForm((form) => ({ ...form, [f.key]: e.target.value }))}
+                        placeholder={f.placeholder}
+                        className="w-full rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-quaternary)] focus:outline-none transition-colors"
+                        style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-strong)" }}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "var(--text-tertiary)" }}>Observações</label>
+                  <textarea
+                    value={overviewForm.notes ?? ""}
+                    onChange={(e) => setOverviewForm((form) => ({ ...form, notes: e.target.value }))}
+                    rows={4}
+                    placeholder="Notas internas sobre o cliente..."
+                    className="w-full rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-quaternary)] focus:outline-none transition-colors resize-none"
+                    style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-strong)" }}
+                  />
+                </div>
               </div>
+            ) : (
+              <>
+                <Field label={<><User size={11} className="inline mr-1" />Contato</>}         value={client.primary_contact_name} />
+                <Field label={<><Mail size={11} className="inline mr-1" />E-mail</>}           value={client.primary_contact_email && <a href={`mailto:${client.primary_contact_email}`} style={{ color: "var(--accent)" }}>{client.primary_contact_email}</a>} />
+                <Field label={<><Phone size={11} className="inline mr-1" />Telefone</>}        value={client.primary_contact_phone} />
+                <Field label={<><Globe size={11} className="inline mr-1" />Website</>}         value={client.website && <a href={client.website} target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent)" }}>{client.website.replace(/^https?:\/\//, "")}</a>} />
+                <Field label={<><Tag size={11} className="inline mr-1" />Segmento</>}          value={client.segment} />
+                <Field label={<><DollarSign size={11} className="inline mr-1" />Mensalidade</>} value={client.monthly_fee && <span style={{ color: "var(--accent)" }} className="font-medium">R$ {client.monthly_fee.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>} />
+                <Field label={<><DollarSign size={11} className="inline mr-1" />Investimento em mídia</>} value={client.monthly_investment && <span className="font-medium">R$ {client.monthly_investment.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>} />
+                <Field label={<><Tag size={11} className="inline mr-1" />Tipo de serviço</>}   value={client.tipo_servico} />
+                <Field label="Origem do lead"      value={client.origem_lead} />
+                <Field label={<><Calendar size={11} className="inline mr-1" />Próxima reunião</>} value={client.proxima_reuniao && new Date(client.proxima_reuniao).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })} />
+                <Field label="Início do contrato" value={client.contract_start && new Date(client.contract_start).toLocaleDateString("pt-BR")} />
+                <Field label="Fim do contrato" value={client.contract_end && new Date(client.contract_end).toLocaleDateString("pt-BR")} />
+                <Field label={<><Hash size={11} className="inline mr-1" />ID conta Meta Ads</>} value={client.meta_ads_account_id} />
+                <Field label={<><Hash size={11} className="inline mr-1" />ID conta Google Ads</>} value={client.google_ads_account_id} />
+                <Field label={<><Hash size={11} className="inline mr-1" />ID propriedade GA4</>} value={client.ga4_property_id} />
+                {client.notes && (
+                  <div className="py-4" style={{ borderBottom: "1px solid var(--bg-surface-2)" }}>
+                    <p className="text-xs mb-2" style={{ color: "var(--text-tertiary)" }}>Observações</p>
+                    <p className="text-sm text-[var(--text-primary)] leading-relaxed whitespace-pre-wrap">{client.notes}</p>
+                  </div>
+                )}
+                {!client.primary_contact_name && !client.website && !client.segment && !client.monthly_fee && !client.notes && (
+                  <div className="text-center py-12">
+                    <p className="text-sm font-semibold text-[var(--text-primary)] mb-1">Nenhum dado adicional</p>
+                    <p className="text-xs" style={{ color: "var(--text-quaternary)" }}>{canEdit ? "Clique em \"Editar informações\" para preencher." : "As informações do cliente aparecerão aqui"}</p>
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}
