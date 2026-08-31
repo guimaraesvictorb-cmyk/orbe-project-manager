@@ -309,7 +309,7 @@ function PerformanceChart({
   return (
     <div className="rounded-xl overflow-hidden" style={{ backgroundColor: CARD_BG, border: `1px solid ${BORDER}` }}>
       <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: `1px solid ${BORDER}` }}>
-        <span className="text-sm font-semibold text-white">Performance</span>
+        <span className="text-sm font-semibold text-[var(--text-primary)]">Performance</span>
         {data.length > 0 && (
           <div className="flex items-center gap-1">
             {CHART_METRICS.map(m => (
@@ -434,7 +434,7 @@ function CampaignTableSection({
 
   function getCellValue(row: CampaignRow, key: TableColKey): React.ReactNode {
     if (key === 'objective') return <span className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>{OBJECTIVE_LABEL[row.objective] ?? row.objective ?? '—'}</span>
-    if (key === 'name') return <span className="text-white font-medium text-xs truncate block" style={{ maxWidth: 210 }}>{row.name}</span>
+    if (key === 'name') return <span className="text-[var(--text-primary)] font-medium text-xs truncate block" style={{ maxWidth: 210 }}>{row.name}</span>
     if (key === 'status') {
       const active = row.status === 'ACTIVE'
       return (
@@ -446,7 +446,7 @@ function CampaignTableSection({
     }
     if (key === 'startTime') return <span className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>{fmtBR(row.startTime?.slice(0, 10) ?? '')}</span>
     if (key === 'budget') return <span className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>{fmtBudget(row.dailyBudget, row.lifetimeBudget)}</span>
-    if (key === 'spend') return <span className="text-xs font-semibold text-white">{fmtCurrency(row.spend)}</span>
+    if (key === 'spend') return <span className="text-xs font-semibold text-[var(--text-primary)]">{fmtCurrency(row.spend)}</span>
     if (key === 'cpc') return <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{row.cpc > 0 ? fmtCurrency(row.cpc) : '—'}</span>
     if (key === 'ctr') return <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{fmtPct(row.ctr)}</span>
     if (key === 'cpcLink') return <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{row.cpcLink > 0 ? fmtCurrency(row.cpcLink) : '—'}</span>
@@ -469,16 +469,16 @@ function CampaignTableSection({
   const totalCpr = totalResults > 0 ? totalSpend / totalResults : 0
 
   function getTotalCell(key: TableColKey): React.ReactNode {
-    if (key === 'name') return <span className="text-xs font-bold text-white">{filtered.length} campanhas</span>
-    if (key === 'spend') return <span className="text-xs font-bold text-white">{fmtCurrency(totalSpend)}</span>
-    if (key === 'cpc') return <span className="text-xs font-bold text-white">{totalCpc > 0 ? fmtCurrency(totalCpc) : '—'}</span>
-    if (key === 'ctr') return <span className="text-xs font-bold text-white">{fmtPct(totalCtr)}</span>
-    if (key === 'cpcLink') return <span className="text-xs font-bold text-white">{totalCpcLink > 0 ? fmtCurrency(totalCpcLink) : '—'}</span>
-    if (key === 'cpm') return <span className="text-xs font-bold text-white">{totalCpm > 0 ? fmtCurrency(totalCpm) : '—'}</span>
-    if (key === 'impressions') return <span className="text-xs font-bold text-white">{fmtInt(totalImp)}</span>
-    if (key === 'reach') return <span className="text-xs font-bold text-white">{fmtInt(totalReach)}</span>
-    if (key === 'results') return <span className="text-xs font-bold text-white">{fmtInt(totalResults)}</span>
-    if (key === 'costPerResult') return <span className="text-xs font-bold text-white">{totalCpr > 0 ? fmtCurrency(totalCpr) : '—'}</span>
+    if (key === 'name') return <span className="text-xs font-bold text-[var(--text-primary)]">{filtered.length} campanhas</span>
+    if (key === 'spend') return <span className="text-xs font-bold text-[var(--text-primary)]">{fmtCurrency(totalSpend)}</span>
+    if (key === 'cpc') return <span className="text-xs font-bold text-[var(--text-primary)]">{totalCpc > 0 ? fmtCurrency(totalCpc) : '—'}</span>
+    if (key === 'ctr') return <span className="text-xs font-bold text-[var(--text-primary)]">{fmtPct(totalCtr)}</span>
+    if (key === 'cpcLink') return <span className="text-xs font-bold text-[var(--text-primary)]">{totalCpcLink > 0 ? fmtCurrency(totalCpcLink) : '—'}</span>
+    if (key === 'cpm') return <span className="text-xs font-bold text-[var(--text-primary)]">{totalCpm > 0 ? fmtCurrency(totalCpm) : '—'}</span>
+    if (key === 'impressions') return <span className="text-xs font-bold text-[var(--text-primary)]">{fmtInt(totalImp)}</span>
+    if (key === 'reach') return <span className="text-xs font-bold text-[var(--text-primary)]">{fmtInt(totalReach)}</span>
+    if (key === 'results') return <span className="text-xs font-bold text-[var(--text-primary)]">{fmtInt(totalResults)}</span>
+    if (key === 'costPerResult') return <span className="text-xs font-bold text-[var(--text-primary)]">{totalCpr > 0 ? fmtCurrency(totalCpr) : '—'}</span>
     return null
   }
 
@@ -492,7 +492,7 @@ function CampaignTableSection({
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Buscar campanha..."
-            className="bg-transparent text-xs outline-none flex-1 text-white placeholder-gray-600"
+            className="bg-transparent text-xs outline-none flex-1 text-[var(--text-primary)] placeholder-gray-600"
           />
         </div>
 
@@ -671,18 +671,18 @@ function ConversionFunnel({ metrics }: { metrics: AccountMetrics | null }) {
   return (
     <div className="rounded-xl overflow-hidden" style={{ backgroundColor: CARD_BG, border: `1px solid ${BORDER}` }}>
       <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: `1px solid ${BORDER}` }}>
-        <span className="text-sm font-semibold text-white">Funil de Conversão</span>
+        <span className="text-sm font-semibold text-[var(--text-primary)]">Funil de Conversão</span>
         <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px]" style={{ border: `1px solid ${BORDER}`, color: 'var(--text-secondary)' }}>
           <Download size={11} /> Exportar PDF
         </button>
       </div>
       <div className="p-4 space-y-3">
         <div className="flex items-center gap-2 mb-2">
-          <span className="text-xs font-medium text-white px-3 py-1 rounded-full" style={{ backgroundColor: '#111827', border: `1px solid ${BORDER}` }}>
+          <span className="text-xs font-medium text-[var(--text-primary)] px-3 py-1 rounded-full" style={{ backgroundColor: '#111827', border: `1px solid ${BORDER}` }}>
             Todas as campanhas
           </span>
         </div>
-        <div className="text-[11px] font-semibold text-white mb-1" style={{ color: BLUE }}>
+        <div className="text-[11px] font-semibold text-[var(--text-primary)] mb-1" style={{ color: BLUE }}>
           Valor Investido: {fmtCurrency(spend)}
         </div>
         <div className="flex flex-col items-center gap-0">
@@ -705,9 +705,9 @@ function ConversionFunnel({ metrics }: { metrics: AccountMetrics | null }) {
                   border: `1px solid ${BLUE}44`,
                 }}
               >
-                <span className="text-sm font-bold text-white">{step.label}</span>
+                <span className="text-sm font-bold text-[var(--text-primary)]">{step.label}</span>
                 <div className="text-right">
-                  <div className="text-base font-bold text-white">{fmtInt(step.value)}</div>
+                  <div className="text-base font-bold text-[var(--text-primary)]">{fmtInt(step.value)}</div>
                   <div className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>{fmtCurrency(step.cost)}</div>
                 </div>
               </div>
@@ -830,7 +830,7 @@ export function MetaAdsLiveTab({ client }: Props) {
     return (
       <div className="rounded-xl py-16 text-center" style={{ backgroundColor: CARD_BG, border: `1px solid ${BORDER}` }}>
         <AlertCircle size={28} className="mx-auto mb-4" style={{ color: 'var(--text-quaternary)' }} />
-        <p className="text-sm font-semibold text-white mb-2">Conta não conectada</p>
+        <p className="text-sm font-semibold text-[var(--text-primary)] mb-2">Conta não conectada</p>
         <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
           {!token
             ? 'Configure o token Meta em Integrações → Meta Ads.'
@@ -846,10 +846,10 @@ export function MetaAdsLiveTab({ client }: Props) {
       {/* ── Header ── */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: BLUE }}>
+          <div className="w-7 h-7 rounded-full flex items-center justify-center text-[var(--text-primary)] text-xs font-bold" style={{ backgroundColor: BLUE }}>
             M
           </div>
-          <span className="text-base font-bold text-white">Meta Ads</span>
+          <span className="text-base font-bold text-[var(--text-primary)]">Meta Ads</span>
         </div>
 
         <div className="flex items-center gap-2">
@@ -946,7 +946,7 @@ export function MetaAdsLiveTab({ client }: Props) {
 
       {/* ── PDF de Campanhas ── */}
       <div className="rounded-xl p-4" style={{ backgroundColor: CARD_BG, border: `1px solid ${BORDER}` }}>
-        <div className="font-semibold text-white text-sm mb-2">PDF de Campanhas</div>
+        <div className="font-semibold text-[var(--text-primary)] text-sm mb-2">PDF de Campanhas</div>
         <p className="text-[11px] leading-relaxed mb-3" style={{ color: 'var(--text-secondary)' }}>
           Personalize as métricas que deseja exportar das campanhas diretamente na tabela acima. Reorganize as métricas, filtre pela ordem desejada, oculte campanhas, oculte métricas desnecessárias para a elaboração do relatório na opção "Organizar" e salve essas configurações sempre que necessário, de forma simples e intuitiva.
         </p>
@@ -969,7 +969,7 @@ export function MetaAdsLiveTab({ client }: Props) {
       {/* ── Melhores Anúncios ── */}
       <div className="rounded-xl p-4" style={{ backgroundColor: CARD_BG, border: `1px solid ${BORDER}` }}>
         <div className="flex items-center justify-between mb-4">
-          <span className="font-semibold text-white text-sm">Melhores Anúncios</span>
+          <span className="font-semibold text-[var(--text-primary)] text-sm">Melhores Anúncios</span>
           <span className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>{fmtBR(until)}</span>
         </div>
         <div className="flex flex-col items-center justify-center py-8 gap-4">
@@ -989,7 +989,7 @@ export function MetaAdsLiveTab({ client }: Props) {
 
       {/* ── Dados Demográficos ── */}
       <div className="rounded-xl p-4" style={{ backgroundColor: CARD_BG, border: `1px solid ${BORDER}` }}>
-        <div className="font-semibold text-white text-sm mb-4">Dados Demográficos</div>
+        <div className="font-semibold text-[var(--text-primary)] text-sm mb-4">Dados Demográficos</div>
         <div className="flex flex-col items-center justify-center py-8 gap-4">
           <Users size={28} style={{ color: '#2a3040' }} />
           <p className="text-sm text-center" style={{ color: 'var(--text-tertiary)' }}>
@@ -1007,7 +1007,7 @@ export function MetaAdsLiveTab({ client }: Props) {
       {/* ── Meta de Investimento ── */}
       <div className="rounded-xl p-4" style={{ backgroundColor: CARD_BG, border: `1px solid ${BORDER}` }}>
         <div className="flex items-center justify-between mb-4">
-          <span className="font-semibold text-white text-sm">Meta de Investimento</span>
+          <span className="font-semibold text-[var(--text-primary)] text-sm">Meta de Investimento</span>
           <span className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>
             {new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
           </span>

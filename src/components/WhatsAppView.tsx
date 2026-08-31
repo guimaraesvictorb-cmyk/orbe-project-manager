@@ -133,14 +133,14 @@ function ConfigModal({ onClose, onSave }: ConfigModalProps) {
     }
   }
 
-  const inp = "w-full rounded-lg px-3 py-2 text-xs text-white placeholder-[var(--text-quaternary)] focus:outline-none";
+  const inp = "w-full rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] placeholder-[var(--text-quaternary)] focus:outline-none";
   const inpStyle = { backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.85)" }}>
       <div className="rounded-2xl border w-full max-w-md" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
         <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: "var(--border)" }}>
-          <p className="text-sm font-semibold text-white">Conectar WhatsApp</p>
+          <p className="text-sm font-semibold text-[var(--text-primary)]">Conectar WhatsApp</p>
           <button onClick={() => { stopPolling(); onClose(); }}><X size={16} style={{ color: "var(--text-tertiary)" }} /></button>
         </div>
 
@@ -149,7 +149,7 @@ function ConfigModal({ onClose, onSave }: ConfigModalProps) {
           <div className="px-6 py-5 space-y-4">
             <div className="rounded-xl px-4 py-3 text-xs space-y-1" style={{ backgroundColor: "#0d1a0d", border: "1px solid var(--accent-a22)" }}>
               <p className="font-bold" style={{ color: "var(--accent)" }}>Pré-requisito: Evolution API no ar</p>
-              <p style={{ color: "#777" }}>Acesse <strong className="text-white">evolution-api.com</strong> e faça deploy gratuito no Railway ou Render. Depois cole a URL e a chave abaixo.</p>
+              <p style={{ color: "#777" }}>Acesse <strong className="text-[var(--text-primary)]">evolution-api.com</strong> e faça deploy gratuito no Railway ou Render. Depois cole a URL e a chave abaixo.</p>
             </div>
             <div>
               <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "var(--text-tertiary)" }}>URL da API *</label>
@@ -206,7 +206,7 @@ function ConfigModal({ onClose, onSave }: ConfigModalProps) {
             )}
             <div className="text-xs space-y-1" style={{ color: "var(--text-tertiary)" }}>
               <p>1. Abra o WhatsApp no celular</p>
-              <p>2. Vá em <strong className="text-white">Dispositivos conectados → Conectar dispositivo</strong></p>
+              <p>2. Vá em <strong className="text-[var(--text-primary)]">Dispositivos conectados → Conectar dispositivo</strong></p>
               <p>3. Aponte a câmera para o QR Code acima</p>
             </div>
             <div className="flex gap-2 w-full">
@@ -234,7 +234,7 @@ function ConfigModal({ onClose, onSave }: ConfigModalProps) {
             <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ backgroundColor: "#0d1f0d", border: "1px solid var(--accent-a44)" }}>
               <Check size={26} style={{ color: "var(--accent)" }} />
             </div>
-            <p className="text-sm font-bold text-white">WhatsApp conectado!</p>
+            <p className="text-sm font-bold text-[var(--text-primary)]">WhatsApp conectado!</p>
             <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>Configuração salva. Você já pode enviar mensagens.</p>
           </div>
         )}
@@ -309,7 +309,7 @@ export function WhatsAppView() {
     }
   }
 
-  const inp = "w-full rounded-lg px-3 py-2 text-xs text-white placeholder-[var(--text-quaternary)] focus:outline-none";
+  const inp = "w-full rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] placeholder-[var(--text-quaternary)] focus:outline-none";
   const inpStyle = { backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" };
 
   return (
@@ -319,7 +319,7 @@ export function WhatsAppView() {
         <div className="flex items-start justify-between">
           <div>
             <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "var(--accent)" }}>Comunicação</p>
-            <h2 className="text-white font-bold text-lg leading-tight">WhatsApp</h2>
+            <h2 className="text-[var(--text-primary)] font-bold text-lg leading-tight">WhatsApp</h2>
             <p className="text-xs mt-1" style={{ color: "var(--text-tertiary)" }}>Envie mensagens e templates para clientes via Evolution API.</p>
           </div>
           <button onClick={() => setShowConfig(true)} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors"
@@ -399,7 +399,7 @@ export function WhatsAppView() {
                   value={customText}
                   onChange={(e) => setCustomText(e.target.value)}
                   rows={12}
-                  className="w-full text-xs text-white leading-relaxed bg-transparent focus:outline-none resize-none"
+                  className="w-full text-xs text-[var(--text-primary)] leading-relaxed bg-transparent focus:outline-none resize-none"
                   placeholder="Escreva sua mensagem aqui..."
                 />
               </div>

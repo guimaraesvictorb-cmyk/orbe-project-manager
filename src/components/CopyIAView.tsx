@@ -146,7 +146,7 @@ function CopyCard({ result, onRegenerate, loading }: { result: CopyResult; onReg
                 {copied === key ? <Check size={12} /> : <Copy size={12} />}
               </button>
             </div>
-            <p className="text-sm text-white leading-relaxed whitespace-pre-wrap">{value}</p>
+            <p className="text-sm text-[var(--text-primary)] leading-relaxed whitespace-pre-wrap">{value}</p>
           </div>
         ))}
       </div>
@@ -196,9 +196,9 @@ export function CopyIAView() {
     }
   }
 
-  const sel = "rounded-lg px-3 py-2 text-xs text-white focus:outline-none appearance-none cursor-pointer";
+  const sel = "rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] focus:outline-none appearance-none cursor-pointer";
   const selStyle = { backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" };
-  const inp = "w-full rounded-lg px-3 py-2 text-xs text-white placeholder-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent-a44)] transition-colors";
+  const inp = "w-full rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] placeholder-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent-a44)] transition-colors";
   const inpStyle = { backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" };
 
   return (
@@ -206,7 +206,7 @@ export function CopyIAView() {
       <div className="max-w-screen-xl mx-auto w-full px-6 py-8 space-y-8">
         <div>
           <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "var(--accent)" }}>Ferramentas de IA</p>
-          <h2 className="text-white font-bold text-lg leading-tight">Copy IA</h2>
+          <h2 className="text-[var(--text-primary)] font-bold text-lg leading-tight">Copy IA</h2>
           <p className="text-xs mt-1" style={{ color: "var(--text-tertiary)" }}>Gere copy de alta conversão para Meta Ads, Google Ads, Instagram e WhatsApp.</p>
         </div>
 
@@ -295,7 +295,7 @@ export function CopyIAView() {
             {results.length === 0 ? (
               <div className="rounded-2xl border border-[var(--border)] py-20 flex flex-col items-center justify-center" style={{ backgroundColor: "var(--bg-surface)" }}>
                 <Sparkles size={28} className="mb-3" style={{ color: "#222" }} />
-                <p className="text-sm font-semibold text-white mb-1">Nenhum copy gerado ainda</p>
+                <p className="text-sm font-semibold text-[var(--text-primary)] mb-1">Nenhum copy gerado ainda</p>
                 <p className="text-xs" style={{ color: "var(--text-quaternary)" }}>Preencha o formulário e clique em Gerar</p>
               </div>
             ) : (

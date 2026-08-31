@@ -152,7 +152,7 @@ Tom profissional, em português brasileiro. Seja específico com os dados fornec
       {!report && !loading && (
         <div className="rounded-xl border border-[var(--border)] py-16 text-center" style={{ backgroundColor: "var(--bg-surface)" }}>
           <FileText size={28} className="mx-auto mb-3" style={{ color: "#222" }} />
-          <p className="text-sm font-semibold text-white mb-1">Relatório não gerado</p>
+          <p className="text-sm font-semibold text-[var(--text-primary)] mb-1">Relatório não gerado</p>
           <p className="text-xs" style={{ color: "var(--text-quaternary)" }}>
             Clique em "Gerar relatório com IA" para criar um relatório completo baseado nos dados do cliente
           </p>
@@ -190,7 +190,7 @@ export function RelatoriosView() {
       <div className="max-w-screen-xl mx-auto w-full px-6 py-8 space-y-6">
         <div>
           <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "var(--accent)" }}>Relatórios</p>
-          <h2 className="text-white font-bold text-lg leading-tight">Relatório de Cliente</h2>
+          <h2 className="text-[var(--text-primary)] font-bold text-lg leading-tight">Relatório de Cliente</h2>
           <p className="text-xs mt-1" style={{ color: "var(--text-tertiary)" }}>
             Selecione um cliente para gerar um relatório mensal completo com IA — inclui performance de anúncios, tarefas e recomendações.
           </p>
@@ -201,7 +201,7 @@ export function RelatoriosView() {
             <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "var(--text-tertiary)" }}>Cliente</label>
             <select
               value={selectedId} onChange={(e) => setSelectedId(e.target.value)}
-              className="rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none appearance-none min-w-[220px]"
+              className="rounded-lg px-3 py-2.5 text-sm text-[var(--text-primary)] focus:outline-none appearance-none min-w-[220px]"
               style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" }}
             >
               <option value="">Selecione um cliente...</option>
@@ -212,7 +212,7 @@ export function RelatoriosView() {
           </div>
           {selected && (
             <div className="text-xs" style={{ color: "var(--text-tertiary)" }}>
-              Período: <strong className="text-white">{new Date().toLocaleString("pt-BR", { month: "long", year: "numeric" })}</strong>
+              Período: <strong className="text-[var(--text-primary)]">{new Date().toLocaleString("pt-BR", { month: "long", year: "numeric" })}</strong>
             </div>
           )}
         </div>
@@ -222,7 +222,7 @@ export function RelatoriosView() {
         ) : (
           <div className="rounded-xl border border-[var(--border)] py-20 flex flex-col items-center" style={{ backgroundColor: "var(--bg-surface)" }}>
             <FileText size={32} className="mb-3" style={{ color: "#222" }} />
-            <p className="text-sm font-semibold text-white">Selecione um cliente acima</p>
+            <p className="text-sm font-semibold text-[var(--text-primary)]">Selecione um cliente acima</p>
             <p className="text-xs mt-1" style={{ color: "var(--text-quaternary)" }}>O relatório será gerado com base nos dados cadastrados</p>
           </div>
         )}

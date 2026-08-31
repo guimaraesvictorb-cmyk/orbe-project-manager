@@ -112,7 +112,7 @@ function NewRecordModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.8)" }}>
       <div className="w-full max-w-md rounded-2xl border p-6 space-y-4" style={{ backgroundColor: "var(--bg-surface-2)", borderColor: "var(--border)" }}>
-        <h3 className="text-white font-semibold text-sm">Novo lançamento</h3>
+        <h3 className="text-[var(--text-primary)] font-semibold text-sm">Novo lançamento</h3>
         <form onSubmit={submit} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -120,7 +120,7 @@ function NewRecordModal({
               <select
                 value={form.type}
                 onChange={(e) => setForm((p) => ({ ...p, type: e.target.value as FinancialRecord["type"] }))}
-                className="w-full bg-black border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[var(--accent)]"
+                className="w-full bg-[var(--bg-page)] border rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)]"
                 style={{ borderColor: "var(--border-subtle)" }}
               >
                 <option value="mensalidade">Mensalidade</option>
@@ -134,7 +134,7 @@ function NewRecordModal({
               <select
                 value={form.status}
                 onChange={(e) => setForm((p) => ({ ...p, status: e.target.value as PaymentStatus }))}
-                className="w-full bg-black border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[var(--accent)]"
+                className="w-full bg-[var(--bg-page)] border rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)]"
                 style={{ borderColor: "var(--border-subtle)" }}
               >
                 {(Object.keys(STATUS_CONFIG) as PaymentStatus[]).map((s) => (
@@ -148,7 +148,7 @@ function NewRecordModal({
             <select
               value={form.client_id}
               onChange={(e) => handleClientChange(e.target.value)}
-              className="w-full bg-black border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[var(--accent)]"
+              className="w-full bg-[var(--bg-page)] border rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)]"
               style={{ borderColor: "var(--border-subtle)" }}
             >
               <option value="">— sem cliente —</option>
@@ -161,7 +161,7 @@ function NewRecordModal({
               value={form.description}
               onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
               placeholder="ex: Mensalidade maio/2026"
-              className="w-full bg-black border rounded-lg px-3 py-2 text-xs text-white placeholder:text-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent)]"
+              className="w-full bg-[var(--bg-page)] border rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent)]"
               style={{ borderColor: "var(--border-subtle)" }}
             />
           </div>
@@ -173,7 +173,7 @@ function NewRecordModal({
                 value={form.amount}
                 onChange={(e) => setForm((p) => ({ ...p, amount: e.target.value }))}
                 placeholder="0"
-                className="w-full bg-black border rounded-lg px-3 py-2 text-xs text-white placeholder:text-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent)]"
+                className="w-full bg-[var(--bg-page)] border rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent)]"
                 style={{ borderColor: "var(--border-subtle)" }}
                 required
               />
@@ -184,7 +184,7 @@ function NewRecordModal({
                 type="date"
                 value={form.due_date}
                 onChange={(e) => setForm((p) => ({ ...p, due_date: e.target.value }))}
-                className="w-full bg-black border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[var(--accent)]"
+                className="w-full bg-[var(--bg-page)] border rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)]"
                 style={{ borderColor: "var(--border-subtle)" }}
                 required
               />
@@ -264,14 +264,14 @@ export function FinanceiroView() {
             <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "var(--accent)" }}>
               Financeiro
             </p>
-            <h2 className="text-white font-bold text-lg leading-tight">MRR & pagamentos</h2>
+            <h2 className="text-[var(--text-primary)] font-bold text-lg leading-tight">MRR & pagamentos</h2>
           </div>
           <div className="flex items-center gap-2">
             <input
               type="month"
               value={month}
               onChange={(e) => setMonth(e.target.value)}
-              className="bg-black border rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[var(--accent)]"
+              className="bg-[var(--bg-page)] border rounded-lg px-3 py-1.5 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)]"
               style={{ borderColor: "var(--border-subtle)" }}
             />
             <button
@@ -312,7 +312,7 @@ export function FinanceiroView() {
         {/* Records table */}
         <div className="rounded-2xl border overflow-hidden" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
           <div className="px-5 py-3 border-b" style={{ borderColor: "var(--border)" }}>
-            <p className="text-xs font-semibold text-white">Lançamentos — {month}</p>
+            <p className="text-xs font-semibold text-[var(--text-primary)]">Lançamentos — {month}</p>
           </div>
           {loading ? (
             <div className="px-5 py-10 text-center">
@@ -343,7 +343,7 @@ export function FinanceiroView() {
               <tbody>
                 {records.map((r) => (
                   <tr key={r.id} style={{ borderBottom: "1px solid var(--bg-surface-2)" }}>
-                    <td className="px-4 py-3 text-white font-medium">{r.client_id ? (clientMap[r.client_id] ?? "—") : "—"}</td>
+                    <td className="px-4 py-3 text-[var(--text-primary)] font-medium">{r.client_id ? (clientMap[r.client_id] ?? "—") : "—"}</td>
                     <td className="px-4 py-3" style={{ color: "var(--text-secondary)" }}>{r.description ?? "—"}</td>
                     <td className="px-4 py-3">
                       <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase" style={{ backgroundColor: "var(--border)", color: "var(--text-tertiary)" }}>
@@ -353,7 +353,7 @@ export function FinanceiroView() {
                     <td className="px-4 py-3" style={{ color: "var(--text-secondary)" }}>
                       {new Date(r.due_date + "T12:00:00").toLocaleDateString("pt-BR")}
                     </td>
-                    <td className="px-4 py-3 font-semibold text-white">{fmt(r.amount)}</td>
+                    <td className="px-4 py-3 font-semibold text-[var(--text-primary)]">{fmt(r.amount)}</td>
                     <td className="px-4 py-3">
                       <StatusDropdown record={r} onUpdate={handleMarkStatus} />
                     </td>

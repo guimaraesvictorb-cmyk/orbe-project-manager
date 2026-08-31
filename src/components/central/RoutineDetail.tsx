@@ -23,7 +23,7 @@ export function RoutineDetail({ routine, onBack }: RoutineDetailProps) {
       <div>
         <button
           onClick={onBack}
-          className="flex items-center gap-2 text-xs text-[var(--text-tertiary)] hover:text-white transition-colors duration-150 mb-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded"
+          className="flex items-center gap-2 text-xs text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors duration-150 mb-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded"
         >
           <ArrowLeft size={13} aria-hidden="true" />
           Voltar para Processos
@@ -31,7 +31,7 @@ export function RoutineDetail({ routine, onBack }: RoutineDetailProps) {
 
         <div className="flex items-start gap-4">
           <div
-            className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 text-white text-xs font-bold"
+            className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 text-[var(--text-primary)] text-xs font-bold"
             style={{ backgroundColor: routine.color + "33", border: `1px solid ${routine.color}55` }}
           >
             <span style={{ color: routine.color }}>{routine.shortRole}</span>
@@ -40,7 +40,7 @@ export function RoutineDetail({ routine, onBack }: RoutineDetailProps) {
             <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: routine.color }}>
               Rotina
             </p>
-            <h2 className="text-white font-bold text-xl leading-tight">{routine.role}</h2>
+            <h2 className="text-[var(--text-primary)] font-bold text-xl leading-tight">{routine.role}</h2>
             {routine.objective && (
               <p className="text-xs mt-1 leading-relaxed max-w-2xl" style={{ color: "var(--text-secondary)" }}>
                 {routine.objective}
@@ -87,7 +87,7 @@ export function RoutineDetail({ routine, onBack }: RoutineDetailProps) {
                       style={{ color: block.freqColor }}
                       aria-hidden="true"
                     />
-                    <span className="text-sm text-white leading-snug">{item.text}</span>
+                    <span className="text-sm text-[var(--text-primary)] leading-snug">{item.text}</span>
                   </div>
                   {item.subItems && (
                     <ul className="mt-1.5 ml-5 space-y-1" role="list">
@@ -138,7 +138,7 @@ export function RoutineDetail({ routine, onBack }: RoutineDetailProps) {
                       borderBottom: idx < routine.goals!.length - 1 ? "1px solid var(--bg-surface-2)" : "none",
                     }}
                   >
-                    <td className="px-4 py-2.5 text-sm text-white">{goal.indicator}</td>
+                    <td className="px-4 py-2.5 text-sm text-[var(--text-primary)]">{goal.indicator}</td>
                     <td className="px-4 py-2.5 text-right">
                       <span className="text-xs font-semibold" style={{ color: "var(--accent)" }}>
                         {goal.target}

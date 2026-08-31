@@ -28,7 +28,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-const inputCls = "w-full bg-black border rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-[var(--text-quaternary)] focus:outline-none transition-colors max-w-sm";
+const inputCls = "w-full bg-[var(--bg-page)] border rounded-lg px-3 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-quaternary)] focus:outline-none transition-colors max-w-sm";
 
 interface TeamMember { id: string; email: string; display_name: string; role: string; is_active: boolean; custom_sections: string[] | null }
 
@@ -146,7 +146,7 @@ function TeamPanel({ currentUserId }: { currentUserId: string }) {
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-1">
           <Users size={14} style={{ color: "var(--accent)" }} />
-          <p className="text-sm font-semibold text-white">Membros da equipe</p>
+          <p className="text-sm font-semibold text-[var(--text-primary)]">Membros da equipe</p>
         </div>
         <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>Gerencie as funções e acessos do time. A função define quais seções cada membro pode ver.</p>
       </div>
@@ -183,7 +183,7 @@ function TeamPanel({ currentUserId }: { currentUserId: string }) {
 
                 {/* Identity */}
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold text-white flex items-center gap-2 truncate">
+                  <p className="text-xs font-semibold text-[var(--text-primary)] flex items-center gap-2 truncate">
                     <span className="truncate">{member.display_name || member.email}</span>
                     {isMe && <span className="flex-shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: "var(--accent-tint)", color: "var(--accent)" }}>Você</span>}
                     {!member.is_active && <span className="flex-shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: "#1a0505", color: "var(--danger)" }}>Inativo</span>}
@@ -200,7 +200,7 @@ function TeamPanel({ currentUserId }: { currentUserId: string }) {
                       setRoleEdits((r) => ({ ...r, [member.id]: newRole }));
                       setSectionEdits((s) => ({ ...s, [member.id]: SECTION_ACCESS[newRole] ?? [] }));
                     }}
-                    className="rounded-lg px-2 py-1.5 text-xs text-white border appearance-none cursor-pointer focus:outline-none"
+                    className="rounded-lg px-2 py-1.5 text-xs text-[var(--text-primary)] border appearance-none cursor-pointer focus:outline-none"
                     style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border-strong)" }}
                   >
                     {ROLE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -390,7 +390,7 @@ export function ProfileView({ profile, userEmail }: ProfileViewProps) {
           {section === "perfil" && (
             <>
               <div className="flex items-center justify-between mb-8">
-                <h2 className="text-white font-semibold text-base">Configurações de perfil</h2>
+                <h2 className="text-[var(--text-primary)] font-semibold text-base">Configurações de perfil</h2>
                 <button
                   onClick={handleSaveName}
                   disabled={saving || !displayName.trim() || displayName.trim() === (profile?.display_name ?? "")}
@@ -408,7 +408,7 @@ export function ProfileView({ profile, userEmail }: ProfileViewProps) {
                   {(displayName || email).charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <p className="text-white font-semibold text-sm">{displayName || "—"}</p>
+                  <p className="text-[var(--text-primary)] font-semibold text-sm">{displayName || "—"}</p>
                   <p className="text-xs mt-0.5" style={{ color: "var(--text-tertiary)" }}>{email}</p>
                   {profile && (
                     <div className="flex items-center gap-1 mt-2">
@@ -476,7 +476,7 @@ export function ProfileView({ profile, userEmail }: ProfileViewProps) {
           {/* ── Equipe & Acessos ── */}
           {section === "equipe" && isAdmin && profile?.id && (
             <>
-              <h2 className="text-white font-semibold text-base mb-8">Equipe & Acessos</h2>
+              <h2 className="text-[var(--text-primary)] font-semibold text-base mb-8">Equipe & Acessos</h2>
               <TeamPanel currentUserId={profile.id} />
             </>
           )}
@@ -484,12 +484,12 @@ export function ProfileView({ profile, userEmail }: ProfileViewProps) {
           {/* ── Segurança ── */}
           {section === "seguranca" && (
             <>
-              <h2 className="text-white font-semibold text-base mb-8">Segurança</h2>
+              <h2 className="text-[var(--text-primary)] font-semibold text-base mb-8">Segurança</h2>
 
               <div className="mb-8">
                 <div className="flex items-center gap-2 mb-1">
                   <KeyRound size={14} style={{ color: "var(--accent)" }} />
-                  <p className="text-sm font-semibold text-white">Alterar senha</p>
+                  <p className="text-sm font-semibold text-[var(--text-primary)]">Alterar senha</p>
                 </div>
                 <p className="text-xs mb-6" style={{ color: "var(--text-tertiary)" }}>Após alterar, você será desconectado de todos os dispositivos.</p>
 
@@ -529,7 +529,7 @@ export function ProfileView({ profile, userEmail }: ProfileViewProps) {
               <div style={{ borderTop: "1px solid var(--bg-surface-2)", paddingTop: "2rem" }}>
                 <div className="flex items-center gap-2 mb-1">
                   <Globe size={14} style={{ color: "var(--accent)" }} />
-                  <p className="text-sm font-semibold text-white">Sessões ativas</p>
+                  <p className="text-sm font-semibold text-[var(--text-primary)]">Sessões ativas</p>
                 </div>
                 <p className="text-xs mb-6" style={{ color: "var(--text-tertiary)" }}>Dispositivos com acesso à sua conta.</p>
                 <div className="rounded-xl border overflow-hidden" style={{ borderColor: "var(--bg-surface-2)" }}>
@@ -541,7 +541,7 @@ export function ProfileView({ profile, userEmail }: ProfileViewProps) {
                   <div className="grid grid-cols-4 items-center px-4 py-3 gap-2">
                     <div className="flex items-center gap-2">
                       <Monitor size={13} style={{ color: "var(--accent)" }} />
-                      <span className="text-xs text-white">Este dispositivo</span>
+                      <span className="text-xs text-[var(--text-primary)]">Este dispositivo</span>
                     </div>
                     <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>Agora</span>
                     <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>Brasil</span>
@@ -560,12 +560,12 @@ export function ProfileView({ profile, userEmail }: ProfileViewProps) {
               <div style={{ borderTop: "1px solid var(--bg-surface-2)", paddingTop: "2rem", marginTop: "2rem" }}>
                 <div className="flex items-center gap-2 mb-1">
                   <ShieldCheck size={14} style={{ color: "var(--accent)" }} />
-                  <p className="text-sm font-semibold text-white">Verificação em 2 etapas</p>
+                  <p className="text-sm font-semibold text-[var(--text-primary)]">Verificação em 2 etapas</p>
                 </div>
                 <p className="text-xs mb-4" style={{ color: "var(--text-tertiary)" }}>Adicione uma camada extra de segurança à sua conta.</p>
                 <div className="flex items-center justify-between px-4 py-3 rounded-xl border" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--bg-surface-2)" }}>
                   <div>
-                    <p className="text-xs text-white font-medium">Autenticação por aplicativo</p>
+                    <p className="text-xs text-[var(--text-primary)] font-medium">Autenticação por aplicativo</p>
                     <p className="text-[11px] mt-0.5" style={{ color: "var(--text-quaternary)" }}>Google Authenticator, Authy, etc.</p>
                   </div>
                   <span className="text-[10px] font-bold px-2 py-1 rounded" style={{ backgroundColor: "var(--bg-surface-2)", color: "var(--text-quaternary)" }}>Em breve</span>

@@ -31,14 +31,14 @@ function ClientCard({ client, onHealthChange, onStatusChange, onSelect }: { clie
       {/* Top row */}
       <div className="flex items-start gap-3">
         <div
-          className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 text-white text-xs font-bold"
+          className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 text-[var(--text-primary)] text-xs font-bold"
           style={{ backgroundColor: avatarColor(client.id) }}
         >
           {initials(client.name)}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-white font-semibold text-sm leading-snug truncate">{client.name}</p>
+            <p className="text-[var(--text-primary)] font-semibold text-sm leading-snug truncate">{client.name}</p>
             {/* Health flag — clicável */}
             <div className="relative">
               <button
@@ -77,7 +77,7 @@ function ClientCard({ client, onHealthChange, onStatusChange, onSelect }: { clie
         {client.primary_contact_name && (
           <div className="flex justify-between">
             <span style={{ color: "var(--text-tertiary)" }}>Contato</span>
-            <span className="text-white truncate ml-2">{client.primary_contact_name}</span>
+            <span className="text-[var(--text-primary)] truncate ml-2">{client.primary_contact_name}</span>
           </div>
         )}
         {client.monthly_fee && (
@@ -178,7 +178,7 @@ function NewClientModal({ onClose, onSave }: { onClose: () => void; onSave: (dat
     }
   }
 
-  const inp = "w-full rounded-lg px-3 py-2 text-sm text-white placeholder-[var(--text-quaternary)] focus:outline-none transition-colors";
+  const inp = "w-full rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-quaternary)] focus:outline-none transition-colors";
   const inpStyle = { backgroundColor: "var(--bg-input)", border: "1px solid var(--border-strong)" };
 
   return (
@@ -189,7 +189,7 @@ function NewClientModal({ onClose, onSave }: { onClose: () => void; onSave: (dat
     >
       <div className="w-full max-w-lg rounded-2xl p-6 space-y-4 overflow-y-auto max-h-[90vh]" style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" }}>
         <div className="flex items-center justify-between">
-          <h3 className="text-white font-semibold text-sm">Novo Cliente</h3>
+          <h3 className="text-[var(--text-primary)] font-semibold text-sm">Novo Cliente</h3>
           <button onClick={onClose} style={{ color: "var(--text-tertiary)" }}><X size={16} /></button>
         </div>
 
@@ -332,7 +332,7 @@ export function ClientesSection({ compact = false, onSelectClient }: ClientesSec
     return true;
   }), [activeClients, filterStatus, filterFlag, search]);
 
-  const selectCls = "bg-[var(--bg-surface-2)] border border-[var(--border-strong)] rounded-lg px-3 py-2 text-xs text-white focus:outline-none transition-colors appearance-none cursor-pointer";
+  const selectCls = "bg-[var(--bg-surface-2)] border border-[var(--border-strong)] rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] focus:outline-none transition-colors appearance-none cursor-pointer";
 
   async function handleCreate(data: Partial<Client>): Promise<string | undefined> {
     if (!user) return "Usuário não autenticado";
@@ -357,7 +357,7 @@ export function ClientesSection({ compact = false, onSelectClient }: ClientesSec
       {!compact && (
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h2 className="text-white text-base font-semibold">Carteira de Clientes</h2>
+            <h2 className="text-[var(--text-primary)] text-base font-semibold">Carteira de Clientes</h2>
             <p className="text-xs mt-0.5" style={{ color: "var(--text-tertiary)" }}>
               {ativos} ativos · {emRisco} em risco
             </p>
@@ -385,7 +385,7 @@ export function ClientesSection({ compact = false, onSelectClient }: ClientesSec
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar por nome, segmento..."
-            className="w-full bg-[var(--bg-surface-2)] border border-[var(--border-strong)] rounded-lg pl-8 pr-3 py-2 text-xs text-white placeholder-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent-a44)] transition-colors"
+            className="w-full bg-[var(--bg-surface-2)] border border-[var(--border-strong)] rounded-lg pl-8 pr-3 py-2 text-xs text-[var(--text-primary)] placeholder-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent-a44)] transition-colors"
           />
         </div>
         <select className={selectCls} value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
@@ -405,7 +405,7 @@ export function ClientesSection({ compact = false, onSelectClient }: ClientesSec
 
       {filtered.length === 0 ? (
         <div className="rounded-xl border border-[var(--border)] py-16 text-center" style={{ backgroundColor: "var(--bg-surface)" }}>
-          <p className="text-white font-semibold text-sm mb-1">Nenhum cliente encontrado</p>
+          <p className="text-[var(--text-primary)] font-semibold text-sm mb-1">Nenhum cliente encontrado</p>
           <p className="text-xs mb-4" style={{ color: "var(--text-quaternary)" }}>
             {activeClients.length === 0 ? "Adicione o primeiro cliente da Orbe" : "Tente ajustar os filtros"}
           </p>

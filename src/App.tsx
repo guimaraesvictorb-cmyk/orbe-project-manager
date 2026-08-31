@@ -57,7 +57,7 @@ function App() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--bg-page)] flex items-center justify-center">
         <Loader2 size={24} className="animate-spin" style={{ color: "var(--accent)" }} />
       </div>
     );
@@ -69,7 +69,7 @@ function App() {
 
   return (
     <ThemeProvider>
-      <div className="flex h-screen bg-black text-white font-sans overflow-hidden">
+      <div className="flex h-screen bg-[var(--bg-page)] text-[var(--text-primary)] font-sans overflow-hidden">
         <AppNav active={view} onChange={navigate} profile={profile} onLogout={logout} />
 
         <main className="flex-1 overflow-y-auto min-h-0">

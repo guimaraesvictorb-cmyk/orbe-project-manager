@@ -113,7 +113,7 @@ function PhaseDetail({ phase }: { phase: Phase }) {
             {phase.label}
           </span>
           <div>
-            <h3 className="text-white font-semibold text-sm leading-tight">{phase.name}</h3>
+            <h3 className="text-[var(--text-primary)] font-semibold text-sm leading-tight">{phase.name}</h3>
             <p className="text-[11px] mt-0.5" style={{ color: "var(--accent)" }}>{phase.meta}</p>
           </div>
         </div>
@@ -178,7 +178,7 @@ function PhaseDetail({ phase }: { phase: Phase }) {
               style={{ color: "var(--accent)" }}
               aria-hidden="true"
             />
-            <span className="text-sm text-white leading-relaxed">{item}</span>
+            <span className="text-sm text-[var(--text-primary)] leading-relaxed">{item}</span>
           </li>
         ))}
       </ul>
@@ -210,7 +210,7 @@ export function OperacaoView() {
               </p>
               <h2
                 id="pipeline-title"
-                className="text-white font-bold text-lg leading-tight"
+                className="text-[var(--text-primary)] font-bold text-lg leading-tight"
               >
                 Jornada pós-venda do cliente
               </h2>
@@ -244,14 +244,14 @@ export function OperacaoView() {
               <TrendingDown size={18} style={{ color: "var(--danger)" }} />
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--danger)" }}>Churn</p>
-                <p className="text-white font-bold text-xl leading-tight">{churned.length}</p>
+                <p className="text-[var(--text-primary)] font-bold text-xl leading-tight">{churned.length}</p>
                 <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>cliente{churned.length !== 1 ? "s" : ""} perdido{churned.length !== 1 ? "s" : ""}</p>
               </div>
             </div>
             <div className="w-px h-10 hidden sm:block" style={{ backgroundColor: "#EF444433" }} />
             <div>
               <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--danger)" }}>Perda de Receita</p>
-              <p className="text-white font-bold text-xl leading-tight">
+              <p className="text-[var(--text-primary)] font-bold text-xl leading-tight">
                 R$ {churnRevenueLost.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
               </p>
               <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>por mês</p>

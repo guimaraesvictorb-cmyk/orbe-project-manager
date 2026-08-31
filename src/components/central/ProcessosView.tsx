@@ -36,7 +36,7 @@ function RoutineCard({
       </div>
 
       <div className="flex-1 min-w-0">
-        <p className="text-white font-semibold text-sm leading-snug mb-1">
+        <p className="text-[var(--text-primary)] font-semibold text-sm leading-snug mb-1">
           Rotina do {routine.role}
         </p>
         <p className="text-xs leading-relaxed truncate" style={{ color: "var(--text-tertiary)" }}>
@@ -83,7 +83,7 @@ function PlaceholderCard({ label }: { label: string }) {
         <Lock size={14} style={{ color: "var(--text-quaternary)" }} aria-hidden="true" />
       </div>
       <div>
-        <p className="text-white font-semibold text-sm">{label}</p>
+        <p className="text-[var(--text-primary)] font-semibold text-sm">{label}</p>
         <p className="text-[11px] mt-0.5" style={{ color: "var(--text-quaternary)" }}>Em construção</p>
       </div>
     </div>
@@ -108,7 +108,7 @@ export function ProcessosView() {
         <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "var(--accent)" }}>
           OPS · Processos
         </p>
-        <h2 className="text-white font-bold text-xl">Processos & Rotinas</h2>
+        <h2 className="text-[var(--text-primary)] font-bold text-xl">Processos & Rotinas</h2>
         <p className="text-xs mt-1" style={{ color: "var(--text-tertiary)" }}>
           Documentação operacional da Orbe. Clique em uma rotina para ver o checklist completo.
         </p>

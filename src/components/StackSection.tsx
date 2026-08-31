@@ -33,7 +33,7 @@ export function StackSection() {
               </span>
             )}
 
-            <p className="text-white font-semibold text-sm leading-snug mb-1 pr-12">
+            <p className="text-[var(--text-primary)] font-semibold text-sm leading-snug mb-1 pr-12">
               {skill.name}
             </p>
             <p className="text-[var(--text-secondary)] text-xs leading-relaxed">

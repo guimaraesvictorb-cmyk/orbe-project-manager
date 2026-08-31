@@ -177,7 +177,7 @@ export function MetaAdsIntegration() {
     }
   }
 
-  const inp = "w-full rounded-lg px-3 py-2 text-xs text-white placeholder-[var(--text-quaternary)] focus:outline-none";
+  const inp = "w-full rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] placeholder-[var(--text-quaternary)] focus:outline-none";
   const inpStyle = { backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" };
 
   return (
@@ -186,7 +186,7 @@ export function MetaAdsIntegration() {
       <div className="rounded-2xl border p-5 space-y-4" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-bold text-white">Meta Ads</p>
+            <p className="text-sm font-bold text-[var(--text-primary)]">Meta Ads</p>
             <p className="text-xs mt-0.5" style={{ color: "var(--text-tertiary)" }}>Conecte sua conta para sincronizar métricas automaticamente</p>
           </div>
           {savedToken && accounts.length > 0 && (
@@ -206,7 +206,7 @@ export function MetaAdsIntegration() {
             <p className="font-bold" style={{ color: "#1877F2" }}>Passo a passo:</p>
             <p style={{ color: "var(--text-tertiary)" }}>1. Acesse <a href="https://developers.facebook.com/tools/explorer" target="_blank" rel="noopener noreferrer" className="underline" style={{ color: "#1877F2" }}>developers.facebook.com/tools/explorer <ExternalLink size={10} className="inline" /></a></p>
             <p style={{ color: "var(--text-tertiary)" }}>2. Clique em "Generate Access Token"</p>
-            <p style={{ color: "var(--text-tertiary)" }}>3. Selecione as permissões: <strong className="text-white">ads_read</strong>, <strong className="text-white">ads_management</strong></p>
+            <p style={{ color: "var(--text-tertiary)" }}>3. Selecione as permissões: <strong className="text-[var(--text-primary)]">ads_read</strong>, <strong className="text-[var(--text-primary)]">ads_management</strong></p>
             <p style={{ color: "var(--text-tertiary)" }}>4. Copie o token gerado e cole abaixo</p>
             <p className="text-[10px] mt-1" style={{ color: "var(--text-quaternary)" }}>O token expira em 60 dias. Para tokens permanentes, configure um App próprio no Meta Developers.</p>
           </div>
@@ -242,7 +242,7 @@ export function MetaAdsIntegration() {
       {accounts.length > 0 && (
         <div className="rounded-2xl border overflow-hidden" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
           <div className="px-5 py-3 border-b" style={{ borderColor: "var(--bg-surface-2)" }}>
-            <p className="text-xs font-bold text-white">Sincronizar clientes</p>
+            <p className="text-xs font-bold text-[var(--text-primary)]">Sincronizar clientes</p>
             <p className="text-[10px] mt-0.5" style={{ color: "var(--text-tertiary)" }}>
               Para cada cliente, escolha a conta de anúncios correspondente e clique em Sincronizar
             </p>
@@ -254,8 +254,8 @@ export function MetaAdsIntegration() {
             </div>
           ) : activeClients.length === 0 ? (
             <div className="py-10 text-center space-y-2" style={{ color: "var(--text-quaternary)" }}>
-              <p className="text-xs font-semibold text-white">Nenhum cliente cadastrado</p>
-              <p className="text-[11px]">Vá para a seção <strong className="text-white">Clientes</strong> e adicione seus clientes primeiro.</p>
+              <p className="text-xs font-semibold text-[var(--text-primary)]">Nenhum cliente cadastrado</p>
+              <p className="text-[11px]">Vá para a seção <strong className="text-[var(--text-primary)]">Clientes</strong> e adicione seus clientes primeiro.</p>
             </div>
           ) : (
             <div className="divide-y" style={{ borderColor: "var(--bg-surface-2)" }}>
@@ -267,14 +267,14 @@ export function MetaAdsIntegration() {
                 return (
                   <div key={client.id} className="px-5 py-4 flex items-center gap-3">
                     <div className="w-36 flex-shrink-0">
-                      <p className="text-xs font-medium text-white truncate">{client.name}</p>
+                      <p className="text-xs font-medium text-[var(--text-primary)] truncate">{client.name}</p>
                       {result === "ok" && <p className="text-[10px] flex items-center gap-1 mt-0.5" style={{ color: "var(--accent)" }}><Check size={10} />Sincronizado</p>}
                       {result === "fail" && <p className="text-[10px] mt-0.5" style={{ color: "var(--danger)" }}>Falhou</p>}
                     </div>
                     <select
                       value={mapped}
                       onChange={(e) => setClientAccountMap((m) => ({ ...m, [client.id]: e.target.value }))}
-                      className="flex-1 rounded-lg px-3 py-2 text-xs text-white appearance-none focus:outline-none"
+                      className="flex-1 rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] appearance-none focus:outline-none"
                       style={inpStyle}>
                       <option value="">— Selecione a conta de anúncios —</option>
                       {accounts.map((a) => (

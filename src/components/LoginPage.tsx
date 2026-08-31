@@ -50,7 +50,7 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
             >
               Orbe
             </div>
-            <span className="text-white font-bold text-xl tracking-tight">Operating System</span>
+            <span className="text-[var(--text-primary)] font-bold text-xl tracking-tight">Operating System</span>
           </div>
           <p className="text-[11px] tracking-widest uppercase" style={{ color: "var(--text-tertiary)" }}>
             Plataforma Operacional Interna
@@ -75,7 +75,7 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
               placeholder="seu@email.com"
               autoComplete="email"
               required
-              className="w-full rounded-lg px-3 py-2.5 text-sm text-white placeholder-[var(--text-quaternary)] focus:outline-none transition-colors"
+              className="w-full rounded-lg px-3 py-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-quaternary)] focus:outline-none transition-colors"
               style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-strong)" }}
               onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent-a44)")}
               onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border-strong)")}
@@ -94,7 +94,7 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
                 placeholder="••••••••"
                 autoComplete="current-password"
                 required
-                className="w-full rounded-lg px-3 py-2.5 pr-10 text-sm text-white placeholder-[var(--text-quaternary)] focus:outline-none transition-colors"
+                className="w-full rounded-lg px-3 py-2.5 pr-10 text-sm text-[var(--text-primary)] placeholder-[var(--text-quaternary)] focus:outline-none transition-colors"
                 style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-strong)" }}
                 onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent-a44)")}
                 onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border-strong)")}

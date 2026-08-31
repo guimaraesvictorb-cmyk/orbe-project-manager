@@ -45,14 +45,14 @@ function inp(label: string, value: string, onChange: (v: string) => void, placeh
       <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: 'var(--text-tertiary)' }}>{label}</label>
       <input
         value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
-        className="w-full rounded-lg px-3 py-2 text-xs text-white placeholder-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent-a44)] transition-colors"
+        className="w-full rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] placeholder-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent-a44)] transition-colors"
         style={{ backgroundColor: 'var(--bg-surface-2)', border: '1px solid var(--border-strong)' }}
       />
       {presets && (
         <div className="flex flex-wrap gap-1 mt-1.5">
           {presets.map((p) => (
             <button key={p} onClick={() => onChange(p)}
-              className="text-[10px] px-2 py-0.5 rounded transition-colors hover:text-white"
+              className="text-[10px] px-2 py-0.5 rounded transition-colors hover:text-[var(--text-primary)]"
               style={{ backgroundColor: 'var(--bg-surface-2)', color: value === p ? 'var(--accent)' : 'var(--text-quaternary)', border: `1px solid ${value === p ? 'var(--accent-a33)' : 'var(--border)'}` }}>
               {p}
             </button>
@@ -102,7 +102,7 @@ export function RastreamentoView() {
 
         <div>
           <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: 'var(--accent)' }}>Rastreamento</p>
-          <h2 className="text-white font-bold text-lg leading-tight">Gerador de Links UTM</h2>
+          <h2 className="text-[var(--text-primary)] font-bold text-lg leading-tight">Gerador de Links UTM</h2>
           <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>Crie links rastreados para campanhas de anúncio, e-mail ou redes sociais.</p>
         </div>
 
@@ -164,7 +164,7 @@ export function RastreamentoView() {
             {history.length === 0 ? (
               <div className="rounded-xl border border-[var(--border)] py-12 text-center" style={{ backgroundColor: 'var(--bg-surface)' }}>
                 <QrCode size={24} className="mx-auto mb-2" style={{ color: '#222' }} />
-                <p className="text-sm text-white">Histórico vazio</p>
+                <p className="text-sm text-[var(--text-primary)]">Histórico vazio</p>
                 <p className="text-xs mt-1" style={{ color: 'var(--text-quaternary)' }}>Links salvos aparecem aqui</p>
               </div>
             ) : (
@@ -178,8 +178,8 @@ export function RastreamentoView() {
                         {link.campaign && <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ backgroundColor: 'var(--bg-surface-2)', color: 'var(--text-tertiary)' }}>{link.campaign}</span>}
                       </div>
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                        <button onClick={() => loadLink(link)} className="text-[11px] px-2 py-1 rounded hover:text-white" style={{ color: 'var(--text-tertiary)' }}>Usar</button>
-                        <button onClick={() => copyText(buildUTM(link), link.id)} className="p-1 rounded hover:text-white" style={{ color: 'var(--text-tertiary)' }}>
+                        <button onClick={() => loadLink(link)} className="text-[11px] px-2 py-1 rounded hover:text-[var(--text-primary)]" style={{ color: 'var(--text-tertiary)' }}>Usar</button>
+                        <button onClick={() => copyText(buildUTM(link), link.id)} className="p-1 rounded hover:text-[var(--text-primary)]" style={{ color: 'var(--text-tertiary)' }}>
                           {copied === link.id ? <Check size={11} style={{ color: 'var(--accent)' }} /> : <Copy size={11} />}
                         </button>
                         <button onClick={() => deleteLink(link.id)} className="p-1 rounded hover:text-red-500" style={{ color: 'var(--text-quaternary)' }}>

@@ -55,42 +55,42 @@ function PlatformSection({ metrics, platform }: { metrics: SharedMetric[]; platf
           return (
             <div key={m.id} className="rounded-xl border p-4" style={{ backgroundColor: "var(--bg-surface-2)", borderColor: "var(--border)" }}>
               <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-bold text-white capitalize">{period}</p>
+                <p className="text-xs font-bold text-[var(--text-primary)] capitalize">{period}</p>
                 <Trend curr={m.investimento} prev={prev?.investimento ?? null} />
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div>
                   <p className="text-[10px] uppercase tracking-widest mb-0.5" style={{ color: "var(--text-quaternary)" }}>Investimento</p>
-                  <p className="text-sm font-bold text-white">{fmt(m.investimento, "R$ ")}</p>
+                  <p className="text-sm font-bold text-[var(--text-primary)]">{fmt(m.investimento, "R$ ")}</p>
                 </div>
                 {platform === "meta" ? (
                   <>
                     <div>
                       <p className="text-[10px] uppercase tracking-widest mb-0.5" style={{ color: "var(--text-quaternary)" }}>Resultados</p>
-                      <p className="text-sm font-bold text-white">{fmtInt(m.resultados)}</p>
+                      <p className="text-sm font-bold text-[var(--text-primary)]">{fmtInt(m.resultados)}</p>
                     </div>
                     <div>
                       <p className="text-[10px] uppercase tracking-widest mb-0.5" style={{ color: "var(--text-quaternary)" }}>Custo/resultado</p>
-                      <p className="text-sm font-bold text-white">{fmt(m.custo_por_resultado, "R$ ")}</p>
+                      <p className="text-sm font-bold text-[var(--text-primary)]">{fmt(m.custo_por_resultado, "R$ ")}</p>
                     </div>
                     <div>
                       <p className="text-[10px] uppercase tracking-widest mb-0.5" style={{ color: "var(--text-quaternary)" }}>CTR</p>
-                      <p className="text-sm font-bold text-white">{m.ctr != null ? m.ctr + "%" : "—"}</p>
+                      <p className="text-sm font-bold text-[var(--text-primary)]">{m.ctr != null ? m.ctr + "%" : "—"}</p>
                     </div>
                   </>
                 ) : (
                   <>
                     <div>
                       <p className="text-[10px] uppercase tracking-widest mb-0.5" style={{ color: "var(--text-quaternary)" }}>Cliques</p>
-                      <p className="text-sm font-bold text-white">{fmtInt(m.cliques)}</p>
+                      <p className="text-sm font-bold text-[var(--text-primary)]">{fmtInt(m.cliques)}</p>
                     </div>
                     <div>
                       <p className="text-[10px] uppercase tracking-widest mb-0.5" style={{ color: "var(--text-quaternary)" }}>Conversões</p>
-                      <p className="text-sm font-bold text-white">{fmtInt(m.conversoes)}</p>
+                      <p className="text-sm font-bold text-[var(--text-primary)]">{fmtInt(m.conversoes)}</p>
                     </div>
                     <div>
                       <p className="text-[10px] uppercase tracking-widest mb-0.5" style={{ color: "var(--text-quaternary)" }}>ROAS</p>
-                      <p className="text-sm font-bold text-white">{m.roas ?? "—"}</p>
+                      <p className="text-sm font-bold text-[var(--text-primary)]">{m.roas ?? "—"}</p>
                     </div>
                   </>
                 )}
@@ -121,7 +121,7 @@ export function SharedDashboardPage({ token }: { token: string }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--bg-page)] flex items-center justify-center">
         <Loader2 size={24} className="animate-spin" style={{ color: "var(--accent)" }} />
       </div>
     );
@@ -129,8 +129,8 @@ export function SharedDashboardPage({ token }: { token: string }) {
 
   if (error || !client) {
     return (
-      <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-3">
-        <p className="text-white font-semibold">Link inválido</p>
+      <div className="min-h-screen bg-[var(--bg-page)] flex flex-col items-center justify-center gap-3">
+        <p className="text-[var(--text-primary)] font-semibold">Link inválido</p>
         <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>{error || "Este link não existe ou expirou."}</p>
       </div>
     );
@@ -140,16 +140,16 @@ export function SharedDashboardPage({ token }: { token: string }) {
   const status = STATUS_META[client.status as keyof typeof STATUS_META] ?? { label: "—", color: "var(--text-tertiary)" };
 
   return (
-    <div className="min-h-screen bg-black text-white font-sans">
+    <div className="min-h-screen bg-[var(--bg-page)] text-[var(--text-primary)] font-sans">
       {/* Header */}
       <div style={{ backgroundColor: "#050505", borderBottom: "1px solid var(--bg-surface-2)" }}>
         <div className="max-w-3xl mx-auto px-6 py-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="text-xl font-bold leading-none" style={{ fontFamily: "Arial, sans-serif", letterSpacing: "-2px" }}>
-              <span className="text-white">Orbe</span>
+              <span className="text-[var(--text-primary)]">Orbe</span>
             </div>
             <div>
-              <p className="text-white font-semibold text-xs leading-tight">Dashboard do Cliente</p>
+              <p className="text-[var(--text-primary)] font-semibold text-xs leading-tight">Dashboard do Cliente</p>
               <p className="text-[10px]" style={{ color: "var(--text-quaternary)" }}>Orbe Marketing</p>
             </div>
           </div>
@@ -160,7 +160,7 @@ export function SharedDashboardPage({ token }: { token: string }) {
       <div className="max-w-3xl mx-auto px-6 py-8 space-y-8">
         {/* Client info */}
         <div>
-          <h1 className="text-2xl font-bold text-white mb-1">{client.name}</h1>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-1">{client.name}</h1>
           <div className="flex items-center gap-3 flex-wrap">
             {client.segment && <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>{client.segment}</span>}
             {client.tipo_servico && <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>• {client.tipo_servico}</span>}

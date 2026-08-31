@@ -156,7 +156,7 @@ export function TaskTable({ tasks, onEdit, onDelete, onStatusChange }: TaskTable
   }
 
   const thCls =
-    "px-3 py-3 text-left text-[10px] font-semibold tracking-widest uppercase text-[var(--text-secondary)] whitespace-nowrap select-none cursor-pointer hover:text-white transition-colors duration-150";
+    "px-3 py-3 text-left text-[10px] font-semibold tracking-widest uppercase text-[var(--text-secondary)] whitespace-nowrap select-none cursor-pointer hover:text-[var(--text-primary)] transition-colors duration-150";
 
   function Th({ col, label }: { col: SortKey; label: string }) {
     return (
@@ -211,7 +211,7 @@ export function TaskTable({ tasks, onEdit, onDelete, onStatusChange }: TaskTable
                   {/* Title */}
                   <td className="px-3 py-3 max-w-[260px]">
                     <p
-                      className="text-sm font-medium text-white leading-snug truncate"
+                      className="text-sm font-medium text-[var(--text-primary)] leading-snug truncate"
                       title={task.title}
                     >
                       {overdue && (
@@ -304,7 +304,7 @@ export function TaskTable({ tasks, onEdit, onDelete, onStatusChange }: TaskTable
                     <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={() => onEdit(task)}
-                        className="w-7 h-7 rounded flex items-center justify-center text-[var(--text-secondary)] hover:text-white hover:bg-[var(--border-subtle)] transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+                        className="w-7 h-7 rounded flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border-subtle)] transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
                         aria-label={`Editar ${task.title}`}
                       >
                         <Pencil size={13} />

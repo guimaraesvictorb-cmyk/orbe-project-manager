@@ -26,7 +26,7 @@ function StatCard({ icon, label, value, sub, accent }: {
         <span className="text-xs font-bold tracking-widest uppercase" style={{ color: "var(--text-tertiary)" }}>{label}</span>
         <span style={{ color: accent ? "var(--accent)" : "var(--text-quaternary)" }}>{icon}</span>
       </div>
-      <p className="text-2xl font-bold text-white leading-none">{value}</p>
+      <p className="text-2xl font-bold text-[var(--text-primary)] leading-none">{value}</p>
       {sub && <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>{sub}</p>}
     </div>
   );
@@ -62,7 +62,7 @@ export function DashboardView() {
           <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "var(--accent)" }}>
             Dashboard
           </p>
-          <h2 className="text-white font-bold text-lg leading-tight">Visão geral da operação</h2>
+          <h2 className="text-[var(--text-primary)] font-bold text-lg leading-tight">Visão geral da operação</h2>
         </div>
 
         {/* KPI cards */}
@@ -148,7 +148,7 @@ export function DashboardView() {
                   return (
                     <div key={task.id} className="flex items-center justify-between px-4 py-3 gap-3" style={{ borderColor: "var(--border)" }}>
                       <div className="min-w-0">
-                        <p className="text-sm text-white truncate font-medium">{task.title}</p>
+                        <p className="text-sm text-[var(--text-primary)] truncate font-medium">{task.title}</p>
                         <p className="text-[11px]" style={{ color: "var(--text-tertiary)" }}>{client?.name ?? "—"}</p>
                       </div>
                       <span
@@ -184,7 +184,7 @@ export function DashboardView() {
                 atRiskClients.map((client) => (
                   <div key={client.id} className="flex items-center justify-between px-4 py-3 gap-3" style={{ borderColor: "var(--border)" }}>
                     <div className="min-w-0">
-                      <p className="text-sm text-white truncate font-medium">{client.name}</p>
+                      <p className="text-sm text-[var(--text-primary)] truncate font-medium">{client.name}</p>
                       <p className="text-[11px]" style={{ color: "var(--text-tertiary)" }}>{client.segment ?? "—"}</p>
                     </div>
                     <span

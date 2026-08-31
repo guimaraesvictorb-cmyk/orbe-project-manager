@@ -44,7 +44,7 @@ interface Message {
 function renderMarkdown(text: string) {
   return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
     part.startsWith("**") && part.endsWith("**")
-      ? <strong key={i} className="text-white">{part.slice(2, -2)}</strong>
+      ? <strong key={i} className="text-[var(--text-primary)]">{part.slice(2, -2)}</strong>
       : <span key={i}>{part}</span>
   );
 }
@@ -305,7 +305,7 @@ export function SuperAgenteView() {
               style={{ backgroundColor: "var(--accent-tint)", border: "1px solid var(--accent-a22)" }}>
               <Search size={20} style={{ color: "var(--accent)" }} />
             </div>
-            <p className="text-white font-semibold mb-1">Super Agente Orbe</p>
+            <p className="text-[var(--text-primary)] font-semibold mb-1">Super Agente Orbe</p>
             <p className="text-xs" style={{ color: "var(--text-quaternary)" }}>IA com busca web em tempo real. Pergunte sobre campanhas, benchmarks, estratégias e muito mais.</p>
           </div>
         )}
@@ -362,7 +362,7 @@ export function SuperAgenteView() {
           onClick={(e) => e.target === e.currentTarget && setShowSettings(false)}>
           <div className="w-full max-w-md rounded-2xl p-6 space-y-4" style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" }}>
             <div className="flex items-center justify-between">
-              <h3 className="text-white font-semibold text-sm">Configurar Super Agente</h3>
+              <h3 className="text-[var(--text-primary)] font-semibold text-sm">Configurar Super Agente</h3>
               <button onClick={() => setShowSettings(false)} style={{ color: "var(--text-tertiary)" }}><X size={16} /></button>
             </div>
             {[

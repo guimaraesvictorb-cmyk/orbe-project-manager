@@ -19,7 +19,7 @@ export function PhaseDetail({ phase }: PhaseDetailProps) {
           >
             {phase.label}
           </p>
-          <h2 className="text-white text-xl font-bold leading-snug">
+          <h2 className="text-[var(--text-primary)] text-xl font-bold leading-snug">
             {phase.name}
           </h2>
         </div>
@@ -52,7 +52,7 @@ export function PhaseDetail({ phase }: PhaseDetailProps) {
               style={{ backgroundColor: "var(--accent)" }}
               aria-hidden="true"
             />
-            <span className="text-sm text-white leading-relaxed">{item}</span>
+            <span className="text-sm text-[var(--text-primary)] leading-relaxed">{item}</span>
           </li>
         ))}
       </ul>

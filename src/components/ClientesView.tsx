@@ -22,7 +22,7 @@ export function ClientesView() {
           <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "var(--accent)" }}>
             Operação
           </p>
-          <h2 className="text-white font-bold text-lg leading-tight">Carteira de clientes</h2>
+          <h2 className="text-[var(--text-primary)] font-bold text-lg leading-tight">Carteira de clientes</h2>
         </div>
         <ClientesSection compact={false} onSelectClient={setSelectedClient} />
       </div>

@@ -18,7 +18,7 @@ export function CompiladoTab({ clientId }: CompiladoTabProps) {
   if (allPeriods.length === 0) {
     return (
       <div className="rounded-xl border border-[var(--border)] py-16 text-center max-w-2xl" style={{ backgroundColor: 'var(--bg-surface)' }}>
-        <p className="text-sm font-semibold text-white mb-1">Sem dados para compilar</p>
+        <p className="text-sm font-semibold text-[var(--text-primary)] mb-1">Sem dados para compilar</p>
         <p className="text-xs" style={{ color: 'var(--text-quaternary)' }}>Adicione métricas nas abas Meta Ads e Google Ads primeiro</p>
       </div>
     )
@@ -73,12 +73,12 @@ export function CompiladoTab({ clientId }: CompiladoTabProps) {
                 className="grid items-center px-4 py-3"
                 style={{ gridTemplateColumns: '130px 1fr 1fr 1fr 1fr 1fr', borderBottom: '1px solid var(--bg-surface-2)' }}
               >
-                <span className="text-xs font-semibold text-white capitalize">{label}</span>
+                <span className="text-xs font-semibold text-[var(--text-primary)] capitalize">{label}</span>
                 <span className="text-xs" style={{ color: '#1877F2' }}>{m ? fmtCurrency(m.investimento) : '—'}</span>
                 <span className="text-xs" style={{ color: '#EA4335' }}>{g ? fmtCurrency(g.investimento) : '—'}</span>
                 <span className="text-xs font-semibold" style={{ color: 'var(--accent)' }}>{fmtCurrency(totalP || null)}</span>
-                <span className="text-xs text-white">{cliques ? fmt(cliques) : '—'}</span>
-                <span className="text-xs text-white">{impressoes ? fmt(impressoes) : '—'}</span>
+                <span className="text-xs text-[var(--text-primary)]">{cliques ? fmt(cliques) : '—'}</span>
+                <span className="text-xs text-[var(--text-primary)]">{impressoes ? fmt(impressoes) : '—'}</span>
               </div>
             )
           })}

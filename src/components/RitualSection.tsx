@@ -24,7 +24,7 @@ export function RitualSection() {
               borderLeft: "3px solid var(--accent)",
             }}
           >
-            <p className="text-white font-semibold text-sm leading-snug mb-1">
+            <p className="text-[var(--text-primary)] font-semibold text-sm leading-snug mb-1">
               {ritual.name}
             </p>
             <p

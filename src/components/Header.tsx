@@ -16,7 +16,7 @@ const ROLE_LABELS: Record<string, string> = {
 export function Header({ profile, onLogout }: HeaderProps) {
   return (
     <header
-      className="sticky top-0 z-50 bg-black border-b-2 px-6 py-4"
+      className="sticky top-0 z-50 bg-[var(--bg-page)] border-b-2 px-6 py-4"
       style={{ borderBottomColor: "var(--accent)" }}
     >
       <div className="max-w-screen-xl mx-auto flex items-center justify-between gap-4">
@@ -26,13 +26,13 @@ export function Header({ profile, onLogout }: HeaderProps) {
             className="flex-shrink-0 text-2xl font-bold leading-none select-none"
             style={{ fontFamily: "Arial, sans-serif", letterSpacing: "-1px" }}
           >
-            <span className="text-white">Orbe</span>
+            <span className="text-[var(--text-primary)]">Orbe</span>
           </div>
 
           <div className="hidden sm:block w-px h-8 bg-[var(--border-subtle)]" />
 
           <div className="min-w-0">
-            <p className="text-white font-semibold text-sm leading-tight tracking-wide">
+            <p className="text-[var(--text-primary)] font-semibold text-sm leading-tight tracking-wide">
               Operating System
             </p>
             <p className="text-xs leading-tight mt-0.5" style={{ color: "var(--text-secondary)" }}>

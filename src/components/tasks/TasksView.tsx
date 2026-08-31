@@ -59,7 +59,7 @@ function TaskModal({ task, clients, profiles, onClose, onSave, onDelete, current
   );
   const [saving, setSaving] = useState(false);
   const inputStyle = { backgroundColor: "var(--bg-input)", border: "1px solid var(--border-strong)" };
-  const inputCls = "w-full rounded-lg px-3 py-2 text-sm text-white placeholder-[var(--text-quaternary)] focus:outline-none transition-colors";
+  const inputCls = "w-full rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-quaternary)] focus:outline-none transition-colors";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -75,7 +75,7 @@ function TaskModal({ task, clients, profiles, onClose, onSave, onDelete, current
       onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="w-full max-w-lg rounded-2xl p-6 space-y-4" style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" }}>
         <div className="flex items-center justify-between">
-          <h3 className="text-white font-semibold text-sm">{task ? "Editar Tarefa" : "Nova Tarefa"}</h3>
+          <h3 className="text-[var(--text-primary)] font-semibold text-sm">{task ? "Editar Tarefa" : "Nova Tarefa"}</h3>
           <button onClick={onClose} style={{ color: "var(--text-tertiary)" }}><X size={16} /></button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-3">
@@ -278,7 +278,7 @@ export function TasksView({ clientId }: { clientId?: string }) {
         <div className="rounded-xl border border-[var(--border)] overflow-hidden">
           {filtered.length === 0 ? (
             <div className="py-16 text-center">
-              <p className="text-white font-semibold text-sm mb-1">Nenhuma tarefa</p>
+              <p className="text-[var(--text-primary)] font-semibold text-sm mb-1">Nenhuma tarefa</p>
               <p className="text-xs mb-4" style={{ color: "var(--text-quaternary)" }}>Crie a primeira tarefa para começar</p>
               <button onClick={() => setEditing("new")} className="text-xs font-semibold px-4 py-2 rounded-lg" style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}>
                 + Nova Tarefa
@@ -303,7 +303,7 @@ export function TasksView({ clientId }: { clientId?: string }) {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           {isOverdue && <span className="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" />}
-                          <span className="text-sm text-white">{task.title}</span>
+                          <span className="text-sm text-[var(--text-primary)]">{task.title}</span>
                         </div>
                       </td>
                       <td className="px-4 py-3">
@@ -352,7 +352,7 @@ export function TasksView({ clientId }: { clientId?: string }) {
                         onMouseLeave={(e) => ((e.currentTarget as HTMLDivElement).style.borderColor = "var(--border)")}
                         onClick={() => setEditing(task)}>
                         <div className="flex items-start justify-between gap-2 mb-2">
-                          <p className="text-sm text-white leading-snug">{task.title}</p>
+                          <p className="text-sm text-[var(--text-primary)] leading-snug">{task.title}</p>
                           {isOverdue && <span className="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0 mt-1.5" />}
                         </div>
                         {client && <span className="text-[9px] font-medium px-1.5 py-0.5 rounded" style={{ backgroundColor: "var(--bg-surface-2)", color: "var(--text-tertiary)" }}>{client.name}</span>}

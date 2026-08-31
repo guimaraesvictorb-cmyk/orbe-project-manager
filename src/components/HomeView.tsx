@@ -500,7 +500,7 @@ export function HomeView({ profile, onNavigate }: HomeViewProps) {
           >
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-white font-semibold text-sm">Configurar Orbe AI</h3>
+                <h3 className="text-[var(--text-primary)] font-semibold text-sm">Configurar Orbe AI</h3>
                 <p className="text-[11px] mt-0.5" style={{ color: "var(--text-tertiary)" }}>
                   Sua API key é salva localmente, nunca enviada a terceiros.
                 </p>

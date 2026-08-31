@@ -30,7 +30,7 @@ function Field({ label, value }: { label: React.ReactNode; value: React.ReactNod
   return (
     <div className="grid grid-cols-[160px_1fr] items-start gap-4 py-3" style={{ borderBottom: "1px solid var(--bg-surface-2)" }}>
       <p className="text-xs pt-0.5" style={{ color: "var(--text-tertiary)" }}>{label}</p>
-      <div className="text-sm text-white">{value}</div>
+      <div className="text-sm text-[var(--text-primary)]">{value}</div>
     </div>
   )
 }
@@ -46,7 +46,7 @@ function KnowledgeCard({ entry, onValidate, onDelete }: {
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <p className="text-sm font-semibold text-white leading-snug">{entry.title}</p>
+            <p className="text-sm font-semibold text-[var(--text-primary)] leading-snug">{entry.title}</p>
             <span
               className="text-[9px] font-bold tracking-widest uppercase px-1.5 py-0.5 rounded"
               style={{ backgroundColor: src.bg, color: src.color }}
@@ -98,7 +98,7 @@ function AddEntryModal({ onClose, onSave }: {
     onClose()
   }
 
-  const inputCls = "w-full rounded-lg px-3 py-2.5 text-sm text-white placeholder-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent-a44)] transition-colors"
+  const inputCls = "w-full rounded-lg px-3 py-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent-a44)] transition-colors"
   const inputStyle = { backgroundColor: "var(--bg-input)", border: "1px solid var(--border-strong)" }
 
   return (
@@ -109,7 +109,7 @@ function AddEntryModal({ onClose, onSave }: {
     >
       <div className="w-full max-w-lg rounded-2xl p-6 space-y-4" style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" }}>
         <div className="flex items-center justify-between">
-          <h3 className="text-white font-semibold text-sm">Adicionar Informação</h3>
+          <h3 className="text-[var(--text-primary)] font-semibold text-sm">Adicionar Informação</h3>
           <button onClick={onClose} style={{ color: "var(--text-tertiary)" }}><X size={16} /></button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-3">
@@ -259,7 +259,7 @@ Use APENAS as informações acima. Não invente dados. Se não souber algo sobre
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center max-w-xs">
           <Brain size={32} className="mx-auto mb-3" style={{ color: "var(--text-quaternary)" }} />
-          <p className="text-sm font-semibold text-white mb-1">IA não configurada</p>
+          <p className="text-sm font-semibold text-[var(--text-primary)] mb-1">IA não configurada</p>
           <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
             Configure sua chave Groq no assistente principal (aba Home) para ativar a IA por cliente.
           </p>
@@ -273,7 +273,7 @@ Use APENAS as informações acima. Não invente dados. Se não souber algo sobre
       <div className="flex items-center gap-2 px-4 py-2 rounded-xl mb-4" style={{ backgroundColor: "#0a0f0d", border: "1px solid var(--accent-tint)" }}>
         <BookOpen size={12} style={{ color: "var(--accent)" }} />
         <p className="text-[11px]" style={{ color: "var(--text-tertiary)" }}>
-          IA especializada em <span className="text-white font-medium">{client.name}</span> —{" "}
+          IA especializada em <span className="text-[var(--text-primary)] font-medium">{client.name}</span> —{" "}
           {validated.length} {validated.length === 1 ? "informação validada" : "informações validadas"}
         </p>
       </div>
@@ -282,7 +282,7 @@ Use APENAS as informações acima. Não invente dados. Se não souber algo sobre
         {messages.length === 0 && (
           <div className="text-center py-12">
             <Brain size={28} className="mx-auto mb-3" style={{ color: "#222" }} />
-            <p className="text-sm font-semibold text-white mb-1">IA do Cliente</p>
+            <p className="text-sm font-semibold text-[var(--text-primary)] mb-1">IA do Cliente</p>
             <p className="text-xs" style={{ color: "var(--text-quaternary)" }}>
               Pergunte qualquer coisa sobre {client.name}. Uso apenas informações validadas.
             </p>
@@ -322,7 +322,7 @@ Use APENAS as informações acima. Não invente dados. Se não souber algo sobre
           onChange={(e) => setInput(e.target.value)}
           placeholder={`Pergunte sobre ${client.name}...`}
           disabled={streaming}
-          className="flex-1 rounded-xl px-4 py-3 text-sm text-white placeholder-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent-a44)] transition-colors"
+          className="flex-1 rounded-xl px-4 py-3 text-sm text-[var(--text-primary)] placeholder-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent-a44)] transition-colors"
           style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" }}
         />
         <button
@@ -441,7 +441,7 @@ export function ClientDetailView({ client, onBack }: ClientDetailViewProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.8)" }}>
           <div className="rounded-2xl border w-full max-w-md" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
             <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: "var(--border)" }}>
-              <p className="text-sm font-semibold text-white">Links de acesso do cliente</p>
+              <p className="text-sm font-semibold text-[var(--text-primary)]">Links de acesso do cliente</p>
               <button onClick={() => setShowShareModal(false)}><X size={16} style={{ color: "var(--text-tertiary)" }} /></button>
             </div>
             <div className="px-6 py-5 space-y-4">
@@ -457,7 +457,7 @@ export function ClientDetailView({ client, onBack }: ClientDetailViewProps) {
               {tokens.map((t) => (
                 <div key={t.id} className="rounded-xl border p-3 flex items-center gap-3" style={{ borderColor: "var(--border)" }}>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-white truncate">{t.label ?? "Link"}</p>
+                    <p className="text-xs font-medium text-[var(--text-primary)] truncate">{t.label ?? "Link"}</p>
                     <p className="text-[10px] truncate" style={{ color: "var(--text-quaternary)" }}>{window.location.origin}?share={t.token}</p>
                     {t.expires_at && <p className="text-[10px]" style={{ color: "var(--danger)" }}>Expira: {new Date(t.expires_at).toLocaleDateString("pt-BR")}</p>}
                   </div>
@@ -478,20 +478,20 @@ export function ClientDetailView({ client, onBack }: ClientDetailViewProps) {
       <div className="flex items-center gap-4 px-8 py-5" style={{ borderBottom: "1px solid var(--bg-surface-2)" }}>
         <button
           onClick={onBack}
-          className="p-1.5 rounded-lg transition-colors hover:bg-[var(--bg-surface-2)] hover:text-white"
+          className="p-1.5 rounded-lg transition-colors hover:bg-[var(--bg-surface-2)] hover:text-[var(--text-primary)]"
           style={{ color: "var(--text-tertiary)" }}
         >
           <ArrowLeft size={16} />
         </button>
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <div
-            className="w-9 h-9 rounded-lg flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
+            className="w-9 h-9 rounded-lg flex items-center justify-center text-[var(--text-primary)] text-sm font-bold flex-shrink-0"
             style={{ backgroundColor: "var(--accent-a22)", border: "1px solid var(--accent-a33)" }}
           >
             {client.name.charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0">
-            <h1 className="text-white font-semibold text-base leading-tight truncate">{client.name}</h1>
+            <h1 className="text-[var(--text-primary)] font-semibold text-base leading-tight truncate">{client.name}</h1>
             {client.segment && <p className="text-xs truncate" style={{ color: "var(--text-tertiary)" }}>{client.segment}</p>}
           </div>
           <span
@@ -545,12 +545,12 @@ export function ClientDetailView({ client, onBack }: ClientDetailViewProps) {
             {client.notes && (
               <div className="py-4" style={{ borderBottom: "1px solid var(--bg-surface-2)" }}>
                 <p className="text-xs mb-2" style={{ color: "var(--text-tertiary)" }}>Observações</p>
-                <p className="text-sm text-white leading-relaxed whitespace-pre-wrap">{client.notes}</p>
+                <p className="text-sm text-[var(--text-primary)] leading-relaxed whitespace-pre-wrap">{client.notes}</p>
               </div>
             )}
             {!client.primary_contact_name && !client.website && !client.segment && !client.monthly_fee && !client.notes && (
               <div className="text-center py-12">
-                <p className="text-sm font-semibold text-white mb-1">Nenhum dado adicional</p>
+                <p className="text-sm font-semibold text-[var(--text-primary)] mb-1">Nenhum dado adicional</p>
                 <p className="text-xs" style={{ color: "var(--text-quaternary)" }}>As informações do cliente aparecerão aqui</p>
               </div>
             )}
@@ -596,14 +596,14 @@ export function ClientDetailView({ client, onBack }: ClientDetailViewProps) {
                     placeholder="Título do item..."
                     required
                     autoFocus
-                    className="w-full rounded-lg px-3 py-2 text-sm text-white placeholder-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent-a44)] transition-colors"
+                    className="w-full rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent-a44)] transition-colors"
                     style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" }}
                   />
                   <input
                     value={newItemCategory}
                     onChange={(e) => setNewItemCategory(e.target.value)}
                     placeholder="Categoria (opcional)"
-                    className="w-full rounded-lg px-3 py-2 text-xs text-white placeholder-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent-a44)] transition-colors"
+                    className="w-full rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] placeholder-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent-a44)] transition-colors"
                     style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" }}
                   />
                 </div>
@@ -622,7 +622,7 @@ export function ClientDetailView({ client, onBack }: ClientDetailViewProps) {
             {items.length === 0 ? (
               <div className="rounded-xl border border-[var(--border)] py-16 text-center" style={{ backgroundColor: "var(--bg-surface)" }}>
                 <ListChecks size={28} className="mx-auto mb-3" style={{ color: "#222" }} />
-                <p className="text-sm font-semibold text-white mb-1">Checklist vazio</p>
+                <p className="text-sm font-semibold text-[var(--text-primary)] mb-1">Checklist vazio</p>
                 <p className="text-xs" style={{ color: "var(--text-quaternary)" }}>Adicione itens para acompanhar o progresso do cliente</p>
               </div>
             ) : (
@@ -738,7 +738,7 @@ export function ClientDetailView({ client, onBack }: ClientDetailViewProps) {
               {validated.length === 0 && pending.length === 0 && (
                 <div className="text-center py-16 rounded-xl border border-[var(--border)]" style={{ backgroundColor: "var(--bg-surface)" }}>
                   <BookOpen size={28} className="mx-auto mb-3" style={{ color: "#222" }} />
-                  <p className="text-sm font-semibold text-white mb-1">Base de conhecimento vazia</p>
+                  <p className="text-sm font-semibold text-[var(--text-primary)] mb-1">Base de conhecimento vazia</p>
                   <p className="text-xs mb-4" style={{ color: "var(--text-quaternary)" }}>
                     Adicione informações manualmente ou use a IA para sugerir conteúdo relevante
                   </p>

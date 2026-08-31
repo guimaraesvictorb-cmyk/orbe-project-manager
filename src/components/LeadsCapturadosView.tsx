@@ -31,7 +31,7 @@ function CaptureRow({ capture, onConvert, onDelete }: {
     <div className="flex items-center gap-3 px-5 py-3 border-b group" style={{ borderColor: "var(--bg-surface-2)" }}>
       <div className="flex-1 min-w-0 grid grid-cols-[1fr_1fr_140px_100px] gap-3 items-center">
         <div className="min-w-0">
-          <p className="text-xs font-medium text-white truncate">{capture.name ?? "—"}</p>
+          <p className="text-xs font-medium text-[var(--text-primary)] truncate">{capture.name ?? "—"}</p>
           <p className="text-[10px] truncate" style={{ color: "var(--text-quaternary)" }}>{capture.email ?? capture.phone ?? "sem contato"}</p>
         </div>
         <div className="min-w-0">
@@ -98,15 +98,15 @@ function ConvertModal({ capture, onClose, onConverted }: {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.8)" }}>
       <div className="rounded-2xl border w-full max-w-sm" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
         <div className="px-6 py-5 space-y-4">
-          <p className="text-sm font-semibold text-white">Mover para pipeline</p>
+          <p className="text-sm font-semibold text-[var(--text-primary)]">Mover para pipeline</p>
           <div>
-            <p className="text-xs mb-1" style={{ color: "var(--text-tertiary)" }}>Lead: <strong className="text-white">{capture.name}</strong></p>
+            <p className="text-xs mb-1" style={{ color: "var(--text-tertiary)" }}>Lead: <strong className="text-[var(--text-primary)]">{capture.name}</strong></p>
             {capture.utm_source && <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>Fonte: {capture.utm_source} / {capture.utm_medium}</p>}
           </div>
           <div>
             <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "var(--text-tertiary)" }}>Etapa inicial</label>
             <select value={stageId} onChange={(e) => setStageId(e.target.value)}
-              className="w-full rounded-lg px-3 py-2 text-xs text-white appearance-none focus:outline-none"
+              className="w-full rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] appearance-none focus:outline-none"
               style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" }}>
               {stages.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
@@ -161,7 +161,7 @@ fetch("${url}", {
       <div className="flex items-center justify-between px-5 py-3 border-b" style={{ borderColor: "var(--bg-surface-2)" }}>
         <div className="flex items-center gap-2">
           <Code size={14} style={{ color: "var(--accent)" }} />
-          <p className="text-xs font-bold text-white">Código de integração para seu site</p>
+          <p className="text-xs font-bold text-[var(--text-primary)]">Código de integração para seu site</p>
         </div>
         <button onClick={copy} className="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-lg" style={{ backgroundColor: "var(--bg-surface-2)", color: copied ? "var(--accent)" : "var(--text-tertiary)" }}>
           {copied ? <Check size={11} /> : <Copy size={11} />}{copied ? "Copiado!" : "Copiar"}
@@ -213,7 +213,7 @@ export function LeadsCapturadosView() {
         <div className="flex items-start justify-between">
           <div>
             <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "var(--accent)" }}>Geração de Leads</p>
-            <h2 className="text-white font-bold text-lg leading-tight">Leads Capturados</h2>
+            <h2 className="text-[var(--text-primary)] font-bold text-lg leading-tight">Leads Capturados</h2>
             <p className="text-xs mt-1" style={{ color: "var(--text-tertiary)" }}>Leads capturados via formulários com rastreamento UTM completo.</p>
           </div>
           <button onClick={() => setShowCode(!showCode)} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border"
@@ -243,14 +243,14 @@ export function LeadsCapturadosView() {
           <div className="relative">
             <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--text-quaternary)" }} />
             <input value={search} onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar leads..." className="pl-8 pr-3 py-2 rounded-lg text-xs text-white focus:outline-none"
+              placeholder="Buscar leads..." className="pl-8 pr-3 py-2 rounded-lg text-xs text-[var(--text-primary)] focus:outline-none"
               style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)", width: 220 }} />
           </div>
           {sources.length > 0 && (
             <div className="relative">
               <Filter size={12} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--text-quaternary)" }} />
               <select value={filterSource} onChange={(e) => setFilterSource(e.target.value)}
-                className="pl-8 pr-3 py-2 rounded-lg text-xs text-white appearance-none focus:outline-none"
+                className="pl-8 pr-3 py-2 rounded-lg text-xs text-[var(--text-primary)] appearance-none focus:outline-none"
                 style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" }}>
                 <option value="">Todas as fontes</option>
                 {sources.map((s) => <option key={s} value={s}>{s}</option>)}
@@ -275,7 +275,7 @@ export function LeadsCapturadosView() {
           ) : filtered.length === 0 ? (
             <div className="py-16 text-center">
               <Users size={24} className="mx-auto mb-3" style={{ color: "#222" }} />
-              <p className="text-sm font-semibold text-white mb-1">Nenhum lead capturado ainda</p>
+              <p className="text-sm font-semibold text-[var(--text-primary)] mb-1">Nenhum lead capturado ainda</p>
               <p className="text-xs" style={{ color: "var(--text-quaternary)" }}>
                 Integre o código no seu site para capturar leads automaticamente com dados UTM
               </p>

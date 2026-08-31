@@ -164,7 +164,7 @@ export function GoogleAdsIntegration() {
     }
   }
 
-  const inp = "w-full rounded-lg px-3 py-2 text-xs text-white placeholder-[var(--text-quaternary)] focus:outline-none";
+  const inp = "w-full rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] placeholder-[var(--text-quaternary)] focus:outline-none";
   const inpStyle = { backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" };
 
   return (
@@ -172,7 +172,7 @@ export function GoogleAdsIntegration() {
       <div className="rounded-2xl border p-5 space-y-4" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-bold text-white">Google Ads</p>
+            <p className="text-sm font-bold text-[var(--text-primary)]">Google Ads</p>
             <p className="text-xs mt-0.5" style={{ color: "var(--text-tertiary)" }}>Conecte via OAuth para sincronizar campanhas e métricas</p>
           </div>
           {savedToken && (
@@ -191,8 +191,8 @@ export function GoogleAdsIntegration() {
           <div className="rounded-xl p-4 space-y-2 text-xs" style={{ backgroundColor: "#1a0a0a", border: "1px solid #EA433522" }}>
             <p className="font-bold" style={{ color: "#EA4335" }}>Passo a passo:</p>
             <p style={{ color: "var(--text-tertiary)" }}>1. Acesse <a href="https://developers.google.com/oauthplayground" target="_blank" rel="noopener noreferrer" className="underline" style={{ color: "#EA4335" }}>Google OAuth Playground <ExternalLink size={10} className="inline" /></a></p>
-            <p style={{ color: "var(--text-tertiary)" }}>2. Selecione o escopo: <strong className="text-white">https://www.googleapis.com/auth/adwords</strong></p>
-            <p style={{ color: "var(--text-tertiary)" }}>3. Autorize e obtenha o <strong className="text-white">Access Token</strong></p>
+            <p style={{ color: "var(--text-tertiary)" }}>2. Selecione o escopo: <strong className="text-[var(--text-primary)]">https://www.googleapis.com/auth/adwords</strong></p>
+            <p style={{ color: "var(--text-tertiary)" }}>3. Autorize e obtenha o <strong className="text-[var(--text-primary)]">Access Token</strong></p>
             <p style={{ color: "var(--text-tertiary)" }}>4. Para o Developer Token, acesse Google Ads → Ferramentas → API Center</p>
             <p className="text-[10px] mt-1" style={{ color: "var(--text-quaternary)" }}>O access token expira em 1 hora. Para uso contínuo, é necessário implementar refresh token via backend.</p>
           </div>
@@ -227,7 +227,7 @@ export function GoogleAdsIntegration() {
       {savedToken && (
         <div className="rounded-2xl border overflow-hidden" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
           <div className="px-5 py-3 border-b" style={{ borderColor: "var(--bg-surface-2)" }}>
-            <p className="text-xs font-bold text-white">Sincronizar clientes</p>
+            <p className="text-xs font-bold text-[var(--text-primary)]">Sincronizar clientes</p>
           </div>
           <div className="divide-y" style={{ borderColor: "var(--bg-surface-2)" }}>
             {activeClients.map((client) => {
@@ -240,7 +240,7 @@ export function GoogleAdsIntegration() {
                 <div key={client.id}>
                   <div className="flex items-center gap-3 px-5 py-3 cursor-pointer" onClick={() => setExpandedClient(expanded ? null : client.id)}>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-white truncate">{client.name}</p>
+                      <p className="text-xs font-medium text-[var(--text-primary)] truncate">{client.name}</p>
                       {accountId && <p className="text-[10px]" style={{ color: "var(--text-quaternary)" }}>Customer ID: {accountId}</p>}
                     </div>
                     {result === "ok" && <span className="text-[10px] flex items-center gap-1" style={{ color: "var(--accent)" }}><Check size={11} />Sincronizado</span>}

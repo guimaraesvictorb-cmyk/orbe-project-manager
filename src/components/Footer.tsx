@@ -9,7 +9,7 @@ export function Footer() {
             style={{ fontFamily: "Arial, sans-serif", letterSpacing: "-2px" }}
             aria-label="Orbe"
           >
-            <span className="text-white">Orbe</span>
+            <span className="text-[var(--text-primary)]">Orbe</span>
           </span>
           <span className="text-[10px] tracking-widest uppercase text-[var(--text-secondary)]">
             Marketing ·{" "}

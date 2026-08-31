@@ -48,12 +48,12 @@ function GeralSection({ profile }: { profile: Profile | null }) {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-white font-semibold text-base mb-1">Geral</h2>
+        <h2 className="text-[var(--text-primary)] font-semibold text-base mb-1">Geral</h2>
         <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>Preferências gerais da plataforma</p>
       </div>
 
       <div>
-        <p className="text-xs font-semibold text-white mb-1">Tema da interface</p>
+        <p className="text-xs font-semibold text-[var(--text-primary)] mb-1">Tema da interface</p>
         <p className="text-xs mb-4" style={{ color: "var(--text-tertiary)" }}>Escolha entre tema escuro (padrão) e tema claro.</p>
 
         <div className="flex gap-3">
@@ -148,7 +148,7 @@ function SegurancaSection() {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-white font-semibold text-base mb-1">Verificação em 2 etapas</h2>
+        <h2 className="text-[var(--text-primary)] font-semibold text-base mb-1">Verificação em 2 etapas</h2>
         <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
           Adicione uma camada extra de segurança usando um aplicativo autenticador (Google Authenticator, Authy, etc).
         </p>
@@ -162,7 +162,7 @@ function SegurancaSection() {
             <div className="flex items-center gap-3">
               <ShieldCheck size={18} style={{ color: has2FA ? "var(--accent)" : "var(--text-quaternary)" }} />
               <div>
-                <p className="text-sm font-medium text-white">Autenticação por app</p>
+                <p className="text-sm font-medium text-[var(--text-primary)]">Autenticação por app</p>
                 <p className="text-xs mt-0.5" style={{ color: has2FA ? "var(--accent)" : "var(--text-tertiary)" }}>
                   {has2FA ? "Ativo — sua conta está protegida" : "Não configurado"}
                 </p>
@@ -190,7 +190,7 @@ function SegurancaSection() {
           {step === "verifying" && (
             <div className="rounded-xl border p-5 space-y-5" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
               <div>
-                <p className="text-sm font-semibold text-white mb-1">1. Escaneie o QR Code</p>
+                <p className="text-sm font-semibold text-[var(--text-primary)] mb-1">1. Escaneie o QR Code</p>
                 <p className="text-xs mb-4" style={{ color: "var(--text-tertiary)" }}>
                   Abra seu app autenticador e escaneie o código abaixo.
                 </p>
@@ -210,14 +210,14 @@ function SegurancaSection() {
 
               <form onSubmit={verifyTotp} className="space-y-3">
                 <div>
-                  <p className="text-sm font-semibold text-white mb-1">2. Confirme o código</p>
+                  <p className="text-sm font-semibold text-[var(--text-primary)] mb-1">2. Confirme o código</p>
                   <p className="text-xs mb-3" style={{ color: "var(--text-tertiary)" }}>Digite o código de 6 dígitos gerado pelo app.</p>
                   <input
                     value={totp}
                     onChange={(e) => setTotp(e.target.value.replace(/\D/g, "").slice(0, 6))}
                     placeholder="000000"
                     maxLength={6}
-                    className="w-40 text-center rounded-lg px-3 py-3 text-lg font-mono text-white focus:outline-none focus:border-[var(--accent-a44)] tracking-widest"
+                    className="w-40 text-center rounded-lg px-3 py-3 text-lg font-mono text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-a44)] tracking-widest"
                     style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" }}
                     autoFocus
                   />
@@ -325,7 +325,7 @@ function EquipeSection() {
     <div className="space-y-6">
       <div className="flex items-start justify-between">
         <div>
-          <h2 className="text-white font-semibold text-base mb-1">Minha Equipe</h2>
+          <h2 className="text-[var(--text-primary)] font-semibold text-base mb-1">Minha Equipe</h2>
           <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>Gerencie os membros e funções da equipe Orbe.</p>
         </div>
         <div className="flex items-center gap-2">
@@ -359,14 +359,14 @@ function EquipeSection() {
 
       {showInvite && (
         <form onSubmit={handleInvite} className="rounded-xl border p-4 space-y-3" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
-          <p className="text-sm font-semibold text-white">Convidar novo membro</p>
+          <p className="text-sm font-semibold text-[var(--text-primary)]">Convidar novo membro</p>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "var(--text-tertiary)" }}>Nome</label>
               <input
                 value={inviteName} onChange={(e) => setInviteName(e.target.value)} required
                 placeholder="Nome completo"
-                className="w-full rounded-lg px-3 py-2 text-xs text-white placeholder-[var(--text-quaternary)] focus:outline-none"
+                className="w-full rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] placeholder-[var(--text-quaternary)] focus:outline-none"
                 style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-strong)" }}
               />
             </div>
@@ -374,7 +374,7 @@ function EquipeSection() {
               <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "var(--text-tertiary)" }}>Função</label>
               <select
                 value={inviteRole} onChange={(e) => setInviteRole(e.target.value as Profile["role"])}
-                className="w-full rounded-lg px-3 py-2 text-xs text-white focus:outline-none"
+                className="w-full rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] focus:outline-none"
                 style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-strong)" }}
               >
                 {Object.entries(ROLE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
@@ -386,7 +386,7 @@ function EquipeSection() {
             <input
               type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} required
               placeholder="email@agenciaorbe.co"
-              className="w-full rounded-lg px-3 py-2 text-xs text-white placeholder-[var(--text-quaternary)] focus:outline-none"
+              className="w-full rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] placeholder-[var(--text-quaternary)] focus:outline-none"
               style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-strong)" }}
             />
           </div>
@@ -425,7 +425,7 @@ function EquipeSection() {
               style={{ gridTemplateColumns: "1fr 100px 100px 80px", borderBottom: "1px solid var(--bg-surface-2)" }}
             >
               <div className="min-w-0">
-                <p className="text-sm text-white font-medium truncate">{m.display_name}</p>
+                <p className="text-sm text-[var(--text-primary)] font-medium truncate">{m.display_name}</p>
                 <p className="text-[11px] truncate" style={{ color: "var(--text-tertiary)" }}>{m.email}</p>
               </div>
 
@@ -433,7 +433,7 @@ function EquipeSection() {
                 value={m.role}
                 onChange={(e) => changeRole(m.id, e.target.value as Profile["role"])}
                 disabled={updatingRole === m.id}
-                className="rounded-lg px-2 py-1.5 text-[11px] text-white focus:outline-none disabled:opacity-50"
+                className="rounded-lg px-2 py-1.5 text-[11px] text-[var(--text-primary)] focus:outline-none disabled:opacity-50"
                 style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" }}
               >
                 {Object.entries(ROLE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
@@ -469,7 +469,7 @@ function EquipeSection() {
           {members.length === 0 && (
             <div className="py-12 text-center">
               <Users size={24} className="mx-auto mb-2" style={{ color: "#222" }} />
-              <p className="text-sm text-white">Nenhum membro encontrado</p>
+              <p className="text-sm text-[var(--text-primary)]">Nenhum membro encontrado</p>
             </div>
           )}
         </div>

@@ -52,7 +52,7 @@ function MetricRow({ label, curr, prev, format }: { label: string; curr: number 
     <div className="flex items-center justify-between py-2.5" style={{ borderBottom: '1px solid var(--bg-surface-2)' }}>
       <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{label}</span>
       <div className="flex items-center gap-1">
-        <span className="text-sm font-semibold text-white">{display}</span>
+        <span className="text-sm font-semibold text-[var(--text-primary)]">{display}</span>
         <Trend curr={curr} prev={prev} />
       </div>
     </div>
@@ -105,7 +105,7 @@ function EntryForm({ platform, clientId, existing, onSave, onCancel }: {
     setSaving(false)
   }
 
-  const inputCls = 'w-full rounded-lg px-3 py-2 text-xs text-white placeholder-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent-a44)] transition-colors'
+  const inputCls = 'w-full rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] placeholder-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent-a44)] transition-colors'
   const inputStyle = { backgroundColor: 'var(--bg-input)', border: '1px solid var(--border-strong)' }
 
   return (
@@ -159,14 +159,14 @@ function PeriodCard({ metric, prevMetric, platform, onDelete, onEdit }: {
         <div className="flex items-center gap-3">
           <button onClick={() => setOpen((v) => !v)} className="flex items-center gap-2">
             {open ? <ChevronUp size={14} style={{ color: 'var(--text-tertiary)' }} /> : <ChevronDown size={14} style={{ color: 'var(--text-tertiary)' }} />}
-            <p className="text-sm font-semibold text-white capitalize">{label}</p>
+            <p className="text-sm font-semibold text-[var(--text-primary)] capitalize">{label}</p>
           </button>
           {metric.investimento && (
             <span className="text-xs font-bold" style={{ color: 'var(--accent)' }}>{fmtCurrency(metric.investimento)}</span>
           )}
         </div>
         <div className="flex items-center gap-1">
-          <button onClick={onEdit} className="text-[11px] px-2 py-1 rounded transition-colors hover:text-white" style={{ color: 'var(--text-tertiary)' }}>Editar</button>
+          <button onClick={onEdit} className="text-[11px] px-2 py-1 rounded transition-colors hover:text-[var(--text-primary)]" style={{ color: 'var(--text-tertiary)' }}>Editar</button>
           <button onClick={onDelete} className="p-1.5 rounded transition-colors hover:text-red-500" style={{ color: 'var(--text-quaternary)' }}>
             <Trash2 size={12} />
           </button>
@@ -256,7 +256,7 @@ export function AdsMetricsTab({ clientId, platform }: AdsMetricsTabProps) {
 
       {data.length === 0 && !showForm ? (
         <div className="rounded-xl border border-[var(--border)] py-16 text-center" style={{ backgroundColor: 'var(--bg-surface)' }}>
-          <p className="text-sm font-semibold text-white mb-1">Nenhuma métrica registrada</p>
+          <p className="text-sm font-semibold text-[var(--text-primary)] mb-1">Nenhuma métrica registrada</p>
           <p className="text-xs mb-4" style={{ color: 'var(--text-quaternary)' }}>
             Adicione as métricas mensais do {platformLabel} para acompanhar a evolução
           </p>

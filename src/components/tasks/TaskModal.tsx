@@ -34,7 +34,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 const inputCls =
-  "w-full rounded-lg px-3 py-2 text-sm text-white bg-[var(--bg-surface-2)] border border-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent)] transition-colors duration-150";
+  "w-full rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] bg-[var(--bg-surface-2)] border border-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent)] transition-colors duration-150";
 
 const selectCls = inputCls + " appearance-none cursor-pointer";
 
@@ -104,13 +104,13 @@ export function TaskModal({ task, onSave, onClose }: TaskModalProps) {
             <p className="text-[10px] font-semibold tracking-widest uppercase text-[var(--accent)] mb-0.5">
               {isEdit ? "Editar Tarefa" : "Nova Tarefa"}
             </p>
-            <h2 className="text-white font-bold text-base leading-tight">
+            <h2 className="text-[var(--text-primary)] font-bold text-base leading-tight">
               {isEdit ? form.title || "Sem título" : "Criar nova tarefa"}
             </h2>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-secondary)] hover:text-white hover:bg-[var(--border-subtle)] transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border-subtle)] transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
             aria-label="Fechar"
           >
             <X size={16} />
@@ -260,7 +260,7 @@ export function TaskModal({ task, onSave, onClose }: TaskModalProps) {
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-lg text-sm font-medium text-[var(--text-secondary)] hover:text-white transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+            className="px-4 py-2 rounded-lg text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
           >
             Cancelar
           </button>

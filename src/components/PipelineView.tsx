@@ -34,7 +34,7 @@ function LeadCard({
       onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = "var(--border)"; }}
     >
       <div className="flex items-start justify-between gap-2 mb-2">
-        <p className="text-sm font-semibold text-white leading-snug">{lead.name}</p>
+        <p className="text-sm font-semibold text-[var(--text-primary)] leading-snug">{lead.name}</p>
         <button
           onClick={(e) => { e.stopPropagation(); setShowMove((p) => !p); }}
           className="flex-shrink-0 p-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity"
@@ -114,7 +114,7 @@ function LeadModal({ lead, stages, onClose }: { lead: Lead; stages: PipelineStag
       <div className="w-full max-w-lg rounded-2xl border p-6 space-y-4 max-h-[90vh] overflow-y-auto" style={{ backgroundColor: "var(--bg-surface-2)", borderColor: "var(--border)" }}>
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-white font-semibold text-base">{lead.name}</p>
+            <p className="text-[var(--text-primary)] font-semibold text-base">{lead.name}</p>
             <p className="text-xs mt-0.5" style={{ color: "var(--accent)" }}>{stage?.name ?? "—"}</p>
           </div>
           <button onClick={onClose} style={{ color: "var(--text-tertiary)" }}><X size={16} /></button>
@@ -247,7 +247,7 @@ function NewLeadModal({
         type={type} value={form[key]}
         onChange={(e) => setForm((p) => ({ ...p, [key]: e.target.value }))}
         placeholder={placeholder}
-        className="w-full bg-black border rounded-lg px-3 py-2 text-xs text-white placeholder:text-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent)]"
+        className="w-full bg-[var(--bg-page)] border rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent)]"
         style={{ borderColor: "var(--border-subtle)" }}
       />
     </div>
@@ -257,7 +257,7 @@ function NewLeadModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.85)" }}
       onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="w-full max-w-lg rounded-2xl border p-6 space-y-3 max-h-[90vh] overflow-y-auto" style={{ backgroundColor: "var(--bg-surface-2)", borderColor: "var(--border)" }}>
-        <h3 className="text-white font-semibold text-sm">Novo lead</h3>
+        <h3 className="text-[var(--text-primary)] font-semibold text-sm">Novo lead</h3>
         <form onSubmit={submit} className="space-y-3">
           {inp("Nome da empresa *", "name", "text", "ex: Empresa XYZ")}
 
@@ -290,7 +290,7 @@ function NewLeadModal({
             <select
               value={form.status_contrato}
               onChange={(e) => setForm((p) => ({ ...p, status_contrato: e.target.value }))}
-              className="w-full bg-black border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[var(--accent)]"
+              className="w-full bg-[var(--bg-page)] border rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)]"
               style={{ borderColor: "var(--border-subtle)" }}
             >
               <option value="">Nenhum</option>
@@ -306,7 +306,7 @@ function NewLeadModal({
             <select
               value={form.stage_id}
               onChange={(e) => setForm((p) => ({ ...p, stage_id: e.target.value }))}
-              className="w-full bg-black border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[var(--accent)]"
+              className="w-full bg-[var(--bg-page)] border rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)]"
               style={{ borderColor: "var(--border-subtle)" }}
               required
             >
@@ -323,7 +323,7 @@ function NewLeadModal({
               onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))}
               rows={2}
               placeholder="Contexto do lead..."
-              className="w-full bg-black border rounded-lg px-3 py-2 text-xs text-white placeholder:text-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent)] resize-none"
+              className="w-full bg-[var(--bg-page)] border rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent)] resize-none"
               style={{ borderColor: "var(--border-subtle)" }}
             />
           </div>
@@ -370,7 +370,7 @@ export function PipelineView() {
             <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "var(--accent)" }}>
               Pipeline comercial
             </p>
-            <h2 className="text-white font-bold text-lg leading-tight">Gestão de leads</h2>
+            <h2 className="text-[var(--text-primary)] font-bold text-lg leading-tight">Gestão de leads</h2>
           </div>
           <button
             onClick={() => setShowNew(true)}
@@ -385,7 +385,7 @@ export function PipelineView() {
         <div className="flex gap-6 text-xs flex-wrap">
           <div>
             <span style={{ color: "var(--text-tertiary)" }}>Leads ativos</span>
-            <span className="ml-2 font-bold text-white">{activeLeads.length}</span>
+            <span className="ml-2 font-bold text-[var(--text-primary)]">{activeLeads.length}</span>
           </div>
           <div>
             <span style={{ color: "var(--text-tertiary)" }}>MRR potencial</span>
@@ -393,7 +393,7 @@ export function PipelineView() {
           </div>
           <div>
             <span style={{ color: "var(--text-tertiary)" }}>MRR ponderado</span>
-            <span className="ml-2 font-bold text-white">{fmt(weightedMrr)}</span>
+            <span className="ml-2 font-bold text-[var(--text-primary)]">{fmt(weightedMrr)}</span>
           </div>
         </div>
 
@@ -409,7 +409,7 @@ export function PipelineView() {
                   <div className="flex items-center justify-between mb-3 px-1">
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: stage.color }} />
-                      <span className="text-xs font-semibold text-white">{stage.name}</span>
+                      <span className="text-xs font-semibold text-[var(--text-primary)]">{stage.name}</span>
                       <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "var(--border)", color: "var(--text-tertiary)" }}>
                         {stageLeads.length}
                       </span>

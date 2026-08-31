@@ -128,7 +128,7 @@ function PlaceholderContent({ label }: { label: string }) {
       >
         <Lock size={20} style={{ color: "var(--text-quaternary)" }} aria-hidden="true" />
       </div>
-      <p className="text-white font-semibold">{label}</p>
+      <p className="text-[var(--text-primary)] font-semibold">{label}</p>
       <p className="text-xs" style={{ color: "var(--text-quaternary)" }}>
         Em construção — em breve disponível
       </p>

@@ -57,7 +57,7 @@ export function PhaseCard({ phase, isActive, onClick }: PhaseCardProps) {
       </p>
 
       {/* Phase name */}
-      <p className="text-white font-semibold text-sm leading-snug mb-2 pr-8">
+      <p className="text-[var(--text-primary)] font-semibold text-sm leading-snug mb-2 pr-8">
         {phase.name}
       </p>
 

@@ -99,10 +99,10 @@ export function AppNav({ active, onChange, profile, onLogout }: AppNavProps) {
           className="text-xl font-bold leading-none select-none flex-shrink-0"
           style={{ fontFamily: "Arial, sans-serif", letterSpacing: "-2px" }}
         >
-          <span className="text-white">Orbe</span>
+          <span className="text-[var(--text-primary)]">Orbe</span>
         </div>
         <div>
-          <p className="text-white font-semibold text-xs leading-tight">Operating System</p>
+          <p className="text-[var(--text-primary)] font-semibold text-xs leading-tight">Operating System</p>
           <p className="text-[10px] leading-tight" style={{ color: "var(--text-quaternary)" }}>Plataforma Orbe</p>
         </div>
       </div>
