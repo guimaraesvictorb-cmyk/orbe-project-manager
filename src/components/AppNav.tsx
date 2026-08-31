@@ -80,19 +80,39 @@ interface AppNavProps {
   onChange: (v: AppView) => void;
   profile: Profile | null;
   onLogout: () => void;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
-export function AppNav({ active, onChange, profile, onLogout }: AppNavProps) {
+export function AppNav({ active, onChange, profile, onLogout, isOpen, onClose }: AppNavProps) {
   const allowed = getAllowedSections(profile);
   const visibleNav = NAV
     .map((group) => ({ ...group, items: group.items.filter((i) => i.view === "home" || allowed.includes(i.view)) }))
     .filter((group) => group.items.length > 0);
 
+  function handleChange(v: AppView) {
+    onChange(v);
+    onClose();
+  }
+
   return (
-    <aside
-      className="flex flex-col flex-shrink-0 h-screen overflow-y-auto"
-      style={{ width: 260, backgroundColor: "#050505", borderRight: "1px solid var(--bg-surface-2)" }}
-    >
+    <>
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-30 lg:hidden"
+          style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
+          onClick={onClose}
+        />
+      )}
+      <aside
+        className="flex flex-col flex-shrink-0 h-screen overflow-y-auto fixed inset-y-0 left-0 z-40 transition-transform duration-200 lg:static lg:translate-x-0"
+        style={{
+          width: 260,
+          backgroundColor: "#050505",
+          borderRight: "1px solid var(--bg-surface-2)",
+          transform: isOpen ? "translateX(0)" : "translateX(-100%)",
+        }}
+      >
       {/* Logo */}
       <div className="flex items-center gap-3 px-5 py-5 flex-shrink-0" style={{ borderBottom: "1px solid var(--bg-surface-2)" }}>
         <div
@@ -122,7 +142,7 @@ export function AppNav({ active, onChange, profile, onLogout }: AppNavProps) {
                 return (
                   <button
                     key={view}
-                    onClick={() => onChange(view)}
+                    onClick={() => handleChange(view)}
                     className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-xs font-medium transition-all duration-100 focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
                     style={{
                       backgroundColor: isActive ? "var(--accent-tint)" : "transparent",
@@ -158,7 +178,7 @@ export function AppNav({ active, onChange, profile, onLogout }: AppNavProps) {
       {/* User section */}
       <div className="flex-shrink-0 px-3 pb-4 pt-3 space-y-0.5" style={{ borderTop: "1px solid var(--bg-surface-2)" }}>
         <button
-          onClick={() => onChange("profile")}
+          onClick={() => handleChange("profile")}
           className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left transition-all duration-100 focus:outline-none"
           style={{
             backgroundColor: active === "profile" ? "var(--accent-tint)" : "transparent",
@@ -196,7 +216,7 @@ export function AppNav({ active, onChange, profile, onLogout }: AppNavProps) {
 
         {(profile?.role === "admin" || profile?.role === "coordenador") && (
           <button
-            onClick={() => onChange("settings")}
+            onClick={() => handleChange("settings")}
             className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-xs transition-all duration-100 focus:outline-none"
             style={{
               backgroundColor: active === "settings" ? "var(--accent-tint)" : "transparent",
@@ -240,6 +260,7 @@ export function AppNav({ active, onChange, profile, onLogout }: AppNavProps) {
           Sair
         </button>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }

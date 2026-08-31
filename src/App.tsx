@@ -22,12 +22,13 @@ import { WhatsAppView } from "./components/WhatsAppView";
 import { IntegracoesView } from "./components/IntegracoesView";
 import { LeadsCapturadosView } from "./components/LeadsCapturadosView";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import { Loader2 } from "lucide-react";
+import { Loader2, Menu } from "lucide-react";
 
 const VIEW_KEY = "orbe_view";
 
 function App() {
   const { user, profile, isAuthenticated, isLoading, logout } = useAuth();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [view, setView] = useState<AppView>(() => {
     const saved = localStorage.getItem(VIEW_KEY) as AppView | null;
     const valid: AppView[] = [
@@ -70,9 +71,33 @@ function App() {
   return (
     <ThemeProvider>
       <div className="flex h-screen bg-[var(--bg-page)] text-[var(--text-primary)] font-sans overflow-hidden">
-        <AppNav active={view} onChange={navigate} profile={profile} onLogout={logout} />
+        <AppNav
+          active={view}
+          onChange={navigate}
+          profile={profile}
+          onLogout={logout}
+          isOpen={mobileNavOpen}
+          onClose={() => setMobileNavOpen(false)}
+        />
 
-        <main className="flex-1 overflow-y-auto min-h-0">
+        <div className="flex-1 flex flex-col min-h-0">
+          {/* Mobile top bar */}
+          <div
+            className="lg:hidden flex-shrink-0 flex items-center gap-3 px-4 py-3"
+            style={{ borderBottom: "1px solid var(--bg-surface-2)" }}
+          >
+            <button
+              onClick={() => setMobileNavOpen(true)}
+              className="p-1.5 rounded-lg"
+              style={{ color: "var(--text-secondary)" }}
+              aria-label="Abrir menu"
+            >
+              <Menu size={20} />
+            </button>
+            <span className="text-sm font-semibold">Orbe</span>
+          </div>
+
+          <main className="flex-1 overflow-y-auto min-h-0">
           {view === "home"       && <HomeView profile={profile} onNavigate={navigate} />}
           {view === "dashboard"  && <DashboardView />}
           {view === "tarefas"    && <TarefasView />}
@@ -90,7 +115,8 @@ function App() {
           {view === "leads-capturados" && <LeadsCapturadosView />}
           {view === "profile"    && <ProfileView profile={profile} userEmail={user?.email ?? ""} />}
           {view === "settings"   && <SettingsView profile={profile} />}
-        </main>
+          </main>
+        </div>
       </div>
     </ThemeProvider>
   );
