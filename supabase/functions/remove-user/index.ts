@@ -19,15 +19,10 @@ serve(async (req) => {
 
     const authHeader = req.headers.get("authorization");
     if (!authHeader) return json({ error: "Não autorizado" }, 401);
+    const jwt = authHeader.replace(/^Bearer\s+/i, "");
 
-    const supabaseUser = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      { global: { headers: { authorization: authHeader } } },
-    );
-
-    const { data: { user } } = await supabaseUser.auth.getUser();
-    if (!user) return json({ error: "Token inválido" }, 401);
+    const { data: { user }, error: userErr } = await supabaseAdmin.auth.getUser(jwt);
+    if (userErr || !user) return json({ error: "Token inválido" }, 401);
 
     const { data: callerProfile } = await supabaseAdmin
       .from("profiles")
