@@ -9,7 +9,7 @@ export function CompiladoTab({ clientId }: CompiladoTabProps) {
 
   if (loading) return (
     <div className="flex justify-center py-12">
-      <Loader2 size={18} className="animate-spin" style={{ color: '#1FCE4A' }} />
+      <Loader2 size={18} className="animate-spin" style={{ color: '#7B61FF' }} />
     </div>
   )
 
@@ -33,7 +33,7 @@ export function CompiladoTab({ clientId }: CompiladoTabProps) {
       {/* Summary cards */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: 'Total investido', value: fmtCurrency(totalInvest), color: '#1FCE4A' },
+          { label: 'Total investido', value: fmtCurrency(totalInvest), color: '#7B61FF' },
           { label: 'Meta Ads', value: fmtCurrency(totalMeta), color: '#1877F2' },
           { label: 'Google Ads', value: fmtCurrency(totalGoogle), color: '#EA4335' },
         ].map(({ label, value, color }) => (
@@ -76,7 +76,7 @@ export function CompiladoTab({ clientId }: CompiladoTabProps) {
                 <span className="text-xs font-semibold text-white capitalize">{label}</span>
                 <span className="text-xs" style={{ color: '#1877F2' }}>{m ? fmtCurrency(m.investimento) : '—'}</span>
                 <span className="text-xs" style={{ color: '#EA4335' }}>{g ? fmtCurrency(g.investimento) : '—'}</span>
-                <span className="text-xs font-semibold" style={{ color: '#1FCE4A' }}>{fmtCurrency(totalP || null)}</span>
+                <span className="text-xs font-semibold" style={{ color: '#7B61FF' }}>{fmtCurrency(totalP || null)}</span>
                 <span className="text-xs text-white">{cliques ? fmt(cliques) : '—'}</span>
                 <span className="text-xs text-white">{impressoes ? fmt(impressoes) : '—'}</span>
               </div>

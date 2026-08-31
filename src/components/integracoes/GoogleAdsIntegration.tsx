@@ -176,7 +176,7 @@ export function GoogleAdsIntegration() {
             <p className="text-xs mt-0.5" style={{ color: "#555" }}>Conecte via OAuth para sincronizar campanhas e métricas</p>
           </div>
           {savedToken && (
-            <span className="flex items-center gap-1.5 text-xs" style={{ color: "#1FCE4A" }}>
+            <span className="flex items-center gap-1.5 text-xs" style={{ color: "#7B61FF" }}>
               <Check size={12} />Conectado
             </span>
           )}
@@ -243,7 +243,7 @@ export function GoogleAdsIntegration() {
                       <p className="text-xs font-medium text-white truncate">{client.name}</p>
                       {accountId && <p className="text-[10px]" style={{ color: "#444" }}>Customer ID: {accountId}</p>}
                     </div>
-                    {result === "ok" && <span className="text-[10px] flex items-center gap-1" style={{ color: "#1FCE4A" }}><Check size={11} />Sincronizado</span>}
+                    {result === "ok" && <span className="text-[10px] flex items-center gap-1" style={{ color: "#7B61FF" }}><Check size={11} />Sincronizado</span>}
                     {expanded ? <ChevronUp size={13} style={{ color: "#555" }} /> : <ChevronDown size={13} style={{ color: "#555" }} />}
                   </div>
 

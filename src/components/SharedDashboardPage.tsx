@@ -34,7 +34,7 @@ function Trend({ curr, prev }: { curr: number | null; prev: number | null }) {
   if (curr == null || prev == null || prev === 0) return <Minus size={12} style={{ color: "#555" }} />;
   const pct = ((curr - prev) / prev) * 100;
   if (Math.abs(pct) < 0.5) return <Minus size={12} style={{ color: "#555" }} />;
-  if (pct > 0) return <span className="flex items-center gap-0.5 text-[10px]" style={{ color: "#1FCE4A" }}><TrendingUp size={11} />{pct.toFixed(1)}%</span>;
+  if (pct > 0) return <span className="flex items-center gap-0.5 text-[10px]" style={{ color: "#7B61FF" }}><TrendingUp size={11} />{pct.toFixed(1)}%</span>;
   return <span className="flex items-center gap-0.5 text-[10px]" style={{ color: "#EF4444" }}><TrendingDown size={11} />{Math.abs(pct).toFixed(1)}%</span>;
 }
 
@@ -122,7 +122,7 @@ export function SharedDashboardPage({ token }: { token: string }) {
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <Loader2 size={24} className="animate-spin" style={{ color: "#1FCE4A" }} />
+        <Loader2 size={24} className="animate-spin" style={{ color: "#7B61FF" }} />
       </div>
     );
   }
@@ -146,7 +146,7 @@ export function SharedDashboardPage({ token }: { token: string }) {
         <div className="max-w-3xl mx-auto px-6 py-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="text-xl font-bold leading-none" style={{ fontFamily: "Arial, sans-serif", letterSpacing: "-2px" }}>
-              <span className="text-white">M</span><span style={{ color: "#1FCE4A" }}>5</span>
+              <span className="text-white">Orbe</span>
             </div>
             <div>
               <p className="text-white font-semibold text-xs leading-tight">Dashboard do Cliente</p>

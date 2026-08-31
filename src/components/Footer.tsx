@@ -9,12 +9,11 @@ export function Footer() {
             style={{ fontFamily: "Arial, sans-serif", letterSpacing: "-2px" }}
             aria-label="Orbe"
           >
-            <span className="text-white">M</span>
-            <span style={{ color: "#1FCE4A" }}>5</span>
+            <span className="text-white">Orbe</span>
           </span>
           <span className="text-[10px] tracking-widest uppercase text-[#A3A3A3]">
             Marketing ·{" "}
-            <span style={{ color: "#1FCE4A" }}>Operating System v1.0</span>
+            <span style={{ color: "#7B61FF" }}>Operating System v1.0</span>
             {" "}· Documento Estratégico Interno
           </span>
         </div>
@@ -22,7 +21,7 @@ export function Footer() {
         {/* Right */}
         <p className="text-[10px] tracking-widest uppercase text-[#A3A3A3]">
           Metodologia Orbe ·{" "}
-          <span style={{ color: "#1FCE4A" }}>Não Distribuir</span>
+          <span style={{ color: "#7B61FF" }}>Não Distribuir</span>
         </p>
       </div>
     </footer>

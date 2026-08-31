@@ -25,7 +25,7 @@ export function PhaseDetail({ phase }: PhaseDetailProps) {
         </div>
         <p
           className="text-xs font-semibold tracking-wide sm:text-right flex-shrink-0"
-          style={{ color: "#1FCE4A" }}
+          style={{ color: "#7B61FF" }}
         >
           {phase.meta}
         </p>
@@ -35,7 +35,7 @@ export function PhaseDetail({ phase }: PhaseDetailProps) {
       <blockquote
         className="mb-6 px-4 py-3 rounded-r-md italic text-sm leading-relaxed"
         style={{
-          borderLeft: "3px solid #1FCE4A",
+          borderLeft: "3px solid #7B61FF",
           backgroundColor: "#0a0a0a",
           color: "#e5e5e5",
         }}
@@ -49,7 +49,7 @@ export function PhaseDetail({ phase }: PhaseDetailProps) {
           <li key={idx} className="flex items-start gap-3">
             <span
               className="mt-1.5 flex-shrink-0 w-1.5 h-1.5 rounded-full"
-              style={{ backgroundColor: "#1FCE4A" }}
+              style={{ backgroundColor: "#7B61FF" }}
               aria-hidden="true"
             />
             <span className="text-sm text-white leading-relaxed">{item}</span>
@@ -61,42 +61,42 @@ export function PhaseDetail({ phase }: PhaseDetailProps) {
       <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-[#262626]">
         <button
           onClick={() => alert("Em breve")}
-          className="px-4 py-2 rounded-md text-sm font-medium transition-all duration-150 border focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1FCE4A]"
+          className="px-4 py-2 rounded-md text-sm font-medium transition-all duration-150 border focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7B61FF]"
           style={{
-            borderColor: "#1FCE4A",
-            color: "#1FCE4A",
+            borderColor: "#7B61FF",
+            color: "#7B61FF",
             backgroundColor: "transparent",
           }}
           onMouseEnter={(e) => {
             (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-              "#1FCE4A";
+              "#7B61FF";
             (e.currentTarget as HTMLButtonElement).style.color = "#000000";
           }}
           onMouseLeave={(e) => {
             (e.currentTarget as HTMLButtonElement).style.backgroundColor =
               "transparent";
-            (e.currentTarget as HTMLButtonElement).style.color = "#1FCE4A";
+            (e.currentTarget as HTMLButtonElement).style.color = "#7B61FF";
           }}
         >
           Detalhar essa fase
         </button>
         <button
           onClick={() => alert("Em breve")}
-          className="px-4 py-2 rounded-md text-sm font-medium transition-all duration-150 border focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1FCE4A]"
+          className="px-4 py-2 rounded-md text-sm font-medium transition-all duration-150 border focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7B61FF]"
           style={{
-            borderColor: "#1FCE4A",
-            color: "#1FCE4A",
+            borderColor: "#7B61FF",
+            color: "#7B61FF",
             backgroundColor: "transparent",
           }}
           onMouseEnter={(e) => {
             (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-              "#1FCE4A";
+              "#7B61FF";
             (e.currentTarget as HTMLButtonElement).style.color = "#000000";
           }}
           onMouseLeave={(e) => {
             (e.currentTarget as HTMLButtonElement).style.backgroundColor =
               "transparent";
-            (e.currentTarget as HTMLButtonElement).style.color = "#1FCE4A";
+            (e.currentTarget as HTMLButtonElement).style.color = "#7B61FF";
           }}
         >
           Plano de IA para essa fase

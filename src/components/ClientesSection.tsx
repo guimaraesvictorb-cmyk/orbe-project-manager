@@ -25,7 +25,7 @@ function ClientCard({ client, onHealthChange, onStatusChange, onSelect }: { clie
       className="rounded-xl p-4 border border-[#1a1a1a] transition-all duration-150 flex flex-col gap-3 cursor-pointer"
       style={{ backgroundColor: "#0a0a0a" }}
       onClick={() => onSelect(client)}
-      onMouseEnter={(e) => ((e.currentTarget as HTMLDivElement).style.borderColor = "#1FCE4A33")}
+      onMouseEnter={(e) => ((e.currentTarget as HTMLDivElement).style.borderColor = "#7B61FF33")}
       onMouseLeave={(e) => ((e.currentTarget as HTMLDivElement).style.borderColor = "#1a1a1a")}
     >
       {/* Top row */}
@@ -83,7 +83,7 @@ function ClientCard({ client, onHealthChange, onStatusChange, onSelect }: { clie
         {client.monthly_fee && (
           <div className="flex justify-between">
             <span style={{ color: "#555" }}>Mensalidade</span>
-            <span style={{ color: "#1FCE4A" }} className="font-medium">
+            <span style={{ color: "#7B61FF" }} className="font-medium">
               R$ {client.monthly_fee.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
             </span>
           </div>
@@ -103,7 +103,7 @@ function ClientCard({ client, onHealthChange, onStatusChange, onSelect }: { clie
             onClick={(e) => e.stopPropagation()}
             className="flex items-center gap-1 text-[11px] transition-colors duration-150"
             style={{ color: "#444" }}
-            onMouseEnter={(e) => ((e.currentTarget as HTMLAnchorElement).style.color = "#1FCE4A")}
+            onMouseEnter={(e) => ((e.currentTarget as HTMLAnchorElement).style.color = "#7B61FF")}
             onMouseLeave={(e) => ((e.currentTarget as HTMLAnchorElement).style.color = "#444")}
           >
             <ExternalLink size={11} />
@@ -195,19 +195,19 @@ function NewClientModal({ onClose, onSave }: { onClose: () => void; onSave: (dat
 
         <form onSubmit={handleSubmit} className="space-y-3">
           {/* Identificação */}
-          <p className="text-[10px] font-bold uppercase tracking-widest pt-1" style={{ color: "#1FCE4A" }}>Identificação</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest pt-1" style={{ color: "#7B61FF" }}>Identificação</p>
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2 space-y-1">
               <label className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "#555" }}>Nome da empresa *</label>
-              <input type="text" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="Ex: Loja ABC" required className={inp} style={inpStyle} onFocus={(e) => (e.currentTarget.style.borderColor = "#1FCE4A44")} onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")} />
+              <input type="text" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="Ex: Loja ABC" required className={inp} style={inpStyle} onFocus={(e) => (e.currentTarget.style.borderColor = "#7B61FF44")} onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")} />
             </div>
             <div className="space-y-1">
               <label className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "#555" }}>Segmento</label>
-              <input type="text" value={form.segment} onChange={(e) => setForm((f) => ({ ...f, segment: e.target.value }))} placeholder="ecommerce, saas..." className={inp} style={inpStyle} onFocus={(e) => (e.currentTarget.style.borderColor = "#1FCE4A44")} onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")} />
+              <input type="text" value={form.segment} onChange={(e) => setForm((f) => ({ ...f, segment: e.target.value }))} placeholder="ecommerce, saas..." className={inp} style={inpStyle} onFocus={(e) => (e.currentTarget.style.borderColor = "#7B61FF44")} onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")} />
             </div>
             <div className="space-y-1">
               <label className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "#555" }}>Tipo de serviço</label>
-              <input type="text" value={form.tipo_servico} onChange={(e) => setForm((f) => ({ ...f, tipo_servico: e.target.value }))} placeholder="Tráfego pago, Social..." className={inp} style={inpStyle} onFocus={(e) => (e.currentTarget.style.borderColor = "#1FCE4A44")} onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")} />
+              <input type="text" value={form.tipo_servico} onChange={(e) => setForm((f) => ({ ...f, tipo_servico: e.target.value }))} placeholder="Tráfego pago, Social..." className={inp} style={inpStyle} onFocus={(e) => (e.currentTarget.style.borderColor = "#7B61FF44")} onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")} />
             </div>
             <div className="space-y-1">
               <label className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "#555" }}>Status</label>
@@ -220,62 +220,62 @@ function NewClientModal({ onClose, onSave }: { onClose: () => void; onSave: (dat
             </div>
             <div className="space-y-1">
               <label className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "#555" }}>Website</label>
-              <input type="text" value={form.website} onChange={(e) => setForm((f) => ({ ...f, website: e.target.value }))} placeholder="https://..." className={inp} style={inpStyle} onFocus={(e) => (e.currentTarget.style.borderColor = "#1FCE4A44")} onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")} />
+              <input type="text" value={form.website} onChange={(e) => setForm((f) => ({ ...f, website: e.target.value }))} placeholder="https://..." className={inp} style={inpStyle} onFocus={(e) => (e.currentTarget.style.borderColor = "#7B61FF44")} onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")} />
             </div>
           </div>
 
           {/* Financeiro */}
-          <p className="text-[10px] font-bold uppercase tracking-widest pt-1" style={{ color: "#1FCE4A" }}>Financeiro</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest pt-1" style={{ color: "#7B61FF" }}>Financeiro</p>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <label className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "#555" }}>Mensalidade (R$)</label>
-              <input type="number" step="any" value={form.monthly_fee} onChange={(e) => setForm((f) => ({ ...f, monthly_fee: e.target.value }))} placeholder="5000" className={inp} style={inpStyle} onFocus={(e) => (e.currentTarget.style.borderColor = "#1FCE4A44")} onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")} />
+              <input type="number" step="any" value={form.monthly_fee} onChange={(e) => setForm((f) => ({ ...f, monthly_fee: e.target.value }))} placeholder="5000" className={inp} style={inpStyle} onFocus={(e) => (e.currentTarget.style.borderColor = "#7B61FF44")} onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")} />
             </div>
             <div className="space-y-1">
               <label className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "#555" }}>Investimento em mídia (R$)</label>
-              <input type="number" step="any" value={form.monthly_investment} onChange={(e) => setForm((f) => ({ ...f, monthly_investment: e.target.value }))} placeholder="3000" className={inp} style={inpStyle} onFocus={(e) => (e.currentTarget.style.borderColor = "#1FCE4A44")} onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")} />
+              <input type="number" step="any" value={form.monthly_investment} onChange={(e) => setForm((f) => ({ ...f, monthly_investment: e.target.value }))} placeholder="3000" className={inp} style={inpStyle} onFocus={(e) => (e.currentTarget.style.borderColor = "#7B61FF44")} onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")} />
             </div>
             <div className="space-y-1">
               <label className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "#555" }}>Início do contrato</label>
-              <input type="date" value={form.contract_start} onChange={(e) => setForm((f) => ({ ...f, contract_start: e.target.value }))} className={inp} style={inpStyle} onFocus={(e) => (e.currentTarget.style.borderColor = "#1FCE4A44")} onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")} />
+              <input type="date" value={form.contract_start} onChange={(e) => setForm((f) => ({ ...f, contract_start: e.target.value }))} className={inp} style={inpStyle} onFocus={(e) => (e.currentTarget.style.borderColor = "#7B61FF44")} onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")} />
             </div>
             <div className="space-y-1">
               <label className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "#555" }}>Fim do contrato</label>
-              <input type="date" value={form.contract_end} onChange={(e) => setForm((f) => ({ ...f, contract_end: e.target.value }))} className={inp} style={inpStyle} onFocus={(e) => (e.currentTarget.style.borderColor = "#1FCE4A44")} onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")} />
+              <input type="date" value={form.contract_end} onChange={(e) => setForm((f) => ({ ...f, contract_end: e.target.value }))} className={inp} style={inpStyle} onFocus={(e) => (e.currentTarget.style.borderColor = "#7B61FF44")} onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")} />
             </div>
           </div>
 
           {/* Contato */}
-          <p className="text-[10px] font-bold uppercase tracking-widest pt-1" style={{ color: "#1FCE4A" }}>Contato</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest pt-1" style={{ color: "#7B61FF" }}>Contato</p>
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2 space-y-1">
               <label className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "#555" }}>Nome do responsável</label>
-              <input type="text" value={form.primary_contact_name} onChange={(e) => setForm((f) => ({ ...f, primary_contact_name: e.target.value }))} placeholder="Nome do contato" className={inp} style={inpStyle} onFocus={(e) => (e.currentTarget.style.borderColor = "#1FCE4A44")} onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")} />
+              <input type="text" value={form.primary_contact_name} onChange={(e) => setForm((f) => ({ ...f, primary_contact_name: e.target.value }))} placeholder="Nome do contato" className={inp} style={inpStyle} onFocus={(e) => (e.currentTarget.style.borderColor = "#7B61FF44")} onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")} />
             </div>
             <div className="space-y-1">
               <label className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "#555" }}>E-mail</label>
-              <input type="email" value={form.primary_contact_email} onChange={(e) => setForm((f) => ({ ...f, primary_contact_email: e.target.value }))} placeholder="email@empresa.com" className={inp} style={inpStyle} onFocus={(e) => (e.currentTarget.style.borderColor = "#1FCE4A44")} onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")} />
+              <input type="email" value={form.primary_contact_email} onChange={(e) => setForm((f) => ({ ...f, primary_contact_email: e.target.value }))} placeholder="email@empresa.com" className={inp} style={inpStyle} onFocus={(e) => (e.currentTarget.style.borderColor = "#7B61FF44")} onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")} />
             </div>
             <div className="space-y-1">
               <label className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "#555" }}>Telefone / WhatsApp</label>
-              <input type="text" value={form.primary_contact_phone} onChange={(e) => setForm((f) => ({ ...f, primary_contact_phone: e.target.value }))} placeholder="(11) 99999-9999" className={inp} style={inpStyle} onFocus={(e) => (e.currentTarget.style.borderColor = "#1FCE4A44")} onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")} />
+              <input type="text" value={form.primary_contact_phone} onChange={(e) => setForm((f) => ({ ...f, primary_contact_phone: e.target.value }))} placeholder="(11) 99999-9999" className={inp} style={inpStyle} onFocus={(e) => (e.currentTarget.style.borderColor = "#7B61FF44")} onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")} />
             </div>
           </div>
 
           {/* Outros */}
-          <p className="text-[10px] font-bold uppercase tracking-widest pt-1" style={{ color: "#1FCE4A" }}>Outros</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest pt-1" style={{ color: "#7B61FF" }}>Outros</p>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <label className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "#555" }}>Origem do lead</label>
-              <input type="text" value={form.origem_lead} onChange={(e) => setForm((f) => ({ ...f, origem_lead: e.target.value }))} placeholder="Indicação, Instagram..." className={inp} style={inpStyle} onFocus={(e) => (e.currentTarget.style.borderColor = "#1FCE4A44")} onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")} />
+              <input type="text" value={form.origem_lead} onChange={(e) => setForm((f) => ({ ...f, origem_lead: e.target.value }))} placeholder="Indicação, Instagram..." className={inp} style={inpStyle} onFocus={(e) => (e.currentTarget.style.borderColor = "#7B61FF44")} onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")} />
             </div>
             <div className="space-y-1">
               <label className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "#555" }}>Próxima reunião</label>
-              <input type="datetime-local" value={form.proxima_reuniao} onChange={(e) => setForm((f) => ({ ...f, proxima_reuniao: e.target.value }))} className={inp} style={inpStyle} onFocus={(e) => (e.currentTarget.style.borderColor = "#1FCE4A44")} onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")} />
+              <input type="datetime-local" value={form.proxima_reuniao} onChange={(e) => setForm((f) => ({ ...f, proxima_reuniao: e.target.value }))} className={inp} style={inpStyle} onFocus={(e) => (e.currentTarget.style.borderColor = "#7B61FF44")} onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")} />
             </div>
             <div className="col-span-2 space-y-1">
               <label className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "#555" }}>Observações</label>
-              <textarea value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} placeholder="Notas internas sobre o cliente..." rows={3} className={inp + " resize-none"} style={inpStyle} onFocus={(e) => (e.currentTarget.style.borderColor = "#1FCE4A44")} onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")} />
+              <textarea value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} placeholder="Notas internas sobre o cliente..." rows={3} className={inp + " resize-none"} style={inpStyle} onFocus={(e) => (e.currentTarget.style.borderColor = "#7B61FF44")} onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")} />
             </div>
           </div>
 
@@ -293,7 +293,7 @@ function NewClientModal({ onClose, onSave }: { onClose: () => void; onSave: (dat
               type="submit"
               disabled={saving || !form.name}
               className="flex-1 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all"
-              style={{ backgroundColor: saving || !form.name ? "#0d1f14" : "#1FCE4A", color: saving || !form.name ? "#333" : "#000" }}
+              style={{ backgroundColor: saving || !form.name ? "#1A1230" : "#7B61FF", color: saving || !form.name ? "#333" : "#000" }}
             >
               {saving ? <Loader2 size={13} className="animate-spin" /> : "Criar Cliente"}
             </button>
@@ -347,7 +347,7 @@ export function ClientesSection({ compact = false, onSelectClient }: ClientesSec
   if (loading) {
     return (
       <div className="flex items-center justify-center h-40">
-        <Loader2 size={20} className="animate-spin" style={{ color: "#1FCE4A" }} />
+        <Loader2 size={20} className="animate-spin" style={{ color: "#7B61FF" }} />
       </div>
     );
   }
@@ -366,9 +366,9 @@ export function ClientesSection({ compact = false, onSelectClient }: ClientesSec
             <button
               onClick={() => setShowNewModal(true)}
               className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-150"
-              style={{ backgroundColor: "#1FCE4A", color: "#000" }}
-              onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.backgroundColor = "#17b83e")}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.backgroundColor = "#1FCE4A")}
+              style={{ backgroundColor: "#7B61FF", color: "#000" }}
+              onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.backgroundColor = "#6247E5")}
+              onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.backgroundColor = "#7B61FF")}
             >
               <Plus size={13} />
               Novo Cliente
@@ -385,7 +385,7 @@ export function ClientesSection({ compact = false, onSelectClient }: ClientesSec
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar por nome, segmento..."
-            className="w-full bg-[#0d0d0d] border border-[#1e1e1e] rounded-lg pl-8 pr-3 py-2 text-xs text-white placeholder-[#444] focus:outline-none focus:border-[#1FCE4A44] transition-colors"
+            className="w-full bg-[#0d0d0d] border border-[#1e1e1e] rounded-lg pl-8 pr-3 py-2 text-xs text-white placeholder-[#444] focus:outline-none focus:border-[#7B61FF44] transition-colors"
           />
         </div>
         <select className={selectCls} value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
@@ -413,7 +413,7 @@ export function ClientesSection({ compact = false, onSelectClient }: ClientesSec
             <button
               onClick={() => setShowNewModal(true)}
               className="text-xs font-semibold px-4 py-2 rounded-lg"
-              style={{ backgroundColor: "#1FCE4A", color: "#000" }}
+              style={{ backgroundColor: "#7B61FF", color: "#000" }}
             >
               + Adicionar Cliente
             </button>

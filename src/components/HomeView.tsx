@@ -107,9 +107,9 @@ function MessageBubble({ message }: { message: Message }) {
       {!isUser && (
         <div
           className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
-          style={{ backgroundColor: "#0d1f14", border: "1px solid #1FCE4A33" }}
+          style={{ backgroundColor: "#1A1230", border: "1px solid #7B61FF33" }}
         >
-          <Sparkles size={13} style={{ color: "#1FCE4A" }} aria-hidden="true" />
+          <Sparkles size={13} style={{ color: "#7B61FF" }} aria-hidden="true" />
         </div>
       )}
 
@@ -126,7 +126,7 @@ function MessageBubble({ message }: { message: Message }) {
           if (isBullet) {
             return (
               <div key={i} className="flex items-start gap-2 mt-1">
-                <span style={{ color: "#1FCE4A", marginTop: "0.35rem", flexShrink: 0 }}>▸</span>
+                <span style={{ color: "#7B61FF", marginTop: "0.35rem", flexShrink: 0 }}>▸</span>
                 <span>{renderMarkdown(line.replace(/^(\s*)-\s/, ""))}</span>
               </div>
             );
@@ -148,9 +148,9 @@ function TypingIndicator() {
     <div className="flex gap-3">
       <div
         className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-        style={{ backgroundColor: "#0d1f14", border: "1px solid #1FCE4A33" }}
+        style={{ backgroundColor: "#1A1230", border: "1px solid #7B61FF33" }}
       >
-        <Sparkles size={13} style={{ color: "#1FCE4A" }} />
+        <Sparkles size={13} style={{ color: "#7B61FF" }} />
       </div>
       <div
         className="rounded-2xl px-4 py-3 flex items-center gap-1"
@@ -161,7 +161,7 @@ function TypingIndicator() {
             key={i}
             className="w-1.5 h-1.5 rounded-full"
             style={{
-              backgroundColor: "#1FCE4A",
+              backgroundColor: "#7B61FF",
               animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite`,
             }}
           />
@@ -319,14 +319,14 @@ export function HomeView({ profile, onNavigate }: HomeViewProps) {
         <div className="flex items-center gap-2">
           <div
             className="w-6 h-6 rounded-md flex items-center justify-center"
-            style={{ backgroundColor: "#0d1f14", border: "1px solid #1FCE4A44" }}
+            style={{ backgroundColor: "#1A1230", border: "1px solid #7B61FF44" }}
           >
-            <Sparkles size={12} style={{ color: "#1FCE4A" }} />
+            <Sparkles size={12} style={{ color: "#7B61FF" }} />
           </div>
-          <span className="text-xs font-bold tracking-widest uppercase" style={{ color: "#1FCE4A" }}>
+          <span className="text-xs font-bold tracking-widest uppercase" style={{ color: "#7B61FF" }}>
             Orbe AI
           </span>
-          <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{ backgroundColor: "#0d1f14", color: "#555", border: "1px solid #1a1a1a" }}>
+          <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{ backgroundColor: "#1A1230", color: "#555", border: "1px solid #1a1a1a" }}>
             llama 3.3 · groq
           </span>
         </div>
@@ -426,7 +426,7 @@ export function HomeView({ profile, onNavigate }: HomeViewProps) {
                 style={{ borderColor: "#1a1a1a", color: "#666", backgroundColor: "#080808" }}
                 onMouseEnter={(e) => {
                   const el = e.currentTarget as HTMLButtonElement;
-                  el.style.borderColor = "#1FCE4A44";
+                  el.style.borderColor = "#7B61FF44";
                   el.style.color = "#A3A3A3";
                 }}
                 onMouseLeave={(e) => {
@@ -458,7 +458,7 @@ export function HomeView({ profile, onNavigate }: HomeViewProps) {
                 color: "#e5e5e5",
                 maxHeight: "120px",
               }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = "#1FCE4A44")}
+              onFocus={(e) => (e.currentTarget.style.borderColor = "#7B61FF44")}
               onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")}
               onInput={(e) => {
                 const el = e.currentTarget;
@@ -471,9 +471,9 @@ export function HomeView({ profile, onNavigate }: HomeViewProps) {
           <button
             onClick={() => sendMessage(input)}
             disabled={!input.trim() || isStreaming}
-            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1FCE4A]"
+            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7B61FF]"
             style={{
-              backgroundColor: input.trim() && !isStreaming ? "#1FCE4A" : "#111",
+              backgroundColor: input.trim() && !isStreaming ? "#7B61FF" : "#111",
               color: input.trim() && !isStreaming ? "#000" : "#333",
               border: "1px solid #1a1a1a",
             }}
@@ -533,7 +533,7 @@ export function HomeView({ profile, onNavigate }: HomeViewProps) {
                   border: "1px solid #1e1e1e",
                   color: "#e5e5e5",
                 }}
-                onFocus={(e) => (e.currentTarget.style.borderColor = "#1FCE4A44")}
+                onFocus={(e) => (e.currentTarget.style.borderColor = "#7B61FF44")}
                 onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")}
               />
               <p className="text-[10px]" style={{ color: "#333" }}>
@@ -552,9 +552,9 @@ export function HomeView({ profile, onNavigate }: HomeViewProps) {
               <button
                 onClick={saveApiKey}
                 className="flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150"
-                style={{ backgroundColor: "#1FCE4A", color: "#000" }}
-                onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.backgroundColor = "#17b83e")}
-                onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.backgroundColor = "#1FCE4A")}
+                style={{ backgroundColor: "#7B61FF", color: "#000" }}
+                onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.backgroundColor = "#6247E5")}
+                onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.backgroundColor = "#7B61FF")}
               >
                 Salvar
               </button>

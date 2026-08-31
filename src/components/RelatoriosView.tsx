@@ -94,7 +94,7 @@ Gere um relatório mensal completo e profissional em HTML (apenas o corpo, sem <
 - <p> para parágrafos
 - <ul><li> para listas
 - <strong> para destaques
-- <span style="color:#1FCE4A"> para números positivos
+- <span style="color:#7B61FF"> para números positivos
 - <span style="color:#EF4444"> para alertas
 
 O relatório deve ter:
@@ -127,7 +127,7 @@ Tom profissional, em português brasileiro. Seja específico com os dados fornec
         <div className="flex items-center gap-3">
           <span className="text-[10px] font-bold px-2 py-0.5 rounded" style={{ backgroundColor: flag.bg, color: flag.color }}>{flag.label}</span>
           <span className="text-[11px]" style={{ color: status.color }}>{status.label}</span>
-          {client.monthly_fee && <span className="text-[11px]" style={{ color: "#1FCE4A" }}>{fmtCurrency(client.monthly_fee)}/mês</span>}
+          {client.monthly_fee && <span className="text-[11px]" style={{ color: "#7B61FF" }}>{fmtCurrency(client.monthly_fee)}/mês</span>}
         </div>
         <div className="flex items-center gap-2">
           {report && (
@@ -140,7 +140,7 @@ Tom profissional, em português brasileiro. Seja específico com os dados fornec
           )}
           <button onClick={generate} disabled={loading || !apiKey}
             className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all disabled:opacity-40"
-            style={{ backgroundColor: "#1FCE4A", color: "#000" }}>
+            style={{ backgroundColor: "#7B61FF", color: "#000" }}>
             {loading ? <Loader2 size={12} className="animate-spin" /> : report ? <RefreshCw size={12} /> : <Sparkles size={12} />}
             {loading ? "Gerando..." : report ? "Regerar" : "Gerar relatório com IA"}
           </button>
@@ -163,7 +163,7 @@ Tom profissional, em português brasileiro. Seja específico com os dados fornec
       {loading && (
         <div className="flex items-center justify-center py-16">
           <div className="text-center space-y-3">
-            <Loader2 size={24} className="animate-spin mx-auto" style={{ color: "#1FCE4A" }} />
+            <Loader2 size={24} className="animate-spin mx-auto" style={{ color: "#7B61FF" }} />
             <p className="text-sm" style={{ color: "#555" }}>Analisando dados e gerando relatório...</p>
           </div>
         </div>
@@ -189,7 +189,7 @@ export function RelatoriosView() {
     <div className="flex flex-col min-h-0">
       <div className="max-w-screen-xl mx-auto w-full px-6 py-8 space-y-6">
         <div>
-          <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "#1FCE4A" }}>Relatórios</p>
+          <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "#7B61FF" }}>Relatórios</p>
           <h2 className="text-white font-bold text-lg leading-tight">Relatório de Cliente</h2>
           <p className="text-xs mt-1" style={{ color: "#555" }}>
             Selecione um cliente para gerar um relatório mensal completo com IA — inclui performance de anúncios, tarefas e recomendações.

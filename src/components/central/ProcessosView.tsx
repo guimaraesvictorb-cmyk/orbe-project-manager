@@ -14,7 +14,7 @@ function RoutineCard({
   return (
     <button
       onClick={onClick}
-      className="group w-full text-left rounded-xl p-4 border border-[#1a1a1a] transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1FCE4A] flex items-start gap-4"
+      className="group w-full text-left rounded-xl p-4 border border-[#1a1a1a] transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7B61FF] flex items-start gap-4"
       style={{ backgroundColor: "#0a0a0a" }}
       onMouseEnter={(e) => {
         const el = e.currentTarget as HTMLButtonElement;
@@ -105,7 +105,7 @@ export function ProcessosView() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "#1FCE4A" }}>
+        <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "#7B61FF" }}>
           OPS · Processos
         </p>
         <h2 className="text-white font-bold text-xl">Processos & Rotinas</h2>

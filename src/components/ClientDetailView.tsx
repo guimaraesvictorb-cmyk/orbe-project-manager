@@ -61,8 +61,8 @@ function KnowledgeCard({ entry, onValidate, onDelete }: {
             <button
               onClick={onValidate}
               title="Validar"
-              className="p-1.5 rounded-lg transition-colors hover:bg-[#0d1f14]"
-              style={{ color: "#1FCE4A" }}
+              className="p-1.5 rounded-lg transition-colors hover:bg-[#1A1230]"
+              style={{ color: "#7B61FF" }}
             >
               <Check size={14} />
             </button>
@@ -98,7 +98,7 @@ function AddEntryModal({ onClose, onSave }: {
     onClose()
   }
 
-  const inputCls = "w-full rounded-lg px-3 py-2.5 text-sm text-white placeholder-[#333] focus:outline-none focus:border-[#1FCE4A44] transition-colors"
+  const inputCls = "w-full rounded-lg px-3 py-2.5 text-sm text-white placeholder-[#333] focus:outline-none focus:border-[#7B61FF44] transition-colors"
   const inputStyle = { backgroundColor: "#080808", border: "1px solid #1e1e1e" }
 
   return (
@@ -144,7 +144,7 @@ function AddEntryModal({ onClose, onSave }: {
               type="submit"
               disabled={saving || !title.trim() || !content.trim()}
               className="flex-1 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 disabled:opacity-40"
-              style={{ backgroundColor: "#1FCE4A", color: "#000" }}
+              style={{ backgroundColor: "#7B61FF", color: "#000" }}
             >
               {saving ? <Loader2 size={13} className="animate-spin" /> : "Salvar"}
             </button>
@@ -270,8 +270,8 @@ Use APENAS as informações acima. Não invente dados. Se não souber algo sobre
 
   return (
     <div className="flex flex-col h-full" style={{ minHeight: 0 }}>
-      <div className="flex items-center gap-2 px-4 py-2 rounded-xl mb-4" style={{ backgroundColor: "#0a0f0d", border: "1px solid #0d1f14" }}>
-        <BookOpen size={12} style={{ color: "#1FCE4A" }} />
+      <div className="flex items-center gap-2 px-4 py-2 rounded-xl mb-4" style={{ backgroundColor: "#0a0f0d", border: "1px solid #1A1230" }}>
+        <BookOpen size={12} style={{ color: "#7B61FF" }} />
         <p className="text-[11px]" style={{ color: "#555" }}>
           IA especializada em <span className="text-white font-medium">{client.name}</span> —{" "}
           {validated.length} {validated.length === 1 ? "informação validada" : "informações validadas"}
@@ -294,7 +294,7 @@ Use APENAS as informações acima. Não invente dados. Se não souber algo sobre
               className="rounded-2xl px-4 py-3 text-sm max-w-[85%] leading-relaxed whitespace-pre-wrap"
               style={
                 msg.role === "user"
-                  ? { backgroundColor: "#0d1f14", color: "#fff", borderBottomRightRadius: 4 }
+                  ? { backgroundColor: "#1A1230", color: "#fff", borderBottomRightRadius: 4 }
                   : { backgroundColor: "#111", color: "#ddd", borderBottomLeftRadius: 4 }
               }
             >
@@ -322,14 +322,14 @@ Use APENAS as informações acima. Não invente dados. Se não souber algo sobre
           onChange={(e) => setInput(e.target.value)}
           placeholder={`Pergunte sobre ${client.name}...`}
           disabled={streaming}
-          className="flex-1 rounded-xl px-4 py-3 text-sm text-white placeholder-[#333] focus:outline-none focus:border-[#1FCE4A44] transition-colors"
+          className="flex-1 rounded-xl px-4 py-3 text-sm text-white placeholder-[#333] focus:outline-none focus:border-[#7B61FF44] transition-colors"
           style={{ backgroundColor: "#0d0d0d", border: "1px solid #1e1e1e" }}
         />
         <button
           type="submit"
           disabled={!input.trim() || streaming}
           className="p-3 rounded-xl flex items-center justify-center transition-all disabled:opacity-30"
-          style={{ backgroundColor: "#1FCE4A", color: "#000" }}
+          style={{ backgroundColor: "#7B61FF", color: "#000" }}
         >
           <Send size={15} />
         </button>
@@ -448,7 +448,7 @@ export function ClientDetailView({ client, onBack }: ClientDetailViewProps) {
               <p className="text-xs" style={{ color: "#555" }}>Gere um link para o cliente visualizar suas métricas de anúncios sem precisar fazer login.</p>
               <button onClick={() => createToken("Link do cliente")}
                 className="w-full py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all"
-                style={{ backgroundColor: "#1FCE4A", color: "#000" }}>
+                style={{ backgroundColor: "#7B61FF", color: "#000" }}>
                 <Link size={13} />Gerar novo link
               </button>
               {tokens.length === 0 && (
@@ -461,7 +461,7 @@ export function ClientDetailView({ client, onBack }: ClientDetailViewProps) {
                     <p className="text-[10px] truncate" style={{ color: "#444" }}>{window.location.origin}?share={t.token}</p>
                     {t.expires_at && <p className="text-[10px]" style={{ color: "#EF4444" }}>Expira: {new Date(t.expires_at).toLocaleDateString("pt-BR")}</p>}
                   </div>
-                  <button onClick={() => copyShareLink(t.token)} className="p-1.5 rounded-lg transition-colors" style={{ color: copiedToken === t.token ? "#1FCE4A" : "#555" }}>
+                  <button onClick={() => copyShareLink(t.token)} className="p-1.5 rounded-lg transition-colors" style={{ color: copiedToken === t.token ? "#7B61FF" : "#555" }}>
                     {copiedToken === t.token ? <Check size={14} /> : <Copy size={14} />}
                   </button>
                   <button onClick={() => deleteToken(t.id)} className="p-1.5 rounded-lg transition-colors" style={{ color: "#333" }}
@@ -486,7 +486,7 @@ export function ClientDetailView({ client, onBack }: ClientDetailViewProps) {
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <div
             className="w-9 h-9 rounded-lg flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
-            style={{ backgroundColor: "#1FCE4A22", border: "1px solid #1FCE4A33" }}
+            style={{ backgroundColor: "#7B61FF22", border: "1px solid #7B61FF33" }}
           >
             {client.name.charAt(0).toUpperCase()}
           </div>
@@ -505,7 +505,7 @@ export function ClientDetailView({ client, onBack }: ClientDetailViewProps) {
           </span>
           <button onClick={() => setShowShareModal(true)} className="ml-auto flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors flex-shrink-0"
             style={{ borderColor: "#1e1e1e", color: "#555" }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#1FCE4A"; (e.currentTarget as HTMLButtonElement).style.borderColor = "#1FCE4A44"; }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#7B61FF"; (e.currentTarget as HTMLButtonElement).style.borderColor = "#7B61FF44"; }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#555"; (e.currentTarget as HTMLButtonElement).style.borderColor = "#1e1e1e"; }}>
             <Share2 size={12} />Compartilhar
           </button>
@@ -522,7 +522,7 @@ export function ClientDetailView({ client, onBack }: ClientDetailViewProps) {
           >
             {t.label}
             {tab === t.id && (
-              <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-t" style={{ backgroundColor: "#1FCE4A" }} />
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-t" style={{ backgroundColor: "#7B61FF" }} />
             )}
           </button>
         ))}
@@ -533,11 +533,11 @@ export function ClientDetailView({ client, onBack }: ClientDetailViewProps) {
         {tab === "overview" && (
           <div className="max-w-2xl">
             <Field label={<><User size={11} className="inline mr-1" />Contato</>}         value={client.primary_contact_name} />
-            <Field label={<><Mail size={11} className="inline mr-1" />E-mail</>}           value={client.primary_contact_email && <a href={`mailto:${client.primary_contact_email}`} style={{ color: "#1FCE4A" }}>{client.primary_contact_email}</a>} />
+            <Field label={<><Mail size={11} className="inline mr-1" />E-mail</>}           value={client.primary_contact_email && <a href={`mailto:${client.primary_contact_email}`} style={{ color: "#7B61FF" }}>{client.primary_contact_email}</a>} />
             <Field label={<><Phone size={11} className="inline mr-1" />Telefone</>}        value={client.primary_contact_phone} />
-            <Field label={<><Globe size={11} className="inline mr-1" />Website</>}         value={client.website && <a href={client.website} target="_blank" rel="noopener noreferrer" style={{ color: "#1FCE4A" }}>{client.website.replace(/^https?:\/\//, "")}</a>} />
+            <Field label={<><Globe size={11} className="inline mr-1" />Website</>}         value={client.website && <a href={client.website} target="_blank" rel="noopener noreferrer" style={{ color: "#7B61FF" }}>{client.website.replace(/^https?:\/\//, "")}</a>} />
             <Field label={<><Tag size={11} className="inline mr-1" />Segmento</>}          value={client.segment} />
-            <Field label={<><DollarSign size={11} className="inline mr-1" />Mensalidade</>} value={client.monthly_fee && <span style={{ color: "#1FCE4A" }} className="font-medium">R$ {client.monthly_fee.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>} />
+            <Field label={<><DollarSign size={11} className="inline mr-1" />Mensalidade</>} value={client.monthly_fee && <span style={{ color: "#7B61FF" }} className="font-medium">R$ {client.monthly_fee.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>} />
             <Field label={<><Tag size={11} className="inline mr-1" />Tipo de serviço</>}   value={client.tipo_servico} />
             <Field label="Origem do lead"      value={client.origem_lead} />
             <Field label={<><Calendar size={11} className="inline mr-1" />Próxima reunião</>} value={client.proxima_reuniao && new Date(client.proxima_reuniao).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })} />
@@ -569,7 +569,7 @@ export function ClientDetailView({ client, onBack }: ClientDetailViewProps) {
                 <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "#1a1a1a" }}>
                   <div
                     className="h-full rounded-full transition-all duration-300"
-                    style={{ width: `${(done.length / items.length) * 100}%`, backgroundColor: "#1FCE4A" }}
+                    style={{ width: `${(done.length / items.length) * 100}%`, backgroundColor: "#7B61FF" }}
                   />
                 </div>
               </div>
@@ -580,7 +580,7 @@ export function ClientDetailView({ client, onBack }: ClientDetailViewProps) {
               <button
                 onClick={() => setShowAddChecklist(true)}
                 className="flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-lg"
-                style={{ backgroundColor: "#1FCE4A", color: "#000" }}
+                style={{ backgroundColor: "#7B61FF", color: "#000" }}
               >
                 <Plus size={13} />
                 Adicionar item
@@ -596,19 +596,19 @@ export function ClientDetailView({ client, onBack }: ClientDetailViewProps) {
                     placeholder="Título do item..."
                     required
                     autoFocus
-                    className="w-full rounded-lg px-3 py-2 text-sm text-white placeholder-[#333] focus:outline-none focus:border-[#1FCE4A44] transition-colors"
+                    className="w-full rounded-lg px-3 py-2 text-sm text-white placeholder-[#333] focus:outline-none focus:border-[#7B61FF44] transition-colors"
                     style={{ backgroundColor: "#0d0d0d", border: "1px solid #1e1e1e" }}
                   />
                   <input
                     value={newItemCategory}
                     onChange={(e) => setNewItemCategory(e.target.value)}
                     placeholder="Categoria (opcional)"
-                    className="w-full rounded-lg px-3 py-2 text-xs text-white placeholder-[#333] focus:outline-none focus:border-[#1FCE4A44] transition-colors"
+                    className="w-full rounded-lg px-3 py-2 text-xs text-white placeholder-[#333] focus:outline-none focus:border-[#7B61FF44] transition-colors"
                     style={{ backgroundColor: "#0d0d0d", border: "1px solid #1e1e1e" }}
                   />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <button type="submit" className="px-3 py-2 rounded-lg text-xs font-semibold" style={{ backgroundColor: "#1FCE4A", color: "#000" }}>
+                  <button type="submit" className="px-3 py-2 rounded-lg text-xs font-semibold" style={{ backgroundColor: "#7B61FF", color: "#000" }}>
                     Salvar
                   </button>
                   <button type="button" onClick={() => setShowAddChecklist(false)} className="px-3 py-2 rounded-lg text-xs border" style={{ borderColor: "#1e1e1e", color: "#555" }}>
@@ -637,8 +637,8 @@ export function ClientDetailView({ client, onBack }: ClientDetailViewProps) {
                       onClick={() => profile && toggleItem(item.id, profile.id)}
                       className="w-5 h-5 rounded-md border flex-shrink-0 flex items-center justify-center transition-all"
                       style={{
-                        backgroundColor: item.completed ? "#1FCE4A" : "transparent",
-                        borderColor: item.completed ? "#1FCE4A" : "#2a2a2a",
+                        backgroundColor: item.completed ? "#7B61FF" : "transparent",
+                        borderColor: item.completed ? "#7B61FF" : "#2a2a2a",
                       }}
                     >
                       {item.completed && <Check size={11} color="#000" />}
@@ -686,7 +686,7 @@ export function ClientDetailView({ client, onBack }: ClientDetailViewProps) {
                 <button
                   onClick={() => setShowAddModal(true)}
                   className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold"
-                  style={{ backgroundColor: "#1FCE4A", color: "#000" }}
+                  style={{ backgroundColor: "#7B61FF", color: "#000" }}
                 >
                   <Plus size={13} />
                   Adicionar informação
@@ -725,7 +725,7 @@ export function ClientDetailView({ client, onBack }: ClientDetailViewProps) {
             <div>
               {validated.length > 0 && (
                 <>
-                  <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "#1FCE4A" }}>
+                  <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "#7B61FF" }}>
                     Validado ({validated.length})
                   </p>
                   <div className="space-y-3">
@@ -746,7 +746,7 @@ export function ClientDetailView({ client, onBack }: ClientDetailViewProps) {
                     <button
                       onClick={() => setShowAddModal(true)}
                       className="text-xs font-semibold px-4 py-2 rounded-lg"
-                      style={{ backgroundColor: "#1FCE4A", color: "#000" }}
+                      style={{ backgroundColor: "#7B61FF", color: "#000" }}
                     >
                       + Adicionar primeira informação
                     </button>

@@ -10,7 +10,7 @@ const STATUS_META: Record<Task["status"], { label: string; color: string; bg: st
   backlog:      { label: "Backlog",      color: "#525252", bg: "#111" },
   em_andamento: { label: "Em Andamento", color: "#3B82F6", bg: "#0d1630" },
   em_revisao:   { label: "Em Revisão",   color: "#F59E0B", bg: "#1a1200" },
-  concluido:    { label: "Concluído",    color: "#1FCE4A", bg: "#0d1f14" },
+  concluido:    { label: "Concluído",    color: "#7B61FF", bg: "#1A1230" },
   cancelado:    { label: "Cancelado",    color: "#EF4444", bg: "#1a0505" },
 };
 
@@ -81,7 +81,7 @@ function TaskModal({ task, clients, profiles, onClose, onSave, onDelete, current
         <form onSubmit={handleSubmit} className="space-y-3">
           <input value={form.title ?? ""} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
             placeholder="Título da tarefa *" required autoFocus className={inputCls} style={inputStyle}
-            onFocus={(e) => (e.currentTarget.style.borderColor = "#1FCE4A44")}
+            onFocus={(e) => (e.currentTarget.style.borderColor = "#7B61FF44")}
             onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")} />
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
@@ -118,7 +118,7 @@ function TaskModal({ task, clients, profiles, onClose, onSave, onDelete, current
               <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#555" }}>Deadline</label>
               <input type="date" value={form.deadline ?? ""} onChange={(e) => setForm((f) => ({ ...f, deadline: e.target.value || null }))}
                 className={inputCls} style={inputStyle}
-                onFocus={(e) => (e.currentTarget.style.borderColor = "#1FCE4A44")}
+                onFocus={(e) => (e.currentTarget.style.borderColor = "#7B61FF44")}
                 onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")} />
             </div>
             <div className="space-y-1">
@@ -135,7 +135,7 @@ function TaskModal({ task, clients, profiles, onClose, onSave, onDelete, current
           </div>
           <textarea value={form.description ?? ""} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value || null }))}
             placeholder="Descrição (opcional)" rows={3} className={`${inputCls} resize-none`} style={inputStyle}
-            onFocus={(e) => (e.currentTarget.style.borderColor = "#1FCE4A44")}
+            onFocus={(e) => (e.currentTarget.style.borderColor = "#7B61FF44")}
             onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")} />
           <div className="flex gap-3 pt-1">
             {task && onDelete && (
@@ -149,7 +149,7 @@ function TaskModal({ task, clients, profiles, onClose, onSave, onDelete, current
             </button>
             <button type="submit" disabled={saving || !form.title || !form.client_id}
               className="flex-1 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all"
-              style={{ backgroundColor: saving || !form.title || !form.client_id ? "#0d1f14" : "#1FCE4A", color: saving || !form.title || !form.client_id ? "#333" : "#000" }}>
+              style={{ backgroundColor: saving || !form.title || !form.client_id ? "#1A1230" : "#7B61FF", color: saving || !form.title || !form.client_id ? "#333" : "#000" }}>
               {saving ? <Loader2 size={13} className="animate-spin" /> : task ? "Salvar" : "Criar Tarefa"}
             </button>
           </div>
@@ -206,7 +206,7 @@ export function TasksView({ clientId }: { clientId?: string }) {
 
   if (loading) return (
     <div className="flex items-center justify-center h-40">
-      <Loader2 size={20} className="animate-spin" style={{ color: "#1FCE4A" }} />
+      <Loader2 size={20} className="animate-spin" style={{ color: "#7B61FF" }} />
     </div>
   );
 
@@ -215,7 +215,7 @@ export function TasksView({ clientId }: { clientId?: string }) {
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <div>
-          <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "#1FCE4A" }}>Gestão de Tarefas</p>
+          <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "#7B61FF" }}>Gestão de Tarefas</p>
           <div className="flex items-center gap-3">
             <span className="text-sm" style={{ color: "#A3A3A3" }}>{filtered.length} tarefa{filtered.length !== 1 ? "s" : ""}</span>
             {overdue > 0 && (
@@ -230,16 +230,16 @@ export function TasksView({ clientId }: { clientId?: string }) {
           <div className="flex rounded-lg border border-[#1a1a1a] overflow-hidden">
             {([["list", LayoutList], ["kanban", Kanban]] as const).map(([v, Icon]) => (
               <button key={v} onClick={() => setView(v)} className="p-2 transition-colors"
-                style={{ backgroundColor: view === v ? "#1FCE4A" : "transparent", color: view === v ? "#000" : "#555" }}>
+                style={{ backgroundColor: view === v ? "#7B61FF" : "transparent", color: view === v ? "#000" : "#555" }}>
                 <Icon size={14} />
               </button>
             ))}
           </div>
           <button onClick={() => setEditing("new")}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all"
-            style={{ backgroundColor: "#1FCE4A", color: "#000" }}
-            onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.backgroundColor = "#17b83e")}
-            onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.backgroundColor = "#1FCE4A")}>
+            style={{ backgroundColor: "#7B61FF", color: "#000" }}
+            onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.backgroundColor = "#6247E5")}
+            onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.backgroundColor = "#7B61FF")}>
             <Plus size={13} /> Nova Tarefa
           </button>
         </div>
@@ -247,7 +247,7 @@ export function TasksView({ clientId }: { clientId?: string }) {
 
       {/* Status filter chips */}
       <div className="flex items-center gap-2 flex-wrap">
-        {([["todos", "Todas", "#1FCE4A", "#0d1f14"], ...Object.entries(STATUS_META).map(([k, v]) => [k, v.label, v.color, v.bg])] as [string, string, string, string][]).map(([s, label, color, bg]) => (
+        {([["todos", "Todas", "#7B61FF", "#1A1230"], ...Object.entries(STATUS_META).map(([k, v]) => [k, v.label, v.color, v.bg])] as [string, string, string, string][]).map(([s, label, color, bg]) => (
           <button key={s} onClick={() => setFilterStatus(s as Task["status"] | "todos")}
             className="text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider transition-all"
             style={filterStatus === s ? { color, backgroundColor: bg, border: `1px solid ${color}44` } : { color: "#444", backgroundColor: "transparent", border: "1px solid transparent" }}>
@@ -280,7 +280,7 @@ export function TasksView({ clientId }: { clientId?: string }) {
             <div className="py-16 text-center">
               <p className="text-white font-semibold text-sm mb-1">Nenhuma tarefa</p>
               <p className="text-xs mb-4" style={{ color: "#444" }}>Crie a primeira tarefa para começar</p>
-              <button onClick={() => setEditing("new")} className="text-xs font-semibold px-4 py-2 rounded-lg" style={{ backgroundColor: "#1FCE4A", color: "#000" }}>
+              <button onClick={() => setEditing("new")} className="text-xs font-semibold px-4 py-2 rounded-lg" style={{ backgroundColor: "#7B61FF", color: "#000" }}>
                 + Nova Tarefa
               </button>
             </div>

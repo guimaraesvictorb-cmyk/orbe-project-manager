@@ -93,8 +93,7 @@ export function AppNav({ active, onChange, profile, onLogout }: AppNavProps) {
           className="text-xl font-bold leading-none select-none flex-shrink-0"
           style={{ fontFamily: "Arial, sans-serif", letterSpacing: "-2px" }}
         >
-          <span className="text-white">M</span>
-          <span style={{ color: "#1FCE4A" }}>5</span>
+          <span className="text-white">Orbe</span>
         </div>
         <div>
           <p className="text-white font-semibold text-xs leading-tight">Operating System</p>
@@ -118,9 +117,9 @@ export function AppNav({ active, onChange, profile, onLogout }: AppNavProps) {
                   <button
                     key={view}
                     onClick={() => onChange(view)}
-                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-xs font-medium transition-all duration-100 focus:outline-none focus-visible:ring-1 focus-visible:ring-[#1FCE4A]"
+                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-xs font-medium transition-all duration-100 focus:outline-none focus-visible:ring-1 focus-visible:ring-[#7B61FF]"
                     style={{
-                      backgroundColor: isActive ? "#0d1f14" : "transparent",
+                      backgroundColor: isActive ? "#1A1230" : "transparent",
                       color: isActive ? "#fff" : "#555",
                     }}
                     onMouseEnter={(e) => {
@@ -137,10 +136,10 @@ export function AppNav({ active, onChange, profile, onLogout }: AppNavProps) {
                     }}
                     aria-current={isActive ? "page" : undefined}
                   >
-                    <span style={{ color: isActive ? "#1FCE4A" : "inherit" }}>{icon}</span>
+                    <span style={{ color: isActive ? "#7B61FF" : "inherit" }}>{icon}</span>
                     {label}
                     {isActive && (
-                      <ChevronRight size={11} className="ml-auto flex-shrink-0" style={{ color: "#1FCE4A" }} />
+                      <ChevronRight size={11} className="ml-auto flex-shrink-0" style={{ color: "#7B61FF" }} />
                     )}
                   </button>
                 );
@@ -156,7 +155,7 @@ export function AppNav({ active, onChange, profile, onLogout }: AppNavProps) {
           onClick={() => onChange("profile")}
           className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left transition-all duration-100 focus:outline-none"
           style={{
-            backgroundColor: active === "profile" ? "#0d1f14" : "transparent",
+            backgroundColor: active === "profile" ? "#1A1230" : "transparent",
             color: active === "profile" ? "#fff" : "#555",
           }}
           onMouseEnter={(e) => {
@@ -172,20 +171,20 @@ export function AppNav({ active, onChange, profile, onLogout }: AppNavProps) {
             }
           }}
         >
-          <UserCircle size={15} style={{ color: active === "profile" ? "#1FCE4A" : "inherit", flexShrink: 0 }} />
+          <UserCircle size={15} style={{ color: active === "profile" ? "#7B61FF" : "inherit", flexShrink: 0 }} />
           <div className="min-w-0 flex-1">
             <p className="text-xs font-medium leading-tight truncate" style={{ color: "inherit" }}>
               {profile?.display_name ?? "Meu perfil"}
             </p>
             <div className="flex items-center gap-1 mt-0.5">
-              {profile?.role === "admin" && <ShieldCheck size={9} style={{ color: "#1FCE4A" }} />}
+              {profile?.role === "admin" && <ShieldCheck size={9} style={{ color: "#7B61FF" }} />}
               <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: "#333" }}>
                 {ROLE_LABELS[profile?.role ?? ""] ?? profile?.role}
               </p>
             </div>
           </div>
           {active === "profile" && (
-            <ChevronRight size={11} className="flex-shrink-0" style={{ color: "#1FCE4A" }} />
+            <ChevronRight size={11} className="flex-shrink-0" style={{ color: "#7B61FF" }} />
           )}
         </button>
 
@@ -194,7 +193,7 @@ export function AppNav({ active, onChange, profile, onLogout }: AppNavProps) {
             onClick={() => onChange("settings")}
             className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-xs transition-all duration-100 focus:outline-none"
             style={{
-              backgroundColor: active === "settings" ? "#0d1f14" : "transparent",
+              backgroundColor: active === "settings" ? "#1A1230" : "transparent",
               color: active === "settings" ? "#fff" : "#555",
             }}
             onMouseEnter={(e) => {
@@ -210,10 +209,10 @@ export function AppNav({ active, onChange, profile, onLogout }: AppNavProps) {
               }
             }}
           >
-            <Settings size={13} style={{ color: active === "settings" ? "#1FCE4A" : "inherit" }} />
+            <Settings size={13} style={{ color: active === "settings" ? "#7B61FF" : "inherit" }} />
             Configurações
             {active === "settings" && (
-              <ChevronRight size={11} className="ml-auto flex-shrink-0" style={{ color: "#1FCE4A" }} />
+              <ChevronRight size={11} className="ml-auto flex-shrink-0" style={{ color: "#7B61FF" }} />
             )}
           </button>
         )}

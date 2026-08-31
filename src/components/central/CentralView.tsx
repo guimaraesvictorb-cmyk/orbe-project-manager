@@ -56,7 +56,7 @@ const SECTIONS: SidebarSection[] = [
     id: "clientes",
     label: "Clientes",
     icon: <Users2 size={14} />,
-    color: "#1FCE4A",
+    color: "#7B61FF",
     items: [{ id: "clientes-carteira", label: "Carteira de Clientes", icon: <Users2 size={12} /> }],
   },
   {
@@ -174,7 +174,7 @@ export function CentralView() {
       >
         {/* Sidebar header */}
         <div className="px-4 py-4 border-b" style={{ borderColor: "#1a1a1a" }}>
-          <p className="text-[10px] font-bold tracking-widest uppercase" style={{ color: "#1FCE4A" }}>
+          <p className="text-[10px] font-bold tracking-widest uppercase" style={{ color: "#7B61FF" }}>
             Central de Operação
           </p>
         </div>

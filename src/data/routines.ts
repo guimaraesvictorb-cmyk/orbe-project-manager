@@ -75,7 +75,7 @@ export const ROUTINES: Routine[] = [
       },
       {
         frequency: "Semanalmente",
-        freqColor: "#1FCE4A",
+        freqColor: "#7B61FF",
         items: [
           {
             text: "Reunião de Designers",
@@ -170,7 +170,7 @@ export const ROUTINES: Routine[] = [
       },
       {
         frequency: "Semanalmente",
-        freqColor: "#1FCE4A",
+        freqColor: "#7B61FF",
         items: [
           {
             text: "Reunião de Estratégia — WOR",
@@ -251,7 +251,7 @@ export const ROUTINES: Routine[] = [
       },
       {
         frequency: "Semanalmente",
-        freqColor: "#1FCE4A",
+        freqColor: "#7B61FF",
         items: [
           {
             text: "Acessar o B.I. de cada cliente pelo menos 4x por semana",
@@ -334,7 +334,7 @@ export const ROUTINES: Routine[] = [
       },
       {
         frequency: "Semanalmente",
-        freqColor: "#1FCE4A",
+        freqColor: "#7B61FF",
         items: [
           {
             text: "Atualizar o Drive dos clientes com",
@@ -439,7 +439,7 @@ export const ROUTINES: Routine[] = [
       },
       {
         frequency: "Semanalmente",
-        freqColor: "#1FCE4A",
+        freqColor: "#7B61FF",
         items: [
           {
             text: "WOR de Estratégias — Weekly/Quinzenal",
@@ -573,7 +573,7 @@ export const ROUTINES: Routine[] = [
       },
       {
         frequency: "Semanalmente",
-        freqColor: "#1FCE4A",
+        freqColor: "#7B61FF",
         items: [
           {
             text: "Quality Control — Reunião com cada Coordenador",
@@ -677,7 +677,7 @@ export const ROUTINES: Routine[] = [
     blocks: [
       {
         frequency: "Semanalmente",
-        freqColor: "#1FCE4A",
+        freqColor: "#7B61FF",
         items: [
           {
             text: "Weekly com Coordenadores",

@@ -130,13 +130,13 @@ export const CLIENTS: OrbeClient[] = [
 ];
 
 export const FLAG_META = {
-  green:  { label: "Green",  color: "#1FCE4A", bg: "#071a0e" },
+  green:  { label: "Green",  color: "#7B61FF", bg: "#140D24" },
   yellow: { label: "Yellow", color: "#F59E0B", bg: "#1a1200" },
   red:    { label: "Red",    color: "#EF4444", bg: "#180808" },
 };
 
 export const STATUS_CLIENT_META: Record<ClientStatus, { label: string; color: string }> = {
-  ativo:      { label: "Ativo",      color: "#1FCE4A" },
+  ativo:      { label: "Ativo",      color: "#7B61FF" },
   onboarding: { label: "Onboarding", color: "#60A5FA" },
   pausado:    { label: "Pausado",    color: "#F59E0B" },
   encerrado:  { label: "Encerrado",  color: "#6B7280" },

@@ -281,7 +281,7 @@ export const STATUS_META: Record<
   TaskStatus,
   { label: string; bg: string; color: string; dot: string }
 > = {
-  ativa:        { label: "Ativa",        bg: "#071a0e", color: "#1FCE4A", dot: "#1FCE4A" },
+  ativa:        { label: "Ativa",        bg: "#140D24", color: "#7B61FF", dot: "#7B61FF" },
   em_andamento: { label: "Em andamento", bg: "#071422", color: "#60A5FA", dot: "#60A5FA" },
   concluida:    { label: "Concluída",    bg: "#111",    color: "#6B7280", dot: "#6B7280" },
   pausada:      { label: "Pausada",      bg: "#1a1200", color: "#F59E0B", dot: "#F59E0B" },

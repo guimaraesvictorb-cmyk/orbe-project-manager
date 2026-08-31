@@ -15,7 +15,7 @@ function utmColor(source: string | null) {
   if (s.includes("google")) return "#EA4335";
   if (s.includes("instagram")) return "#E1306C";
   if (s.includes("whatsapp")) return "#25D366";
-  if (s.includes("organic") || s.includes("organico")) return "#1FCE4A";
+  if (s.includes("organic") || s.includes("organico")) return "#7B61FF";
   return "#F59E0B";
 }
 
@@ -44,12 +44,12 @@ function CaptureRow({ capture, onConvert, onDelete }: {
         </div>
         <div>
           <p className="text-[10px]" style={{ color: "#444" }}>{date}</p>
-          {capture.lead_id && <p className="text-[10px] font-bold" style={{ color: "#1FCE4A" }}>Convertido</p>}
+          {capture.lead_id && <p className="text-[10px] font-bold" style={{ color: "#7B61FF" }}>Convertido</p>}
         </div>
         <div className="flex items-center gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
           {!capture.lead_id && (
             <button onClick={() => onConvert(capture)} className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg transition-colors"
-              style={{ backgroundColor: "#0d1f14", color: "#1FCE4A", border: "1px solid #1FCE4A33" }}>
+              style={{ backgroundColor: "#1A1230", color: "#7B61FF", border: "1px solid #7B61FF33" }}>
               <ArrowRight size={10} />Pipeline
             </button>
           )}
@@ -115,7 +115,7 @@ function ConvertModal({ capture, onClose, onConverted }: {
             <button onClick={onClose} className="flex-1 py-2 rounded-xl text-xs border" style={{ borderColor: "#1e1e1e", color: "#555" }}>Cancelar</button>
             <button onClick={doConvert} disabled={converting || !stageId}
               className="flex-1 py-2 rounded-xl text-xs font-semibold disabled:opacity-40 flex items-center justify-center gap-1.5"
-              style={{ backgroundColor: "#1FCE4A", color: "#000" }}>
+              style={{ backgroundColor: "#7B61FF", color: "#000" }}>
               {converting ? <Loader2 size={12} className="animate-spin" /> : <ChevronRight size={12} />}Mover
             </button>
           </div>
@@ -160,10 +160,10 @@ fetch("${url}", {
     <div className="rounded-2xl border overflow-hidden" style={{ backgroundColor: "#0a0a0a", borderColor: "#1a1a1a" }}>
       <div className="flex items-center justify-between px-5 py-3 border-b" style={{ borderColor: "#111" }}>
         <div className="flex items-center gap-2">
-          <Code size={14} style={{ color: "#1FCE4A" }} />
+          <Code size={14} style={{ color: "#7B61FF" }} />
           <p className="text-xs font-bold text-white">Código de integração para seu site</p>
         </div>
-        <button onClick={copy} className="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-lg" style={{ backgroundColor: "#111", color: copied ? "#1FCE4A" : "#555" }}>
+        <button onClick={copy} className="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-lg" style={{ backgroundColor: "#111", color: copied ? "#7B61FF" : "#555" }}>
           {copied ? <Check size={11} /> : <Copy size={11} />}{copied ? "Copiado!" : "Copiar"}
         </button>
       </div>
@@ -212,12 +212,12 @@ export function LeadsCapturadosView() {
       <div className="max-w-screen-xl mx-auto w-full px-6 py-8 space-y-6">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "#1FCE4A" }}>Geração de Leads</p>
+            <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "#7B61FF" }}>Geração de Leads</p>
             <h2 className="text-white font-bold text-lg leading-tight">Leads Capturados</h2>
             <p className="text-xs mt-1" style={{ color: "#555" }}>Leads capturados via formulários com rastreamento UTM completo.</p>
           </div>
           <button onClick={() => setShowCode(!showCode)} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border"
-            style={{ borderColor: "#1e1e1e", color: "#1FCE4A" }}>
+            style={{ borderColor: "#1e1e1e", color: "#7B61FF" }}>
             <Code size={13} />Código de integração
           </button>
         </div>
@@ -226,7 +226,7 @@ export function LeadsCapturadosView() {
         <div className="grid grid-cols-3 gap-4">
           {[
             { label: "Total capturados", value: captures.length },
-            { label: "Convertidos", value: converted, color: "#1FCE4A" },
+            { label: "Convertidos", value: converted, color: "#7B61FF" },
             { label: "Aguardando", value: captures.length - converted, color: "#F59E0B" },
           ].map((s) => (
             <div key={s.label} className="rounded-xl border p-4" style={{ backgroundColor: "#0a0a0a", borderColor: "#1a1a1a" }}>
@@ -270,7 +270,7 @@ export function LeadsCapturadosView() {
 
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 size={20} className="animate-spin" style={{ color: "#1FCE4A" }} />
+              <Loader2 size={20} className="animate-spin" style={{ color: "#7B61FF" }} />
             </div>
           ) : filtered.length === 0 ? (
             <div className="py-16 text-center">

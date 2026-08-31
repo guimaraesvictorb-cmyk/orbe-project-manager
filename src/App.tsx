@@ -45,7 +45,7 @@ function App() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <Loader2 size={24} className="animate-spin" style={{ color: "#1FCE4A" }} />
+        <Loader2 size={24} className="animate-spin" style={{ color: "#7B61FF" }} />
       </div>
     );
   }

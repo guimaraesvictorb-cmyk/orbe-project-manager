@@ -190,7 +190,7 @@ export function MetaAdsIntegration() {
             <p className="text-xs mt-0.5" style={{ color: "#555" }}>Conecte sua conta para sincronizar métricas automaticamente</p>
           </div>
           {savedToken && accounts.length > 0 && (
-            <span className="flex items-center gap-1.5 text-xs" style={{ color: "#1FCE4A" }}>
+            <span className="flex items-center gap-1.5 text-xs" style={{ color: "#7B61FF" }}>
               <Check size={12} />Conectado ({accounts.length} conta{accounts.length !== 1 ? "s" : ""})
             </span>
           )}
@@ -268,7 +268,7 @@ export function MetaAdsIntegration() {
                   <div key={client.id} className="px-5 py-4 flex items-center gap-3">
                     <div className="w-36 flex-shrink-0">
                       <p className="text-xs font-medium text-white truncate">{client.name}</p>
-                      {result === "ok" && <p className="text-[10px] flex items-center gap-1 mt-0.5" style={{ color: "#1FCE4A" }}><Check size={10} />Sincronizado</p>}
+                      {result === "ok" && <p className="text-[10px] flex items-center gap-1 mt-0.5" style={{ color: "#7B61FF" }}><Check size={10} />Sincronizado</p>}
                       {result === "fail" && <p className="text-[10px] mt-0.5" style={{ color: "#EF4444" }}>Falhou</p>}
                     </div>
                     <select

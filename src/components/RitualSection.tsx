@@ -6,7 +6,7 @@ export function RitualSection() {
       <h2
         id="rituais-title"
         className="text-xs font-bold tracking-widest uppercase mb-4"
-        style={{ color: "#1FCE4A" }}
+        style={{ color: "#7B61FF" }}
       >
         Rituais Recorrentes
       </h2>
@@ -21,7 +21,7 @@ export function RitualSection() {
               borderTop: "1px solid #262626",
               borderRight: "1px solid #262626",
               borderBottom: "1px solid #262626",
-              borderLeft: "3px solid #1FCE4A",
+              borderLeft: "3px solid #7B61FF",
             }}
           >
             <p className="text-white font-semibold text-sm leading-snug mb-1">
@@ -29,7 +29,7 @@ export function RitualSection() {
             </p>
             <p
               className="text-[10px] font-semibold tracking-widest uppercase mb-2"
-              style={{ color: "#1FCE4A" }}
+              style={{ color: "#7B61FF" }}
             >
               {ritual.when}
             </p>

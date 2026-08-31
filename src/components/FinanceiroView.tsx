@@ -15,7 +15,7 @@ function currentMonth() {
 }
 
 const STATUS_CONFIG: Record<PaymentStatus, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
-  pago:      { label: "Pago",     color: "#1FCE4A", bg: "#0d1f14", icon: <CheckCircle2 size={12} /> },
+  pago:      { label: "Pago",     color: "#7B61FF", bg: "#1A1230", icon: <CheckCircle2 size={12} /> },
   pendente:  { label: "Pendente", color: "#F59E0B", bg: "#1a1200", icon: <Clock size={12} /> },
   atrasado:  { label: "Atrasado", color: "#EF4444", bg: "#2a0a0a", icon: <AlertCircle size={12} /> },
   cancelado: { label: "Cancelado",color: "#555",    bg: "#111",    icon: <XCircle size={12} /> },
@@ -120,7 +120,7 @@ function NewRecordModal({
               <select
                 value={form.type}
                 onChange={(e) => setForm((p) => ({ ...p, type: e.target.value as FinancialRecord["type"] }))}
-                className="w-full bg-black border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#1FCE4A]"
+                className="w-full bg-black border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#7B61FF]"
                 style={{ borderColor: "#262626" }}
               >
                 <option value="mensalidade">Mensalidade</option>
@@ -134,7 +134,7 @@ function NewRecordModal({
               <select
                 value={form.status}
                 onChange={(e) => setForm((p) => ({ ...p, status: e.target.value as PaymentStatus }))}
-                className="w-full bg-black border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#1FCE4A]"
+                className="w-full bg-black border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#7B61FF]"
                 style={{ borderColor: "#262626" }}
               >
                 {(Object.keys(STATUS_CONFIG) as PaymentStatus[]).map((s) => (
@@ -148,7 +148,7 @@ function NewRecordModal({
             <select
               value={form.client_id}
               onChange={(e) => handleClientChange(e.target.value)}
-              className="w-full bg-black border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#1FCE4A]"
+              className="w-full bg-black border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#7B61FF]"
               style={{ borderColor: "#262626" }}
             >
               <option value="">— sem cliente —</option>
@@ -161,7 +161,7 @@ function NewRecordModal({
               value={form.description}
               onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
               placeholder="ex: Mensalidade maio/2026"
-              className="w-full bg-black border rounded-lg px-3 py-2 text-xs text-white placeholder:text-[#333] focus:outline-none focus:border-[#1FCE4A]"
+              className="w-full bg-black border rounded-lg px-3 py-2 text-xs text-white placeholder:text-[#333] focus:outline-none focus:border-[#7B61FF]"
               style={{ borderColor: "#262626" }}
             />
           </div>
@@ -173,7 +173,7 @@ function NewRecordModal({
                 value={form.amount}
                 onChange={(e) => setForm((p) => ({ ...p, amount: e.target.value }))}
                 placeholder="0"
-                className="w-full bg-black border rounded-lg px-3 py-2 text-xs text-white placeholder:text-[#333] focus:outline-none focus:border-[#1FCE4A]"
+                className="w-full bg-black border rounded-lg px-3 py-2 text-xs text-white placeholder:text-[#333] focus:outline-none focus:border-[#7B61FF]"
                 style={{ borderColor: "#262626" }}
                 required
               />
@@ -184,7 +184,7 @@ function NewRecordModal({
                 type="date"
                 value={form.due_date}
                 onChange={(e) => setForm((p) => ({ ...p, due_date: e.target.value }))}
-                className="w-full bg-black border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#1FCE4A]"
+                className="w-full bg-black border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#7B61FF]"
                 style={{ borderColor: "#262626" }}
                 required
               />
@@ -194,7 +194,7 @@ function NewRecordModal({
             <button type="button" onClick={onClose} className="flex-1 py-2 rounded-xl text-xs border" style={{ borderColor: "#262626", color: "#A3A3A3" }}>
               Cancelar
             </button>
-            <button type="submit" className="flex-1 py-2 rounded-xl text-xs font-semibold" style={{ backgroundColor: "#1FCE4A", color: "#000" }}>
+            <button type="submit" className="flex-1 py-2 rounded-xl text-xs font-semibold" style={{ backgroundColor: "#7B61FF", color: "#000" }}>
               Salvar
             </button>
           </div>
@@ -261,7 +261,7 @@ export function FinanceiroView() {
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "#1FCE4A" }}>
+            <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "#7B61FF" }}>
               Financeiro
             </p>
             <h2 className="text-white font-bold text-lg leading-tight">MRR & pagamentos</h2>
@@ -271,14 +271,14 @@ export function FinanceiroView() {
               type="month"
               value={month}
               onChange={(e) => setMonth(e.target.value)}
-              className="bg-black border rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#1FCE4A]"
+              className="bg-black border rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#7B61FF]"
               style={{ borderColor: "#262626" }}
             />
             <button
               onClick={handleGenerateMensalidades}
               className="px-3 py-1.5 text-xs border rounded-lg transition-colors"
               style={{ borderColor: "#262626", color: "#A3A3A3" }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#1FCE4A"; (e.currentTarget as HTMLButtonElement).style.color = "#1FCE4A"; }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#7B61FF"; (e.currentTarget as HTMLButtonElement).style.color = "#7B61FF"; }}
               onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#262626"; (e.currentTarget as HTMLButtonElement).style.color = "#A3A3A3"; }}
             >
               Gerar mensalidades
@@ -286,7 +286,7 @@ export function FinanceiroView() {
             <button
               onClick={() => setShowModal(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg"
-              style={{ backgroundColor: "#1FCE4A", color: "#000" }}
+              style={{ backgroundColor: "#7B61FF", color: "#000" }}
             >
               <Plus size={13} />
               Novo lançamento
@@ -298,7 +298,7 @@ export function FinanceiroView() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {[
             { label: "Total faturado", value: fmt(totalAmount), color: "#A3A3A3" },
-            { label: "Recebido", value: fmt(totalPaid), color: "#1FCE4A" },
+            { label: "Recebido", value: fmt(totalPaid), color: "#7B61FF" },
             { label: "Pendente", value: fmt(totalPending), color: "#F59E0B" },
             { label: "Atrasado", value: fmt(totalOverdue), color: "#EF4444" },
           ].map(({ label, value, color }) => (
@@ -324,7 +324,7 @@ export function FinanceiroView() {
               <button
                 onClick={handleGenerateMensalidades}
                 className="text-xs font-semibold"
-                style={{ color: "#1FCE4A" }}
+                style={{ color: "#7B61FF" }}
               >
                 Gerar mensalidades dos clientes ativos →
               </button>

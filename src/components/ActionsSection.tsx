@@ -7,7 +7,7 @@ export function ActionsSection() {
       <h2
         id="actions-title"
         className="text-xs font-bold tracking-widest uppercase mb-4"
-        style={{ color: "#1FCE4A" }}
+        style={{ color: "#7B61FF" }}
       >
         Próximas Ações
       </h2>
@@ -17,7 +17,7 @@ export function ActionsSection() {
           <button
             key={action.label}
             onClick={() => alert("Em breve")}
-            className="group flex items-center justify-between gap-3 rounded-xl px-4 py-4 text-left transition-all duration-150 border focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1FCE4A]"
+            className="group flex items-center justify-between gap-3 rounded-xl px-4 py-4 text-left transition-all duration-150 border focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7B61FF]"
             style={{
               backgroundColor: "#131313",
               borderColor: "#262626",
@@ -25,7 +25,7 @@ export function ActionsSection() {
             }}
             onMouseEnter={(e) => {
               const el = e.currentTarget as HTMLButtonElement;
-              el.style.borderColor = "#1FCE4A";
+              el.style.borderColor = "#7B61FF";
               el.style.backgroundColor = "#1A1A1A";
             }}
             onMouseLeave={(e) => {
@@ -38,7 +38,7 @@ export function ActionsSection() {
             <ArrowRight
               size={14}
               className="flex-shrink-0 transition-transform duration-150 group-hover:translate-x-0.5"
-              style={{ color: "#1FCE4A" }}
+              style={{ color: "#7B61FF" }}
               aria-hidden="true"
             />
           </button>

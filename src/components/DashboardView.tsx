@@ -20,11 +20,11 @@ function StatCard({ icon, label, value, sub, accent }: {
   return (
     <div
       className="rounded-2xl border p-5 flex flex-col gap-3"
-      style={{ backgroundColor: "#0a0a0a", borderColor: accent ? "#1FCE4A33" : "#1a1a1a" }}
+      style={{ backgroundColor: "#0a0a0a", borderColor: accent ? "#7B61FF33" : "#1a1a1a" }}
     >
       <div className="flex items-center justify-between">
         <span className="text-xs font-bold tracking-widest uppercase" style={{ color: "#555" }}>{label}</span>
-        <span style={{ color: accent ? "#1FCE4A" : "#333" }}>{icon}</span>
+        <span style={{ color: accent ? "#7B61FF" : "#333" }}>{icon}</span>
       </div>
       <p className="text-2xl font-bold text-white leading-none">{value}</p>
       {sub && <p className="text-xs" style={{ color: "#555" }}>{sub}</p>}
@@ -33,7 +33,7 @@ function StatCard({ icon, label, value, sub, accent }: {
 }
 
 const HEALTH_LABEL: Record<string, string> = { green: "Saudável", yellow: "Atenção", red: "Em risco" };
-const HEALTH_COLOR: Record<string, string> = { green: "#1FCE4A", yellow: "#F59E0B", red: "#EF4444" };
+const HEALTH_COLOR: Record<string, string> = { green: "#7B61FF", yellow: "#F59E0B", red: "#EF4444" };
 
 export function DashboardView() {
   const { clients } = useClients();
@@ -59,7 +59,7 @@ export function DashboardView() {
 
         {/* Header */}
         <div>
-          <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "#1FCE4A" }}>
+          <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "#7B61FF" }}>
             Dashboard
           </p>
           <h2 className="text-white font-bold text-lg leading-tight">Visão geral da operação</h2>
@@ -104,7 +104,7 @@ export function DashboardView() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {[
               { label: "Total faturado", value: fmt(totalAmount), color: "#A3A3A3" },
-              { label: "Recebido", value: fmt(totalPaid), color: "#1FCE4A" },
+              { label: "Recebido", value: fmt(totalPaid), color: "#7B61FF" },
               { label: "Pendente", value: fmt(totalPending), color: "#F59E0B" },
               { label: "Atrasado", value: fmt(totalOverdue), color: "#EF4444" },
             ].map(({ label, value, color }) => (

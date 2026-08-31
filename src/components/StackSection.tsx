@@ -7,7 +7,7 @@ export function StackSection() {
       <h2
         id="stack-title"
         className="text-xs font-bold tracking-widest uppercase mb-4"
-        style={{ color: "#1FCE4A" }}
+        style={{ color: "#7B61FF" }}
       >
         Stack de IA Orbe
       </h2>
@@ -19,14 +19,14 @@ export function StackSection() {
             className="relative rounded-xl p-4 transition-all duration-150"
             style={{
               backgroundColor: "#131313",
-              border: `1px solid ${skill.isNew ? "#1FCE4A" : "#262626"}`,
+              border: `1px solid ${skill.isNew ? "#7B61FF" : "#262626"}`,
             }}
           >
             {/* NEW badge */}
             {skill.isNew && (
               <span
                 className="absolute top-3 right-3 text-[9px] font-bold tracking-widest px-1.5 py-0.5 rounded flex items-center gap-1"
-                style={{ backgroundColor: "#1FCE4A", color: "#000000" }}
+                style={{ backgroundColor: "#7B61FF", color: "#000000" }}
               >
                 <Sparkles size={8} aria-hidden="true" />
                 NEW

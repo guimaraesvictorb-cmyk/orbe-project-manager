@@ -45,7 +45,7 @@ function inp(label: string, value: string, onChange: (v: string) => void, placeh
       <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: '#555' }}>{label}</label>
       <input
         value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
-        className="w-full rounded-lg px-3 py-2 text-xs text-white placeholder-[#333] focus:outline-none focus:border-[#1FCE4A44] transition-colors"
+        className="w-full rounded-lg px-3 py-2 text-xs text-white placeholder-[#333] focus:outline-none focus:border-[#7B61FF44] transition-colors"
         style={{ backgroundColor: '#0d0d0d', border: '1px solid #1e1e1e' }}
       />
       {presets && (
@@ -53,7 +53,7 @@ function inp(label: string, value: string, onChange: (v: string) => void, placeh
           {presets.map((p) => (
             <button key={p} onClick={() => onChange(p)}
               className="text-[10px] px-2 py-0.5 rounded transition-colors hover:text-white"
-              style={{ backgroundColor: '#0d0d0d', color: value === p ? '#1FCE4A' : '#444', border: `1px solid ${value === p ? '#1FCE4A33' : '#1a1a1a'}` }}>
+              style={{ backgroundColor: '#0d0d0d', color: value === p ? '#7B61FF' : '#444', border: `1px solid ${value === p ? '#7B61FF33' : '#1a1a1a'}` }}>
               {p}
             </button>
           ))}
@@ -101,7 +101,7 @@ export function RastreamentoView() {
       <div className="max-w-screen-xl mx-auto w-full px-6 py-8 space-y-8">
 
         <div>
-          <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: '#1FCE4A' }}>Rastreamento</p>
+          <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: '#7B61FF' }}>Rastreamento</p>
           <h2 className="text-white font-bold text-lg leading-tight">Gerador de Links UTM</h2>
           <p className="text-xs mt-1" style={{ color: '#555' }}>Crie links rastreados para campanhas de anúncio, e-mail ou redes sociais.</p>
         </div>
@@ -132,7 +132,7 @@ export function RastreamentoView() {
                     <button
                       onClick={() => copyText(generated, 'link')}
                       className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg flex-1 justify-center"
-                      style={{ backgroundColor: '#1FCE4A', color: '#000' }}
+                      style={{ backgroundColor: '#7B61FF', color: '#000' }}
                     >
                       {copied === 'link' ? <Check size={12} /> : <Copy size={12} />}
                       {copied === 'link' ? 'Copiado!' : 'Copiar link'}
@@ -173,14 +173,14 @@ export function RastreamentoView() {
                   <div key={link.id} className="rounded-xl border p-3 group" style={{ backgroundColor: '#0a0a0a', borderColor: '#1a1a1a' }}>
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div className="flex gap-1.5 flex-wrap">
-                        {link.source && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: '#111', color: '#1FCE4A' }}>{link.source}</span>}
+                        {link.source && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: '#111', color: '#7B61FF' }}>{link.source}</span>}
                         {link.medium && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: '#111', color: '#A3A3A3' }}>{link.medium}</span>}
                         {link.campaign && <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ backgroundColor: '#111', color: '#666' }}>{link.campaign}</span>}
                       </div>
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                         <button onClick={() => loadLink(link)} className="text-[11px] px-2 py-1 rounded hover:text-white" style={{ color: '#555' }}>Usar</button>
                         <button onClick={() => copyText(buildUTM(link), link.id)} className="p-1 rounded hover:text-white" style={{ color: '#555' }}>
-                          {copied === link.id ? <Check size={11} style={{ color: '#1FCE4A' }} /> : <Copy size={11} />}
+                          {copied === link.id ? <Check size={11} style={{ color: '#7B61FF' }} /> : <Copy size={11} />}
                         </button>
                         <button onClick={() => deleteLink(link.id)} className="p-1 rounded hover:text-red-500" style={{ color: '#333' }}>
                           <Trash2 size={11} />

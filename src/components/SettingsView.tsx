@@ -24,8 +24,8 @@ function SectionBtn({ id, label, active, onClick }: { id: Section; label: string
       className="w-full text-left px-4 py-2 text-xs transition-colors duration-100"
       style={{
         color: isActive ? "#fff" : "#555",
-        backgroundColor: isActive ? "#0d1f14" : "transparent",
-        borderLeft: isActive ? "2px solid #1FCE4A" : "2px solid transparent",
+        backgroundColor: isActive ? "#1A1230" : "transparent",
+        borderLeft: isActive ? "2px solid #7B61FF" : "2px solid transparent",
       }}
     >
       {label}
@@ -63,22 +63,22 @@ function GeralSection({ profile }: { profile: Profile | null }) {
               onClick={() => saveTheme(t)}
               className="flex flex-col items-center gap-2 p-4 rounded-xl border transition-all"
               style={{
-                borderColor: theme === t ? "#1FCE4A" : "#1e1e1e",
-                backgroundColor: theme === t ? "#0d1f14" : "#0a0a0a",
+                borderColor: theme === t ? "#7B61FF" : "#1e1e1e",
+                backgroundColor: theme === t ? "#1A1230" : "#0a0a0a",
               }}
             >
-              {t === "dark" ? <Moon size={20} style={{ color: theme === t ? "#1FCE4A" : "#555" }} />
-                            : <Sun size={20}  style={{ color: theme === t ? "#1FCE4A" : "#555" }} />}
+              {t === "dark" ? <Moon size={20} style={{ color: theme === t ? "#7B61FF" : "#555" }} />
+                            : <Sun size={20}  style={{ color: theme === t ? "#7B61FF" : "#555" }} />}
               <span className="text-xs font-medium" style={{ color: theme === t ? "#fff" : "#555" }}>
                 {t === "dark" ? "Escuro" : "Claro"}
               </span>
-              {theme === t && <span className="text-[10px] font-bold" style={{ color: "#1FCE4A" }}>Ativo</span>}
+              {theme === t && <span className="text-[10px] font-bold" style={{ color: "#7B61FF" }}>Ativo</span>}
             </button>
           ))}
         </div>
 
         {saved && (
-          <div className="flex items-center gap-2 mt-3 text-xs" style={{ color: "#1FCE4A" }}>
+          <div className="flex items-center gap-2 mt-3 text-xs" style={{ color: "#7B61FF" }}>
             <Check size={12} />Tema salvo!
           </div>
         )}
@@ -160,10 +160,10 @@ function SegurancaSection() {
         <>
           <div className="flex items-start justify-between px-4 py-4 rounded-xl border" style={{ backgroundColor: "#0a0a0a", borderColor: "#1a1a1a" }}>
             <div className="flex items-center gap-3">
-              <ShieldCheck size={18} style={{ color: has2FA ? "#1FCE4A" : "#444" }} />
+              <ShieldCheck size={18} style={{ color: has2FA ? "#7B61FF" : "#444" }} />
               <div>
                 <p className="text-sm font-medium text-white">Autenticação por app</p>
-                <p className="text-xs mt-0.5" style={{ color: has2FA ? "#1FCE4A" : "#555" }}>
+                <p className="text-xs mt-0.5" style={{ color: has2FA ? "#7B61FF" : "#555" }}>
                   {has2FA ? "Ativo — sua conta está protegida" : "Não configurado"}
                 </p>
               </div>
@@ -180,7 +180,7 @@ function SegurancaSection() {
               <button
                 onClick={startEnroll}
                 className="text-xs font-semibold px-3 py-1.5 rounded-lg"
-                style={{ backgroundColor: "#1FCE4A", color: "#000" }}
+                style={{ backgroundColor: "#7B61FF", color: "#000" }}
               >
                 Ativar 2FA
               </button>
@@ -202,7 +202,7 @@ function SegurancaSection() {
                 <div className="mt-3 flex items-center gap-2">
                   <p className="text-[11px] font-mono px-3 py-1.5 rounded-lg" style={{ backgroundColor: "#111", color: "#888" }}>{secret}</p>
                   <button onClick={copySecret} className="p-1.5 rounded-lg transition-colors hover:bg-[#1a1a1a]" style={{ color: "#555" }}>
-                    {copied ? <Check size={13} style={{ color: "#1FCE4A" }} /> : <Copy size={13} />}
+                    {copied ? <Check size={13} style={{ color: "#7B61FF" }} /> : <Copy size={13} />}
                   </button>
                 </div>
                 <p className="text-[11px] mt-1" style={{ color: "#444" }}>Ou insira o código manualmente no app.</p>
@@ -217,7 +217,7 @@ function SegurancaSection() {
                     onChange={(e) => setTotp(e.target.value.replace(/\D/g, "").slice(0, 6))}
                     placeholder="000000"
                     maxLength={6}
-                    className="w-40 text-center rounded-lg px-3 py-3 text-lg font-mono text-white focus:outline-none focus:border-[#1FCE4A44] tracking-widest"
+                    className="w-40 text-center rounded-lg px-3 py-3 text-lg font-mono text-white focus:outline-none focus:border-[#7B61FF44] tracking-widest"
                     style={{ backgroundColor: "#0d0d0d", border: "1px solid #1e1e1e" }}
                     autoFocus
                   />
@@ -235,7 +235,7 @@ function SegurancaSection() {
                     type="submit"
                     disabled={totp.length !== 6}
                     className="px-4 py-2 rounded-lg text-xs font-semibold disabled:opacity-40"
-                    style={{ backgroundColor: "#1FCE4A", color: "#000" }}
+                    style={{ backgroundColor: "#7B61FF", color: "#000" }}
                   >
                     Verificar e ativar
                   </button>
@@ -245,9 +245,9 @@ function SegurancaSection() {
           )}
 
           {step === "done" && (
-            <div className="flex items-center gap-2 px-4 py-3 rounded-xl text-xs" style={{ backgroundColor: "#0d1f14", border: "1px solid #1FCE4A33" }}>
-              <Check size={14} style={{ color: "#1FCE4A" }} />
-              <span style={{ color: "#1FCE4A" }}>2FA ativado com sucesso! Sua conta está protegida.</span>
+            <div className="flex items-center gap-2 px-4 py-3 rounded-xl text-xs" style={{ backgroundColor: "#1A1230", border: "1px solid #7B61FF33" }}>
+              <Check size={14} style={{ color: "#7B61FF" }} />
+              <span style={{ color: "#7B61FF" }}>2FA ativado com sucesso! Sua conta está protegida.</span>
             </div>
           )}
 
@@ -335,7 +335,7 @@ function EquipeSection() {
           <button
             onClick={() => setShowInvite(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
-            style={{ backgroundColor: "#1FCE4A", color: "#000" }}
+            style={{ backgroundColor: "#7B61FF", color: "#000" }}
           >
             <UserPlus size={13} />
             Convidar
@@ -347,9 +347,9 @@ function EquipeSection() {
         <div
           className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs"
           style={{
-            backgroundColor: inviteResult.ok ? "#0d1f14" : "#1a0505",
-            border: `1px solid ${inviteResult.ok ? "#1FCE4A33" : "#EF444433"}`,
-            color: inviteResult.ok ? "#1FCE4A" : "#EF4444",
+            backgroundColor: inviteResult.ok ? "#1A1230" : "#1a0505",
+            border: `1px solid ${inviteResult.ok ? "#7B61FF33" : "#EF444433"}`,
+            color: inviteResult.ok ? "#7B61FF" : "#EF4444",
           }}
         >
           {inviteResult.ok ? <Check size={12} /> : <AlertCircle size={12} />}
@@ -397,7 +397,7 @@ function EquipeSection() {
             <button
               type="submit" disabled={inviting}
               className="flex-1 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
-              style={{ backgroundColor: "#1FCE4A", color: "#000" }}
+              style={{ backgroundColor: "#7B61FF", color: "#000" }}
             >
               {inviting ? <Loader2 size={12} className="animate-spin" /> : <Mail size={12} />}
               {inviting ? "Enviando..." : "Enviar convite"}
@@ -408,7 +408,7 @@ function EquipeSection() {
 
       {loading ? (
         <div className="flex justify-center py-8">
-          <Loader2 size={18} className="animate-spin" style={{ color: "#1FCE4A" }} />
+          <Loader2 size={18} className="animate-spin" style={{ color: "#7B61FF" }} />
         </div>
       ) : (
         <div className="rounded-xl border overflow-hidden" style={{ borderColor: "#1a1a1a" }}>
@@ -442,8 +442,8 @@ function EquipeSection() {
               <span
                 className="text-[10px] font-bold px-2 py-0.5 rounded-full w-fit"
                 style={{
-                  backgroundColor: m.is_active ? "#0d1f14" : "#1a0505",
-                  color: m.is_active ? "#1FCE4A" : "#EF4444",
+                  backgroundColor: m.is_active ? "#1A1230" : "#1a0505",
+                  color: m.is_active ? "#7B61FF" : "#EF4444",
                 }}
               >
                 {m.is_active ? "Ativo" : "Inativo"}
@@ -454,8 +454,8 @@ function EquipeSection() {
                 className="text-[11px] px-2 py-1 rounded-lg border transition-colors"
                 style={{ borderColor: "#1e1e1e", color: "#555" }}
                 onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.borderColor = m.is_active ? "#ef444444" : "#1FCE4A44";
-                  (e.currentTarget as HTMLButtonElement).style.color = m.is_active ? "#ef4444" : "#1FCE4A";
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = m.is_active ? "#ef444444" : "#7B61FF44";
+                  (e.currentTarget as HTMLButtonElement).style.color = m.is_active ? "#ef4444" : "#7B61FF";
                 }}
                 onMouseLeave={(e) => {
                   (e.currentTarget as HTMLButtonElement).style.borderColor = "#1e1e1e";

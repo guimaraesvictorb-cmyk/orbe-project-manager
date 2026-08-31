@@ -147,8 +147,8 @@ function ConfigModal({ onClose, onSave }: ConfigModalProps) {
         {/* ── Step: form ── */}
         {step === "form" && (
           <div className="px-6 py-5 space-y-4">
-            <div className="rounded-xl px-4 py-3 text-xs space-y-1" style={{ backgroundColor: "#0d1a0d", border: "1px solid #1FCE4A22" }}>
-              <p className="font-bold" style={{ color: "#1FCE4A" }}>Pré-requisito: Evolution API no ar</p>
+            <div className="rounded-xl px-4 py-3 text-xs space-y-1" style={{ backgroundColor: "#0d1a0d", border: "1px solid #7B61FF22" }}>
+              <p className="font-bold" style={{ color: "#7B61FF" }}>Pré-requisito: Evolution API no ar</p>
               <p style={{ color: "#777" }}>Acesse <strong className="text-white">evolution-api.com</strong> e faça deploy gratuito no Railway ou Render. Depois cole a URL e a chave abaixo.</p>
             </div>
             <div>
@@ -180,7 +180,7 @@ function ConfigModal({ onClose, onSave }: ConfigModalProps) {
               onClick={connect}
               disabled={loading || !url || !key || !instance}
               className="w-full py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-40"
-              style={{ backgroundColor: "#1FCE4A", color: "#000" }}
+              style={{ backgroundColor: "#7B61FF", color: "#000" }}
             >
               {loading ? <Loader2 size={14} className="animate-spin" /> : <Wifi size={14} />}
               {loading ? "Conectando..." : "Conectar WhatsApp"}
@@ -191,7 +191,7 @@ function ConfigModal({ onClose, onSave }: ConfigModalProps) {
         {/* ── Step: QR ── */}
         {step === "qr" && (
           <div className="px-6 py-6 flex flex-col items-center gap-4 text-center">
-            <div className="flex items-center gap-1.5 text-xs" style={{ color: "#1FCE4A" }}>
+            <div className="flex items-center gap-1.5 text-xs" style={{ color: "#7B61FF" }}>
               <Loader2 size={12} className="animate-spin" />
               Aguardando leitura do QR Code...
             </div>
@@ -231,8 +231,8 @@ function ConfigModal({ onClose, onSave }: ConfigModalProps) {
         {/* ── Step: connected ── */}
         {step === "connected" && (
           <div className="px-6 py-10 flex flex-col items-center gap-3 text-center">
-            <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ backgroundColor: "#0d1f0d", border: "1px solid #1FCE4A44" }}>
-              <Check size={26} style={{ color: "#1FCE4A" }} />
+            <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ backgroundColor: "#0d1f0d", border: "1px solid #7B61FF44" }}>
+              <Check size={26} style={{ color: "#7B61FF" }} />
             </div>
             <p className="text-sm font-bold text-white">WhatsApp conectado!</p>
             <p className="text-xs" style={{ color: "#555" }}>Configuração salva. Você já pode enviar mensagens.</p>
@@ -318,12 +318,12 @@ export function WhatsAppView() {
       <div className="max-w-screen-xl mx-auto w-full px-6 py-8 space-y-6">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "#1FCE4A" }}>Comunicação</p>
+            <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "#7B61FF" }}>Comunicação</p>
             <h2 className="text-white font-bold text-lg leading-tight">WhatsApp</h2>
             <p className="text-xs mt-1" style={{ color: "#555" }}>Envie mensagens e templates para clientes via Evolution API.</p>
           </div>
           <button onClick={() => setShowConfig(true)} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors"
-            style={{ borderColor: "#1e1e1e", color: isConfigured ? "#1FCE4A" : "#EF4444" }}>
+            style={{ borderColor: "#1e1e1e", color: isConfigured ? "#7B61FF" : "#EF4444" }}>
             <Settings size={13} />
             {isConfigured ? "Configurado" : "Configurar API"}
           </button>
@@ -380,7 +380,7 @@ export function WhatsAppView() {
 
             <button onClick={send} disabled={sending || !isConfigured || !selectedPhone}
               className="w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-40"
-              style={{ backgroundColor: sentOk ? "#0d1f14" : "#25D366", color: sentOk ? "#1FCE4A" : "#000", border: sentOk ? "1px solid #1FCE4A44" : "none" }}>
+              style={{ backgroundColor: sentOk ? "#1A1230" : "#25D366", color: sentOk ? "#7B61FF" : "#000", border: sentOk ? "1px solid #7B61FF44" : "none" }}>
               {sending ? <Loader2 size={16} className="animate-spin" /> : sentOk ? <Check size={16} /> : <Send size={16} />}
               {sending ? "Enviando..." : sentOk ? "Enviado!" : "Enviar mensagem"}
             </button>

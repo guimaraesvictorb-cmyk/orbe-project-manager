@@ -17,17 +17,16 @@ export function Header({ profile, onLogout }: HeaderProps) {
   return (
     <header
       className="sticky top-0 z-50 bg-black border-b-2 px-6 py-4"
-      style={{ borderBottomColor: "#1FCE4A" }}
+      style={{ borderBottomColor: "#7B61FF" }}
     >
       <div className="max-w-screen-xl mx-auto flex items-center justify-between gap-4">
         {/* Left: Logo + title */}
         <div className="flex items-center gap-4 min-w-0">
           <div
             className="flex-shrink-0 text-2xl font-bold leading-none select-none"
-            style={{ fontFamily: "Arial, sans-serif", letterSpacing: "-2px" }}
+            style={{ fontFamily: "Arial, sans-serif", letterSpacing: "-1px" }}
           >
-            <span className="text-white">M</span>
-            <span style={{ color: "#1FCE4A" }}>5</span>
+            <span className="text-white">Orbe</span>
           </div>
 
           <div className="hidden sm:block w-px h-8 bg-[#262626]" />
@@ -46,7 +45,7 @@ export function Header({ profile, onLogout }: HeaderProps) {
         <div className="flex items-center gap-4 flex-shrink-0">
           <p className="hidden lg:block text-right text-xs leading-snug" style={{ color: "#A3A3A3" }}>
             Não vendemos anúncios.{" "}
-            <span style={{ color: "#1FCE4A" }}>Vendemos infraestrutura de crescimento.</span>
+            <span style={{ color: "#7B61FF" }}>Vendemos infraestrutura de crescimento.</span>
           </p>
 
           {profile && (
@@ -56,7 +55,7 @@ export function Header({ profile, onLogout }: HeaderProps) {
                 {/* Role badge */}
                 <span
                   className="hidden sm:flex items-center gap-1 text-[9px] font-bold tracking-widest px-2 py-1 rounded uppercase"
-                  style={{ backgroundColor: "#0d2016", color: "#1FCE4A", border: "1px solid #1FCE4A33" }}
+                  style={{ backgroundColor: "#1A1230", color: "#7B61FF", border: "1px solid #7B61FF33" }}
                 >
                   {profile.role === "admin" && <ShieldCheck size={10} />}
                   {ROLE_LABELS[profile.role] ?? profile.role}
@@ -68,7 +67,7 @@ export function Header({ profile, onLogout }: HeaderProps) {
 
                 <button
                   onClick={onLogout}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 border focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1FCE4A]"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 border focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7B61FF]"
                   style={{ borderColor: "#262626", color: "#A3A3A3", backgroundColor: "transparent" }}
                   onMouseEnter={(e) => {
                     const el = e.currentTarget as HTMLButtonElement;

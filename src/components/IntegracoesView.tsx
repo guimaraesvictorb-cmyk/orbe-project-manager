@@ -17,7 +17,7 @@ export function IntegracoesView() {
     <div className="flex flex-col min-h-0">
       <div className="max-w-screen-xl mx-auto w-full px-6 py-8 space-y-6">
         <div>
-          <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "#1FCE4A" }}>Integrações</p>
+          <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "#7B61FF" }}>Integrações</p>
           <h2 className="text-white font-bold text-lg leading-tight">Plataformas de Anúncio</h2>
           <p className="text-xs mt-1" style={{ color: "#555" }}>
             Conecte suas contas de anúncios para sincronizar métricas automaticamente nos dashboards dos clientes.

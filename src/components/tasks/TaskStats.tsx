@@ -14,7 +14,7 @@ export function TaskStats({ tasks }: TaskStatsProps) {
 
   const items = [
     { label: "Total",         value: total,      color: "#A3A3A3" },
-    { label: "Ativas",        value: ativas,     color: "#1FCE4A" },
+    { label: "Ativas",        value: ativas,     color: "#7B61FF" },
     { label: "Em andamento",  value: andamento,  color: "#60A5FA" },
     { label: "Concluídas",    value: concluidas, color: "#6B7280" },
     { label: "Atrasadas",     value: atrasadas,  color: atrasadas > 0 ? "#EF4444" : "#333" },

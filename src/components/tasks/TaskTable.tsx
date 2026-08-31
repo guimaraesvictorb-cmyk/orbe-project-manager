@@ -32,8 +32,8 @@ function formatDate(iso: string): string {
 function SortIcon({ col, sortKey, dir }: { col: SortKey; sortKey: SortKey; dir: SortDir }) {
   if (col !== sortKey) return <ChevronsUpDown size={12} className="text-[#444]" />;
   return dir === "asc"
-    ? <ChevronUp size={12} style={{ color: "#1FCE4A" }} />
-    : <ChevronDown size={12} style={{ color: "#1FCE4A" }} />;
+    ? <ChevronUp size={12} style={{ color: "#7B61FF" }} />
+    : <ChevronDown size={12} style={{ color: "#7B61FF" }} />;
 }
 
 // Inline status dropdown
@@ -51,7 +51,7 @@ function StatusBadge({
     <div className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold whitespace-nowrap transition-all duration-150 focus:outline-none focus-visible:ring-1 focus-visible:ring-[#1FCE4A]"
+        className="flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold whitespace-nowrap transition-all duration-150 focus:outline-none focus-visible:ring-1 focus-visible:ring-[#7B61FF]"
         style={{
           backgroundColor: meta.bg,
           color: meta.color,
@@ -246,9 +246,9 @@ export function TaskTable({ tasks, onEdit, onDelete, onStatusChange }: TaskTable
                     <span
                       className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold tracking-wider"
                       style={{
-                        backgroundColor: "#0d2016",
-                        color: "#1FCE4A",
-                        border: "1px solid #1FCE4A33",
+                        backgroundColor: "#1A1230",
+                        color: "#7B61FF",
+                        border: "1px solid #7B61FF33",
                       }}
                       title={PHASE_SHORT[task.phaseId]}
                     >
@@ -304,7 +304,7 @@ export function TaskTable({ tasks, onEdit, onDelete, onStatusChange }: TaskTable
                     <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={() => onEdit(task)}
-                        className="w-7 h-7 rounded flex items-center justify-center text-[#A3A3A3] hover:text-white hover:bg-[#262626] transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1FCE4A]"
+                        className="w-7 h-7 rounded flex items-center justify-center text-[#A3A3A3] hover:text-white hover:bg-[#262626] transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7B61FF]"
                         aria-label={`Editar ${task.title}`}
                       >
                         <Pencil size={13} />

@@ -23,7 +23,7 @@ export function RoutineDetail({ routine, onBack }: RoutineDetailProps) {
       <div>
         <button
           onClick={onBack}
-          className="flex items-center gap-2 text-xs text-[#555] hover:text-white transition-colors duration-150 mb-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1FCE4A] rounded"
+          className="flex items-center gap-2 text-xs text-[#555] hover:text-white transition-colors duration-150 mb-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7B61FF] rounded"
         >
           <ArrowLeft size={13} aria-hidden="true" />
           Voltar para Processos
@@ -116,8 +116,8 @@ export function RoutineDetail({ routine, onBack }: RoutineDetailProps) {
       {routine.goals && routine.goals.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <Target size={14} style={{ color: "#1FCE4A" }} aria-hidden="true" />
-            <h3 className="text-xs font-bold tracking-widest uppercase" style={{ color: "#1FCE4A" }}>
+            <Target size={14} style={{ color: "#7B61FF" }} aria-hidden="true" />
+            <h3 className="text-xs font-bold tracking-widest uppercase" style={{ color: "#7B61FF" }}>
               Metas do {routine.shortRole}
             </h3>
           </div>
@@ -140,7 +140,7 @@ export function RoutineDetail({ routine, onBack }: RoutineDetailProps) {
                   >
                     <td className="px-4 py-2.5 text-sm text-white">{goal.indicator}</td>
                     <td className="px-4 py-2.5 text-right">
-                      <span className="text-xs font-semibold" style={{ color: "#1FCE4A" }}>
+                      <span className="text-xs font-semibold" style={{ color: "#7B61FF" }}>
                         {goal.target}
                       </span>
                     </td>

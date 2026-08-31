@@ -4,6 +4,7 @@ import type { Profile } from "../lib/database.types";
 import {
   ShieldCheck, Save, KeyRound, CheckCircle2,
   AlertCircle, Monitor, Globe, LogOut, Users, Check, Loader2,
+  ChevronDown, Trash2, X,
 } from "lucide-react";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -45,14 +46,30 @@ const inputCls = "w-full bg-black border rounded-lg px-3 py-2.5 text-sm text-whi
 
 interface TeamMember { id: string; email: string; display_name: string; role: string; is_active: boolean }
 
+function initials(name: string, email: string): string {
+  const source = (name || email || "?").trim();
+  const parts = source.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return source.slice(0, 2).toUpperCase();
+}
+
 function TeamPanel({ currentUserId }: { currentUserId: string }) {
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<Record<string, boolean>>({});
   const [saved, setSaved] = useState<Record<string, boolean>>({});
   const [roleEdits, setRoleEdits] = useState<Record<string, string>>({});
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [confirming, setConfirming] = useState<string | null>(null);
+  const [removing, setRemoving] = useState<string | null>(null);
+  const [removeError, setRemoveError] = useState("");
 
   useEffect(() => {
+    loadMembers();
+  }, []);
+
+  function loadMembers() {
+    setLoading(true);
     supabase.from("profiles").select("id,email,display_name,role,is_active").order("created_at")
       .then(({ data }) => {
         setMembers(data ?? []);
@@ -61,7 +78,7 @@ function TeamPanel({ currentUserId }: { currentUserId: string }) {
         setRoleEdits(edits);
         setLoading(false);
       });
-  }, []);
+  }
 
   async function saveRole(memberId: string) {
     setSaving((s) => ({ ...s, [memberId]: true }));
@@ -72,69 +89,163 @@ function TeamPanel({ currentUserId }: { currentUserId: string }) {
     setTimeout(() => setSaved((s) => ({ ...s, [memberId]: false })), 2000);
   }
 
-  if (loading) return <div className="flex justify-center py-12"><Loader2 size={18} className="animate-spin" style={{ color: "#1FCE4A" }} /></div>;
+  async function removeMember(memberId: string) {
+    setRemoving(memberId);
+    setRemoveError("");
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/remove-user`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${session?.access_token ?? ""}`,
+        },
+        body: JSON.stringify({ target_id: memberId }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Erro ao remover membro");
+      setMembers((prev) => prev.filter((m) => m.id !== memberId));
+      setConfirming(null);
+    } catch (err: unknown) {
+      setRemoveError((err as Error).message);
+    } finally {
+      setRemoving(null);
+    }
+  }
+
+  if (loading) return <div className="flex justify-center py-12"><Loader2 size={18} className="animate-spin" style={{ color: "#7B61FF" }} /></div>;
 
   return (
     <div className="space-y-4">
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-1">
-          <Users size={14} style={{ color: "#1FCE4A" }} />
+          <Users size={14} style={{ color: "#7B61FF" }} />
           <p className="text-sm font-semibold text-white">Membros da equipe</p>
         </div>
         <p className="text-xs" style={{ color: "#555" }}>Gerencie as funções e acessos do time. A função define quais seções cada membro pode ver.</p>
       </div>
 
-      <div className="rounded-xl border overflow-hidden" style={{ borderColor: "#1a1a1a" }}>
-        <div className="grid grid-cols-[1fr_auto_auto] gap-3 px-4 py-2" style={{ backgroundColor: "#0a0a0a", borderBottom: "1px solid #111" }}>
-          {["Membro", "Função", ""].map((h) => (
-            <p key={h} className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#333" }}>{h}</p>
-          ))}
+      {removeError && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs" style={{ backgroundColor: "#1a0505", border: "1px solid #EF444433", color: "#EF4444" }}>
+          <AlertCircle size={12} />{removeError}
         </div>
+      )}
 
+      <div className="space-y-2.5">
         {members.map((member) => {
           const isMe = member.id === currentUserId;
           const sections = SECTION_ACCESS[roleEdits[member.id]] ?? [];
+          const granted = Object.keys(SECTION_LABELS).filter((s) => sections.includes(s));
+          const isExpanded = !!expanded[member.id];
+          const isConfirming = confirming === member.id;
+
           return (
-            <div key={member.id} style={{ borderBottom: "1px solid #0d0d0d" }}>
-              <div className="grid grid-cols-[1fr_auto_auto] gap-3 px-4 py-3 items-center">
-                <div>
-                  <p className="text-xs font-semibold text-white">
-                    {member.display_name || member.email}
-                    {isMe && <span className="ml-2 text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: "#0d1f14", color: "#1FCE4A" }}>Você</span>}
-                  </p>
-                  <p className="text-[11px] mt-0.5" style={{ color: "#444" }}>{member.email}</p>
+            <div
+              key={member.id}
+              className="rounded-xl border overflow-hidden transition-colors"
+              style={{ borderColor: isConfirming ? "#EF444444" : "#1a1a1a", backgroundColor: "#0a0a0a" }}
+            >
+              <div className="flex flex-wrap items-center gap-3 px-4 py-3.5">
+                {/* Avatar */}
+                <div
+                  className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-[11px] font-bold"
+                  style={{ backgroundColor: "#1A1230", color: "#7B61FF" }}
+                >
+                  {initials(member.display_name, member.email)}
                 </div>
-                <select
-                  value={roleEdits[member.id] ?? member.role}
-                  onChange={(e) => setRoleEdits((r) => ({ ...r, [member.id]: e.target.value }))}
-                  className="rounded-lg px-2 py-1.5 text-xs text-white border appearance-none cursor-pointer focus:outline-none"
-                  style={{ backgroundColor: "#0a0a0a", borderColor: "#1e1e1e" }}
-                >
-                  {ROLE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
-                <button
-                  onClick={() => saveRole(member.id)}
-                  disabled={saving[member.id] || roleEdits[member.id] === member.role}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-40 transition-all"
-                  style={{ backgroundColor: saved[member.id] ? "#0d1f14" : "#1FCE4A22", color: saved[member.id] ? "#1FCE4A" : "#1FCE4A", border: "1px solid #1FCE4A33" }}
-                >
-                  {saving[member.id] ? <Loader2 size={11} className="animate-spin" /> : saved[member.id] ? <Check size={11} /> : <Save size={11} />}
-                  {saved[member.id] ? "Salvo" : "Salvar"}
-                </button>
+
+                {/* Identity */}
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold text-white flex items-center gap-2 truncate">
+                    <span className="truncate">{member.display_name || member.email}</span>
+                    {isMe && <span className="flex-shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: "#1A1230", color: "#7B61FF" }}>Você</span>}
+                    {!member.is_active && <span className="flex-shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: "#1a0505", color: "#EF4444" }}>Inativo</span>}
+                  </p>
+                  <p className="text-[11px] mt-0.5 truncate" style={{ color: "#444" }}>{member.email}</p>
+                </div>
+
+                {/* Role + actions */}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <select
+                    value={roleEdits[member.id] ?? member.role}
+                    onChange={(e) => setRoleEdits((r) => ({ ...r, [member.id]: e.target.value }))}
+                    className="rounded-lg px-2 py-1.5 text-xs text-white border appearance-none cursor-pointer focus:outline-none"
+                    style={{ backgroundColor: "#080808", borderColor: "#1e1e1e" }}
+                  >
+                    {ROLE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
+                  <button
+                    onClick={() => saveRole(member.id)}
+                    disabled={saving[member.id] || roleEdits[member.id] === member.role}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-40 transition-all"
+                    style={{ backgroundColor: saved[member.id] ? "#1A1230" : "#7B61FF22", color: "#7B61FF", border: "1px solid #7B61FF33" }}
+                  >
+                    {saving[member.id] ? <Loader2 size={11} className="animate-spin" /> : saved[member.id] ? <Check size={11} /> : <Save size={11} />}
+                    {saved[member.id] ? "Salvo" : "Salvar"}
+                  </button>
+                  {!isMe && (
+                    <button
+                      onClick={() => setConfirming(member.id)}
+                      title="Remover acesso"
+                      className="flex items-center justify-center w-8 h-8 rounded-lg border transition-colors"
+                      style={{ borderColor: "#1e1e1e", color: "#555" }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#ef444444"; (e.currentTarget as HTMLButtonElement).style.color = "#ef4444"; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#1e1e1e"; (e.currentTarget as HTMLButtonElement).style.color = "#555"; }}
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  )}
+                </div>
               </div>
 
-              {/* Seções acessíveis */}
-              <div className="px-4 pb-3 flex flex-wrap gap-1.5">
-                {Object.keys(SECTION_LABELS).map((sec) => {
-                  const hasAccess = sections.includes(sec);
-                  return (
-                    <span key={sec} className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
-                      style={{ backgroundColor: hasAccess ? "#0d1f14" : "#111", color: hasAccess ? "#1FCE4A" : "#333" }}>
-                      {SECTION_LABELS[sec]}
-                    </span>
-                  );
-                })}
-              </div>
+              {isConfirming ? (
+                <div className="flex items-center justify-between gap-3 px-4 py-3 flex-wrap" style={{ backgroundColor: "#1a0505", borderTop: "1px solid #EF444422" }}>
+                  <p className="text-xs" style={{ color: "#EF4444" }}>
+                    Remover o acesso de <strong>{member.display_name || member.email}</strong>? O login dele será bloqueado.
+                  </p>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <button
+                      onClick={() => setConfirming(null)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border"
+                      style={{ borderColor: "#333", color: "#A3A3A3" }}
+                    >
+                      <X size={11} />Cancelar
+                    </button>
+                    <button
+                      onClick={() => removeMember(member.id)}
+                      disabled={removing === member.id}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-50"
+                      style={{ backgroundColor: "#EF4444", color: "#000" }}
+                    >
+                      {removing === member.id ? <Loader2 size={11} className="animate-spin" /> : <Trash2 size={11} />}
+                      Confirmar remoção
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setExpanded((e) => ({ ...e, [member.id]: !e[member.id] }))}
+                  className="w-full flex items-center gap-1.5 px-4 py-2 text-[11px] transition-colors"
+                  style={{ color: "#555", borderTop: "1px solid #111" }}
+                >
+                  <ChevronDown size={12} className="transition-transform" style={{ transform: isExpanded ? "rotate(180deg)" : "none" }} />
+                  {granted.length} de {Object.keys(SECTION_LABELS).length} seções liberadas
+                </button>
+              )}
+
+              {isExpanded && !isConfirming && (
+                <div className="px-4 pb-3.5 flex flex-wrap gap-1.5">
+                  {Object.keys(SECTION_LABELS).map((sec) => {
+                    const hasAccess = sections.includes(sec);
+                    return (
+                      <span key={sec} className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
+                        style={{ backgroundColor: hasAccess ? "#1A1230" : "#111", color: hasAccess ? "#7B61FF" : "#333" }}>
+                        {SECTION_LABELS[sec]}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           );
         })}
@@ -190,7 +301,7 @@ export function ProfileView({ profile, userEmail }: ProfileViewProps) {
   }
 
   const inputStyle = { borderColor: "#1e1e1e" };
-  const focusInput = (e: React.FocusEvent<HTMLInputElement>) => (e.currentTarget.style.borderColor = "#1FCE4A44");
+  const focusInput = (e: React.FocusEvent<HTMLInputElement>) => (e.currentTarget.style.borderColor = "#7B61FF44");
   const blurInput = (e: React.FocusEvent<HTMLInputElement>) => (e.currentTarget.style.borderColor = "#1e1e1e");
 
   const navItems = [
@@ -211,8 +322,8 @@ export function ProfileView({ profile, userEmail }: ProfileViewProps) {
             className="w-full text-left px-4 py-2 text-xs transition-colors duration-100"
             style={{
               color: section === item.id ? "#fff" : "#555",
-              backgroundColor: section === item.id ? "#0d1f14" : "transparent",
-              borderLeft: section === item.id ? "2px solid #1FCE4A" : "2px solid transparent",
+              backgroundColor: section === item.id ? "#1A1230" : "transparent",
+              borderLeft: section === item.id ? "2px solid #7B61FF" : "2px solid transparent",
             }}
           >
             {item.label}
@@ -233,7 +344,7 @@ export function ProfileView({ profile, userEmail }: ProfileViewProps) {
                   onClick={handleSaveName}
                   disabled={saving || !displayName.trim() || displayName.trim() === (profile?.display_name ?? "")}
                   className="flex items-center gap-2 px-5 py-2 rounded-lg text-xs font-semibold transition-all disabled:opacity-40"
-                  style={{ backgroundColor: savedName ? "#0d1f14" : "#1FCE4A", color: savedName ? "#1FCE4A" : "#000" }}
+                  style={{ backgroundColor: savedName ? "#1A1230" : "#7B61FF", color: savedName ? "#7B61FF" : "#000" }}
                 >
                   {savedName ? <CheckCircle2 size={13} /> : <Save size={13} />}
                   {saving ? "Salvando..." : savedName ? "Salvo!" : "Salvar"}
@@ -242,7 +353,7 @@ export function ProfileView({ profile, userEmail }: ProfileViewProps) {
 
               <div className="flex items-center gap-6 mb-8 pb-6" style={{ borderBottom: "1px solid #111" }}>
                 <div className="w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0 text-2xl font-bold"
-                  style={{ backgroundColor: "#0d1f14", color: "#1FCE4A", border: "2px solid #1FCE4A33" }}>
+                  style={{ backgroundColor: "#1A1230", color: "#7B61FF", border: "2px solid #7B61FF33" }}>
                   {(displayName || email).charAt(0).toUpperCase()}
                 </div>
                 <div>
@@ -250,8 +361,8 @@ export function ProfileView({ profile, userEmail }: ProfileViewProps) {
                   <p className="text-xs mt-0.5" style={{ color: "#555" }}>{email}</p>
                   {profile && (
                     <div className="flex items-center gap-1 mt-2">
-                      {profile.role === "admin" && <ShieldCheck size={11} style={{ color: "#1FCE4A" }} />}
-                      <span className="text-[10px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded" style={{ backgroundColor: "#0d1f14", color: "#1FCE4A" }}>
+                      {profile.role === "admin" && <ShieldCheck size={11} style={{ color: "#7B61FF" }} />}
+                      <span className="text-[10px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded" style={{ backgroundColor: "#1A1230", color: "#7B61FF" }}>
                         {ROLE_LABELS[profile.role] ?? profile.role}
                       </span>
                     </div>
@@ -285,7 +396,7 @@ export function ProfileView({ profile, userEmail }: ProfileViewProps) {
                   </p>
                   {isAdmin && (
                     <p className="text-[10px] mt-1.5" style={{ color: "#444" }}>
-                      Para alterar a função de um membro, acesse <button onClick={() => setSection("equipe")} className="underline" style={{ color: "#1FCE4A" }}>Equipe & Acessos</button>.
+                      Para alterar a função de um membro, acesse <button onClick={() => setSection("equipe")} className="underline" style={{ color: "#7B61FF" }}>Equipe & Acessos</button>.
                     </p>
                   )}
                 </Field>
@@ -301,7 +412,7 @@ export function ProfileView({ profile, userEmail }: ProfileViewProps) {
                   <div className="flex flex-wrap gap-1.5 pt-1">
                     {(SECTION_ACCESS[profile?.role ?? ""] ?? []).map((sec) => (
                       <span key={sec} className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
-                        style={{ backgroundColor: "#0d1f14", color: "#1FCE4A" }}>
+                        style={{ backgroundColor: "#1A1230", color: "#7B61FF" }}>
                         {SECTION_LABELS[sec]}
                       </span>
                     ))}
@@ -326,7 +437,7 @@ export function ProfileView({ profile, userEmail }: ProfileViewProps) {
 
               <div className="mb-8">
                 <div className="flex items-center gap-2 mb-1">
-                  <KeyRound size={14} style={{ color: "#1FCE4A" }} />
+                  <KeyRound size={14} style={{ color: "#7B61FF" }} />
                   <p className="text-sm font-semibold text-white">Alterar senha</p>
                 </div>
                 <p className="text-xs mb-6" style={{ color: "#555" }}>Após alterar, você será desconectado de todos os dispositivos.</p>
@@ -350,14 +461,14 @@ export function ProfileView({ profile, userEmail }: ProfileViewProps) {
                     </div>
                   )}
                   {pwSuccess && (
-                    <div className="flex items-center gap-2 mt-4 px-3 py-2 rounded-lg max-w-sm" style={{ backgroundColor: "#0d1f14", border: "1px solid #1FCE4A33" }}>
-                      <CheckCircle2 size={13} style={{ color: "#1FCE4A", flexShrink: 0 }} />
-                      <p className="text-xs" style={{ color: "#1FCE4A" }}>Senha alterada com sucesso!</p>
+                    <div className="flex items-center gap-2 mt-4 px-3 py-2 rounded-lg max-w-sm" style={{ backgroundColor: "#1A1230", border: "1px solid #7B61FF33" }}>
+                      <CheckCircle2 size={13} style={{ color: "#7B61FF", flexShrink: 0 }} />
+                      <p className="text-xs" style={{ color: "#7B61FF" }}>Senha alterada com sucesso!</p>
                     </div>
                   )}
                   <button type="submit" disabled={savingPw || !newPw || !confirmPw}
                     className="flex items-center gap-2 mt-6 px-5 py-2 rounded-lg text-xs font-semibold disabled:opacity-40"
-                    style={{ backgroundColor: "#1FCE4A", color: "#000" }}>
+                    style={{ backgroundColor: "#7B61FF", color: "#000" }}>
                     <KeyRound size={13} />
                     {savingPw ? "Alterando..." : "Alterar senha"}
                   </button>
@@ -366,7 +477,7 @@ export function ProfileView({ profile, userEmail }: ProfileViewProps) {
 
               <div style={{ borderTop: "1px solid #111", paddingTop: "2rem" }}>
                 <div className="flex items-center gap-2 mb-1">
-                  <Globe size={14} style={{ color: "#1FCE4A" }} />
+                  <Globe size={14} style={{ color: "#7B61FF" }} />
                   <p className="text-sm font-semibold text-white">Sessões ativas</p>
                 </div>
                 <p className="text-xs mb-6" style={{ color: "#555" }}>Dispositivos com acesso à sua conta.</p>
@@ -378,12 +489,12 @@ export function ProfileView({ profile, userEmail }: ProfileViewProps) {
                   </div>
                   <div className="grid grid-cols-4 items-center px-4 py-3 gap-2">
                     <div className="flex items-center gap-2">
-                      <Monitor size={13} style={{ color: "#1FCE4A" }} />
+                      <Monitor size={13} style={{ color: "#7B61FF" }} />
                       <span className="text-xs text-white">Este dispositivo</span>
                     </div>
                     <span className="text-xs" style={{ color: "#555" }}>Agora</span>
                     <span className="text-xs" style={{ color: "#555" }}>Brasil</span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full w-fit" style={{ backgroundColor: "#0d1f14", color: "#1FCE4A" }}>Atual</span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full w-fit" style={{ backgroundColor: "#1A1230", color: "#7B61FF" }}>Atual</span>
                   </div>
                 </div>
                 <button onClick={() => supabase.auth.signOut({ scope: "others" })}
@@ -397,7 +508,7 @@ export function ProfileView({ profile, userEmail }: ProfileViewProps) {
 
               <div style={{ borderTop: "1px solid #111", paddingTop: "2rem", marginTop: "2rem" }}>
                 <div className="flex items-center gap-2 mb-1">
-                  <ShieldCheck size={14} style={{ color: "#1FCE4A" }} />
+                  <ShieldCheck size={14} style={{ color: "#7B61FF" }} />
                   <p className="text-sm font-semibold text-white">Verificação em 2 etapas</p>
                 </div>
                 <p className="text-xs mb-4" style={{ color: "#555" }}>Adicione uma camada extra de segurança à sua conta.</p>

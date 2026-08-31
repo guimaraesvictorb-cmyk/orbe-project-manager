@@ -34,7 +34,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 const inputCls =
-  "w-full rounded-lg px-3 py-2 text-sm text-white bg-[#0d0d0d] border border-[#333] focus:outline-none focus:border-[#1FCE4A] transition-colors duration-150";
+  "w-full rounded-lg px-3 py-2 text-sm text-white bg-[#0d0d0d] border border-[#333] focus:outline-none focus:border-[#7B61FF] transition-colors duration-150";
 
 const selectCls = inputCls + " appearance-none cursor-pointer";
 
@@ -101,7 +101,7 @@ export function TaskModal({ task, onSave, onClose }: TaskModalProps) {
           style={{ borderBottomColor: "#262626" }}
         >
           <div>
-            <p className="text-[10px] font-semibold tracking-widest uppercase text-[#1FCE4A] mb-0.5">
+            <p className="text-[10px] font-semibold tracking-widest uppercase text-[#7B61FF] mb-0.5">
               {isEdit ? "Editar Tarefa" : "Nova Tarefa"}
             </p>
             <h2 className="text-white font-bold text-base leading-tight">
@@ -110,7 +110,7 @@ export function TaskModal({ task, onSave, onClose }: TaskModalProps) {
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-[#A3A3A3] hover:text-white hover:bg-[#262626] transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1FCE4A]"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-[#A3A3A3] hover:text-white hover:bg-[#262626] transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7B61FF]"
             aria-label="Fechar"
           >
             <X size={16} />
@@ -260,19 +260,19 @@ export function TaskModal({ task, onSave, onClose }: TaskModalProps) {
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-lg text-sm font-medium text-[#A3A3A3] hover:text-white transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1FCE4A]"
+            className="px-4 py-2 rounded-lg text-sm font-medium text-[#A3A3A3] hover:text-white transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7B61FF]"
           >
             Cancelar
           </button>
           <button
             onClick={handleSubmit as unknown as React.MouseEventHandler<HTMLButtonElement>}
-            className="px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1FCE4A]"
-            style={{ backgroundColor: "#1FCE4A", color: "#000000" }}
+            className="px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7B61FF]"
+            style={{ backgroundColor: "#7B61FF", color: "#000000" }}
             onMouseEnter={(e) =>
-              ((e.currentTarget as HTMLButtonElement).style.backgroundColor = "#17b83e")
+              ((e.currentTarget as HTMLButtonElement).style.backgroundColor = "#6247E5")
             }
             onMouseLeave={(e) =>
-              ((e.currentTarget as HTMLButtonElement).style.backgroundColor = "#1FCE4A")
+              ((e.currentTarget as HTMLButtonElement).style.backgroundColor = "#7B61FF")
             }
           >
             {isEdit ? "Salvar alterações" : "Criar tarefa"}

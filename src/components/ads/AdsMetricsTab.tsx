@@ -11,7 +11,7 @@ function Trend({ curr, prev }: { curr: number | null; prev: number | null }) {
   const pct = ((curr - prev) / prev) * 100
   const up = pct > 0
   const Icon = pct === 0 ? Minus : up ? TrendingUp : TrendingDown
-  const color = pct === 0 ? '#555' : up ? '#1FCE4A' : '#EF4444'
+  const color = pct === 0 ? '#555' : up ? '#7B61FF' : '#EF4444'
   return (
     <span className="flex items-center gap-0.5 text-[10px] font-bold ml-1" style={{ color }}>
       <Icon size={10} />{Math.abs(pct).toFixed(1)}%
@@ -105,7 +105,7 @@ function EntryForm({ platform, clientId, existing, onSave, onCancel }: {
     setSaving(false)
   }
 
-  const inputCls = 'w-full rounded-lg px-3 py-2 text-xs text-white placeholder-[#333] focus:outline-none focus:border-[#1FCE4A44] transition-colors'
+  const inputCls = 'w-full rounded-lg px-3 py-2 text-xs text-white placeholder-[#333] focus:outline-none focus:border-[#7B61FF44] transition-colors'
   const inputStyle = { backgroundColor: '#080808', border: '1px solid #1e1e1e' }
 
   return (
@@ -132,7 +132,7 @@ function EntryForm({ platform, clientId, existing, onSave, onCancel }: {
           Cancelar
         </button>
         <button type="submit" disabled={saving} className="flex-1 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
-          style={{ backgroundColor: '#1FCE4A', color: '#000' }}>
+          style={{ backgroundColor: '#7B61FF', color: '#000' }}>
           {saving ? <Loader2 size={12} className="animate-spin" /> : null}
           {saving ? 'Salvando...' : 'Salvar métricas'}
         </button>
@@ -162,7 +162,7 @@ function PeriodCard({ metric, prevMetric, platform, onDelete, onEdit }: {
             <p className="text-sm font-semibold text-white capitalize">{label}</p>
           </button>
           {metric.investimento && (
-            <span className="text-xs font-bold" style={{ color: '#1FCE4A' }}>{fmtCurrency(metric.investimento)}</span>
+            <span className="text-xs font-bold" style={{ color: '#7B61FF' }}>{fmtCurrency(metric.investimento)}</span>
           )}
         </div>
         <div className="flex items-center gap-1">
@@ -214,7 +214,7 @@ export function AdsMetricsTab({ clientId, platform }: AdsMetricsTabProps) {
 
   if (loading) return (
     <div className="flex justify-center py-12">
-      <Loader2 size={18} className="animate-spin" style={{ color: '#1FCE4A' }} />
+      <Loader2 size={18} className="animate-spin" style={{ color: '#7B61FF' }} />
     </div>
   )
 
@@ -231,7 +231,7 @@ export function AdsMetricsTab({ clientId, platform }: AdsMetricsTabProps) {
           <button
             onClick={() => setShowForm(true)}
             className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg"
-            style={{ backgroundColor: '#1FCE4A', color: '#000' }}
+            style={{ backgroundColor: '#7B61FF', color: '#000' }}
           >
             <Plus size={12} />Adicionar mês
           </button>
@@ -262,7 +262,7 @@ export function AdsMetricsTab({ clientId, platform }: AdsMetricsTabProps) {
           </p>
           {canEdit && (
             <button onClick={() => setShowForm(true)} className="text-xs font-semibold px-4 py-2 rounded-lg"
-              style={{ backgroundColor: '#1FCE4A', color: '#000' }}>
+              style={{ backgroundColor: '#7B61FF', color: '#000' }}>
               + Adicionar primeiro mês
             </button>
           )}

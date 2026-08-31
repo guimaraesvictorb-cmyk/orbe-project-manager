@@ -37,7 +37,7 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
       className="min-h-screen flex items-center justify-center p-4"
       style={{
         backgroundColor: "#000",
-        backgroundImage: `radial-gradient(ellipse at 50% 50%, #0d1f1466 0%, transparent 70%)`,
+        backgroundImage: `radial-gradient(ellipse at 50% 50%, #1A123066 0%, transparent 70%)`,
       }}
     >
       <div className="w-full max-w-sm">
@@ -46,7 +46,7 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
           <div className="inline-flex items-center gap-3 mb-3">
             <div
               className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-black text-sm"
-              style={{ backgroundColor: "#1FCE4A" }}
+              style={{ backgroundColor: "#7B61FF" }}
             >
               Orbe
             </div>
@@ -77,7 +77,7 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
               required
               className="w-full rounded-lg px-3 py-2.5 text-sm text-white placeholder-[#333] focus:outline-none transition-colors"
               style={{ backgroundColor: "#080808", border: "1px solid #1e1e1e" }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = "#1FCE4A44")}
+              onFocus={(e) => (e.currentTarget.style.borderColor = "#7B61FF44")}
               onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")}
             />
           </div>
@@ -96,7 +96,7 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
                 required
                 className="w-full rounded-lg px-3 py-2.5 pr-10 text-sm text-white placeholder-[#333] focus:outline-none transition-colors"
                 style={{ backgroundColor: "#080808", border: "1px solid #1e1e1e" }}
-                onFocus={(e) => (e.currentTarget.style.borderColor = "#1FCE4A44")}
+                onFocus={(e) => (e.currentTarget.style.borderColor = "#7B61FF44")}
                 onBlur={(e) => (e.currentTarget.style.borderColor = "#1e1e1e")}
               />
               <button
@@ -119,9 +119,9 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
           <button
             type="submit"
             disabled={loading || !email || !password}
-            className="w-full py-3 rounded-xl text-sm font-bold transition-all duration-150 flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1FCE4A]"
+            className="w-full py-3 rounded-xl text-sm font-bold transition-all duration-150 flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7B61FF]"
             style={{
-              backgroundColor: loading || !email || !password ? "#0d1f14" : "#1FCE4A",
+              backgroundColor: loading || !email || !password ? "#1A1230" : "#7B61FF",
               color: loading || !email || !password ? "#333" : "#000",
             }}
           >

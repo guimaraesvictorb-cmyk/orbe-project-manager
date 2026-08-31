@@ -1,10 +1,11 @@
-import { useState } from "react";
-import { ChevronRight, CheckCircle2 } from "lucide-react";
+import { useState, useMemo } from "react";
+import { ChevronRight, CheckCircle2, TrendingDown } from "lucide-react";
 import { OPERATIONAL_PHASES } from "../data/m5os";
 import type { Phase } from "../data/m5os";
 import { TasksView } from "./tasks/TasksView";
 import { ClientesSection } from "./ClientesSection";
 import { Footer } from "./Footer";
+import { useClients } from "../hooks/useClients";
 
 // Default to "Operação Recorrente" (F7)
 const DEFAULT_PHASE_ID = 7;
@@ -24,15 +25,15 @@ function PipelineStep({
     <div className="flex items-center flex-1 min-w-0">
       <button
         onClick={onClick}
-        className="group flex-1 min-w-0 text-left rounded-xl p-4 transition-all duration-150 border focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1FCE4A]"
+        className="group flex-1 min-w-0 text-left rounded-xl p-4 transition-all duration-150 border focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7B61FF]"
         style={{
-          backgroundColor: isActive ? "#0d1f14" : "#0a0a0a",
-          borderColor: isActive ? "#1FCE4A" : "#1a1a1a",
+          backgroundColor: isActive ? "#1A1230" : "#0a0a0a",
+          borderColor: isActive ? "#7B61FF" : "#1a1a1a",
         }}
         onMouseEnter={(e) => {
           if (!isActive) {
             const el = e.currentTarget as HTMLButtonElement;
-            el.style.borderColor = "#1FCE4A44";
+            el.style.borderColor = "#7B61FF44";
             el.style.backgroundColor = "#0d0d0d";
           }
         }}
@@ -51,7 +52,7 @@ function PipelineStep({
             className="text-[10px] font-bold tracking-widest uppercase px-1.5 py-0.5 rounded"
             style={
               isActive
-                ? { backgroundColor: "#1FCE4A", color: "#000" }
+                ? { backgroundColor: "#7B61FF", color: "#000" }
                 : { backgroundColor: "#1a1a1a", color: "#555" }
             }
           >
@@ -60,7 +61,7 @@ function PipelineStep({
           {isActive && (
             <span
               className="w-1.5 h-1.5 rounded-full animate-pulse"
-              style={{ backgroundColor: "#1FCE4A" }}
+              style={{ backgroundColor: "#7B61FF" }}
               aria-hidden="true"
             />
           )}
@@ -75,7 +76,7 @@ function PipelineStep({
         </p>
 
         {/* Meta */}
-        <p className="text-[11px]" style={{ color: isActive ? "#1FCE4A" : "#3a3a3a" }}>
+        <p className="text-[11px]" style={{ color: isActive ? "#7B61FF" : "#3a3a3a" }}>
           {phase.meta}
         </p>
       </button>
@@ -107,25 +108,25 @@ function PhaseDetail({ phase }: { phase: Phase }) {
         <div className="flex items-center gap-3">
           <span
             className="text-[10px] font-bold tracking-widest uppercase px-2 py-1 rounded"
-            style={{ backgroundColor: "#0d1f14", color: "#1FCE4A", border: "1px solid #1FCE4A33" }}
+            style={{ backgroundColor: "#1A1230", color: "#7B61FF", border: "1px solid #7B61FF33" }}
           >
             {phase.label}
           </span>
           <div>
             <h3 className="text-white font-semibold text-sm leading-tight">{phase.name}</h3>
-            <p className="text-[11px] mt-0.5" style={{ color: "#1FCE4A" }}>{phase.meta}</p>
+            <p className="text-[11px] mt-0.5" style={{ color: "#7B61FF" }}>{phase.meta}</p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={() => alert("Em breve")}
-            className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 border focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1FCE4A]"
+            className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 border focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7B61FF]"
             style={{ borderColor: "#262626", color: "#A3A3A3" }}
             onMouseEnter={(e) => {
               const el = e.currentTarget as HTMLButtonElement;
-              el.style.borderColor = "#1FCE4A";
-              el.style.color = "#1FCE4A";
+              el.style.borderColor = "#7B61FF";
+              el.style.color = "#7B61FF";
             }}
             onMouseLeave={(e) => {
               const el = e.currentTarget as HTMLButtonElement;
@@ -137,17 +138,17 @@ function PhaseDetail({ phase }: { phase: Phase }) {
           </button>
           <button
             onClick={() => alert("Em breve")}
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 border focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1FCE4A]"
-            style={{ borderColor: "#1FCE4A", color: "#1FCE4A" }}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 border focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7B61FF]"
+            style={{ borderColor: "#7B61FF", color: "#7B61FF" }}
             onMouseEnter={(e) => {
               const el = e.currentTarget as HTMLButtonElement;
-              el.style.backgroundColor = "#1FCE4A";
+              el.style.backgroundColor = "#7B61FF";
               el.style.color = "#000";
             }}
             onMouseLeave={(e) => {
               const el = e.currentTarget as HTMLButtonElement;
               el.style.backgroundColor = "transparent";
-              el.style.color = "#1FCE4A";
+              el.style.color = "#7B61FF";
             }}
           >
             Plano de IA
@@ -159,7 +160,7 @@ function PhaseDetail({ phase }: { phase: Phase }) {
       <div
         className="mx-6 mt-4 mb-0 px-4 py-3 rounded-xl italic text-sm leading-relaxed"
         style={{
-          borderLeft: "3px solid #1FCE4A",
+          borderLeft: "3px solid #7B61FF",
           backgroundColor: "#060f09",
           color: "#d4d4d4",
         }}
@@ -174,7 +175,7 @@ function PhaseDetail({ phase }: { phase: Phase }) {
             <CheckCircle2
               size={14}
               className="flex-shrink-0 mt-0.5"
-              style={{ color: "#1FCE4A" }}
+              style={{ color: "#7B61FF" }}
               aria-hidden="true"
             />
             <span className="text-sm text-white leading-relaxed">{item}</span>
@@ -189,6 +190,9 @@ export function OperacaoView() {
   const [activePhaseId, setActivePhaseId] = useState<number>(DEFAULT_PHASE_ID);
   const activePhase =
     OPERATIONAL_PHASES.find((p) => p.id === activePhaseId) ?? OPERATIONAL_PHASES[2];
+  const { clients } = useClients();
+  const churned = useMemo(() => clients.filter((c) => c.status === "churned"), [clients]);
+  const churnRevenueLost = useMemo(() => churned.reduce((s, c) => s + (c.monthly_fee ?? 0), 0), [churned]);
 
   return (
     <div className="flex flex-col min-h-0">
@@ -200,7 +204,7 @@ export function OperacaoView() {
             <div>
               <p
                 className="text-[10px] font-bold tracking-widest uppercase mb-0.5"
-                style={{ color: "#1FCE4A" }}
+                style={{ color: "#7B61FF" }}
               >
                 Pipeline Operacional
               </p>
@@ -232,6 +236,36 @@ export function OperacaoView() {
           {/* Detail */}
           <PhaseDetail phase={activePhase} />
         </section>
+
+        {/* ── Churn banner ────────────────────────────────────────────────── */}
+        {churned.length > 0 && (
+          <div className="rounded-2xl border px-6 py-4 flex flex-wrap items-center gap-6" style={{ backgroundColor: "#0d0808", borderColor: "#EF444433" }}>
+            <div className="flex items-center gap-3">
+              <TrendingDown size={18} style={{ color: "#EF4444" }} />
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#EF4444" }}>Churn</p>
+                <p className="text-white font-bold text-xl leading-tight">{churned.length}</p>
+                <p className="text-[11px]" style={{ color: "#6B7280" }}>cliente{churned.length !== 1 ? "s" : ""} perdido{churned.length !== 1 ? "s" : ""}</p>
+              </div>
+            </div>
+            <div className="w-px h-10 hidden sm:block" style={{ backgroundColor: "#EF444433" }} />
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#EF4444" }}>Perda de Receita</p>
+              <p className="text-white font-bold text-xl leading-tight">
+                R$ {churnRevenueLost.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
+              </p>
+              <p className="text-[11px]" style={{ color: "#6B7280" }}>por mês</p>
+            </div>
+            <div className="w-px h-10 hidden sm:block" style={{ backgroundColor: "#EF444433" }} />
+            <div className="flex flex-wrap gap-2">
+              {churned.map((c) => (
+                <span key={c.id} className="text-[11px] px-2.5 py-1 rounded-lg font-medium" style={{ backgroundColor: "#1a0808", color: "#EF4444", border: "1px solid #EF444422" }}>
+                  {c.name}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* ── Divider ─────────────────────────────────────────────────────── */}
         <div className="flex items-center gap-4">

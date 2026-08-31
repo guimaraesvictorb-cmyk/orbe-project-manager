@@ -12,7 +12,7 @@ function fmt(n: number) {
 const CONTRATO_META: Record<string, { label: string; color: string }> = {
   em_negociacao: { label: "Em negociação", color: "#F59E0B" },
   enviado:       { label: "Enviado",       color: "#2563EB" },
-  assinado:      { label: "Assinado",      color: "#1FCE4A" },
+  assinado:      { label: "Assinado",      color: "#7B61FF" },
   cancelado:     { label: "Cancelado",     color: "#EF4444" },
 };
 
@@ -53,7 +53,7 @@ function LeadCard({
       )}
 
       {(lead.valor_proposta ?? lead.potential_mrr) && (
-        <p className="text-xs font-semibold mb-2" style={{ color: "#1FCE4A" }}>
+        <p className="text-xs font-semibold mb-2" style={{ color: "#7B61FF" }}>
           {fmt(lead.valor_proposta ?? lead.potential_mrr ?? 0)}
         </p>
       )}
@@ -115,7 +115,7 @@ function LeadModal({ lead, stages, onClose }: { lead: Lead; stages: PipelineStag
         <div className="flex items-start justify-between">
           <div>
             <p className="text-white font-semibold text-base">{lead.name}</p>
-            <p className="text-xs mt-0.5" style={{ color: "#1FCE4A" }}>{stage?.name ?? "—"}</p>
+            <p className="text-xs mt-0.5" style={{ color: "#7B61FF" }}>{stage?.name ?? "—"}</p>
           </div>
           <button onClick={onClose} style={{ color: "#555" }}><X size={16} /></button>
         </div>
@@ -132,7 +132,7 @@ function LeadModal({ lead, stages, onClose }: { lead: Lead; stages: PipelineStag
           ].filter((r) => r.value).map(({ label, value, green }) => (
             <div key={label}>
               <p className="text-[10px] font-bold uppercase tracking-widest mb-0.5" style={{ color: "#444" }}>{label}</p>
-              <p style={{ color: green ? "#1FCE4A" : "#A3A3A3" }} className="font-medium">{value}</p>
+              <p style={{ color: green ? "#7B61FF" : "#A3A3A3" }} className="font-medium">{value}</p>
             </div>
           ))}
         </div>
@@ -166,7 +166,7 @@ function LeadModal({ lead, stages, onClose }: { lead: Lead; stages: PipelineStag
               href={lead.link_proposta}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 transition-colors hover:text-[#1FCE4A]"
+              className="flex items-center gap-2 transition-colors hover:text-[#7B61FF]"
               style={{ color: "#555" }}
             >
               <ExternalLink size={11} />Ver proposta
@@ -247,7 +247,7 @@ function NewLeadModal({
         type={type} value={form[key]}
         onChange={(e) => setForm((p) => ({ ...p, [key]: e.target.value }))}
         placeholder={placeholder}
-        className="w-full bg-black border rounded-lg px-3 py-2 text-xs text-white placeholder:text-[#333] focus:outline-none focus:border-[#1FCE4A]"
+        className="w-full bg-black border rounded-lg px-3 py-2 text-xs text-white placeholder:text-[#333] focus:outline-none focus:border-[#7B61FF]"
         style={{ borderColor: "#262626" }}
       />
     </div>
@@ -290,7 +290,7 @@ function NewLeadModal({
             <select
               value={form.status_contrato}
               onChange={(e) => setForm((p) => ({ ...p, status_contrato: e.target.value }))}
-              className="w-full bg-black border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#1FCE4A]"
+              className="w-full bg-black border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#7B61FF]"
               style={{ borderColor: "#262626" }}
             >
               <option value="">Nenhum</option>
@@ -306,7 +306,7 @@ function NewLeadModal({
             <select
               value={form.stage_id}
               onChange={(e) => setForm((p) => ({ ...p, stage_id: e.target.value }))}
-              className="w-full bg-black border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#1FCE4A]"
+              className="w-full bg-black border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#7B61FF]"
               style={{ borderColor: "#262626" }}
               required
             >
@@ -323,7 +323,7 @@ function NewLeadModal({
               onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))}
               rows={2}
               placeholder="Contexto do lead..."
-              className="w-full bg-black border rounded-lg px-3 py-2 text-xs text-white placeholder:text-[#333] focus:outline-none focus:border-[#1FCE4A] resize-none"
+              className="w-full bg-black border rounded-lg px-3 py-2 text-xs text-white placeholder:text-[#333] focus:outline-none focus:border-[#7B61FF] resize-none"
               style={{ borderColor: "#262626" }}
             />
           </div>
@@ -332,7 +332,7 @@ function NewLeadModal({
             <button type="button" onClick={onClose} className="flex-1 py-2 rounded-xl text-xs border" style={{ borderColor: "#262626", color: "#A3A3A3" }}>
               Cancelar
             </button>
-            <button type="submit" className="flex-1 py-2 rounded-xl text-xs font-semibold" style={{ backgroundColor: "#1FCE4A", color: "#000" }}>
+            <button type="submit" className="flex-1 py-2 rounded-xl text-xs font-semibold" style={{ backgroundColor: "#7B61FF", color: "#000" }}>
               Salvar lead
             </button>
           </div>
@@ -367,7 +367,7 @@ export function PipelineView() {
 
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "#1FCE4A" }}>
+            <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "#7B61FF" }}>
               Pipeline comercial
             </p>
             <h2 className="text-white font-bold text-lg leading-tight">Gestão de leads</h2>
@@ -375,7 +375,7 @@ export function PipelineView() {
           <button
             onClick={() => setShowNew(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg flex-shrink-0"
-            style={{ backgroundColor: "#1FCE4A", color: "#000" }}
+            style={{ backgroundColor: "#7B61FF", color: "#000" }}
           >
             <Plus size={13} />
             Novo lead
@@ -389,7 +389,7 @@ export function PipelineView() {
           </div>
           <div>
             <span style={{ color: "#555" }}>MRR potencial</span>
-            <span className="ml-2 font-bold" style={{ color: "#1FCE4A" }}>{fmt(totalPotentialMrr)}</span>
+            <span className="ml-2 font-bold" style={{ color: "#7B61FF" }}>{fmt(totalPotentialMrr)}</span>
           </div>
           <div>
             <span style={{ color: "#555" }}>MRR ponderado</span>
@@ -415,7 +415,7 @@ export function PipelineView() {
                       </span>
                     </div>
                     {stageMrr > 0 && (
-                      <span className="text-[10px]" style={{ color: "#1FCE4A" }}>{fmt(stageMrr)}</span>
+                      <span className="text-[10px]" style={{ color: "#7B61FF" }}>{fmt(stageMrr)}</span>
                     )}
                   </div>
 

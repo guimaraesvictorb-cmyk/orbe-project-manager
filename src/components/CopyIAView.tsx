@@ -122,7 +122,7 @@ function CopyCard({ result, onRegenerate, loading }: { result: CopyResult; onReg
         <span className="text-xs font-bold" style={{ color: platMeta.color }}>{platMeta.label}</span>
         <div className="flex items-center gap-2">
           <button onClick={copyAll} className="flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-lg transition-colors"
-            style={{ color: copied === "all" ? "#1FCE4A" : "#555", backgroundColor: "#111" }}>
+            style={{ color: copied === "all" ? "#7B61FF" : "#555", backgroundColor: "#111" }}>
             {copied === "all" ? <Check size={11} /> : <Copy size={11} />}
             {copied === "all" ? "Copiado!" : "Copiar tudo"}
           </button>
@@ -142,7 +142,7 @@ function CopyCard({ result, onRegenerate, loading }: { result: CopyResult; onReg
               <button
                 onClick={() => copyField(key, value)}
                 className="opacity-0 group-hover:opacity-100 p-1 rounded transition-all flex-shrink-0"
-                style={{ color: copied === key ? "#1FCE4A" : "#555" }}>
+                style={{ color: copied === key ? "#7B61FF" : "#555" }}>
                 {copied === key ? <Check size={12} /> : <Copy size={12} />}
               </button>
             </div>
@@ -198,14 +198,14 @@ export function CopyIAView() {
 
   const sel = "rounded-lg px-3 py-2 text-xs text-white focus:outline-none appearance-none cursor-pointer";
   const selStyle = { backgroundColor: "#0d0d0d", border: "1px solid #1e1e1e" };
-  const inp = "w-full rounded-lg px-3 py-2 text-xs text-white placeholder-[#333] focus:outline-none focus:border-[#1FCE4A44] transition-colors";
+  const inp = "w-full rounded-lg px-3 py-2 text-xs text-white placeholder-[#333] focus:outline-none focus:border-[#7B61FF44] transition-colors";
   const inpStyle = { backgroundColor: "#0d0d0d", border: "1px solid #1e1e1e" };
 
   return (
     <div className="flex flex-col min-h-0">
       <div className="max-w-screen-xl mx-auto w-full px-6 py-8 space-y-8">
         <div>
-          <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "#1FCE4A" }}>Ferramentas de IA</p>
+          <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "#7B61FF" }}>Ferramentas de IA</p>
           <h2 className="text-white font-bold text-lg leading-tight">Copy IA</h2>
           <p className="text-xs mt-1" style={{ color: "#555" }}>Gere copy de alta conversão para Meta Ads, Google Ads, Instagram e WhatsApp.</p>
         </div>
@@ -284,7 +284,7 @@ export function CopyIAView() {
 
             <button type="submit" disabled={loading || !apiKey || !form.product}
               className="w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-40"
-              style={{ backgroundColor: "#1FCE4A", color: "#000" }}>
+              style={{ backgroundColor: "#7B61FF", color: "#000" }}>
               {loading ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
               {loading ? "Gerando copy..." : `Gerar copy para ${PLATFORM_META[platform].label}`}
             </button>
