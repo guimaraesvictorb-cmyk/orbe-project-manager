@@ -28,8 +28,8 @@ function saveDismissed(set: Set<string>) {
 }
 
 export function useNotifications() {
-  const { tasks } = useTasks({})
-  const { clients } = useClients()
+  const { tasks, loading: tasksLoading } = useTasks({})
+  const { clients, loading: clientsLoading } = useClients()
   const [dismissed, setDismissed] = useState<Set<string>>(() => loadDismissed())
 
   useEffect(() => { saveDismissed(dismissed) }, [dismissed])
@@ -61,6 +61,17 @@ export function useNotifications() {
 
     return [...overdue, ...atRisk]
   }, [tasks, clients, clientNameById])
+
+  // Drop dismissed ids that no longer correspond to an active notification
+  // (task completed, client health restored) so localStorage doesn't grow forever.
+  useEffect(() => {
+    if (tasksLoading || clientsLoading) return
+    const currentIds = new Set(all.map((n) => n.id))
+    setDismissed((prev) => {
+      const next = new Set(Array.from(prev).filter((id) => currentIds.has(id)))
+      return next.size === prev.size ? prev : next
+    })
+  }, [all, tasksLoading, clientsLoading])
 
   const visible = all.filter((n) => !dismissed.has(n.id))
 

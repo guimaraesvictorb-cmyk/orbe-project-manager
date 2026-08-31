@@ -62,7 +62,8 @@ async function generateOnboardingTasks(clientId: string, createdBy: string) {
       created_by: createdBy,
     }
   })
-  await supabase.from('tasks').insert(rows)
+  const { error } = await supabase.from('tasks').insert(rows)
+  if (error) throw error
 }
 
 export function useClients() {
@@ -89,7 +90,7 @@ export function useClients() {
     const { data, error } = await supabase.from('clients').insert({ ...input, data_source: 'manual' }).select().single()
     if (error) return { error: error.message }
     setClients((prev) => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
-    // Auto-create onboarding checklist
+    // Auto-create onboarding checklist (fire-and-forget, don't block return, but don't swallow failures silently)
     supabase.from('client_checklist').insert(
       ONBOARDING_STEPS.map((step) => ({
         client_id: data.id,
@@ -99,8 +100,14 @@ export function useClients() {
         completed: false,
         created_by: input.created_by,
       }))
-    ).then(() => {}) // fire-and-forget, don't block return
-    if (input.status === 'ativo') generateOnboardingTasks(data.id, input.created_by).then(() => {})
+    ).then(({ error: checklistError }) => {
+      if (checklistError) console.error('Failed to create onboarding checklist:', checklistError.message)
+    })
+    if (input.status === 'ativo') {
+      generateOnboardingTasks(data.id, input.created_by).catch((err) =>
+        console.error('Failed to generate onboarding tasks:', err)
+      )
+    }
     return { data }
   }
 
@@ -126,9 +133,13 @@ export function useClients() {
     const current = clients.find((c) => c.id === id)
     const result = await updateClient(id, { status })
     if (current && current.status !== 'ativo' && status === 'ativo') {
-      const { count } = await supabase.from('tasks').select('id', { count: 'exact', head: true })
-        .eq('client_id', id).eq('data_source', 'onboarding')
-      if (!count) await generateOnboardingTasks(id, current.created_by)
+      try {
+        const { count } = await supabase.from('tasks').select('id', { count: 'exact', head: true })
+          .eq('client_id', id).eq('data_source', 'onboarding')
+        if (!count) await generateOnboardingTasks(id, current.created_by)
+      } catch (err) {
+        console.error('Failed to generate onboarding tasks on status change:', err)
+      }
     }
     return result
   }

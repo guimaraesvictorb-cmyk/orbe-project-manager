@@ -71,8 +71,12 @@ export function CommandPalette({ open, onClose, onSelectClient, onSelectTask }: 
       className="fixed inset-0 z-[60] flex items-start justify-center pt-[15vh] px-4"
       style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
+      role="presentation"
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Busca global"
         className="w-full max-w-lg rounded-2xl overflow-hidden"
         style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" }}
       >
@@ -84,6 +88,9 @@ export function CommandPalette({ open, onClose, onSelectClient, onSelectTask }: 
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Buscar clientes ou tarefas..."
+            aria-label="Buscar clientes ou tarefas"
+            role="combobox"
+            aria-expanded={results.length > 0}
             className="flex-1 bg-transparent text-sm text-[var(--text-primary)] placeholder-[var(--text-quaternary)] focus:outline-none"
           />
           <kbd className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: "var(--bg-input)", color: "var(--text-quaternary)" }}>
