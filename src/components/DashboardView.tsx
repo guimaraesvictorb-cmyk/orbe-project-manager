@@ -5,6 +5,7 @@ import { useTasks } from "../hooks/useTasks";
 import { useFinancial } from "../hooks/useFinancial";
 import { usePipeline } from "../hooks/usePipeline";
 import { Footer } from "./Footer";
+import { ActivityFeed } from "./ActivityFeed";
 
 function fmt(n: number) {
   return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
@@ -202,6 +203,8 @@ export function DashboardView() {
             </div>
           </section>
         </div>
+
+        <ActivityFeed />
       </div>
 
       <Footer />
