@@ -91,3 +91,10 @@ html, body {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
+
+/* Print / export-to-PDF */
+@media print {
+  .no-print { display: none !important; }
+  body, #root { background: #fff !important; color: #000 !important; overflow: visible !important; }
+  * { color: #000 !important; background-color: transparent !important; border-color: #ccc !important; }
+}

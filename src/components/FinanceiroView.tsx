@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Plus, CheckCircle2, Clock, AlertCircle, XCircle, ChevronDown } from "lucide-react";
+import { Plus, CheckCircle2, Clock, AlertCircle, XCircle, ChevronDown, Download } from "lucide-react";
 import { useFinancial } from "../hooks/useFinancial";
 import { useClients } from "../hooks/useClients";
 import { useAuth } from "../hooks/useAuth";
 import type { FinancialRecord, PaymentStatus } from "../lib/database.types";
 import { Footer } from "./Footer";
+import { exportToCSV } from "../lib/csvExport";
 
 function fmt(n: number) {
   return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
@@ -254,6 +255,20 @@ export function FinanceiroView() {
 
   const clientMap = Object.fromEntries(clients.map((c) => [c.id, c.name]));
 
+  function handleExport() {
+    exportToCSV(`financeiro-${month}.csv`, records.map((r) => ({
+      Cliente: (r.client_id ? clientMap[r.client_id] : null) ?? "—",
+      Tipo: r.type,
+      Descrição: r.description ?? "",
+      Valor: r.amount,
+      Vencimento: r.due_date,
+      Pagamento: r.paid_date ?? "",
+      Status: r.status,
+      "Método": r.payment_method ?? "",
+      "Nota fiscal": r.invoice_number ?? "",
+    })));
+  }
+
   return (
     <div className="flex flex-col min-h-0">
       <div className="max-w-screen-xl mx-auto w-full px-6 py-8 space-y-8">
@@ -266,7 +281,7 @@ export function FinanceiroView() {
             </p>
             <h2 className="text-[var(--text-primary)] font-bold text-lg leading-tight">MRR & pagamentos</h2>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="no-print flex items-center gap-2">
             <input
               type="month"
               value={month}
@@ -282,6 +297,27 @@ export function FinanceiroView() {
               onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border-subtle)"; (e.currentTarget as HTMLButtonElement).style.color = "var(--text-secondary)"; }}
             >
               Gerar mensalidades
+            </button>
+            <button
+              onClick={handleExport}
+              disabled={records.length === 0}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs border rounded-lg transition-colors disabled:opacity-40"
+              style={{ borderColor: "var(--border-subtle)", color: "var(--text-secondary)" }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--accent)"; (e.currentTarget as HTMLButtonElement).style.color = "var(--accent)"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border-subtle)"; (e.currentTarget as HTMLButtonElement).style.color = "var(--text-secondary)"; }}
+            >
+              <Download size={13} />
+              Exportar CSV
+            </button>
+            <button
+              onClick={() => window.print()}
+              disabled={records.length === 0}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs border rounded-lg transition-colors disabled:opacity-40"
+              style={{ borderColor: "var(--border-subtle)", color: "var(--text-secondary)" }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--accent)"; (e.currentTarget as HTMLButtonElement).style.color = "var(--accent)"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border-subtle)"; (e.currentTarget as HTMLButtonElement).style.color = "var(--text-secondary)"; }}
+            >
+              Exportar PDF
             </button>
             <button
               onClick={() => setShowModal(true)}

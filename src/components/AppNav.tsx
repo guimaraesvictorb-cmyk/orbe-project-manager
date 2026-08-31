@@ -105,7 +105,7 @@ export function AppNav({ active, onChange, profile, onLogout, isOpen, onClose }:
         />
       )}
       <aside
-        className="flex flex-col flex-shrink-0 h-screen overflow-y-auto fixed inset-y-0 left-0 z-40 transition-transform duration-200 lg:static lg:translate-x-0"
+        className="no-print flex flex-col flex-shrink-0 h-screen overflow-y-auto fixed inset-y-0 left-0 z-40 transition-transform duration-200 lg:static lg:translate-x-0"
         style={{
           width: 260,
           backgroundColor: "#050505",

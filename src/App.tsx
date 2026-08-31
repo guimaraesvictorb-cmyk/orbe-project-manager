@@ -99,7 +99,7 @@ function App() {
         <div className="flex-1 flex flex-col min-h-0">
           {/* Top bar */}
           <div
-            className="flex-shrink-0 flex items-center gap-3 px-4 py-3"
+            className="no-print flex-shrink-0 flex items-center gap-3 px-4 py-3"
             style={{ borderBottom: "1px solid var(--bg-surface-2)" }}
           >
             <button

@@ -1,9 +1,10 @@
 import { useState, useMemo } from "react";
-import { ExternalLink, Plus, Search, Loader2, X, Check, TrendingDown, ChevronDown, ChevronUp } from "lucide-react";
+import { ExternalLink, Plus, Search, Loader2, X, Check, TrendingDown, ChevronDown, ChevronUp, Download } from "lucide-react";
 import { useClients } from "../hooks/useClients";
 import { useAuth } from "../hooks/useAuth";
 import type { Client } from "../lib/database.types";
 import { FLAG_META, STATUS_META } from "../lib/clientMeta";
+import { exportToCSV } from "../lib/csvExport";
 
 function initials(name: string) {
   return name.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
@@ -362,18 +363,41 @@ export function ClientesSection({ compact = false, onSelectClient }: ClientesSec
               {ativos} ativos · {emRisco} em risco
             </p>
           </div>
-          {isAuthenticated && (
+          <div className="no-print flex items-center gap-2">
             <button
-              onClick={() => setShowNewModal(true)}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-150"
-              style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}
-              onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.backgroundColor = "var(--accent-hover)")}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.backgroundColor = "var(--accent)")}
+              onClick={() => exportToCSV("clientes.csv", filtered.map((c) => ({
+                Nome: c.name,
+                Segmento: c.segment ?? "",
+                Status: c.status,
+                Saúde: c.health_flag,
+                Mensalidade: c.monthly_fee ?? "",
+                Contato: c.primary_contact_name ?? "",
+                Email: c.primary_contact_email ?? "",
+                Telefone: c.primary_contact_phone ?? "",
+                Site: c.website ?? "",
+              })))}
+              disabled={filtered.length === 0}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs border transition-colors disabled:opacity-40"
+              style={{ borderColor: "var(--border-strong)", color: "var(--text-tertiary)" }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--accent)"; (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--accent-a44)"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--text-tertiary)"; (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border-strong)"; }}
             >
-              <Plus size={13} />
-              Novo Cliente
+              <Download size={13} />
+              Exportar CSV
             </button>
-          )}
+            {isAuthenticated && (
+              <button
+                onClick={() => setShowNewModal(true)}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-150"
+                style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}
+                onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.backgroundColor = "var(--accent-hover)")}
+                onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.backgroundColor = "var(--accent)")}
+              >
+                <Plus size={13} />
+                Novo Cliente
+              </button>
+            )}
+          </div>
         </div>
       )}
 
