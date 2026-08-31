@@ -1,7 +1,7 @@
 import { TasksView } from "./tasks/TasksView";
 import { Footer } from "./Footer";
 
-export function TarefasView() {
+export function TarefasView({ initialTaskId, onConsumeInitial }: { initialTaskId?: string; onConsumeInitial?: () => void }) {
   return (
     <div className="flex flex-col min-h-0">
       <div className="max-w-screen-xl mx-auto w-full px-6 py-8">
@@ -11,7 +11,7 @@ export function TarefasView() {
           </p>
           <h2 className="text-[var(--text-primary)] font-bold text-lg leading-tight">Gestão de tarefas</h2>
         </div>
-        <TasksView />
+        <TasksView initialTaskId={initialTaskId} onConsumeInitial={onConsumeInitial} />
       </div>
       <Footer />
     </div>

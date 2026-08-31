@@ -1,13 +1,23 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { ClientesSection } from "./ClientesSection"
 import { ClientDetailView } from "./ClientDetailView"
 import { Footer } from "./Footer"
 import { useClients } from "../hooks/useClients"
 import type { Client } from "../lib/database.types"
 
-export function ClientesView() {
+export function ClientesView({ initialClientId, onConsumeInitial }: { initialClientId?: string; onConsumeInitial?: () => void }) {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
-  const { deleteClient } = useClients()
+  const { clients, deleteClient } = useClients()
+
+  useEffect(() => {
+    if (!initialClientId) return
+    const match = clients.find((c) => c.id === initialClientId)
+    if (match) {
+      setSelectedClient(match)
+      onConsumeInitial?.()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialClientId, clients])
 
   if (selectedClient) {
     return (

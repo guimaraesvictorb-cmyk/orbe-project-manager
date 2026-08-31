@@ -22,13 +22,17 @@ import { WhatsAppView } from "./components/WhatsAppView";
 import { IntegracoesView } from "./components/IntegracoesView";
 import { LeadsCapturadosView } from "./components/LeadsCapturadosView";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import { Loader2, Menu } from "lucide-react";
+import { CommandPalette } from "./components/CommandPalette";
+import { Loader2, Menu, Search } from "lucide-react";
 
 const VIEW_KEY = "orbe_view";
 
 function App() {
   const { user, profile, isAuthenticated, isLoading, logout } = useAuth();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [pendingClientId, setPendingClientId] = useState<string | undefined>();
+  const [pendingTaskId, setPendingTaskId] = useState<string | undefined>();
   const [view, setView] = useState<AppView>(() => {
     const saved = localStorage.getItem(VIEW_KEY) as AppView | null;
     const valid: AppView[] = [
@@ -56,6 +60,17 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile]);
 
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPaletteOpen((v) => !v);
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[var(--bg-page)] flex items-center justify-center">
@@ -81,27 +96,38 @@ function App() {
         />
 
         <div className="flex-1 flex flex-col min-h-0">
-          {/* Mobile top bar */}
+          {/* Top bar */}
           <div
-            className="lg:hidden flex-shrink-0 flex items-center gap-3 px-4 py-3"
+            className="flex-shrink-0 flex items-center gap-3 px-4 py-3"
             style={{ borderBottom: "1px solid var(--bg-surface-2)" }}
           >
             <button
               onClick={() => setMobileNavOpen(true)}
-              className="p-1.5 rounded-lg"
+              className="lg:hidden p-1.5 rounded-lg"
               style={{ color: "var(--text-secondary)" }}
               aria-label="Abrir menu"
             >
               <Menu size={20} />
             </button>
-            <span className="text-sm font-semibold">Orbe</span>
+            <span className="lg:hidden text-sm font-semibold">Orbe</span>
+            <button
+              onClick={() => setPaletteOpen(true)}
+              className="flex-1 lg:flex-none lg:w-72 flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs transition-colors"
+              style={{ borderColor: "var(--border)", color: "var(--text-tertiary)" }}
+              onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.borderColor = "var(--accent-a44)")}
+              onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border)")}
+            >
+              <Search size={13} />
+              <span className="flex-1 text-left">Buscar clientes ou tarefas...</span>
+              <kbd className="hidden sm:inline text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: "var(--bg-input)" }}>⌘K</kbd>
+            </button>
           </div>
 
           <main className="flex-1 overflow-y-auto min-h-0">
           {view === "home"       && <HomeView profile={profile} onNavigate={navigate} />}
           {view === "dashboard"  && <DashboardView />}
-          {view === "tarefas"    && <TarefasView />}
-          {view === "clientes"   && <ClientesView />}
+          {view === "tarefas"    && <TarefasView initialTaskId={pendingTaskId} onConsumeInitial={() => setPendingTaskId(undefined)} />}
+          {view === "clientes"   && <ClientesView initialClientId={pendingClientId} onConsumeInitial={() => setPendingClientId(undefined)} />}
           {view === "financeiro" && <FinanceiroView />}
           {view === "pipeline"   && <PipelineView />}
           {view === "processos"     && <PlaybookView />}
@@ -118,6 +144,13 @@ function App() {
           </main>
         </div>
       </div>
+
+      <CommandPalette
+        open={paletteOpen}
+        onClose={() => setPaletteOpen(false)}
+        onSelectClient={(id) => { setPendingClientId(id); navigate("clientes"); }}
+        onSelectTask={(id) => { setPendingTaskId(id); navigate("tarefas"); }}
+      />
     </ThemeProvider>
   );
 }

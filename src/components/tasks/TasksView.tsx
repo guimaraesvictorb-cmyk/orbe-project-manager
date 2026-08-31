@@ -159,12 +159,22 @@ function TaskModal({ task, clients, profiles, onClose, onSave, onDelete, current
   );
 }
 
-export function TasksView({ clientId }: { clientId?: string }) {
+export function TasksView({ clientId, initialTaskId, onConsumeInitial }: { clientId?: string; initialTaskId?: string; onConsumeInitial?: () => void }) {
   const { tasks, loading, createTask, updateTask, deleteTask } = useTasks({ clientId });
   const { clients } = useClients();
   const { profile } = useAuth();
   const [view, setView] = useState<"list" | "kanban">("list");
   const [editing, setEditing] = useState<Task | null | "new">(null);
+
+  useEffect(() => {
+    if (!initialTaskId || loading) return;
+    const match = tasks.find((t) => t.id === initialTaskId);
+    if (match) {
+      setEditing(match);
+      onConsumeInitial?.();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialTaskId, loading]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [filterStatus, setFilterStatus] = useState<Task["status"] | "todos">("todos");
   const [filterDate, setFilterDate] = useState<"todas" | "hoje" | "semana" | "mes" | "atrasadas">("todas");
