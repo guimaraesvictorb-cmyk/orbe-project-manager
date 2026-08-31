@@ -2,17 +2,12 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../lib/supabase";
 import type { Profile } from "../lib/database.types";
 import {
-  ShieldCheck, Users, Sun, Moon, Mail, Loader2, Check,
-  AlertCircle, Trash2, UserPlus, RefreshCw, Copy,
+  ShieldCheck, Sun, Moon, Loader2, Check,
+  AlertCircle, Copy,
 } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 
-const ROLE_LABELS: Record<string, string> = {
-  admin: "Administrador", coordenador: "Coordenador",
-  gt: "Gestor de Tráfego", gp: "Gestor de Projetos",
-};
-
-type Section = "geral" | "seguranca" | "equipe";
+type Section = "geral" | "seguranca";
 
 interface SettingsViewProps { profile: Profile | null }
 
@@ -262,227 +257,8 @@ function SegurancaSection() {
   );
 }
 
-function EquipeSection() {
-  const [members, setMembers] = useState<Profile[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showInvite, setShowInvite] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteName, setInviteName] = useState("");
-  const [inviteRole, setInviteRole] = useState<Profile["role"]>("gt");
-  const [inviting, setInviting] = useState(false);
-  const [inviteResult, setInviteResult] = useState<{ ok: boolean; msg: string } | null>(null);
-  const [updatingRole, setUpdatingRole] = useState<string | null>(null);
-
-  const loadMembers = useCallback(async () => {
-    setLoading(true);
-    const { data } = await supabase.from("profiles").select("*").order("display_name");
-    setMembers(data ?? []);
-    setLoading(false);
-  }, []);
-
-  useEffect(() => { loadMembers(); }, [loadMembers]);
-
-  async function handleInvite(e: React.FormEvent) {
-    e.preventDefault();
-    setInviting(true);
-    setInviteResult(null);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/invite-user`, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          authorization: `Bearer ${session?.access_token ?? ""}`,
-        },
-        body: JSON.stringify({ email: inviteEmail, display_name: inviteName, role: inviteRole }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Erro ao convidar");
-      setInviteResult({ ok: true, msg: `Convite enviado para ${inviteEmail}` });
-      setInviteEmail(""); setInviteName("");
-      setShowInvite(false);
-      loadMembers();
-    } catch (err: unknown) {
-      setInviteResult({ ok: false, msg: (err as Error).message });
-    } finally {
-      setInviting(false);
-    }
-  }
-
-  async function changeRole(userId: string, role: Profile["role"]) {
-    setUpdatingRole(userId);
-    await supabase.from("profiles").update({ role }).eq("id", userId);
-    setMembers((prev) => prev.map((m) => (m.id === userId ? { ...m, role } : m)));
-    setUpdatingRole(null);
-  }
-
-  async function toggleActive(userId: string, current: boolean) {
-    await supabase.from("profiles").update({ is_active: !current }).eq("id", userId);
-    setMembers((prev) => prev.map((m) => (m.id === userId ? { ...m, is_active: !current } : m)));
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between">
-        <div>
-          <h2 className="text-[var(--text-primary)] font-semibold text-base mb-1">Minha Equipe</h2>
-          <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>Gerencie os membros e funções da equipe Orbe.</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button onClick={loadMembers} className="p-2 rounded-lg transition-colors hover:bg-[var(--bg-surface)]" style={{ color: "var(--text-tertiary)" }}>
-            <RefreshCw size={13} />
-          </button>
-          <button
-            onClick={() => setShowInvite(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
-            style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}
-          >
-            <UserPlus size={13} />
-            Convidar
-          </button>
-        </div>
-      </div>
-
-      {inviteResult && (
-        <div
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs"
-          style={{
-            backgroundColor: inviteResult.ok ? "var(--accent-tint)" : "#1a0505",
-            border: `1px solid ${inviteResult.ok ? "var(--accent-a33)" : "#EF444433"}`,
-            color: inviteResult.ok ? "var(--accent)" : "var(--danger)",
-          }}
-        >
-          {inviteResult.ok ? <Check size={12} /> : <AlertCircle size={12} />}
-          {inviteResult.msg}
-        </div>
-      )}
-
-      {showInvite && (
-        <form onSubmit={handleInvite} className="rounded-xl border p-4 space-y-3" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
-          <p className="text-sm font-semibold text-[var(--text-primary)]">Convidar novo membro</p>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "var(--text-tertiary)" }}>Nome</label>
-              <input
-                value={inviteName} onChange={(e) => setInviteName(e.target.value)} required
-                placeholder="Nome completo"
-                className="w-full rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] placeholder-[var(--text-quaternary)] focus:outline-none"
-                style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-strong)" }}
-              />
-            </div>
-            <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "var(--text-tertiary)" }}>Função</label>
-              <select
-                value={inviteRole} onChange={(e) => setInviteRole(e.target.value as Profile["role"])}
-                className="w-full rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] focus:outline-none"
-                style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-strong)" }}
-              >
-                {Object.entries(ROLE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-              </select>
-            </div>
-          </div>
-          <div>
-            <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "var(--text-tertiary)" }}>E-mail</label>
-            <input
-              type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} required
-              placeholder="email@agenciaorbe.co"
-              className="w-full rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] placeholder-[var(--text-quaternary)] focus:outline-none"
-              style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-strong)" }}
-            />
-          </div>
-          <div className="flex gap-2 pt-1">
-            <button type="button" onClick={() => setShowInvite(false)} className="flex-1 py-2 rounded-lg text-xs border" style={{ borderColor: "var(--border-strong)", color: "var(--text-tertiary)" }}>
-              Cancelar
-            </button>
-            <button
-              type="submit" disabled={inviting}
-              className="flex-1 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
-              style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}
-            >
-              {inviting ? <Loader2 size={12} className="animate-spin" /> : <Mail size={12} />}
-              {inviting ? "Enviando..." : "Enviar convite"}
-            </button>
-          </div>
-        </form>
-      )}
-
-      {loading ? (
-        <div className="flex justify-center py-8">
-          <Loader2 size={18} className="animate-spin" style={{ color: "var(--accent)" }} />
-        </div>
-      ) : (
-        <div className="rounded-xl border overflow-hidden" style={{ borderColor: "var(--border)" }}>
-          <div
-            className="grid px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest"
-            style={{ gridTemplateColumns: "1fr 100px 100px 80px", backgroundColor: "var(--bg-surface)", color: "var(--text-quaternary)", borderBottom: "1px solid var(--bg-surface-2)" }}
-          >
-            <span>Membro</span><span>Função</span><span>Status</span><span></span>
-          </div>
-          {members.map((m) => (
-            <div
-              key={m.id}
-              className="grid items-center px-4 py-3 gap-3"
-              style={{ gridTemplateColumns: "1fr 100px 100px 80px", borderBottom: "1px solid var(--bg-surface-2)" }}
-            >
-              <div className="min-w-0">
-                <p className="text-sm text-[var(--text-primary)] font-medium truncate">{m.display_name}</p>
-                <p className="text-[11px] truncate" style={{ color: "var(--text-tertiary)" }}>{m.email}</p>
-              </div>
-
-              <select
-                value={m.role}
-                onChange={(e) => changeRole(m.id, e.target.value as Profile["role"])}
-                disabled={updatingRole === m.id}
-                className="rounded-lg px-2 py-1.5 text-[11px] text-[var(--text-primary)] focus:outline-none disabled:opacity-50"
-                style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" }}
-              >
-                {Object.entries(ROLE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-              </select>
-
-              <span
-                className="text-[10px] font-bold px-2 py-0.5 rounded-full w-fit"
-                style={{
-                  backgroundColor: m.is_active ? "var(--accent-tint)" : "#1a0505",
-                  color: m.is_active ? "var(--accent)" : "var(--danger)",
-                }}
-              >
-                {m.is_active ? "Ativo" : "Inativo"}
-              </span>
-
-              <button
-                onClick={() => toggleActive(m.id, m.is_active)}
-                className="text-[11px] px-2 py-1 rounded-lg border transition-colors"
-                style={{ borderColor: "var(--border-strong)", color: "var(--text-tertiary)" }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.borderColor = m.is_active ? "#ef444444" : "var(--accent-a44)";
-                  (e.currentTarget as HTMLButtonElement).style.color = m.is_active ? "var(--danger)" : "var(--accent)";
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border-strong)";
-                  (e.currentTarget as HTMLButtonElement).style.color = "var(--text-tertiary)";
-                }}
-              >
-                {m.is_active ? <Trash2 size={12} /> : <Check size={12} />}
-              </button>
-            </div>
-          ))}
-          {members.length === 0 && (
-            <div className="py-12 text-center">
-              <Users size={24} className="mx-auto mb-2" style={{ color: "#222" }} />
-              <p className="text-sm text-[var(--text-primary)]">Nenhum membro encontrado</p>
-            </div>
-          )}
-        </div>
-      )}
-      <p className="text-[11px]" style={{ color: "var(--text-quaternary)" }}>{members.length} membro{members.length !== 1 ? "s" : ""} cadastrado{members.length !== 1 ? "s" : ""}</p>
-    </div>
-  );
-}
-
 export function SettingsView({ profile }: SettingsViewProps) {
   const [section, setSection] = useState<Section>("geral");
-  const isAdmin = profile?.role === "admin";
-  const isCoord = profile?.role === "coordenador";
 
   return (
     <div className="flex h-full" style={{ backgroundColor: "#060606" }}>
@@ -496,9 +272,6 @@ export function SettingsView({ profile }: SettingsViewProps) {
         </p>
         <SectionBtn id="geral"     label="Geral"    active={section} onClick={setSection} />
         <SectionBtn id="seguranca" label="Segurança" active={section} onClick={setSection} />
-        {(isAdmin || isCoord) && (
-          <SectionBtn id="equipe" label="Minha Equipe" active={section} onClick={setSection} />
-        )}
       </aside>
 
       {/* Content */}
@@ -506,7 +279,6 @@ export function SettingsView({ profile }: SettingsViewProps) {
         <div className="max-w-2xl px-10 py-8">
           {section === "geral"     && <GeralSection profile={profile} />}
           {section === "seguranca" && <SegurancaSection />}
-          {section === "equipe"    && (isAdmin || isCoord) && <EquipeSection />}
         </div>
       </div>
     </div>
