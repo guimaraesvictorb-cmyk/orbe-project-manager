@@ -5,6 +5,7 @@ import { useClients } from "../../hooks/useClients";
 import { useAuth } from "../../hooks/useAuth";
 import { supabase } from "../../lib/supabase";
 import type { Task, Profile, Client } from "../../lib/database.types";
+import { CommentThread } from "../CommentThread";
 
 const STATUS_META: Record<Task["status"], { label: string; color: string; bg: string }> = {
   backlog:      { label: "Backlog",      color: "#525252", bg: "var(--bg-surface-2)" },
@@ -73,7 +74,7 @@ function TaskModal({ task, clients, profiles, onClose, onSave, onDelete, current
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.85)" }}
       onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="w-full max-w-lg rounded-2xl p-6 space-y-4" style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" }}>
+      <div className="w-full max-w-lg rounded-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto" style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" }}>
         <div className="flex items-center justify-between">
           <h3 className="text-[var(--text-primary)] font-semibold text-sm">{task ? "Editar Tarefa" : "Nova Tarefa"}</h3>
           <button onClick={onClose} style={{ color: "var(--text-tertiary)" }}><X size={16} /></button>
@@ -154,6 +155,12 @@ function TaskModal({ task, clients, profiles, onClose, onSave, onDelete, current
             </button>
           </div>
         </form>
+
+        {task && (
+          <div className="pt-4 mt-1" style={{ borderTop: "1px solid var(--border-strong)" }}>
+            <CommentThread entityType="task" entityId={task.id} currentUserId={currentUserId} profiles={profiles} />
+          </div>
+        )}
       </div>
     </div>
   );
