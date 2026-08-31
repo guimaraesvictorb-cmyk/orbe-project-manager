@@ -165,6 +165,8 @@ export function TasksView({ clientId, initialTaskId, onConsumeInitial }: { clien
   const { profile } = useAuth();
   const [view, setView] = useState<"list" | "kanban">("list");
   const [editing, setEditing] = useState<Task | null | "new">(null);
+  const [dragOverStatus, setDragOverStatus] = useState<Task["status"] | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!initialTaskId || loading) return;
@@ -382,8 +384,22 @@ export function TasksView({ clientId, initialTaskId, onConsumeInitial }: { clien
           {(["backlog", "em_andamento", "em_revisao", "concluido"] as Task["status"][]).map((status) => {
             const col = filtered.filter((t) => t.status === status);
             const meta = STATUS_META[status];
+            const isDragOver = dragOverStatus === status;
             return (
-              <div key={status} className="flex-1 min-w-[220px] max-w-[300px]">
+              <div
+                key={status}
+                className="flex-1 min-w-[220px] max-w-[300px] rounded-xl transition-colors"
+                style={{ backgroundColor: isDragOver ? "var(--accent-a22)" : "transparent", outline: isDragOver ? "2px dashed var(--accent-a44)" : "none", outlineOffset: 4 }}
+                onDragOver={(e) => { e.preventDefault(); setDragOverStatus(status); }}
+                onDragLeave={() => setDragOverStatus((s) => (s === status ? null : s))}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const taskId = e.dataTransfer.getData("text/plain");
+                  if (taskId) updateTask(taskId, { status });
+                  setDragOverStatus(null);
+                  setDraggingId(null);
+                }}
+              >
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: meta.color }}>{meta.label}</span>
                   <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{ backgroundColor: "var(--bg-surface-2)", color: "var(--text-quaternary)" }}>{col.length}</span>
@@ -394,8 +410,11 @@ export function TasksView({ clientId, initialTaskId, onConsumeInitial }: { clien
                     const assignee = profiles.find((p) => p.id === task.assignee_id);
                     const isOverdue = task.deadline && task.status !== "concluido" && new Date(task.deadline) < today;
                     return (
-                      <div key={task.id} className="rounded-xl p-3 border border-[var(--border)] cursor-pointer transition-all"
-                        style={{ backgroundColor: "var(--bg-surface)" }}
+                      <div key={task.id} className="rounded-xl p-3 border border-[var(--border)] cursor-grab active:cursor-grabbing transition-all"
+                        style={{ backgroundColor: "var(--bg-surface)", opacity: draggingId === task.id ? 0.4 : 1 }}
+                        draggable
+                        onDragStart={(e) => { e.dataTransfer.setData("text/plain", task.id); setDraggingId(task.id); }}
+                        onDragEnd={() => { setDraggingId(null); setDragOverStatus(null); }}
                         onMouseEnter={(e) => ((e.currentTarget as HTMLDivElement).style.borderColor = `${meta.color}44`)}
                         onMouseLeave={(e) => ((e.currentTarget as HTMLDivElement).style.borderColor = "var(--border)")}
                         onClick={() => setEditing(task)}>
@@ -412,7 +431,7 @@ export function TasksView({ clientId, initialTaskId, onConsumeInitial }: { clien
                       </div>
                     );
                   })}
-                  {col.length === 0 && <div className="rounded-xl p-4 border border-dashed border-[var(--border)] text-center"><p className="text-[10px]" style={{ color: "var(--text-quaternary)" }}>Vazio</p></div>}
+                  {col.length === 0 && <div className="rounded-xl p-4 border border-dashed border-[var(--border)] text-center"><p className="text-[10px]" style={{ color: "var(--text-quaternary)" }}>{isDragOver ? "Solte aqui" : "Vazio"}</p></div>}
                 </div>
               </div>
             );
