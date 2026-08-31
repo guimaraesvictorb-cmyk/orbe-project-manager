@@ -112,12 +112,12 @@ export function RastreamentoView() {
           <div className="space-y-4">
             <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--text-tertiary)' }}>Parâmetros</p>
 
-            {inp('URL de destino *', form.url, s('url'), 'https://m5marketing.com.br/...')}
+            {inp('URL de destino *', form.url, s('url'), 'https://agenciaorbe.co/...')}
             {inp('Fonte (utm_source) *', form.source, s('source'), 'google, facebook...', SOURCE_PRESETS)}
             {inp('Mídia (utm_medium) *', form.medium, s('medium'), 'cpc, social, email...', MEDIUM_PRESETS)}
             {inp('Campanha (utm_campaign)', form.campaign, s('campaign'), 'nome-da-campanha')}
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {inp('Conteúdo (utm_content)', form.content, s('content'), 'banner-topo')}
               {inp('Termo (utm_term)', form.term, s('term'), 'palavra-chave')}
             </div>

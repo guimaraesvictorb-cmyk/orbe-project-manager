@@ -197,7 +197,7 @@ function NewClientModal({ onClose, onSave }: { onClose: () => void; onSave: (dat
         <form onSubmit={handleSubmit} className="space-y-3">
           {/* Identificação */}
           <p className="text-[10px] font-bold uppercase tracking-widest pt-1" style={{ color: "var(--accent)" }}>Identificação</p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="col-span-2 space-y-1">
               <label className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-tertiary)" }}>Nome da empresa *</label>
               <input type="text" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="Ex: Loja ABC" required className={inp} style={inpStyle} onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent-a44)")} onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border-strong)")} />
@@ -227,7 +227,7 @@ function NewClientModal({ onClose, onSave }: { onClose: () => void; onSave: (dat
 
           {/* Financeiro */}
           <p className="text-[10px] font-bold uppercase tracking-widest pt-1" style={{ color: "var(--accent)" }}>Financeiro</p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
               <label className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-tertiary)" }}>Mensalidade (R$)</label>
               <input type="number" step="any" value={form.monthly_fee} onChange={(e) => setForm((f) => ({ ...f, monthly_fee: e.target.value }))} placeholder="5000" className={inp} style={inpStyle} onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent-a44)")} onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border-strong)")} />
@@ -248,7 +248,7 @@ function NewClientModal({ onClose, onSave }: { onClose: () => void; onSave: (dat
 
           {/* Contato */}
           <p className="text-[10px] font-bold uppercase tracking-widest pt-1" style={{ color: "var(--accent)" }}>Contato</p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="col-span-2 space-y-1">
               <label className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-tertiary)" }}>Nome do responsável</label>
               <input type="text" value={form.primary_contact_name} onChange={(e) => setForm((f) => ({ ...f, primary_contact_name: e.target.value }))} placeholder="Nome do contato" className={inp} style={inpStyle} onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent-a44)")} onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border-strong)")} />
@@ -265,7 +265,7 @@ function NewClientModal({ onClose, onSave }: { onClose: () => void; onSave: (dat
 
           {/* Outros */}
           <p className="text-[10px] font-bold uppercase tracking-widest pt-1" style={{ color: "var(--accent)" }}>Outros</p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
               <label className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-tertiary)" }}>Origem do lead</label>
               <input type="text" value={form.origem_lead} onChange={(e) => setForm((f) => ({ ...f, origem_lead: e.target.value }))} placeholder="Indicação, Instagram..." className={inp} style={inpStyle} onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent-a44)")} onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border-strong)")} />

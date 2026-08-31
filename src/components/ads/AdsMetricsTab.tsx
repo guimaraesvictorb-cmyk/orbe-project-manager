@@ -114,7 +114,7 @@ function EntryForm({ platform, clientId, existing, onSave, onCancel }: {
         <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: 'var(--text-tertiary)' }}>Período (mês)</label>
         <input type="month" value={period} onChange={(e) => setPeriod(e.target.value)} required className={inputCls} style={inputStyle} />
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {fields.map(({ key, label }) => (
           <div key={key}>
             <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: 'var(--text-tertiary)' }}>{label}</label>

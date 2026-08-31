@@ -222,7 +222,7 @@ export function CopyIAView() {
             {/* Platform tabs */}
             <div>
               <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: "var(--text-tertiary)" }}>Plataforma</p>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {(Object.keys(PLATFORM_META) as Platform[]).map((p) => {
                   const meta = PLATFORM_META[p];
                   const active = platform === p;
@@ -248,7 +248,7 @@ export function CopyIAView() {
                 placeholder="ex: Curso online de vendas, Clínica de estética..." required className={inp} style={inpStyle} />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "var(--text-tertiary)" }}>Objetivo</label>
                 <select value={objective} onChange={(e) => setObjective(e.target.value as Objective)} className={sel} style={selStyle}>

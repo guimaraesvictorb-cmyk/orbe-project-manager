@@ -222,7 +222,7 @@ function TeamPanel({ currentUserId }: { currentUserId: string }) {
       {showInvite && (
         <form onSubmit={handleInvite} className="rounded-xl border p-4 space-y-3" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
           <p className="text-sm font-semibold text-[var(--text-primary)]">Adicionar novo membro</p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "var(--text-tertiary)" }}>Nome</label>
               <input value={inviteName} onChange={(e) => setInviteName(e.target.value)} required placeholder="Nome completo"

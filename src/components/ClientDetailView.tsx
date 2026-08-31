@@ -636,7 +636,7 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
 
             {editingOverview ? (
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {OVERVIEW_FIELDS.map((f) => (
                     <div key={f.key} className={f.type === "datetime-local" || f.key === "meta_ads_account_id" || f.key === "google_ads_account_id" || f.key === "ga4_property_id" ? "col-span-2 sm:col-span-1" : ""}>
                       <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "var(--text-tertiary)" }}>{f.label}</label>

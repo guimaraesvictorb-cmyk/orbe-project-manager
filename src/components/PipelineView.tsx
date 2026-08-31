@@ -120,7 +120,7 @@ function LeadModal({ lead, stages, onClose }: { lead: Lead; stages: PipelineStag
           <button onClick={onClose} style={{ color: "var(--text-tertiary)" }}><X size={16} /></button>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 text-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
           {[
             { label: "Tipo de serviço", value: lead.tipo_servico },
             { label: "Segmento", value: lead.segment },
@@ -261,26 +261,26 @@ function NewLeadModal({
         <form onSubmit={submit} className="space-y-3">
           {inp("Nome da empresa *", "name", "text", "ex: Empresa XYZ")}
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {inp("Contato", "contact_name", "text", "Nome do responsável")}
             {inp("Segmento", "segment", "text", "ex: E-commerce")}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {inp("Email", "contact_email", "email", "email@empresa.com")}
             {inp("Telefone", "contact_phone", "text", "(11) 99999-9999")}
           </div>
 
           {inp("Tipo de serviço", "tipo_servico", "text", "ex: Tráfego pago, Social media...")}
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {inp("MRR potencial (R$)", "potential_mrr", "number", "0")}
             {inp("Valor da proposta (R$)", "valor_proposta", "number", "0")}
           </div>
 
           {inp("Link da proposta", "link_proposta", "url", "https://...")}
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {inp("Probabilidade (%)", "probability", "number", "50")}
             {inp("Data de fechamento", "data_fechamento", "date")}
           </div>

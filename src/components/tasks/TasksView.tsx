@@ -84,7 +84,7 @@ function TaskModal({ task, clients, profiles, onClose, onSave, onDelete, current
             placeholder="Título da tarefa *" required autoFocus className={inputCls} style={inputStyle}
             onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent-a44)")}
             onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border-strong)")} />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
               <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--text-tertiary)" }}>Cliente *</label>
               <select value={form.client_id ?? ""} onChange={(e) => setForm((f) => ({ ...f, client_id: e.target.value }))}
