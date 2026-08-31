@@ -1,10 +1,22 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { ExternalLink, Plus, Search, Loader2, X, Check, TrendingDown, ChevronDown, ChevronUp, Download } from "lucide-react";
 import { useClients } from "../hooks/useClients";
 import { useAuth } from "../hooks/useAuth";
 import type { Client } from "../lib/database.types";
 import { FLAG_META, STATUS_META } from "../lib/clientMeta";
 import { exportToCSV } from "../lib/csvExport";
+import { useHealthSuggestions, type HealthSuggestion } from "../hooks/useHealthSuggestions";
+
+const DISMISSED_SUGGESTIONS_KEY = "orbe_dismissed_health_suggestions";
+
+function loadDismissedSuggestions(): Record<string, string> {
+  try {
+    const raw = localStorage.getItem(DISMISSED_SUGGESTIONS_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
 
 function initials(name: string) {
   return name.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
@@ -16,7 +28,14 @@ function avatarColor(id: string) {
   return AVATAR_COLORS[n % AVATAR_COLORS.length];
 }
 
-function ClientCard({ client, onHealthChange, onStatusChange, onSelect }: { client: Client; onHealthChange: (id: string, flag: Client["health_flag"]) => void; onStatusChange: (id: string, status: Client["status"]) => void; onSelect: (client: Client) => void }) {
+function ClientCard({ client, suggestion, onHealthChange, onStatusChange, onSelect, onDismissSuggestion }: {
+  client: Client;
+  suggestion?: HealthSuggestion;
+  onHealthChange: (id: string, flag: Client["health_flag"]) => void;
+  onStatusChange: (id: string, status: Client["status"]) => void;
+  onSelect: (client: Client) => void;
+  onDismissSuggestion: (clientId: string) => void;
+}) {
   const flag = FLAG_META[client.health_flag];
   const statusMeta = STATUS_META[client.status];
   const [changingFlag, setChangingFlag] = useState(false);
@@ -72,6 +91,32 @@ function ClientCard({ client, onHealthChange, onStatusChange, onSelect }: { clie
           <p className="text-[11px] mt-0.5" style={{ color: "var(--text-tertiary)" }}>{client.segment ?? "—"}</p>
         </div>
       </div>
+
+      {suggestion && (
+        <div
+          className="flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg text-[10px]"
+          style={{ backgroundColor: FLAG_META[suggestion.suggestedFlag].bg, border: `1px solid ${FLAG_META[suggestion.suggestedFlag].color}33` }}
+        >
+          <span style={{ color: FLAG_META[suggestion.suggestedFlag].color }}>
+            Sugestão: <strong>{FLAG_META[suggestion.suggestedFlag].label}</strong> · {suggestion.reason}
+          </span>
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <button
+              onClick={(e) => { e.stopPropagation(); onHealthChange(client.id, suggestion.suggestedFlag); }}
+              className="font-bold px-1.5 py-0.5 rounded uppercase tracking-wider"
+              style={{ color: FLAG_META[suggestion.suggestedFlag].color, backgroundColor: "rgba(255,255,255,0.06)" }}
+            >
+              Aplicar
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); onDismissSuggestion(client.id); }}
+              style={{ color: "var(--text-quaternary)" }}
+            >
+              <X size={11} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Details */}
       <div className="space-y-1.5 text-[11px]">
@@ -318,6 +363,25 @@ export function ClientesSection({ compact = false, onSelectClient }: ClientesSec
   const [filterFlag, setFilterFlag] = useState("todos");
   const [showNewModal, setShowNewModal] = useState(false);
   const [showChurned, setShowChurned] = useState(false);
+  const allSuggestions = useHealthSuggestions();
+  const [dismissedSuggestions, setDismissedSuggestions] = useState<Record<string, string>>(() => loadDismissedSuggestions());
+
+  useEffect(() => {
+    localStorage.setItem(DISMISSED_SUGGESTIONS_KEY, JSON.stringify(dismissedSuggestions));
+  }, [dismissedSuggestions]);
+
+  function getSuggestion(clientId: string): HealthSuggestion | undefined {
+    const s = allSuggestions[clientId];
+    if (!s) return undefined;
+    if (dismissedSuggestions[clientId] === s.reason) return undefined;
+    return s;
+  }
+
+  function dismissSuggestion(clientId: string) {
+    const s = allSuggestions[clientId];
+    if (!s) return;
+    setDismissedSuggestions((prev) => ({ ...prev, [clientId]: s.reason }));
+  }
 
   const activeClients = useMemo(() => clients.filter((c) => c.status !== "churned"), [clients]);
   const churnedClients = useMemo(() => clients.filter((c) => c.status === "churned"), [clients]);
@@ -446,7 +510,7 @@ export function ClientesSection({ compact = false, onSelectClient }: ClientesSec
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
           {filtered.map((client) => (
-            <ClientCard key={client.id} client={client} onHealthChange={updateHealthFlag} onStatusChange={updateStatus} onSelect={(c) => onSelectClient?.(c)} />
+            <ClientCard key={client.id} client={client} suggestion={getSuggestion(client.id)} onHealthChange={updateHealthFlag} onStatusChange={updateStatus} onSelect={(c) => onSelectClient?.(c)} onDismissSuggestion={dismissSuggestion} />
           ))}
         </div>
       )}
@@ -482,7 +546,7 @@ export function ClientesSection({ compact = false, onSelectClient }: ClientesSec
             <div className="px-4 pb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 border-t border-[var(--border)] pt-4">
               {churnedClients.map((client) => (
                 <div key={client.id} className="opacity-60">
-                  <ClientCard client={client} onHealthChange={updateHealthFlag} onStatusChange={updateStatus} onSelect={(c) => onSelectClient?.(c)} />
+                  <ClientCard client={client} suggestion={getSuggestion(client.id)} onHealthChange={updateHealthFlag} onStatusChange={updateStatus} onSelect={(c) => onSelectClient?.(c)} onDismissSuggestion={dismissSuggestion} />
                 </div>
               ))}
             </div>
