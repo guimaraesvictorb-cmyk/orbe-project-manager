@@ -40,6 +40,31 @@ const ONBOARDING_STEPS = [
   { title: "Agendamento da reunião semanal de acompanhamento", category: "Dia 7 — Lançamento", sort_order: 27 },
 ]
 
+function onboardingDayOffset(category: string): number {
+  const m = category.match(/Dia (\d+)/)
+  return m ? parseInt(m[1], 10) : 1
+}
+
+async function generateOnboardingTasks(clientId: string, createdBy: string) {
+  const today = new Date()
+  const rows = ONBOARDING_STEPS.map((step) => {
+    const deadline = new Date(today)
+    deadline.setDate(deadline.getDate() + onboardingDayOffset(step.category))
+    return {
+      client_id: clientId,
+      title: step.title,
+      description: step.category,
+      status: 'backlog' as const,
+      priority: 'media' as const,
+      deadline: deadline.toISOString().split('T')[0],
+      sort_order: step.sort_order,
+      data_source: 'onboarding',
+      created_by: createdBy,
+    }
+  })
+  await supabase.from('tasks').insert(rows)
+}
+
 export function useClients() {
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
@@ -75,6 +100,7 @@ export function useClients() {
         created_by: input.created_by,
       }))
     ).then(() => {}) // fire-and-forget, don't block return
+    if (input.status === 'ativo') generateOnboardingTasks(data.id, input.created_by).then(() => {})
     return { data }
   }
 
@@ -97,7 +123,14 @@ export function useClients() {
   }
 
   async function updateStatus(id: string, status: Client['status']) {
-    return updateClient(id, { status })
+    const current = clients.find((c) => c.id === id)
+    const result = await updateClient(id, { status })
+    if (current && current.status !== 'ativo' && status === 'ativo') {
+      const { count } = await supabase.from('tasks').select('id', { count: 'exact', head: true })
+        .eq('client_id', id).eq('data_source', 'onboarding')
+      if (!count) await generateOnboardingTasks(id, current.created_by)
+    }
+    return result
   }
 
   return { clients, loading, error, fetchClients, createClient, updateClient, deleteClient, updateHealthFlag, updateStatus }
