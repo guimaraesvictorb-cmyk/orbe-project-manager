@@ -23,6 +23,7 @@ import { IntegracoesView } from "./components/IntegracoesView";
 import { LeadsCapturadosView } from "./components/LeadsCapturadosView";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { CommandPalette } from "./components/CommandPalette";
+import { NotificationBell } from "./components/NotificationBell";
 import { Loader2, Menu, Search } from "lucide-react";
 
 const VIEW_KEY = "orbe_view";
@@ -121,6 +122,10 @@ function App() {
               <span className="flex-1 text-left">Buscar clientes ou tarefas...</span>
               <kbd className="hidden sm:inline text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: "var(--bg-input)" }}>⌘K</kbd>
             </button>
+            <NotificationBell
+              onSelectTask={(id) => { setPendingTaskId(id); navigate("tarefas"); }}
+              onSelectClient={(id) => { setPendingClientId(id); navigate("clientes"); }}
+            />
           </div>
 
           <main className="flex-1 overflow-y-auto min-h-0">
