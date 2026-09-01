@@ -125,7 +125,15 @@ function TaskModal({ task, clients, profiles, onClose, onSave, onDelete, onDupli
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--text-tertiary)" }}>Repetir</label>
-              <select value={form.recurrence ?? "nenhuma"} onChange={(e) => setForm((f) => ({ ...f, recurrence: e.target.value as Task["recurrence"] }))}
+              <select value={form.recurrence ?? "nenhuma"} onChange={(e) => {
+                  const recurrence = e.target.value as Task["recurrence"];
+                  setForm((f) => ({
+                    ...f,
+                    recurrence,
+                    // A recorrência conta a partir do deadline — sem uma data aqui, não há "toda semana" fixo pra ancorar.
+                    deadline: recurrence !== "nenhuma" && !f.deadline ? new Date().toISOString().split("T")[0] : f.deadline,
+                  }));
+                }}
                 className={inputCls} style={{ ...inputStyle, appearance: "none" as const }}>
                 <option value="nenhuma">Não repetir</option>
                 <option value="diaria">Diariamente</option>
@@ -133,6 +141,9 @@ function TaskModal({ task, clients, profiles, onClose, onSave, onDelete, onDupli
                 <option value="quinzenal">Quinzenalmente</option>
                 <option value="mensal">Mensalmente</option>
               </select>
+              {form.recurrence && form.recurrence !== "nenhuma" && (
+                <p className="text-[10px]" style={{ color: "var(--text-quaternary)" }}>Repete sempre a partir do Deadline, não da data em que for concluída.</p>
+              )}
             </div>
           </div>
           <textarea value={form.description ?? ""} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value || null }))}
