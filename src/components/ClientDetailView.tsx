@@ -3,18 +3,22 @@ import {
   ArrowLeft, Globe, User, Phone, Mail, DollarSign, Tag,
   Plus, Check, Trash2, Brain, Send, Loader2, Sparkles,
   BookOpen, X, ListChecks, Calendar, Share2, Copy, Link,
-  Pencil, Save, Hash,
+  Pencil, Save, Hash, Users,
 } from "lucide-react"
-import type { Client } from "../lib/database.types"
+import type { Client, Profile } from "../lib/database.types"
+import { supabase } from "../lib/supabase"
 import { useClientKnowledge, type KnowledgeEntry } from "../hooks/useClientKnowledge"
 import { useClientChecklist } from "../hooks/useClientChecklist"
 import { useShareTokens } from "../hooks/useShareTokens"
+import { useClientAssignments } from "../hooks/useClientAssignments"
 import { useAuth } from "../hooks/useAuth"
 import { FLAG_META, STATUS_META } from "../lib/clientMeta"
 import { getGroqApiKey, GROQ_MODEL, GROQ_API_URL } from "../lib/groq"
 import { AdsMetricsTab } from "./ads/AdsMetricsTab"
 import { CompiladoTab } from "./ads/CompiladoTab"
 import { MetaAdsLiveTab } from "./ads/MetaAdsLiveTab"
+
+const ROLE_LABELS: Record<string, string> = { gt: "Gestor de Tráfego", gp: "Gestor de Projetos" }
 
 const SOURCE_META = {
   manual:       { label: "Manual", color: "#2563EB", bg: "#0a0f1a" },
@@ -380,14 +384,27 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
   const [suggesting, setSuggesting] = useState(false)
   const [suggestError, setSuggestError] = useState("")
   const [copiedToken, setCopiedToken] = useState<string | null>(null)
+  const [teamMembers, setTeamMembers] = useState<Profile[]>([])
+  const { assignments, assign, unassign } = useClientAssignments(client.id)
   const { validated, pending, addEntry, validateEntry, deleteEntry } = useClientKnowledge(client.id)
   const { items, done, toggleItem, addItem, deleteItem } = useClientChecklist(client.id)
   const { tokens, createToken, deleteToken } = useShareTokens(client.id)
+
+  useEffect(() => {
+    supabase.from("profiles").select("*").in("role", ["gt", "gp"]).eq("is_active", true)
+      .then(({ data }) => setTeamMembers(data ?? []))
+  }, [])
 
   function copyShareLink(token: string) {
     navigator.clipboard.writeText(`${window.location.origin}?share=${token}`)
     setCopiedToken(token)
     setTimeout(() => setCopiedToken(null), 2000)
+  }
+
+  async function toggleAssignment(member: Profile) {
+    const existing = assignments.find((a) => a.user_id === member.id)
+    if (existing) await unassign(existing.id)
+    else if (profile) await assign(member.id, member.role, profile.id)
   }
 
   const flag = FLAG_META[client.health_flag]
@@ -612,6 +629,42 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
 
         {tab === "overview" && (
           <div className="max-w-2xl">
+            {canEdit && (
+              <div className="rounded-xl border p-4 mb-5" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
+                <div className="flex items-center gap-1.5 mb-2.5">
+                  <Users size={12} style={{ color: "var(--text-tertiary)" }} />
+                  <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--text-tertiary)" }}>Equipe do cliente</p>
+                </div>
+                {teamMembers.length === 0 ? (
+                  <p className="text-xs" style={{ color: "var(--text-quaternary)" }}>Nenhum GT/GP cadastrado ainda.</p>
+                ) : (
+                  <div className="flex flex-wrap gap-1.5">
+                    {teamMembers.map((member) => {
+                      const isAssigned = assignments.some((a) => a.user_id === member.id)
+                      return (
+                        <button
+                          key={member.id}
+                          onClick={() => toggleAssignment(member)}
+                          className="text-[10px] font-bold px-2 py-1 rounded-lg border transition-colors"
+                          style={{
+                            backgroundColor: isAssigned ? "var(--accent-tint)" : "transparent",
+                            color: isAssigned ? "var(--accent)" : "var(--text-quaternary)",
+                            borderColor: isAssigned ? "var(--accent-a33)" : "var(--border-strong)",
+                          }}
+                        >
+                          {isAssigned && <Check size={9} className="inline mr-1" />}
+                          {member.display_name} · {ROLE_LABELS[member.role] ?? member.role}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+                <p className="text-[10px] mt-2" style={{ color: "var(--text-quaternary)" }}>
+                  Só quem estiver marcado aqui vê esse cliente e suas tarefas (Admin/Coordenador sempre veem tudo).
+                </p>
+              </div>
+            )}
+
             {canEdit && onUpdate && (
               <div className="flex justify-end mb-4">
                 {editingOverview ? (
