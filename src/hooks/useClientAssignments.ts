@@ -9,11 +9,12 @@ export function useClientAssignments(clientId: string) {
   const fetchAssignments = useCallback(async () => {
     if (!clientId) return
     setLoading(true)
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('client_assignments')
       .select('*')
       .eq('client_id', clientId)
       .eq('is_active', true)
+    if (error) console.error('Failed to fetch client_assignments:', error.message)
     setAssignments(data ?? [])
     setLoading(false)
   }, [clientId])

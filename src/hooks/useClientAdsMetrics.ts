@@ -11,11 +11,12 @@ export function useClientAdsMetrics(clientId: string) {
 
   const refetch = useCallback(async () => {
     setLoading(true)
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('client_ads_metrics')
       .select('*')
       .eq('client_id', clientId)
       .order('period', { ascending: false })
+    if (error) console.error('Failed to fetch client_ads_metrics:', error.message)
     setMetrics(data ?? [])
     setLoading(false)
   }, [clientId])

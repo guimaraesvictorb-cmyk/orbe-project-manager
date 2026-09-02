@@ -9,13 +9,14 @@ export function useComments(entityType: 'task' | 'client' | 'lead', entityId: st
   const fetchComments = useCallback(async () => {
     if (!entityId) return
     setLoading(true)
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('comments')
       .select('*')
       .eq('entity_type', entityType)
       .eq('entity_id', entityId)
       .is('deleted_at', null)
       .order('created_at', { ascending: true })
+    if (error) console.error('Failed to fetch comments:', error.message)
     setComments(data ?? [])
     setLoading(false)
   }, [entityType, entityId])

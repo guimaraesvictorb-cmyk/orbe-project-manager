@@ -10,11 +10,12 @@ export function useShareTokens(clientId: string) {
 
   const fetch = useCallback(async () => {
     if (!clientId) return;
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("client_share_tokens")
       .select("*")
       .eq("client_id", clientId)
       .order("created_at", { ascending: false });
+    if (error) console.error("Failed to fetch client_share_tokens:", error.message);
     setTokens(data ?? []);
     setLoading(false);
   }, [clientId]);
@@ -26,18 +27,22 @@ export function useShareTokens(clientId: string) {
       ? new Date(Date.now() + expiresInDays * 86400000).toISOString()
       : null;
     const { data: user } = await supabase.auth.getUser();
-    const { data } = await supabase.from("client_share_tokens").insert({
+    const { data, error } = await supabase.from("client_share_tokens").insert({
       client_id: clientId,
       label: label || null,
       expires_at,
       created_by: user.user?.id,
     }).select().single();
-    if (data) setTokens((prev) => [data, ...prev]);
+    if (error) return { error: error.message };
+    setTokens((prev) => [data, ...prev]);
+    return { data };
   }
 
   async function deleteToken(id: string) {
-    await supabase.from("client_share_tokens").delete().eq("id", id);
+    const { error } = await supabase.from("client_share_tokens").delete().eq("id", id);
+    if (error) return { error: error.message };
     setTokens((prev) => prev.filter((t) => t.id !== id));
+    return {};
   }
 
   return { tokens, loading, createToken, deleteToken, refetch: fetch };

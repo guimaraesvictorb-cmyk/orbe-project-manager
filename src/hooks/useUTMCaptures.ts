@@ -9,11 +9,12 @@ export function useUTMCaptures() {
   const [loading, setLoading] = useState(true);
 
   const fetch = useCallback(async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("utm_captures")
       .select("*")
       .order("captured_at", { ascending: false })
       .limit(200);
+    if (error) console.error("Failed to fetch utm_captures:", error.message);
     setCaptures(data ?? []);
     setLoading(false);
   }, []);
@@ -47,8 +48,10 @@ export function useUTMCaptures() {
   }
 
   async function deleteCapture(id: string) {
-    await supabase.from("utm_captures").delete().eq("id", id);
+    const { error } = await supabase.from("utm_captures").delete().eq("id", id);
+    if (error) return { error: error.message };
     setCaptures((prev) => prev.filter((c) => c.id !== id));
+    return {};
   }
 
   return { captures, loading, convertToLead, deleteCapture, refetch: fetch };

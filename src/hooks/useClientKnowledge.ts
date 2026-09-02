@@ -20,11 +20,12 @@ export function useClientKnowledge(clientId: string) {
   const refetch = useCallback(async () => {
     setLoading(true)
     setEntries([])
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('client_knowledge')
       .select('*')
       .eq('client_id', clientId)
       .order('created_at', { ascending: false })
+    if (error) console.error('Failed to fetch client_knowledge:', error.message)
     setEntries(data ?? [])
     setLoading(false)
   }, [clientId])

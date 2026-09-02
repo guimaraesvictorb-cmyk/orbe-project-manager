@@ -9,12 +9,13 @@ export function useClientChecklist(clientId: string) {
   const refetch = useCallback(async () => {
     setLoading(true)
     setItems([])
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('client_checklist')
       .select('*')
       .eq('client_id', clientId)
       .order('sort_order', { ascending: true })
       .order('created_at', { ascending: true })
+    if (error) console.error('Failed to fetch client_checklist:', error.message)
     setItems(data ?? [])
     setLoading(false)
   }, [clientId])

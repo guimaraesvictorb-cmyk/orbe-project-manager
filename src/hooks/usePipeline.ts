@@ -9,10 +9,12 @@ export function usePipeline() {
 
   const fetchAll = useCallback(async () => {
     setLoading(true)
-    const [{ data: leadsData }, { data: stagesData }] = await Promise.all([
+    const [{ data: leadsData, error: leadsError }, { data: stagesData, error: stagesError }] = await Promise.all([
       supabase.from('leads').select('*').is('deleted_at', null).order('created_at', { ascending: false }),
       supabase.from('pipeline_stages').select('*').order('sort_order'),
     ])
+    if (leadsError) console.error('Failed to fetch leads:', leadsError.message)
+    if (stagesError) console.error('Failed to fetch pipeline_stages:', stagesError.message)
     setLeads(leadsData ?? [])
     setStages(stagesData ?? [])
     setLoading(false)
@@ -55,11 +57,12 @@ export function usePipeline() {
   }
 
   async function getActivities(leadId: string): Promise<LeadActivity[]> {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('lead_activities')
       .select('*')
       .eq('lead_id', leadId)
       .order('created_at', { ascending: false })
+    if (error) console.error('Failed to fetch lead_activities:', error.message)
     return data ?? []
   }
 

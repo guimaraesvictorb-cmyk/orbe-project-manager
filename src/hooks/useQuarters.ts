@@ -9,11 +9,12 @@ export function useQuarters(clientId?: string) {
   const fetchQuarters = useCallback(async () => {
     if (!clientId) { setLoading(false); return }
     setLoading(true)
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('quarters')
       .select('*')
       .eq('client_id', clientId)
       .order('period_start', { ascending: false })
+    if (error) console.error('Failed to fetch quarters:', error.message)
     setQuarters(data ?? [])
     setLoading(false)
   }, [clientId])
