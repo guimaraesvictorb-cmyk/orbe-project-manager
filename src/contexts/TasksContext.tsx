@@ -23,6 +23,8 @@ interface TasksContextValue {
   createTask: (input: Omit<Task, 'id' | 'created_at' | 'updated_at' | 'deleted_at' | 'completed_at'>) => Promise<{ data?: Task; error?: string }>
   updateTask: (id: string, updates: Partial<Task>) => Promise<{ data?: Task; error?: string }>
   deleteTask: (id: string) => Promise<{ error?: string }>
+  fetchDeletedTasks: () => Promise<Task[]>
+  restoreTask: (id: string) => Promise<{ data?: Task; error?: string }>
 }
 
 const TasksContext = createContext<TasksContextValue | null>(null)
@@ -33,11 +35,12 @@ export function TasksProvider({ children }: { children: ReactNode }) {
 
   const fetchTasks = useCallback(async () => {
     setLoading(true)
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('tasks')
       .select('*')
       .is('deleted_at', null)
       .order('created_at', { ascending: false })
+    if (error) console.error('Failed to fetch tasks:', error.message)
     setAllTasks(data ?? [])
     setLoading(false)
   }, [])
@@ -82,8 +85,25 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     return {}
   }
 
+  async function fetchDeletedTasks() {
+    const { data, error } = await supabase
+      .from('tasks')
+      .select('*')
+      .not('deleted_at', 'is', null)
+      .order('deleted_at', { ascending: false })
+    if (error) console.error('Failed to fetch deleted tasks:', error.message)
+    return data ?? []
+  }
+
+  async function restoreTask(id: string) {
+    const { data, error } = await supabase.from('tasks').update({ deleted_at: null }).eq('id', id).select().single()
+    if (error) return { error: error.message }
+    setAllTasks((prev) => [data, ...prev])
+    return { data }
+  }
+
   return (
-    <TasksContext.Provider value={{ allTasks, loading, fetchTasks, createTask, updateTask, deleteTask }}>
+    <TasksContext.Provider value={{ allTasks, loading, fetchTasks, createTask, updateTask, deleteTask, fetchDeletedTasks, restoreTask }}>
       {children}
     </TasksContext.Provider>
   )

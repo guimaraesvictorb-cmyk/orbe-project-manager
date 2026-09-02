@@ -1,13 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../lib/supabase";
-import type { Profile } from "../lib/database.types";
+import type { Profile, Client, Task } from "../lib/database.types";
 import {
   ShieldCheck, Sun, Moon, Loader2, Check,
-  AlertCircle, Copy,
+  AlertCircle, Copy, Trash2, RotateCcw,
 } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
+import { useClients } from "../hooks/useClients";
+import { useTasks } from "../hooks/useTasks";
 
-type Section = "geral" | "seguranca";
+type Section = "geral" | "seguranca" | "lixeira";
 
 interface SettingsViewProps { profile: Profile | null }
 
@@ -257,6 +259,101 @@ function SegurancaSection() {
   );
 }
 
+function LixeiraSection() {
+  const { clients, fetchDeletedClients, restoreClient } = useClients();
+  const { fetchDeletedTasks, restoreTask } = useTasks({});
+  const [deletedClients, setDeletedClients] = useState<Client[]>([]);
+  const [deletedTasks, setDeletedTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [restoring, setRestoring] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const [dc, dt] = await Promise.all([fetchDeletedClients(), fetchDeletedTasks()]);
+    setDeletedClients(dc);
+    setDeletedTasks(dt);
+    setLoading(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const clientNameById = new Map(clients.map((c) => [c.id, c.name]));
+
+  async function handleRestoreClient(id: string) {
+    setRestoring(id);
+    await restoreClient(id);
+    setDeletedClients((prev) => prev.filter((c) => c.id !== id));
+    setRestoring(null);
+  }
+
+  async function handleRestoreTask(id: string) {
+    setRestoring(id);
+    await restoreTask(id);
+    setDeletedTasks((prev) => prev.filter((t) => t.id !== id));
+    setRestoring(null);
+  }
+
+  if (loading) return <div className="flex justify-center py-12"><Loader2 size={18} className="animate-spin" style={{ color: "var(--accent)" }} /></div>;
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h2 className="text-white font-semibold text-base mb-1">Lixeira</h2>
+        <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>Clientes e tarefas excluídos ficam aqui — nada é apagado de vez.</p>
+      </div>
+
+      <div>
+        <p className="text-xs font-semibold text-white mb-2">Clientes ({deletedClients.length})</p>
+        {deletedClients.length === 0 ? (
+          <p className="text-xs" style={{ color: "var(--text-quaternary)" }}>Nenhum cliente excluído.</p>
+        ) : (
+          <div className="space-y-2">
+            {deletedClients.map((c) => (
+              <div key={c.id} className="flex items-center justify-between px-4 py-3 rounded-xl border" style={{ borderColor: "var(--border)", backgroundColor: "var(--bg-surface)" }}>
+                <div className="flex items-center gap-2 min-w-0">
+                  <Trash2 size={13} style={{ color: "var(--text-quaternary)" }} />
+                  <span className="text-sm text-white truncate">{c.name}</span>
+                </div>
+                <button onClick={() => handleRestoreClient(c.id)} disabled={restoring === c.id}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-50 flex-shrink-0"
+                  style={{ backgroundColor: "var(--accent-tint)", color: "var(--accent)" }}>
+                  {restoring === c.id ? <Loader2 size={11} className="animate-spin" /> : <RotateCcw size={11} />}
+                  Restaurar
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <p className="text-xs font-semibold text-white mb-2">Tarefas ({deletedTasks.length})</p>
+        {deletedTasks.length === 0 ? (
+          <p className="text-xs" style={{ color: "var(--text-quaternary)" }}>Nenhuma tarefa excluída.</p>
+        ) : (
+          <div className="space-y-2">
+            {deletedTasks.map((t) => (
+              <div key={t.id} className="flex items-center justify-between px-4 py-3 rounded-xl border" style={{ borderColor: "var(--border)", backgroundColor: "var(--bg-surface)" }}>
+                <div className="min-w-0">
+                  <p className="text-sm text-white truncate">{t.title}</p>
+                  <p className="text-[11px]" style={{ color: "var(--text-quaternary)" }}>{clientNameById.get(t.client_id) ?? "Cliente removido"}</p>
+                </div>
+                <button onClick={() => handleRestoreTask(t.id)} disabled={restoring === t.id}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-50 flex-shrink-0"
+                  style={{ backgroundColor: "var(--accent-tint)", color: "var(--accent)" }}>
+                  {restoring === t.id ? <Loader2 size={11} className="animate-spin" /> : <RotateCcw size={11} />}
+                  Restaurar
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function SettingsView({ profile }: SettingsViewProps) {
   const [section, setSection] = useState<Section>("geral");
 
@@ -272,6 +369,7 @@ export function SettingsView({ profile }: SettingsViewProps) {
         </p>
         <SectionBtn id="geral"     label="Geral"    active={section} onClick={setSection} />
         <SectionBtn id="seguranca" label="Segurança" active={section} onClick={setSection} />
+        <SectionBtn id="lixeira"   label="Lixeira"   active={section} onClick={setSection} />
       </aside>
 
       {/* Content */}
@@ -279,6 +377,7 @@ export function SettingsView({ profile }: SettingsViewProps) {
         <div className="max-w-2xl px-10 py-8">
           {section === "geral"     && <GeralSection profile={profile} />}
           {section === "seguranca" && <SegurancaSection />}
+          {section === "lixeira"   && <LixeiraSection />}
         </div>
       </div>
     </div>

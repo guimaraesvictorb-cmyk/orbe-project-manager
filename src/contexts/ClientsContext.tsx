@@ -74,6 +74,8 @@ interface ClientsContextValue {
   createClient: (input: Omit<Client, 'id' | 'created_at' | 'updated_at' | 'deleted_at' | 'data_source'>) => Promise<{ data?: Client; error?: string }>
   updateClient: (id: string, updates: Partial<Client>) => Promise<{ data?: Client; error?: string }>
   deleteClient: (id: string) => Promise<{ error?: string }>
+  fetchDeletedClients: () => Promise<Client[]>
+  restoreClient: (id: string) => Promise<{ data?: Client; error?: string }>
   updateHealthFlag: (id: string, health_flag: Client['health_flag']) => Promise<{ data?: Client; error?: string }>
   updateStatus: (id: string, status: Client['status']) => Promise<{ data?: Client; error?: string }>
 }
@@ -139,6 +141,23 @@ export function ClientsProvider({ children }: { children: ReactNode }) {
     return {}
   }
 
+  async function fetchDeletedClients() {
+    const { data, error } = await supabase
+      .from('clients')
+      .select('*')
+      .not('deleted_at', 'is', null)
+      .order('deleted_at', { ascending: false })
+    if (error) console.error('Failed to fetch deleted clients:', error.message)
+    return data ?? []
+  }
+
+  async function restoreClient(id: string) {
+    const { data, error } = await supabase.from('clients').update({ deleted_at: null }).eq('id', id).select().single()
+    if (error) return { error: error.message }
+    setClients((prev) => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
+    return { data }
+  }
+
   async function updateHealthFlag(id: string, health_flag: Client['health_flag']) {
     return updateClient(id, { health_flag })
   }
@@ -159,7 +178,7 @@ export function ClientsProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <ClientsContext.Provider value={{ clients, loading, error, fetchClients, createClient, updateClient, deleteClient, updateHealthFlag, updateStatus }}>
+    <ClientsContext.Provider value={{ clients, loading, error, fetchClients, createClient, updateClient, deleteClient, fetchDeletedClients, restoreClient, updateHealthFlag, updateStatus }}>
       {children}
     </ClientsContext.Provider>
   )

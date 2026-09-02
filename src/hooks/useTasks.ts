@@ -8,7 +8,7 @@ interface UseTasksOptions {
 }
 
 export function useTasks(options: UseTasksOptions = {}) {
-  const { allTasks, loading, fetchTasks, createTask, updateTask, deleteTask } = useTasksContext()
+  const { allTasks, loading, fetchTasks, createTask, updateTask, deleteTask, fetchDeletedTasks, restoreTask } = useTasksContext()
 
   const tasks = useMemo(() => {
     return allTasks.filter((t) => {
@@ -19,5 +19,5 @@ export function useTasks(options: UseTasksOptions = {}) {
     })
   }, [allTasks, options.clientId, options.quarterId, options.assigneeId])
 
-  return { tasks, loading, fetchTasks, createTask, updateTask, deleteTask }
+  return { tasks, loading, fetchTasks, createTask, updateTask, deleteTask, fetchDeletedTasks, restoreTask }
 }

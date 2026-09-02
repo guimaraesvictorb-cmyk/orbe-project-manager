@@ -1,32 +1,35 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import "./index.css";
 import { useAuth } from "./hooks/useAuth";
 import { canAccessSection, isAdminOrCoordenador } from "./lib/permissions";
 import { LoginPage } from "./components/LoginPage";
 import { AppNav, type AppView } from "./components/AppNav";
 import { HomeView } from "./components/HomeView";
-import { DashboardView } from "./components/DashboardView";
-import { TarefasView } from "./components/TarefasView";
-import { ClientesView } from "./components/ClientesView";
-import { FinanceiroView } from "./components/FinanceiroView";
-import { PipelineView } from "./components/PipelineView";
-import { PlaybookView } from "./components/PlaybookView";
-import { CentralView } from "./components/central/CentralView";
-import { ProfileView } from "./components/ProfileView";
-import { SettingsView } from "./components/SettingsView";
-import { RastreamentoView } from "./components/RastreamentoView";
-import { SuperAgenteView } from "./components/SuperAgenteView";
-import { CopyIAView } from "./components/CopyIAView";
-import { RelatoriosView } from "./components/RelatoriosView";
-import { WhatsAppView } from "./components/WhatsAppView";
-import { IntegracoesView } from "./components/IntegracoesView";
-import { LeadsCapturadosView } from "./components/LeadsCapturadosView";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { ClientsProvider } from "./contexts/ClientsContext";
 import { TasksProvider } from "./contexts/TasksContext";
 import { CommandPalette } from "./components/CommandPalette";
 import { NotificationBell } from "./components/NotificationBell";
 import { Loader2, Menu, Search } from "lucide-react";
+
+// Every view below is loaded on demand — only the one you're actually looking
+// at ships to the browser, instead of all ~16 in one bundle.
+const DashboardView = lazy(() => import("./components/DashboardView").then((m) => ({ default: m.DashboardView })));
+const TarefasView = lazy(() => import("./components/TarefasView").then((m) => ({ default: m.TarefasView })));
+const ClientesView = lazy(() => import("./components/ClientesView").then((m) => ({ default: m.ClientesView })));
+const FinanceiroView = lazy(() => import("./components/FinanceiroView").then((m) => ({ default: m.FinanceiroView })));
+const PipelineView = lazy(() => import("./components/PipelineView").then((m) => ({ default: m.PipelineView })));
+const PlaybookView = lazy(() => import("./components/PlaybookView").then((m) => ({ default: m.PlaybookView })));
+const CentralView = lazy(() => import("./components/central/CentralView").then((m) => ({ default: m.CentralView })));
+const ProfileView = lazy(() => import("./components/ProfileView").then((m) => ({ default: m.ProfileView })));
+const SettingsView = lazy(() => import("./components/SettingsView").then((m) => ({ default: m.SettingsView })));
+const RastreamentoView = lazy(() => import("./components/RastreamentoView").then((m) => ({ default: m.RastreamentoView })));
+const SuperAgenteView = lazy(() => import("./components/SuperAgenteView").then((m) => ({ default: m.SuperAgenteView })));
+const CopyIAView = lazy(() => import("./components/CopyIAView").then((m) => ({ default: m.CopyIAView })));
+const RelatoriosView = lazy(() => import("./components/RelatoriosView").then((m) => ({ default: m.RelatoriosView })));
+const WhatsAppView = lazy(() => import("./components/WhatsAppView").then((m) => ({ default: m.WhatsAppView })));
+const IntegracoesView = lazy(() => import("./components/IntegracoesView").then((m) => ({ default: m.IntegracoesView })));
+const LeadsCapturadosView = lazy(() => import("./components/LeadsCapturadosView").then((m) => ({ default: m.LeadsCapturadosView })));
 
 const VIEW_KEY = "orbe_view";
 
@@ -133,6 +136,11 @@ function App() {
           </div>
 
           <main className="flex-1 overflow-y-auto min-h-0">
+          <Suspense fallback={
+            <div className="flex items-center justify-center h-full">
+              <Loader2 size={24} className="animate-spin" style={{ color: "var(--accent)" }} />
+            </div>
+          }>
           {view === "home"       && <HomeView profile={profile} onNavigate={navigate} />}
           {view === "dashboard"  && <DashboardView />}
           {view === "tarefas"    && <TarefasView initialTaskId={pendingTaskId} onConsumeInitial={() => setPendingTaskId(undefined)} />}
@@ -150,6 +158,7 @@ function App() {
           {view === "leads-capturados" && <LeadsCapturadosView />}
           {view === "profile"    && <ProfileView profile={profile} userEmail={user?.email ?? ""} />}
           {view === "settings"   && <SettingsView profile={profile} />}
+          </Suspense>
           </main>
         </div>
       </div>
