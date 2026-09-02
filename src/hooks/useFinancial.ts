@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import type { FinancialRecord } from '../lib/database.types'
+import { todayLocal } from '../lib/formatters'
 
 interface UseFinancialOptions {
   clientId?: string
@@ -50,7 +51,7 @@ export function useFinancial(options: UseFinancialOptions = {}) {
   async function markAsPaid(id: string, paidDate?: string) {
     return updateRecord(id, {
       status: 'pago',
-      paid_date: paidDate ?? new Date().toISOString().split('T')[0],
+      paid_date: paidDate ?? todayLocal(),
     })
   }
 

@@ -4,10 +4,9 @@ import { usePipeline } from "../hooks/usePipeline";
 import { useAuth } from "../hooks/useAuth";
 import type { Lead, PipelineStage } from "../lib/database.types";
 import { Footer } from "./Footer";
+import { fmtCurrency0 } from "../lib/formatters";
 
-function fmt(n: number) {
-  return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
-}
+const fmt = fmtCurrency0;
 
 const CONTRATO_META: Record<string, { label: string; color: string }> = {
   em_negociacao: { label: "Em negociação", color: "var(--warning)" },

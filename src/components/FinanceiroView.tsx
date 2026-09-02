@@ -6,14 +6,10 @@ import { useAuth } from "../hooks/useAuth";
 import type { FinancialRecord, PaymentStatus } from "../lib/database.types";
 import { Footer } from "./Footer";
 import { exportToCSV } from "../lib/csvExport";
+import { fmtCurrency0, todayLocal, currentMonthLocal } from "../lib/formatters";
 
-function fmt(n: number) {
-  return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
-}
-
-function currentMonth() {
-  return new Date().toISOString().slice(0, 7);
-}
+const fmt = fmtCurrency0;
+const currentMonth = currentMonthLocal;
 
 const STATUS_CONFIG: Record<PaymentStatus, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
   pago:      { label: "Pago",     color: "var(--success)", bg: "#0f2117", icon: <CheckCircle2 size={12} /> },
@@ -235,7 +231,7 @@ export function FinanceiroView() {
 
   async function handleMarkStatus(id: string, status: PaymentStatus) {
     const updates: Partial<FinancialRecord> = { status };
-    if (status === "pago") updates.paid_date = new Date().toISOString().split("T")[0];
+    if (status === "pago") updates.paid_date = todayLocal();
     await updateRecord(id, updates);
   }
 

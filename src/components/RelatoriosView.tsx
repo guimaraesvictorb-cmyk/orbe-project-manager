@@ -7,11 +7,7 @@ import { GROQ_MODEL, GROQ_API_URL, getGroqApiKey } from "../lib/groq";
 import { FLAG_META, STATUS_META } from "../lib/clientMeta";
 import { Footer } from "./Footer";
 import type { Client } from "../lib/database.types";
-
-function fmtCurrency(n: number | null | undefined) {
-  if (n == null) return "não informado";
-  return "R$ " + n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
+import { fmtCurrency, todayLocal } from "../lib/formatters";
 
 function ReportContent({ html }: { html: string }) {
   return (
@@ -31,7 +27,7 @@ function ClientReport({ client }: { client: Client }) {
   const [error, setError] = useState("");
   const apiKey = getGroqApiKey();
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = todayLocal();
   const overdue = tasks.filter((t) => t.deadline && t.deadline < today && t.status !== "concluido" && t.status !== "cancelado");
   const open = tasks.filter((t) => !["concluido", "cancelado"].includes(t.status));
   const done = tasks.filter((t) => t.status === "concluido");

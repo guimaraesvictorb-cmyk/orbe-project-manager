@@ -27,3 +27,7 @@ export function canAccessSection(profile: Pick<Profile, "role" | "custom_section
   if ((ALWAYS_ALLOWED as readonly string[]).includes(section)) return true
   return getAllowedSections(profile).includes(section)
 }
+
+export function isAdminOrCoordenador(profile: Pick<Profile, "role"> | null | undefined): boolean {
+  return profile?.role === "admin" || profile?.role === "coordenador"
+}

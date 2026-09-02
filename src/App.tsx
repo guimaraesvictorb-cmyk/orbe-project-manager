@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import "./index.css";
 import { useAuth } from "./hooks/useAuth";
-import { canAccessSection } from "./lib/permissions";
+import { canAccessSection, isAdminOrCoordenador } from "./lib/permissions";
 import { LoginPage } from "./components/LoginPage";
 import { AppNav, type AppView } from "./components/AppNav";
 import { HomeView } from "./components/HomeView";
@@ -53,7 +53,7 @@ function App() {
 
   useEffect(() => {
     if (!profile) return;
-    if (view === "settings" && !(profile.role === "admin" || profile.role === "coordenador")) {
+    if (view === "settings" && !isAdminOrCoordenador(profile)) {
       navigate("home");
       return;
     }

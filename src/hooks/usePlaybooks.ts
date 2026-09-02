@@ -98,12 +98,15 @@ export function usePlaybooks() {
     const roleToUser: Record<string, string> = {}
     for (const a of assignments ?? []) roleToUser[a.cadeira] = a.user_id
 
-    // 4. Processa passos raiz primeiro, depois sub-passos
+    // 4. Processa passos raiz primeiro, depois sub-passos.
+    // Root steps don't depend on each other, and sub-steps only depend on
+    // their own parent's task id (not on siblings) — both batches can fire
+    // their inserts concurrently instead of awaiting one row at a time.
     const rootSteps = steps.filter((s) => !s.parent_step_id)
     const stepIdToTaskId: Record<string, string> = {}
     let tasksCreated = 0
 
-    for (const step of rootSteps) {
+    const rootResults = await Promise.all(rootSteps.map(async (step) => {
       const deadline = new Date(triggerDate)
       deadline.setDate(deadline.getDate() + step.days_offset)
 
@@ -128,6 +131,10 @@ export function usePlaybooks() {
         .select()
         .single()
 
+      return { step, task }
+    }))
+
+    for (const { step, task } of rootResults) {
       if (task) {
         stepIdToTaskId[step.id] = task.id
         tasksCreated++
@@ -136,12 +143,12 @@ export function usePlaybooks() {
 
     // Sub-tarefas
     const subSteps = steps.filter((s) => s.parent_step_id)
-    for (const step of subSteps) {
+    await Promise.all(subSteps.map((step) => {
       const deadline = new Date(triggerDate)
       deadline.setDate(deadline.getDate() + step.days_offset)
       const parentTaskId = step.parent_step_id ? stepIdToTaskId[step.parent_step_id] : null
 
-      await supabase.from('tasks').insert({
+      return supabase.from('tasks').insert({
         client_id: clientId,
         quarter_id: quarterId ?? null,
         playbook_step_id: step.id,
@@ -158,8 +165,8 @@ export function usePlaybooks() {
         created_by: triggeredBy,
         sort_order: step.sort_order,
       } as never)
-      tasksCreated++
-    }
+    }))
+    tasksCreated += subSteps.length
 
     // 5. Atualiza o trigger com o resultado
     await supabase

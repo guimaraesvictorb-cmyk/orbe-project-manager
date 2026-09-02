@@ -6,6 +6,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { supabase } from "../../lib/supabase";
 import type { Task, Profile, Client } from "../../lib/database.types";
 import { CommentThread } from "../CommentThread";
+import { todayLocal } from "../../lib/formatters";
 
 const STATUS_META: Record<Task["status"], { label: string; color: string; bg: string }> = {
   backlog:      { label: "Backlog",      color: "#525252", bg: "var(--bg-surface-2)" },
@@ -67,7 +68,11 @@ function TaskModal({ task, clients, profiles, onClose, onSave, onDelete, onDupli
     e.preventDefault();
     if (!form.title?.trim() || !form.client_id) return;
     setSaving(true);
-    await onSave(form);
+    // Belt-and-suspenders: recurrence needs a fixed anchor date no matter which
+    // path set it (this dropdown, a duplicated task, an older row from before
+    // this invariant existed).
+    const hasRecurrence = form.recurrence && form.recurrence !== "nenhuma";
+    await onSave(hasRecurrence && !form.deadline ? { ...form, deadline: todayLocal() } : form);
     setSaving(false);
     onClose();
   }
@@ -131,7 +136,7 @@ function TaskModal({ task, clients, profiles, onClose, onSave, onDelete, onDupli
                     ...f,
                     recurrence,
                     // A recorrência conta a partir do deadline — sem uma data aqui, não há "toda semana" fixo pra ancorar.
-                    deadline: recurrence !== "nenhuma" && !f.deadline ? new Date().toISOString().split("T")[0] : f.deadline,
+                    deadline: recurrence !== "nenhuma" && !f.deadline ? todayLocal() : f.deadline,
                   }));
                 }}
                 className={inputCls} style={{ ...inputStyle, appearance: "none" as const }}>
@@ -260,7 +265,7 @@ export function TasksView({ clientId, initialTaskId, onConsumeInitial }: { clien
       status: "backlog",
       priority: task.priority,
       assignee_id: task.assignee_id,
-      deadline: task.deadline,
+      deadline: task.recurrence !== "nenhuma" && !task.deadline ? todayLocal() : task.deadline,
       estimated_hours: task.estimated_hours,
       actual_hours: null,
       sort_order: task.sort_order,

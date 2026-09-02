@@ -4,7 +4,7 @@ import {
   ChevronRight, Settings, Link2, PenTool, FileText, Bot, MessageSquare, Plug, UserPlus,
 } from "lucide-react";
 import type { Profile } from "../lib/database.types";
-import { getAllowedSections } from "../lib/permissions";
+import { getAllowedSections, isAdminOrCoordenador } from "../lib/permissions";
 
 export type AppView =
   | "home" | "dashboard"
@@ -214,7 +214,7 @@ export function AppNav({ active, onChange, profile, onLogout, isOpen, onClose }:
           )}
         </button>
 
-        {(profile?.role === "admin" || profile?.role === "coordenador") && (
+        {isAdminOrCoordenador(profile) && (
           <button
             onClick={() => handleChange("settings")}
             className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-xs transition-all duration-100 focus:outline-none"

@@ -11,6 +11,7 @@ import { useClientKnowledge, type KnowledgeEntry } from "../hooks/useClientKnowl
 import { useClientChecklist } from "../hooks/useClientChecklist"
 import { useShareTokens } from "../hooks/useShareTokens"
 import { useClientAssignments } from "../hooks/useClientAssignments"
+import { isAdminOrCoordenador } from "../lib/permissions"
 import { useAuth } from "../hooks/useAuth"
 import { FLAG_META, STATUS_META } from "../lib/clientMeta"
 import { getGroqApiKey, GROQ_MODEL, GROQ_API_URL } from "../lib/groq"
@@ -409,7 +410,7 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
 
   const flag = FLAG_META[client.health_flag]
   const status = STATUS_META[client.status]
-  const canEdit = profile?.role === "admin" || profile?.role === "coordenador"
+  const canEdit = isAdminOrCoordenador(profile)
 
   function startEditOverview() {
     setOverviewForm({ ...client, notes: client.notes ?? "" })

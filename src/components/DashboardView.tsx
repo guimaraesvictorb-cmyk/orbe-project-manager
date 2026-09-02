@@ -6,10 +6,9 @@ import { useFinancial } from "../hooks/useFinancial";
 import { usePipeline } from "../hooks/usePipeline";
 import { Footer } from "./Footer";
 import { ActivityFeed } from "./ActivityFeed";
+import { fmtCurrency0, todayLocal, currentMonthLocal } from "../lib/formatters";
 
-function fmt(n: number) {
-  return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
-}
+const fmt = fmtCurrency0;
 
 function StatCard({ icon, label, value, sub, accent }: {
   icon: React.ReactNode;
@@ -40,11 +39,11 @@ export function DashboardView() {
   const { clients } = useClients();
   const { tasks } = useTasks({});
   const { totalAmount, totalPaid, totalPending, totalOverdue } = useFinancial({
-    month: new Date().toISOString().slice(0, 7),
+    month: currentMonthLocal(),
   });
   const { leads, totalPotentialMrr } = usePipeline();
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = todayLocal();
 
   const activeClients = clients.filter((c) => c.status === "ativo");
   const atRiskClients = clients.filter((c) => c.health_flag === "red" || c.health_flag === "yellow");
@@ -59,12 +58,14 @@ export function DashboardView() {
     .slice(0, 5);
 
   const STALE_DAYS = 14;
+  const lastTaskMsByClient = tasks.reduce((map, t) => {
+    const ms = new Date(t.updated_at).getTime();
+    if (!map.has(t.client_id) || ms > map.get(t.client_id)!) map.set(t.client_id, ms);
+    return map;
+  }, new Map<string, number>());
   const staleClients = activeClients
     .map((c) => {
-      const lastTaskMs = tasks
-        .filter((t) => t.client_id === c.id)
-        .reduce((max, t) => Math.max(max, new Date(t.updated_at).getTime()), 0);
-      const lastActivityMs = Math.max(lastTaskMs, new Date(c.updated_at).getTime());
+      const lastActivityMs = Math.max(lastTaskMsByClient.get(c.id) ?? 0, new Date(c.updated_at).getTime());
       return { client: c, daysSince: Math.floor((Date.now() - lastActivityMs) / 86400000) };
     })
     .filter((x) => x.daysSince > STALE_DAYS)
