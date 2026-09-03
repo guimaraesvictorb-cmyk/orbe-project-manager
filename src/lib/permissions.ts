@@ -18,12 +18,15 @@ export const SECTION_LABELS: Record<string, string> = {
 // Sections always available regardless of role or custom overrides.
 export const ALWAYS_ALLOWED = ["home", "profile", "settings"] as const
 
-export function getAllowedSections(profile: Pick<Profile, "role" | "custom_sections"> | null | undefined): string[] {
+export function getAllowedSections(profile: Pick<Profile, "role" | "custom_sections" | "can_view_financials"> | null | undefined): string[] {
   if (!profile) return []
-  return profile.custom_sections ?? SECTION_ACCESS[profile.role] ?? []
+  const base = profile.custom_sections ?? SECTION_ACCESS[profile.role] ?? []
+  // Financeiro shows client fees/investment and payment records — restricted
+  // to specifically-flagged users regardless of role, not just admin/coord.
+  return profile.can_view_financials ? base : base.filter((s) => s !== "financeiro")
 }
 
-export function canAccessSection(profile: Pick<Profile, "role" | "custom_sections"> | null | undefined, section: string): boolean {
+export function canAccessSection(profile: Pick<Profile, "role" | "custom_sections" | "can_view_financials"> | null | undefined, section: string): boolean {
   if ((ALWAYS_ALLOWED as readonly string[]).includes(section)) return true
   return getAllowedSections(profile).includes(section)
 }

@@ -4,6 +4,7 @@ import { useClients } from "../hooks/useClients";
 import { useTasks } from "../hooks/useTasks";
 import { useFinancial } from "../hooks/useFinancial";
 import { usePipeline } from "../hooks/usePipeline";
+import { useAuth } from "../hooks/useAuth";
 import { Footer } from "./Footer";
 import { ActivityFeed } from "./ActivityFeed";
 import { fmtCurrency0, todayLocal, currentMonthLocal } from "../lib/formatters";
@@ -36,6 +37,8 @@ const HEALTH_LABEL: Record<string, string> = { green: "Saudável", yellow: "Aten
 const HEALTH_COLOR: Record<string, string> = { green: "var(--success)", yellow: "var(--warning)", red: "var(--danger)" };
 
 export function DashboardView() {
+  const { profile } = useAuth();
+  const canViewFinancials = !!profile?.can_view_financials;
   const { clients } = useClients();
   const { tasks } = useTasks({});
   const { totalAmount, totalPaid, totalPending, totalOverdue } = useFinancial({
@@ -85,7 +88,7 @@ export function DashboardView() {
         </div>
 
         {/* KPI cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className={`grid grid-cols-2 gap-4 ${canViewFinancials ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
           <StatCard
             icon={<Users size={16} />}
             label="Clientes ativos"
@@ -93,13 +96,15 @@ export function DashboardView() {
             sub={`${atRiskClients.length} em atenção`}
             accent={activeClients.length > 0}
           />
-          <StatCard
-            icon={<DollarSign size={16} />}
-            label="MRR atual"
-            value={fmt(mrr)}
-            sub="mensalidades ativas"
-            accent
-          />
+          {canViewFinancials && (
+            <StatCard
+              icon={<DollarSign size={16} />}
+              label="MRR atual"
+              value={fmt(mrr)}
+              sub="mensalidades ativas"
+              accent
+            />
+          )}
           <StatCard
             icon={<CheckSquare size={16} />}
             label="Tarefas atrasadas"
@@ -115,29 +120,31 @@ export function DashboardView() {
           />
         </div>
 
-        {/* Financial month summary */}
-        <section>
-          <p className="text-[10px] font-bold tracking-widest uppercase mb-4" style={{ color: "var(--text-tertiary)" }}>
-            Financeiro — {new Date().toLocaleString("pt-BR", { month: "long", year: "numeric" })}
-          </p>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            {[
-              { label: "Total faturado", value: fmt(totalAmount), color: "var(--text-secondary)" },
-              { label: "Recebido", value: fmt(totalPaid), color: "var(--accent)" },
-              { label: "Pendente", value: fmt(totalPending), color: "var(--warning)" },
-              { label: "Atrasado", value: fmt(totalOverdue), color: "var(--danger)" },
-            ].map(({ label, value, color }) => (
-              <div
-                key={label}
-                className="rounded-xl border p-4"
-                style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}
-              >
-                <p className="text-[10px] font-bold tracking-widest uppercase mb-2" style={{ color: "var(--text-tertiary)" }}>{label}</p>
-                <p className="text-lg font-bold" style={{ color }}>{value}</p>
-              </div>
-            ))}
-          </div>
-        </section>
+        {/* Financial month summary — client fees/payments are Victor-only */}
+        {canViewFinancials && (
+          <section>
+            <p className="text-[10px] font-bold tracking-widest uppercase mb-4" style={{ color: "var(--text-tertiary)" }}>
+              Financeiro — {new Date().toLocaleString("pt-BR", { month: "long", year: "numeric" })}
+            </p>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              {[
+                { label: "Total faturado", value: fmt(totalAmount), color: "var(--text-secondary)" },
+                { label: "Recebido", value: fmt(totalPaid), color: "var(--accent)" },
+                { label: "Pendente", value: fmt(totalPending), color: "var(--warning)" },
+                { label: "Atrasado", value: fmt(totalOverdue), color: "var(--danger)" },
+              ].map(({ label, value, color }) => (
+                <div
+                  key={label}
+                  className="rounded-xl border p-4"
+                  style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}
+                >
+                  <p className="text-[10px] font-bold tracking-widest uppercase mb-2" style={{ color: "var(--text-tertiary)" }}>{label}</p>
+                  <p className="text-lg font-bold" style={{ color }}>{value}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Two columns: overdue tasks + clients at risk */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -223,39 +230,41 @@ export function DashboardView() {
         </div>
 
         {/* Two columns: top MRR + stale clients */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <section>
-            <div className="flex items-center gap-2 mb-4">
-              <Trophy size={14} style={{ color: "var(--accent)" }} />
-              <p className="text-[10px] font-bold tracking-widest uppercase" style={{ color: "var(--accent)" }}>
-                Top 5 clientes por MRR
-              </p>
-            </div>
-            <div className="rounded-2xl border divide-y overflow-hidden" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
-              {topByMrr.length === 0 ? (
-                <div className="px-5 py-8 text-center">
-                  <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>Nenhum cliente com mensalidade cadastrada</p>
-                </div>
-              ) : (
-                topByMrr.map((client, i) => (
-                  <div key={client.id} className="flex items-center justify-between px-4 py-3 gap-3" style={{ borderColor: "var(--border)" }}>
-                    <div className="flex items-center gap-3 min-w-0">
-                      <span className="flex-shrink-0 text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: "var(--accent-a22)", color: "var(--accent)" }}>
-                        {i + 1}
-                      </span>
-                      <div className="min-w-0">
-                        <p className="text-sm text-[var(--text-primary)] truncate font-medium">{client.name}</p>
-                        <p className="text-[11px]" style={{ color: "var(--text-tertiary)" }}>{client.segment ?? "—"}</p>
-                      </div>
-                    </div>
-                    <span className="flex-shrink-0 text-sm font-bold" style={{ color: "var(--accent)" }}>
-                      {fmt(client.monthly_fee ?? 0)}
-                    </span>
+        <div className={`grid grid-cols-1 gap-6 ${canViewFinancials ? "lg:grid-cols-2" : ""}`}>
+          {canViewFinancials && (
+            <section>
+              <div className="flex items-center gap-2 mb-4">
+                <Trophy size={14} style={{ color: "var(--accent)" }} />
+                <p className="text-[10px] font-bold tracking-widest uppercase" style={{ color: "var(--accent)" }}>
+                  Top 5 clientes por MRR
+                </p>
+              </div>
+              <div className="rounded-2xl border divide-y overflow-hidden" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
+                {topByMrr.length === 0 ? (
+                  <div className="px-5 py-8 text-center">
+                    <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>Nenhum cliente com mensalidade cadastrada</p>
                   </div>
-                ))
-              )}
-            </div>
-          </section>
+                ) : (
+                  topByMrr.map((client, i) => (
+                    <div key={client.id} className="flex items-center justify-between px-4 py-3 gap-3" style={{ borderColor: "var(--border)" }}>
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="flex-shrink-0 text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: "var(--accent-a22)", color: "var(--accent)" }}>
+                          {i + 1}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="text-sm text-[var(--text-primary)] truncate font-medium">{client.name}</p>
+                          <p className="text-[11px]" style={{ color: "var(--text-tertiary)" }}>{client.segment ?? "—"}</p>
+                        </div>
+                      </div>
+                      <span className="flex-shrink-0 text-sm font-bold" style={{ color: "var(--accent)" }}>
+                        {fmt(client.monthly_fee ?? 0)}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </section>
+          )}
 
           <section>
             <div className="flex items-center gap-2 mb-4">

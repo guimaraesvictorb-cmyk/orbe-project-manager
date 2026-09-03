@@ -17,6 +17,7 @@ export interface Profile {
   is_active: boolean
   theme: string
   custom_sections: string[] | null
+  can_view_financials: boolean
   created_at: string
   updated_at: string
 }
