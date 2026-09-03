@@ -110,7 +110,31 @@ export function AppNav({ active, onChange, profile, onLogout, isOpen, onClose }:
           width: 260,
           backgroundColor: "#050505",
           borderRight: "1px solid var(--bg-surface-2)",
-        }}
+          // The sidebar is always dark by design, independent of the light/dark
+          // theme toggle. Pin the tokens it uses to their dark values here so
+          // switching to light theme doesn't leave light-mode (pale) text
+          // colors rendering against this hardcoded black background.
+          ["--bg-page" as string]: "#000000",
+          ["--bg-surface" as string]: "#0a0a0a",
+          ["--bg-surface-2" as string]: "#0d0d0d",
+          ["--bg-input" as string]: "#080808",
+          ["--border" as string]: "#1a1a1a",
+          ["--border-strong" as string]: "#1e1e1e",
+          ["--border-subtle" as string]: "#262626",
+          ["--text-primary" as string]: "#ffffff",
+          ["--text-secondary" as string]: "#A3A3A3",
+          ["--text-tertiary" as string]: "#555555",
+          ["--text-quaternary" as string]: "#333333",
+          ["--accent" as string]: "#7B61FF",
+          ["--accent-hover" as string]: "#6247E5",
+          ["--accent-tint" as string]: "#1A1230",
+          ["--accent-a44" as string]: "#7B61FF44",
+          ["--accent-a33" as string]: "#7B61FF33",
+          ["--accent-a22" as string]: "#7B61FF22",
+          ["--success" as string]: "#22C55E",
+          ["--warning" as string]: "#F59E0B",
+          ["--danger" as string]: "#EF4444",
+        } as React.CSSProperties}
       >
       {/* Logo */}
       <div className="flex items-center gap-3 px-5 py-5 flex-shrink-0" style={{ borderBottom: "1px solid var(--bg-surface-2)" }}>

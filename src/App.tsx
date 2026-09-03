@@ -5,12 +5,12 @@ import { canAccessSection, isAdminOrCoordenador } from "./lib/permissions";
 import { LoginPage } from "./components/LoginPage";
 import { AppNav, type AppView } from "./components/AppNav";
 import { HomeView } from "./components/HomeView";
-import { ThemeProvider } from "./contexts/ThemeContext";
+import { ThemeProvider, useTheme } from "./contexts/ThemeContext";
 import { ClientsProvider } from "./contexts/ClientsContext";
 import { TasksProvider } from "./contexts/TasksContext";
 import { CommandPalette } from "./components/CommandPalette";
 import { NotificationBell } from "./components/NotificationBell";
-import { Loader2, Menu, Search } from "lucide-react";
+import { Loader2, Menu, Search, Sun, Moon } from "lucide-react";
 
 // Every view below is loaded on demand — only the one you're actually looking
 // at ships to the browser, instead of all ~16 in one bundle.
@@ -33,6 +33,32 @@ const LeadsCapturadosView = lazy(() => import("./components/LeadsCapturadosView"
 
 const VIEW_KEY = "orbe_view";
 
+const VALID_VIEWS: AppView[] = [
+  "home","dashboard","tarefas","clientes","financeiro","pipeline","processos",
+  "central","rastreamento","super-agente","copy-ia","relatorios","whatsapp",
+  "integracoes","leads-capturados","profile","settings",
+];
+
+function viewFromHash(): AppView | null {
+  const h = window.location.hash.replace(/^#\/?/, "");
+  return VALID_VIEWS.includes(h as AppView) ? (h as AppView) : null;
+}
+
+function ThemeToggleButton() {
+  const { theme, toggleTheme } = useTheme();
+  return (
+    <button
+      onClick={toggleTheme}
+      className="p-1.5 rounded-lg transition-colors"
+      style={{ color: "var(--text-secondary)" }}
+      aria-label={theme === "dark" ? "Mudar para tema claro" : "Mudar para tema escuro"}
+      title={theme === "dark" ? "Tema claro" : "Tema escuro"}
+    >
+      {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+    </button>
+  );
+}
+
 function App() {
   const { user, profile, isAuthenticated, isLoading, logout } = useAuth();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -40,19 +66,35 @@ function App() {
   const [pendingClientId, setPendingClientId] = useState<string | undefined>();
   const [pendingTaskId, setPendingTaskId] = useState<string | undefined>();
   const [view, setView] = useState<AppView>(() => {
+    const fromHash = viewFromHash();
+    if (fromHash) return fromHash;
     const saved = localStorage.getItem(VIEW_KEY) as AppView | null;
-    const valid: AppView[] = [
-      "home","dashboard","tarefas","clientes","financeiro","pipeline","processos",
-      "central","rastreamento","super-agente","copy-ia","relatorios","whatsapp",
-      "integracoes","leads-capturados","profile","settings",
-    ];
-    return saved && valid.includes(saved) ? saved : "home";
+    return saved && VALID_VIEWS.includes(saved) ? saved : "home";
   });
 
   function navigate(v: AppView) {
     localStorage.setItem(VIEW_KEY, v);
     setView(v);
+    if (window.location.hash.replace(/^#\/?/, "") !== v) {
+      window.location.hash = v;
+    }
   }
+
+  // Keeps the URL in sync on first load (e.g. view restored from localStorage
+  // with no hash yet) without adding a spurious history entry, and syncs
+  // `view` state back when the hash changes via browser back/forward.
+  useEffect(() => {
+    if (!window.location.hash) {
+      window.history.replaceState(null, "", `#${view}`);
+    }
+    function onHashChange() {
+      const v = viewFromHash();
+      if (v) setView(v);
+    }
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!profile) return;
@@ -129,6 +171,7 @@ function App() {
               <span className="flex-1 text-left">Buscar clientes ou tarefas...</span>
               <kbd className="hidden sm:inline text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: "var(--bg-input)" }}>⌘K</kbd>
             </button>
+            <ThemeToggleButton />
             <NotificationBell
               onSelectTask={(id) => { setPendingTaskId(id); navigate("tarefas"); }}
               onSelectClient={(id) => { setPendingClientId(id); navigate("clientes"); }}

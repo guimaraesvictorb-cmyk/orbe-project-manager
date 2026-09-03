@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { Plus, Loader2, ChevronDown, LayoutList, Kanban, X, Trash2, Copy } from "lucide-react";
 import { useTasks } from "../../hooks/useTasks";
 import { useClients } from "../../hooks/useClients";
@@ -25,27 +26,59 @@ const PRIORITY_META: Record<Task["priority"], { label: string; color: string }> 
 
 function StatusBadge({ status, onChange }: { status: Task["status"]; onChange: (s: Task["status"]) => void }) {
   const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
   const meta = STATUS_META[status];
+
+  function openMenu() {
+    const rect = btnRef.current?.getBoundingClientRect();
+    if (rect) setPos({ top: rect.bottom + 4, left: rect.left });
+    setOpen(true);
+  }
+
+  // The status pill lives inside a table wrapped in an `overflow-hidden`
+  // rounded container (for the rounded corners), which silently clips any
+  // absolutely-positioned dropdown that would render outside its bounds —
+  // the menu "opens" but is invisible. Portal it to <body> with fixed
+  // positioning computed from the button instead, so it always escapes.
+  useEffect(() => {
+    if (!open) return;
+    function close() { setOpen(false); }
+    window.addEventListener("scroll", close, true);
+    window.addEventListener("resize", close);
+    return () => {
+      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("resize", close);
+    };
+  }, [open]);
+
   return (
     <div className="relative">
       <button
-        onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
+        ref={btnRef}
+        onClick={(e) => { e.stopPropagation(); open ? setOpen(false) : openMenu(); }}
         className="text-[10px] font-bold tracking-widest px-2 py-0.5 rounded uppercase flex items-center gap-1"
         style={{ backgroundColor: meta.bg, color: meta.color, border: `1px solid ${meta.color}33` }}
       >
         {meta.label} <ChevronDown size={9} />
       </button>
-      {open && (
-        <div className="absolute left-0 top-6 z-20 rounded-xl p-1 flex flex-col gap-0.5"
-          style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)", minWidth: "130px" }}>
-          {(Object.keys(STATUS_META) as Task["status"][]).map((s) => (
-            <button key={s} onClick={(e) => { e.stopPropagation(); onChange(s); setOpen(false); }}
-              className="text-left px-2 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider"
-              style={{ color: STATUS_META[s].color, backgroundColor: s === status ? STATUS_META[s].bg : "transparent" }}>
-              {STATUS_META[s].label}
-            </button>
-          ))}
-        </div>
+      {open && pos && createPortal(
+        <>
+          <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setOpen(false); }} />
+          <div
+            className="fixed z-50 rounded-xl p-1 flex flex-col gap-0.5"
+            style={{ top: pos.top, left: pos.left, backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)", minWidth: "130px", boxShadow: "0 8px 24px rgba(0,0,0,0.35)" }}
+          >
+            {(Object.keys(STATUS_META) as Task["status"][]).map((s) => (
+              <button key={s} onClick={(e) => { e.stopPropagation(); onChange(s); setOpen(false); }}
+                className="text-left px-2 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider"
+                style={{ color: STATUS_META[s].color, backgroundColor: s === status ? STATUS_META[s].bg : "transparent" }}>
+                {STATUS_META[s].label}
+              </button>
+            ))}
+          </div>
+        </>,
+        document.body
       )}
     </div>
   );
