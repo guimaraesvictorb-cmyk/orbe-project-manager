@@ -44,5 +44,17 @@ export function useComments(entityType: 'task' | 'client' | 'lead', entityId: st
     return {}
   }
 
-  return { comments, loading, addComment, deleteComment }
+  async function updateComment(id: string, content: string) {
+    const { data, error } = await supabase
+      .from('comments')
+      .update({ content, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single()
+    if (error) return { error: error.message }
+    setComments((prev) => prev.map((c) => (c.id === id ? data : c)))
+    return { data }
+  }
+
+  return { comments, loading, addComment, deleteComment, updateComment }
 }
