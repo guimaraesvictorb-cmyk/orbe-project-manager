@@ -23,10 +23,10 @@ export function useComments(entityType: 'task' | 'client' | 'lead', entityId: st
 
   useEffect(() => { fetchComments() }, [fetchComments])
 
-  async function addComment(content: string, authorId: string) {
+  async function addComment(content: string, authorId: string, title?: string | null) {
     const { data, error } = await supabase
       .from('comments')
-      .insert({ entity_type: entityType, entity_id: entityId, author_id: authorId, content })
+      .insert({ entity_type: entityType, entity_id: entityId, author_id: authorId, content, title: title || null })
       .select()
       .single()
     if (error) return { error: error.message }
@@ -44,10 +44,10 @@ export function useComments(entityType: 'task' | 'client' | 'lead', entityId: st
     return {}
   }
 
-  async function updateComment(id: string, content: string) {
+  async function updateComment(id: string, content: string, title?: string | null) {
     const { data, error } = await supabase
       .from('comments')
-      .update({ content, updated_at: new Date().toISOString() })
+      .update({ content, title: title || null, updated_at: new Date().toISOString() })
       .eq('id', id)
       .select()
       .single()

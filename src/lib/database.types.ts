@@ -167,6 +167,7 @@ export interface Comment {
   entity_type: 'task' | 'client' | 'lead'
   entity_id: string
   author_id: string
+  title: string | null
   content: string
   is_internal: boolean
   created_at: string

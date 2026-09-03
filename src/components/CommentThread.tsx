@@ -48,33 +48,51 @@ function handleComposerKeyDown(
   }
 }
 
+const MAX_COMPOSER_HEIGHT = 200;
+
+// Grows the textarea to fit its content (up to a cap, then scrolls) instead
+// of staying pinned at a single visible row while the text keeps typing off
+// the edge.
+function autoGrow(el: HTMLTextAreaElement | null) {
+  if (!el) return;
+  el.style.height = "auto";
+  el.style.height = Math.min(el.scrollHeight, MAX_COMPOSER_HEIGHT) + "px";
+}
+
 export function CommentThread({ entityType, entityId, currentUserId, profiles }: CommentThreadProps) {
   const { comments, loading, addComment, deleteComment, updateComment } = useComments(entityType, entityId);
+  const [draftTitle, setDraftTitle] = useState("");
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
   const [editDraft, setEditDraft] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
   const composerRef = useRef<HTMLTextAreaElement>(null);
+  const editRef = useRef<HTMLTextAreaElement>(null);
 
   async function submitComment() {
     if (!draft.trim() || sending) return;
     setSending(true);
-    await addComment(draft.trim(), currentUserId);
+    await addComment(draft.trim(), currentUserId, draftTitle.trim());
     setDraft("");
+    setDraftTitle("");
     setSending(false);
+    requestAnimationFrame(() => autoGrow(composerRef.current));
     composerRef.current?.focus();
   }
 
-  function startEdit(id: string, content: string) {
+  function startEdit(id: string, content: string, title: string | null) {
     setEditingId(id);
     setEditDraft(content);
+    setEditTitle(title ?? "");
+    requestAnimationFrame(() => autoGrow(editRef.current));
   }
 
   async function saveEdit(id: string) {
     if (!editDraft.trim()) return;
     setSavingEdit(true);
-    await updateComment(id, editDraft.trim());
+    await updateComment(id, editDraft.trim(), editTitle.trim());
     setSavingEdit(false);
     setEditingId(null);
   }
@@ -93,7 +111,7 @@ export function CommentThread({ entityType, entityId, currentUserId, profiles }:
           <Loader2 size={14} className="animate-spin" style={{ color: "var(--accent)" }} />
         </div>
       ) : (
-        <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
+        <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
           {comments.length === 0 && (
             <p className="text-xs" style={{ color: "var(--text-quaternary)" }}>Nenhum comentário ainda.</p>
           )}
@@ -117,13 +135,21 @@ export function CommentThread({ entityType, entityId, currentUserId, profiles }:
 
                   {isEditing ? (
                     <div className="mt-1 space-y-1.5">
+                      <input
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                        placeholder="Título (opcional) — ex: data da otimização"
+                        className="w-full rounded-lg px-2.5 py-1.5 text-[11px] font-semibold text-[var(--text-primary)] placeholder-[var(--text-quaternary)] focus:outline-none transition-colors"
+                        style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--accent-a44)" }}
+                      />
                       <textarea
+                        ref={editRef}
                         autoFocus
                         rows={2}
                         value={editDraft}
-                        onChange={(e) => setEditDraft(e.target.value)}
+                        onChange={(e) => { setEditDraft(e.target.value); autoGrow(e.currentTarget); }}
                         onKeyDown={(e) => handleComposerKeyDown(e, editDraft, setEditDraft, () => saveEdit(c.id))}
-                        className="w-full rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-primary)] focus:outline-none transition-colors resize-none"
+                        className="w-full rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-primary)] focus:outline-none transition-colors resize-none overflow-y-auto"
                         style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--accent-a44)" }}
                       />
                       <div className="flex items-center gap-1.5">
@@ -147,13 +173,18 @@ export function CommentThread({ entityType, entityId, currentUserId, profiles }:
                       </div>
                     </div>
                   ) : (
-                    <p className="text-xs mt-0.5 whitespace-pre-wrap" style={{ color: "var(--text-secondary)" }}>{c.content}</p>
+                    <>
+                      {c.title && (
+                        <p className="text-xs font-semibold mt-0.5" style={{ color: "var(--accent)" }}>{c.title}</p>
+                      )}
+                      <p className="text-xs mt-0.5 whitespace-pre-wrap" style={{ color: "var(--text-secondary)" }}>{c.content}</p>
+                    </>
                   )}
                 </div>
                 {mine && !isEditing && (
                   <div className="flex-shrink-0 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
-                      onClick={() => startEdit(c.id, c.content)}
+                      onClick={() => startEdit(c.id, c.content, c.title)}
                       className="p-1"
                       style={{ color: "var(--text-quaternary)" }}
                       aria-label="Editar comentário"
@@ -176,26 +207,35 @@ export function CommentThread({ entityType, entityId, currentUserId, profiles }:
         </div>
       )}
 
-      <div className="flex items-end gap-2">
-        <textarea
-          ref={composerRef}
-          rows={1}
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => handleComposerKeyDown(e, draft, setDraft, submitComment)}
-          placeholder="Escreva um comentário... (Enter envia, Ctrl+Enter quebra linha)"
-          className="flex-1 rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] placeholder-[var(--text-quaternary)] focus:outline-none transition-colors resize-none"
+      <div className="space-y-1.5">
+        <input
+          value={draftTitle}
+          onChange={(e) => setDraftTitle(e.target.value)}
+          placeholder="Título (opcional) — ex: data da otimização"
+          className="w-full rounded-lg px-3 py-1.5 text-[11px] font-semibold text-[var(--text-primary)] placeholder-[var(--text-quaternary)] focus:outline-none transition-colors"
           style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-strong)" }}
         />
-        <button
-          type="button"
-          onClick={submitComment}
-          disabled={!draft.trim() || sending}
-          className="flex-shrink-0 p-2 rounded-lg disabled:opacity-40 transition-all"
-          style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}
-        >
-          {sending ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
-        </button>
+        <div className="flex items-end gap-2">
+          <textarea
+            ref={composerRef}
+            rows={1}
+            value={draft}
+            onChange={(e) => { setDraft(e.target.value); autoGrow(e.currentTarget); }}
+            onKeyDown={(e) => handleComposerKeyDown(e, draft, setDraft, submitComment)}
+            placeholder="Escreva um comentário... (Enter envia, Ctrl+Enter quebra linha)"
+            className="flex-1 rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] placeholder-[var(--text-quaternary)] focus:outline-none transition-colors resize-none overflow-y-auto"
+            style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-strong)" }}
+          />
+          <button
+            type="button"
+            onClick={submitComment}
+            disabled={!draft.trim() || sending}
+            className="flex-shrink-0 p-2 rounded-lg disabled:opacity-40 transition-all"
+            style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}
+          >
+            {sending ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
+          </button>
+        </div>
       </div>
     </div>
   );
