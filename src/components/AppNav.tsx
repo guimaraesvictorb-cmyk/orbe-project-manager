@@ -108,33 +108,9 @@ export function AppNav({ active, onChange, profile, onLogout, isOpen, onClose }:
         className={`no-print flex flex-col flex-shrink-0 h-screen overflow-y-auto fixed inset-y-0 left-0 z-40 transition-transform duration-200 lg:static lg:translate-x-0 ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
         style={{
           width: 260,
-          backgroundColor: "#050505",
-          borderRight: "1px solid var(--bg-surface-2)",
-          // The sidebar is always dark by design, independent of the light/dark
-          // theme toggle. Pin the tokens it uses to their dark values here so
-          // switching to light theme doesn't leave light-mode (pale) text
-          // colors rendering against this hardcoded black background.
-          ["--bg-page" as string]: "#000000",
-          ["--bg-surface" as string]: "#0a0a0a",
-          ["--bg-surface-2" as string]: "#0d0d0d",
-          ["--bg-input" as string]: "#080808",
-          ["--border" as string]: "#1a1a1a",
-          ["--border-strong" as string]: "#1e1e1e",
-          ["--border-subtle" as string]: "#262626",
-          ["--text-primary" as string]: "#ffffff",
-          ["--text-secondary" as string]: "#A3A3A3",
-          ["--text-tertiary" as string]: "#555555",
-          ["--text-quaternary" as string]: "#333333",
-          ["--accent" as string]: "#7B61FF",
-          ["--accent-hover" as string]: "#6247E5",
-          ["--accent-tint" as string]: "#1A1230",
-          ["--accent-a44" as string]: "#7B61FF44",
-          ["--accent-a33" as string]: "#7B61FF33",
-          ["--accent-a22" as string]: "#7B61FF22",
-          ["--success" as string]: "#22C55E",
-          ["--warning" as string]: "#F59E0B",
-          ["--danger" as string]: "#EF4444",
-        } as React.CSSProperties}
+          backgroundColor: "var(--bg-surface)",
+          borderRight: "1px solid var(--border)",
+        }}
       >
       {/* Logo */}
       <div className="flex items-center gap-3 px-5 py-5 flex-shrink-0" style={{ borderBottom: "1px solid var(--bg-surface-2)" }}>
@@ -173,7 +149,7 @@ export function AppNav({ active, onChange, profile, onLogout, isOpen, onClose }:
                     }}
                     onMouseEnter={(e) => {
                       if (!isActive) {
-                        (e.currentTarget as HTMLButtonElement).style.backgroundColor = "var(--bg-surface)";
+                        (e.currentTarget as HTMLButtonElement).style.backgroundColor = "var(--bg-surface-2)";
                         (e.currentTarget as HTMLButtonElement).style.color = "var(--text-secondary)";
                       }
                     }}
@@ -209,7 +185,7 @@ export function AppNav({ active, onChange, profile, onLogout, isOpen, onClose }:
           }}
           onMouseEnter={(e) => {
             if (active !== "profile") {
-              (e.currentTarget as HTMLButtonElement).style.backgroundColor = "var(--bg-surface)";
+              (e.currentTarget as HTMLButtonElement).style.backgroundColor = "var(--bg-surface-2)";
               (e.currentTarget as HTMLButtonElement).style.color = "var(--text-secondary)";
             }
           }}
@@ -247,7 +223,7 @@ export function AppNav({ active, onChange, profile, onLogout, isOpen, onClose }:
             }}
             onMouseEnter={(e) => {
               if (active !== "settings") {
-                (e.currentTarget as HTMLButtonElement).style.backgroundColor = "var(--bg-surface)";
+                (e.currentTarget as HTMLButtonElement).style.backgroundColor = "var(--bg-surface-2)";
                 (e.currentTarget as HTMLButtonElement).style.color = "var(--text-secondary)";
               }
             }}
@@ -272,7 +248,7 @@ export function AppNav({ active, onChange, profile, onLogout, isOpen, onClose }:
           style={{ color: "var(--text-quaternary)" }}
           onMouseEnter={(e) => {
             (e.currentTarget as HTMLButtonElement).style.color = "var(--danger)";
-            (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#1a0505";
+            (e.currentTarget as HTMLButtonElement).style.backgroundColor = "color-mix(in srgb, var(--danger) 12%, transparent)";
           }}
           onMouseLeave={(e) => {
             (e.currentTarget as HTMLButtonElement).style.color = "var(--text-quaternary)";
