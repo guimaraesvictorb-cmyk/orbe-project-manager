@@ -80,7 +80,7 @@ function TaskModal({ task, clients, profiles, onClose, onSave, onDelete, onDupli
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.85)" }}
       onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="w-full max-w-lg rounded-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto" style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" }}>
+      <div className="w-full max-w-2xl rounded-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto" style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" }}>
         <div className="flex items-center justify-between">
           <h3 className="text-[var(--text-primary)] font-semibold text-sm">{task ? "Editar Tarefa" : "Nova Tarefa"}</h3>
           <button onClick={onClose} style={{ color: "var(--text-tertiary)" }}><X size={16} /></button>
