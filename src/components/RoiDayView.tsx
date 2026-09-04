@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Trophy, Plus, Trash2, Loader2, FileText, ArrowLeft, Printer } from "lucide-react";
+import { useMemo, useState, useRef, useEffect } from "react";
+import { Trophy, Plus, Trash2, Loader2, FileText, ArrowLeft, Printer, ChevronDown, Check, Calendar } from "lucide-react";
 import { useRoiDay } from "../hooks/useRoiDay";
 import { useAuth } from "../hooks/useAuth";
 import { useClients } from "../hooks/useClients";
@@ -52,18 +52,69 @@ function makePeriod(year: number, month: number): string {
   return `${year}-${String(month).padStart(2, "0")}`;
 }
 
+function shiftPeriod(period: string, delta: number): string {
+  const { year, month } = periodParts(period);
+  const d = new Date(year, month - 1 + delta, 1);
+  return makePeriod(d.getFullYear(), d.getMonth() + 1);
+}
+
+const NUMERIC_FIELDS: (keyof RoiDayClient)[] = [
+  "nps", "fee", "inv_meta", "inv_realizado", "fat_meta", "fat_realizado", "gmv_mes",
+  "relevancia_pct", "leads", "cpl", "mql", "cpmql", "sql_count", "cpsql", "vendas", "cpv", "mc_pct", "mmf",
+];
+
+// One synthetic row per client, averaging every numeric field across all of
+// its tracked months — used by the "Máximo" preset.
+function averageByClient(rows: RoiDayClient[]): RoiDayClient[] {
+  const byName = new Map<string, RoiDayClient[]>();
+  for (const r of rows) {
+    if (!byName.has(r.name)) byName.set(r.name, []);
+    byName.get(r.name)!.push(r);
+  }
+  const result: RoiDayClient[] = [];
+  for (const [, entries] of byName) {
+    const latest = [...entries].sort((a, b) => b.period.localeCompare(a.period))[0];
+    const avg: RoiDayClient = { ...latest, period: "max" };
+    for (const key of NUMERIC_FIELDS) {
+      const vals = entries.map((e) => e[key]).filter((v): v is number => typeof v === "number");
+      (avg as unknown as Record<string, number | null>)[key] = vals.length
+        ? vals.reduce((s, v) => s + v, 0) / vals.length
+        : null;
+    }
+    result.push(avg);
+  }
+  return result.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function pctDelta(current: number, previous: number): number | null {
+  if (!previous) return null;
+  return ((current - previous) / previous) * 100;
+}
+
+function DeltaBadge({ value }: { value: number | null }) {
+  if (value == null || !Number.isFinite(value)) return null;
+  const up = value >= 0;
+  return (
+    <span className="text-[9px] font-bold ml-1" style={{ color: up ? "var(--success)" : "var(--danger)" }}>
+      {up ? "▲" : "▼"}{Math.abs(value).toFixed(0)}%
+    </span>
+  );
+}
+
 type ColType = "text" | "money" | "int" | "pct" | "date";
 
-function EditableCell({ value, type, onCommit, placeholder }: {
+function EditableCell({ value, type, onCommit, placeholder, readOnly }: {
   value: string | number | null;
   type: ColType;
   onCommit: (v: string | number | null) => void;
   placeholder?: string;
+  readOnly?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value == null ? "" : String(value));
 
   function startEdit() {
+    if (readOnly) return;
     setDraft(value == null ? "" : String(value));
     setEditing(true);
   }
@@ -107,7 +158,8 @@ function EditableCell({ value, type, onCommit, placeholder }: {
   return (
     <button
       onClick={startEdit}
-      className="w-full min-w-[90px] text-left px-1.5 py-1 rounded text-xs hover:bg-[var(--bg-surface-2)] transition-colors truncate"
+      disabled={readOnly}
+      className={`w-full min-w-[90px] text-left px-1.5 py-1 rounded text-xs transition-colors truncate ${readOnly ? "cursor-default" : "hover:bg-[var(--bg-surface-2)]"}`}
       style={{ color: value == null ? "var(--text-quaternary)" : "var(--text-secondary)" }}
     >
       {display}
@@ -211,7 +263,21 @@ export function RoiDayView() {
   const { rows, loading, addRow, addMonthFromPrevious, updateRow, deleteRow } = useRoiDay();
   const [adding, setAdding] = useState(false);
   const [period, setPeriod] = useState(() => todayLocal().slice(0, 7));
+  const [viewMode, setViewMode] = useState<"month" | "max">("month");
+  const [compareOn, setCompareOn] = useState(false);
+  const [comparePeriod, setComparePeriod] = useState(() => shiftPeriod(todayLocal().slice(0, 7), -1));
+  const [filterOpen, setFilterOpen] = useState(false);
   const [reportClient, setReportClient] = useState<string | null>(null);
+  const filterRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!filterOpen) return;
+    function onClickOutside(e: MouseEvent) {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) setFilterOpen(false);
+    }
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, [filterOpen]);
 
   const registeredClients = useMemo(
     () => clients.filter((c) => !c.deleted_at).sort((a, b) => a.name.localeCompare(b.name)),
@@ -219,10 +285,17 @@ export function RoiDayView() {
   );
 
   const periodRows = useMemo(() => rows.filter((r) => r.period === period), [rows, period]);
+  const maxRows = useMemo(() => averageByClient(rows), [rows]);
+  const displayRows = viewMode === "max" ? maxRows : periodRows;
+  const editable = viewMode === "month";
+
+  const compareRows = useMemo(() => rows.filter((r) => r.period === comparePeriod), [rows, comparePeriod]);
 
   // Tracking starts today — there's no data before this, so the filter
   // shouldn't offer months/years that could never have anything in them.
   const trackingStart = useMemo(() => periodParts(todayLocal().slice(0, 7)), []);
+  const thisMonthPeriod = todayLocal().slice(0, 7);
+  const lastMonthPeriod = shiftPeriod(thisMonthPeriod, -1);
 
   const yearOptions = useMemo(() => {
     const maxDataYear = Math.max(trackingStart.year, ...rows.map((r) => periodParts(r.period).year));
@@ -257,17 +330,20 @@ export function RoiDayView() {
     [registeredClients, clientNames]
   );
 
-  const totals = useMemo(() => {
-    const sum = (k: keyof RoiDayClient) => periodRows.reduce((s, r) => s + (Number(r[k]) || 0), 0);
+  function sumRows(list: RoiDayClient[]) {
+    const sum = (k: keyof RoiDayClient) => list.reduce((s, r) => s + (Number(r[k]) || 0), 0);
     return {
       fee: sum("fee"), inv_meta: sum("inv_meta"), inv_realizado: sum("inv_realizado"),
       fat_meta: sum("fat_meta"), fat_realizado: sum("fat_realizado"), gmv_mes: sum("gmv_mes"),
       leads: sum("leads"), mql: sum("mql"), sql_count: sum("sql_count"), vendas: sum("vendas"),
     };
-  }, [periodRows]);
+  }
+
+  const totals = useMemo(() => sumRows(displayRows), [displayRows]);
+  const compareTotals = useMemo(() => sumRows(compareRows), [compareRows]);
 
   const nps = useMemo(() => {
-    const ativos = periodRows.filter((r) => r.roi_status === "Ativo");
+    const ativos = displayRows.filter((r) => r.roi_status === "Ativo");
     const respostas = ativos.filter((r) => r.nps != null);
     return {
       clientes: ativos.length,
@@ -275,7 +351,19 @@ export function RoiDayView() {
       aguardando: ativos.length - respostas.length,
       taxa: ativos.length > 0 ? (respostas.length / ativos.length) * 100 : 0,
     };
-  }, [periodRows]);
+  }, [displayRows]);
+
+  function selectPreset(mode: "este_mes" | "mes_passado" | "maximo") {
+    if (mode === "maximo") {
+      setViewMode("max");
+    } else {
+      setViewMode("month");
+      setPeriod(mode === "este_mes" ? thisMonthPeriod : lastMonthPeriod);
+    }
+    setFilterOpen(false);
+  }
+
+  const filterLabel = viewMode === "max" ? "Máximo (média)" : monthLabel(period);
 
   async function handleAddNeverAdded(clientId: string, name: string) {
     if (!profile) return;
@@ -326,42 +414,111 @@ export function RoiDayView() {
           <p className="text-xs mt-1" style={{ color: "var(--text-tertiary)" }}>Fee, investimento, faturamento e funil por cliente, mês a mês — clique numa célula pra editar. Só mostra clientes cadastrados em Clientes.</p>
         </div>
 
-        <div className="flex items-end gap-2">
-          <div className="space-y-1">
-            <label className="text-[9px] font-bold uppercase tracking-widest block" style={{ color: "var(--text-tertiary)" }}>Mês</label>
-            <select
-              value={periodParts(period).month}
-              onChange={(e) => setPeriod(makePeriod(periodParts(period).year, Number(e.target.value)))}
-              className="rounded-lg px-2.5 py-1.5 text-xs font-semibold border focus:outline-none cursor-pointer"
-              style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border-strong)", color: "var(--text-primary)" }}
+        <div className="relative" ref={filterRef}>
+          <button
+            onClick={() => setFilterOpen((v) => !v)}
+            className="flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold transition-colors"
+            style={{ borderColor: filterOpen ? "var(--accent)" : "var(--border-strong)", backgroundColor: "var(--bg-input)", color: "var(--text-primary)" }}
+          >
+            <Calendar size={13} style={{ color: "var(--accent)" }} />
+            {filterLabel}
+            {compareOn && (
+              <span className="text-[10px] font-normal" style={{ color: "var(--text-quaternary)" }}>vs {monthLabel(comparePeriod)}</span>
+            )}
+            <ChevronDown size={13} style={{ color: "var(--text-tertiary)" }} />
+          </button>
+
+          {filterOpen && (
+            <div
+              className="absolute right-0 top-full mt-2 z-30 rounded-xl border shadow-lg flex"
+              style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border-strong)", boxShadow: "0 12px 32px rgba(0,0,0,0.25)" }}
             >
-              {monthOptionsForYear.map((m) => (
-                <option key={m.name} value={m.value}>{m.name}</option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-1">
-            <label className="text-[9px] font-bold uppercase tracking-widest block" style={{ color: "var(--text-tertiary)" }}>Ano</label>
-            <select
-              value={periodParts(period).year}
-              onChange={(e) => {
-                const newYear = Number(e.target.value);
-                const currentMonth = periodParts(period).month;
-                const minMonth = newYear === trackingStart.year ? trackingStart.month : 1;
-                setPeriod(makePeriod(newYear, Math.max(currentMonth, minMonth)));
-              }}
-              className="rounded-lg px-2.5 py-1.5 text-xs font-semibold border focus:outline-none cursor-pointer"
-              style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border-strong)", color: "var(--text-primary)" }}
-            >
-              {yearOptions.map((y) => (
-                <option key={y} value={y}>{y}</option>
-              ))}
-            </select>
-          </div>
+              {/* Presets */}
+              <div className="w-40 py-2 flex-shrink-0" style={{ borderRight: "1px solid var(--border)" }}>
+                {[
+                  { key: "este_mes" as const, label: "Este mês", active: viewMode === "month" && period === thisMonthPeriod },
+                  { key: "mes_passado" as const, label: "Mês passado", active: viewMode === "month" && period === lastMonthPeriod },
+                  { key: "maximo" as const, label: "Máximo (média)", active: viewMode === "max" },
+                ].map((opt) => (
+                  <button
+                    key={opt.key}
+                    onClick={() => selectPreset(opt.key)}
+                    className="w-full flex items-center justify-between gap-2 px-3 py-2 text-xs text-left"
+                    style={{ backgroundColor: opt.active ? "var(--accent-tint)" : "transparent", color: opt.active ? "var(--accent)" : "var(--text-secondary)" }}
+                  >
+                    {opt.label}
+                    {opt.active && <Check size={12} />}
+                  </button>
+                ))}
+                <div className="my-2" style={{ borderTop: "1px solid var(--border)" }} />
+                <p className="px-3 text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: "var(--text-quaternary)" }}>Personalizado</p>
+                <button
+                  onClick={() => setViewMode("month")}
+                  className="w-full flex items-center justify-between gap-2 px-3 py-2 text-xs text-left"
+                  style={{
+                    backgroundColor: viewMode === "month" && period !== thisMonthPeriod && period !== lastMonthPeriod ? "var(--accent-tint)" : "transparent",
+                    color: viewMode === "month" && period !== thisMonthPeriod && period !== lastMonthPeriod ? "var(--accent)" : "var(--text-secondary)",
+                  }}
+                >
+                  Escolher mês
+                </button>
+              </div>
+
+              {/* Custom month/year + compare */}
+              <div className="w-56 p-3 space-y-3">
+                <div className="flex items-center gap-2">
+                  <select
+                    value={periodParts(period).month}
+                    onChange={(e) => { setViewMode("month"); setPeriod(makePeriod(periodParts(period).year, Number(e.target.value))); }}
+                    className="flex-1 rounded-lg px-2 py-1.5 text-xs font-semibold border focus:outline-none cursor-pointer"
+                    style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border-strong)", color: "var(--text-primary)" }}
+                  >
+                    {monthOptionsForYear.map((m) => <option key={m.name} value={m.value}>{m.name}</option>)}
+                  </select>
+                  <select
+                    value={periodParts(period).year}
+                    onChange={(e) => {
+                      setViewMode("month");
+                      const newYear = Number(e.target.value);
+                      const currentMonth = periodParts(period).month;
+                      const minMonth = newYear === trackingStart.year ? trackingStart.month : 1;
+                      setPeriod(makePeriod(newYear, Math.max(currentMonth, minMonth)));
+                    }}
+                    className="rounded-lg px-2 py-1.5 text-xs font-semibold border focus:outline-none cursor-pointer"
+                    style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border-strong)", color: "var(--text-primary)" }}
+                  >
+                    {yearOptions.map((y) => <option key={y} value={y}>{y}</option>)}
+                  </select>
+                </div>
+
+                <div className="pt-2" style={{ borderTop: "1px solid var(--border)" }}>
+                  <label className="flex items-center gap-2 text-xs font-medium cursor-pointer" style={{ color: "var(--text-primary)" }}>
+                    <input type="checkbox" checked={compareOn} onChange={(e) => setCompareOn(e.target.checked)} className="rounded" />
+                    Comparar com outro mês
+                  </label>
+                  {compareOn && (
+                    <select
+                      value={comparePeriod}
+                      onChange={(e) => setComparePeriod(e.target.value)}
+                      className="mt-2 w-full rounded-lg px-2 py-1.5 text-xs font-semibold border focus:outline-none cursor-pointer"
+                      style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border-strong)", color: "var(--text-primary)" }}
+                    >
+                      {yearOptions.flatMap((y) =>
+                        MONTH_NAMES.map((name, i) => ({ y, m: i + 1, name }))
+                          .filter(({ y: yy, m }) => yy > trackingStart.year || (yy === trackingStart.year && m >= trackingStart.month))
+                      ).map(({ y, m, name }) => (
+                        <option key={makePeriod(y, m)} value={makePeriod(y, m)}>{name} {y}</option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      {neverAdded.length > 0 && (
+      {viewMode === "month" && neverAdded.length > 0 && (
         <div className="rounded-xl border p-3 flex flex-wrap items-center gap-2" style={{ backgroundColor: "var(--accent-tint)", borderColor: "var(--accent-a33)" }}>
           <span className="text-xs font-semibold" style={{ color: "var(--text-primary)" }}>Cadastrados em Clientes mas ainda sem registro no ROI Day:</span>
           {neverAdded.map((c) => (
@@ -378,7 +535,7 @@ export function RoiDayView() {
         </div>
       )}
 
-      {missingThisMonth.length > 0 && (
+      {viewMode === "month" && missingThisMonth.length > 0 && (
         <div className="rounded-xl border p-3 flex flex-wrap items-center gap-2" style={{ backgroundColor: "color-mix(in srgb, var(--warning) 12%, var(--bg-surface))", borderColor: "var(--warning)" }}>
           <span className="text-xs font-semibold" style={{ color: "var(--text-primary)" }}>Faltam preencher em {monthLabel(period)}:</span>
           {missingThisMonth.map((name) => (
@@ -411,9 +568,9 @@ export function RoiDayView() {
       </div>
 
       {/* Table */}
-      {periodRows.length === 0 ? (
+      {displayRows.length === 0 ? (
         <div className="rounded-xl border py-16 text-center" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
-          <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Nenhum registro em {monthLabel(period)}</p>
+          <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Nenhum registro em {viewMode === "max" ? "nenhum mês ainda" : monthLabel(period)}</p>
           <p className="text-xs mt-1" style={{ color: "var(--text-quaternary)" }}>Use os atalhos acima ou "Novo cliente" pra começar o mês.</p>
         </div>
       ) : (
@@ -453,7 +610,7 @@ export function RoiDayView() {
             </tr>
           </thead>
           <tbody>
-            {periodRows.map((r) => {
+            {displayRows.map((r) => {
               const invPct = r.inv_meta ? ((r.inv_realizado ?? 0) / r.inv_meta) * 100 : null;
               const fatPct = r.fat_meta ? ((r.fat_realizado ?? 0) / r.fat_meta) * 100 : null;
               const roas = r.inv_realizado ? (r.fat_realizado ?? 0) / r.inv_realizado : null;
@@ -462,53 +619,56 @@ export function RoiDayView() {
               return (
                 <tr key={r.id} className="group hover:bg-[var(--bg-surface-2)] transition-colors" style={{ borderBottom: "1px solid var(--border)" }}>
                   <td className="sticky left-0 z-10" style={{ backgroundColor: "var(--bg-surface)" }}>
-                    <EditableCell value={r.name} type="text" onCommit={(v) => updateRow(r.id, { name: (v as string) ?? r.name })} />
+                    <EditableCell value={r.name} type="text" readOnly={!editable} onCommit={(v) => updateRow(r.id, { name: (v as string) ?? r.name })} />
                   </td>
                   <td>
                     <select
                       value={r.roi_status ?? ""}
                       onChange={(e) => updateRow(r.id, { roi_status: e.target.value || null })}
-                      className="text-[10px] font-bold uppercase tracking-wide rounded px-1.5 py-1 focus:outline-none"
+                      disabled={!editable}
+                      className="text-[10px] font-bold uppercase tracking-wide rounded px-1.5 py-1 focus:outline-none disabled:opacity-70"
                       style={{ backgroundColor: "transparent", color: ROI_STATUS_COLOR[r.roi_status ?? ""] ?? "var(--text-tertiary)", border: "1px solid var(--border)" }}
                     >
                       <option value="">—</option>
                       {ROI_STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
                     </select>
                   </td>
-                  <td><EditableCell value={r.nps} type="int" onCommit={(v) => updateRow(r.id, { nps: v as number | null })} /></td>
-                  <td><EditableCell value={r.fee} type="money" onCommit={(v) => updateRow(r.id, { fee: v as number | null })} /></td>
-                  <td><EditableCell value={r.inv_meta} type="money" onCommit={(v) => updateRow(r.id, { inv_meta: v as number | null })} /></td>
-                  <td><EditableCell value={r.inv_realizado} type="money" onCommit={(v) => updateRow(r.id, { inv_realizado: v as number | null })} /></td>
+                  <td><EditableCell value={r.nps} type="int" readOnly={!editable} onCommit={(v) => updateRow(r.id, { nps: v as number | null })} /></td>
+                  <td><EditableCell value={r.fee} type="money" readOnly={!editable} onCommit={(v) => updateRow(r.id, { fee: v as number | null })} /></td>
+                  <td><EditableCell value={r.inv_meta} type="money" readOnly={!editable} onCommit={(v) => updateRow(r.id, { inv_meta: v as number | null })} /></td>
+                  <td><EditableCell value={r.inv_realizado} type="money" readOnly={!editable} onCommit={(v) => updateRow(r.id, { inv_realizado: v as number | null })} /></td>
                   <td className="px-1.5 py-1" style={{ color: "var(--text-quaternary)" }}>{invPct == null ? "—" : fmtPct(invPct)}</td>
-                  <td><EditableCell value={r.fat_meta} type="money" onCommit={(v) => updateRow(r.id, { fat_meta: v as number | null })} /></td>
-                  <td><EditableCell value={r.fat_realizado} type="money" onCommit={(v) => updateRow(r.id, { fat_realizado: v as number | null })} /></td>
+                  <td><EditableCell value={r.fat_meta} type="money" readOnly={!editable} onCommit={(v) => updateRow(r.id, { fat_meta: v as number | null })} /></td>
+                  <td><EditableCell value={r.fat_realizado} type="money" readOnly={!editable} onCommit={(v) => updateRow(r.id, { fat_realizado: v as number | null })} /></td>
                   <td className="px-1.5 py-1" style={{ color: "var(--text-quaternary)" }}>{fatPct == null ? "—" : fmtPct(fatPct)}</td>
-                  <td><EditableCell value={r.gmv_mes} type="money" onCommit={(v) => updateRow(r.id, { gmv_mes: v as number | null })} /></td>
-                  <td><EditableCell value={r.leads} type="int" onCommit={(v) => updateRow(r.id, { leads: v as number | null })} /></td>
-                  <td><EditableCell value={r.cpl} type="money" onCommit={(v) => updateRow(r.id, { cpl: v as number | null })} /></td>
-                  <td><EditableCell value={r.mql} type="int" onCommit={(v) => updateRow(r.id, { mql: v as number | null })} /></td>
-                  <td><EditableCell value={r.cpmql} type="money" onCommit={(v) => updateRow(r.id, { cpmql: v as number | null })} /></td>
-                  <td><EditableCell value={r.sql_count} type="int" onCommit={(v) => updateRow(r.id, { sql_count: v as number | null })} /></td>
-                  <td><EditableCell value={r.cpsql} type="money" onCommit={(v) => updateRow(r.id, { cpsql: v as number | null })} /></td>
-                  <td><EditableCell value={r.vendas} type="int" onCommit={(v) => updateRow(r.id, { vendas: v as number | null })} /></td>
-                  <td><EditableCell value={r.cpv} type="money" onCommit={(v) => updateRow(r.id, { cpv: v as number | null })} /></td>
+                  <td><EditableCell value={r.gmv_mes} type="money" readOnly={!editable} onCommit={(v) => updateRow(r.id, { gmv_mes: v as number | null })} /></td>
+                  <td><EditableCell value={r.leads} type="int" readOnly={!editable} onCommit={(v) => updateRow(r.id, { leads: v as number | null })} /></td>
+                  <td><EditableCell value={r.cpl} type="money" readOnly={!editable} onCommit={(v) => updateRow(r.id, { cpl: v as number | null })} /></td>
+                  <td><EditableCell value={r.mql} type="int" readOnly={!editable} onCommit={(v) => updateRow(r.id, { mql: v as number | null })} /></td>
+                  <td><EditableCell value={r.cpmql} type="money" readOnly={!editable} onCommit={(v) => updateRow(r.id, { cpmql: v as number | null })} /></td>
+                  <td><EditableCell value={r.sql_count} type="int" readOnly={!editable} onCommit={(v) => updateRow(r.id, { sql_count: v as number | null })} /></td>
+                  <td><EditableCell value={r.cpsql} type="money" readOnly={!editable} onCommit={(v) => updateRow(r.id, { cpsql: v as number | null })} /></td>
+                  <td><EditableCell value={r.vendas} type="int" readOnly={!editable} onCommit={(v) => updateRow(r.id, { vendas: v as number | null })} /></td>
+                  <td><EditableCell value={r.cpv} type="money" readOnly={!editable} onCommit={(v) => updateRow(r.id, { cpv: v as number | null })} /></td>
                   <td className="px-1.5 py-1 font-semibold" style={{ color: roas == null ? "var(--text-quaternary)" : "var(--accent)" }}>{roas == null ? "—" : roas.toFixed(2) + "x"}</td>
                   <td className="px-1.5 py-1 font-semibold" style={{ color: roi == null ? "var(--text-quaternary)" : roi >= 0 ? "var(--success)" : "var(--danger)" }}>{roi == null ? "—" : fmtPct(roi)}</td>
-                  <td><EditableCell value={r.mc_pct} type="pct" onCommit={(v) => updateRow(r.id, { mc_pct: v as number | null })} /></td>
-                  <td><EditableCell value={r.mmf} type="money" onCommit={(v) => updateRow(r.id, { mmf: v as number | null })} /></td>
-                  <td><EditableCell value={r.data_entrada} type="date" onCommit={(v) => updateRow(r.id, { data_entrada: v as string | null })} /></td>
+                  <td><EditableCell value={r.mc_pct} type="pct" readOnly={!editable} onCommit={(v) => updateRow(r.id, { mc_pct: v as number | null })} /></td>
+                  <td><EditableCell value={r.mmf} type="money" readOnly={!editable} onCommit={(v) => updateRow(r.id, { mmf: v as number | null })} /></td>
+                  <td><EditableCell value={r.data_entrada} type="date" readOnly={!editable} onCommit={(v) => updateRow(r.id, { data_entrada: v as string | null })} /></td>
                   <td className="px-1.5 py-1" style={{ color: "var(--text-quaternary)" }}>{lt == null ? "—" : lt}</td>
-                  <td><EditableCell value={r.localizacao} type="text" onCommit={(v) => updateRow(r.id, { localizacao: v as string | null })} /></td>
-                  <td><EditableCell value={r.stakeholder} type="text" onCommit={(v) => updateRow(r.id, { stakeholder: v as string | null })} /></td>
-                  <td><EditableCell value={r.offboarding_date} type="date" onCommit={(v) => updateRow(r.id, { offboarding_date: v as string | null })} /></td>
+                  <td><EditableCell value={r.localizacao} type="text" readOnly={!editable} onCommit={(v) => updateRow(r.id, { localizacao: v as string | null })} /></td>
+                  <td><EditableCell value={r.stakeholder} type="text" readOnly={!editable} onCommit={(v) => updateRow(r.id, { stakeholder: v as string | null })} /></td>
+                  <td><EditableCell value={r.offboarding_date} type="date" readOnly={!editable} onCommit={(v) => updateRow(r.id, { offboarding_date: v as string | null })} /></td>
                   <td className="px-2">
                     <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100">
                       <button onClick={() => setReportClient(r.name)} className="p-1" style={{ color: "var(--text-quaternary)" }} aria-label="Relatório">
                         <FileText size={12} />
                       </button>
-                      <button onClick={() => { if (confirm(`Remover "${r.name}" de ${monthLabel(period)}?`)) deleteRow(r.id); }} className="p-1" style={{ color: "var(--text-quaternary)" }} aria-label="Remover">
-                        <Trash2 size={12} />
-                      </button>
+                      {editable && (
+                        <button onClick={() => { if (confirm(`Remover "${r.name}" de ${monthLabel(period)}?`)) deleteRow(r.id); }} className="p-1" style={{ color: "var(--text-quaternary)" }} aria-label="Remover">
+                          <Trash2 size={12} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -517,14 +677,25 @@ export function RoiDayView() {
           </tbody>
           <tfoot>
             <tr style={{ backgroundColor: "var(--bg-surface-2)", borderTop: "2px solid var(--border-strong)" }}>
-              <td className="sticky left-0 z-10 px-2 py-2 text-[10px] font-bold uppercase tracking-widest" style={{ backgroundColor: "var(--bg-surface-2)", color: "var(--text-primary)" }}>Total ({periodRows.length})</td>
+              <td className="sticky left-0 z-10 px-2 py-2 text-[10px] font-bold uppercase tracking-widest" style={{ backgroundColor: "var(--bg-surface-2)", color: "var(--text-primary)" }}>
+                {viewMode === "max" ? `Média (${displayRows.length})` : `Total (${displayRows.length})`}
+              </td>
               <td /><td />
-              <td className="px-1.5 py-2 text-xs font-bold" style={{ color: "var(--accent)" }}>{fmtCurrency0(totals.fee)}</td>
+              <td className="px-1.5 py-2 text-xs font-bold" style={{ color: "var(--accent)" }}>
+                {fmtCurrency0(totals.fee)}
+                {compareOn && <DeltaBadge value={pctDelta(totals.fee, compareTotals.fee)} />}
+              </td>
               <td className="px-1.5 py-2 text-xs font-bold">{fmtCurrency0(totals.inv_meta)}</td>
-              <td className="px-1.5 py-2 text-xs font-bold">{fmtCurrency0(totals.inv_realizado)}</td>
+              <td className="px-1.5 py-2 text-xs font-bold">
+                {fmtCurrency0(totals.inv_realizado)}
+                {compareOn && <DeltaBadge value={pctDelta(totals.inv_realizado, compareTotals.inv_realizado)} />}
+              </td>
               <td />
               <td className="px-1.5 py-2 text-xs font-bold">{fmtCurrency0(totals.fat_meta)}</td>
-              <td className="px-1.5 py-2 text-xs font-bold">{fmtCurrency0(totals.fat_realizado)}</td>
+              <td className="px-1.5 py-2 text-xs font-bold">
+                {fmtCurrency0(totals.fat_realizado)}
+                {compareOn && <DeltaBadge value={pctDelta(totals.fat_realizado, compareTotals.fat_realizado)} />}
+              </td>
               <td />
               <td className="px-1.5 py-2 text-xs font-bold">{fmtCurrency0(totals.gmv_mes)}</td>
               <td className="px-1.5 py-2 text-xs font-bold">{fmtInt(totals.leads)}</td>
