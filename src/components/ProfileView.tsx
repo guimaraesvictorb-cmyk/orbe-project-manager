@@ -7,6 +7,7 @@ import {
   ChevronDown, Trash2, X, UserPlus, Copy, Mail,
 } from "lucide-react";
 import { SECTION_ACCESS, SECTION_LABELS } from "../lib/permissions";
+import { timeAgo } from "../lib/formatters";
 
 const ROLE_LABELS: Record<string, string> = {
   admin: "Administrador",
@@ -60,9 +61,11 @@ function TeamPanel({ currentUserId }: { currentUserId: string }) {
   const [inviteError, setInviteError] = useState("");
   const [createdCreds, setCreatedCreds] = useState<{ email: string; password: string } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [lastSeen, setLastSeen] = useState<Record<string, string | null>>({});
 
   useEffect(() => {
     loadMembers();
+    loadActivity();
   }, []);
 
   function loadMembers() {
@@ -80,6 +83,22 @@ function TeamPanel({ currentUserId }: { currentUserId: string }) {
         setSectionEdits(sections);
         setLoading(false);
       });
+  }
+
+  async function loadActivity() {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/list-user-activity`, {
+        headers: { authorization: `Bearer ${session?.access_token ?? ""}` },
+      });
+      const json = await res.json();
+      if (!res.ok) return;
+      const map: Record<string, string | null> = {};
+      for (const id in json.activity) map[id] = json.activity[id].last_sign_in_at;
+      setLastSeen(map);
+    } catch {
+      // Não crítico — a tela funciona normalmente sem essa info.
+    }
   }
 
   function toggleSection(memberId: string, section: string) {
@@ -300,6 +319,9 @@ function TeamPanel({ currentUserId }: { currentUserId: string }) {
                     {!member.is_active && <span className="flex-shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: "#1a0505", color: "var(--danger)" }}>Inativo</span>}
                   </p>
                   <p className="text-[11px] mt-0.5 truncate" style={{ color: "var(--text-quaternary)" }}>{member.email}</p>
+                  <p className="text-[10px] mt-0.5" style={{ color: "var(--text-quaternary)" }}>
+                    Último acesso: {member.id in lastSeen ? (lastSeen[member.id] ? timeAgo(lastSeen[member.id]!) : "nunca entrou") : "—"}
+                  </p>
                 </div>
 
                 {/* Role + actions */}
