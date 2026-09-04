@@ -1,7 +1,7 @@
 import {
   Sparkles, LayoutDashboard, CheckSquare, Users, DollarSign,
   TrendingUp, BookOpen, Building2, UserCircle, LogOut, ShieldCheck,
-  ChevronRight, Settings, Link2, PenTool, FileText, Bot, MessageSquare, Plug, UserPlus,
+  ChevronRight, Settings, Link2, PenTool, FileText, Bot, MessageSquare, Plug, UserPlus, Trophy,
 } from "lucide-react";
 import type { Profile } from "../lib/database.types";
 import { getAllowedSections, isAdminOrCoordenador } from "../lib/permissions";
@@ -9,7 +9,7 @@ import { getAllowedSections, isAdminOrCoordenador } from "../lib/permissions";
 export type AppView =
   | "home" | "dashboard"
   | "tarefas" | "clientes"
-  | "financeiro"
+  | "financeiro" | "roi-day"
   | "pipeline"
   | "processos" | "central"
   | "rastreamento"
@@ -33,6 +33,7 @@ const NAV: NavGroup[] = [
     items: [
       { view: "tarefas",  label: "Tarefas",  icon: <CheckSquare size={15} /> },
       { view: "clientes", label: "Clientes", icon: <Users size={15} /> },
+      { view: "roi-day",  label: "ROI Day",  icon: <Trophy size={15} /> },
     ],
   },
   {

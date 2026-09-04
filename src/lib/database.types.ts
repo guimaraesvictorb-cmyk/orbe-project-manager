@@ -280,6 +280,38 @@ export interface ShareToken {
   created_at: string
 }
 
+export interface RoiDayClient {
+  id: string
+  name: string
+  roi_status: string | null
+  offboarding_date: string | null
+  nps: number | null
+  fee: number | null
+  inv_meta: number | null
+  inv_realizado: number | null
+  fat_meta: number | null
+  fat_realizado: number | null
+  gmv_mes: number | null
+  relevancia_pct: number | null
+  leads: number | null
+  cpl: number | null
+  mql: number | null
+  cpmql: number | null
+  sql_count: number | null
+  cpsql: number | null
+  vendas: number | null
+  cpv: number | null
+  mc_pct: number | null
+  mmf: number | null
+  data_entrada: string | null
+  localizacao: string | null
+  stakeholder: string | null
+  client_id: string | null
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
 export interface UTMCapture {
   id: string
   lead_id: string | null
@@ -317,6 +349,7 @@ export type Database = {
       pipeline_stages: { Row: PipelineStage; Insert: Omit<PipelineStage, 'id' | 'created_at'>; Update: Partial<PipelineStage> }
       leads: { Row: Lead; Insert: Omit<Lead, 'id' | 'created_at' | 'updated_at'>; Update: Partial<Lead> }
       lead_activities: { Row: LeadActivity; Insert: Omit<LeadActivity, 'id' | 'created_at'>; Update: Partial<LeadActivity> }
+      roi_day_clients: { Row: RoiDayClient; Insert: Omit<RoiDayClient, 'id' | 'created_at' | 'updated_at'>; Update: Partial<RoiDayClient> }
     }
   }
 }

@@ -18,6 +18,7 @@ const DashboardView = lazy(() => import("./components/DashboardView").then((m) =
 const TarefasView = lazy(() => import("./components/TarefasView").then((m) => ({ default: m.TarefasView })));
 const ClientesView = lazy(() => import("./components/ClientesView").then((m) => ({ default: m.ClientesView })));
 const FinanceiroView = lazy(() => import("./components/FinanceiroView").then((m) => ({ default: m.FinanceiroView })));
+const RoiDayView = lazy(() => import("./components/RoiDayView").then((m) => ({ default: m.RoiDayView })));
 const PipelineView = lazy(() => import("./components/PipelineView").then((m) => ({ default: m.PipelineView })));
 const PlaybookView = lazy(() => import("./components/PlaybookView").then((m) => ({ default: m.PlaybookView })));
 const CentralView = lazy(() => import("./components/central/CentralView").then((m) => ({ default: m.CentralView })));
@@ -34,7 +35,7 @@ const LeadsCapturadosView = lazy(() => import("./components/LeadsCapturadosView"
 const VIEW_KEY = "orbe_view";
 
 const VALID_VIEWS: AppView[] = [
-  "home","dashboard","tarefas","clientes","financeiro","pipeline","processos",
+  "home","dashboard","tarefas","clientes","financeiro","roi-day","pipeline","processos",
   "central","rastreamento","super-agente","copy-ia","relatorios","whatsapp",
   "integracoes","leads-capturados","profile","settings",
 ];
@@ -189,6 +190,7 @@ function App() {
           {view === "tarefas"    && <TarefasView initialTaskId={pendingTaskId} onConsumeInitial={() => setPendingTaskId(undefined)} />}
           {view === "clientes"   && <ClientesView initialClientId={pendingClientId} onConsumeInitial={() => setPendingClientId(undefined)} />}
           {view === "financeiro" && <FinanceiroView />}
+          {view === "roi-day"    && <RoiDayView />}
           {view === "pipeline"   && <PipelineView />}
           {view === "processos"     && <PlaybookView />}
           {view === "central"       && <CentralView />}
