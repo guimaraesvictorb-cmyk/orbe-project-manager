@@ -283,6 +283,7 @@ export interface ShareToken {
 export interface RoiDayClient {
   id: string
   name: string
+  period: string
   roi_status: string | null
   offboarding_date: string | null
   nps: number | null

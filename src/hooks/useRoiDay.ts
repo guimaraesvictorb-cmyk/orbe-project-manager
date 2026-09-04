@@ -11,7 +11,8 @@ export function useRoiDay() {
     const { data, error } = await supabase
       .from('roi_day_clients')
       .select('*')
-      .order('fee', { ascending: false, nullsFirst: false })
+      .order('period', { ascending: false })
+      .order('name', { ascending: true })
     if (error) console.error('Failed to fetch roi_day_clients:', error.message)
     setRows(data ?? [])
     setLoading(false)
@@ -19,14 +20,30 @@ export function useRoiDay() {
 
   useEffect(() => { refetch() }, [refetch])
 
-  async function addRow(name: string, createdBy: string) {
+  async function addRow(name: string, period: string, createdBy: string) {
     const { data, error } = await supabase
       .from('roi_day_clients')
-      .insert({ name, created_by: createdBy })
+      .insert({ name, period, created_by: createdBy })
       .select()
       .single()
     if (error) return { error: error.message }
     setRows((prev) => [...prev, data])
+    return { data }
+  }
+
+  // Starts a new month for a client by copying its most recent entry (static
+  // facts like localização/stakeholder rarely change; the team then edits
+  // the metrics that did).
+  async function addMonthFromPrevious(prev: RoiDayClient, newPeriod: string, createdBy: string) {
+    const { id, created_at, updated_at, ...rest } = prev
+    void id; void created_at; void updated_at
+    const { data, error } = await supabase
+      .from('roi_day_clients')
+      .insert({ ...rest, period: newPeriod, created_by: createdBy })
+      .select()
+      .single()
+    if (error) return { error: error.message }
+    setRows((prevRows) => [...prevRows, data])
     return { data }
   }
 
@@ -49,5 +66,5 @@ export function useRoiDay() {
     return {}
   }
 
-  return { rows, loading, refetch, addRow, updateRow, deleteRow }
+  return { rows, loading, refetch, addRow, addMonthFromPrevious, updateRow, deleteRow }
 }
