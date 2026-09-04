@@ -291,40 +291,41 @@ export function RoiDayView() {
 
   return (
     <div className="max-w-full mx-auto w-full px-6 py-8 space-y-6">
-      <div>
-        <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "var(--accent)" }}>Operação</p>
-        <h2 className="text-[var(--text-primary)] font-bold text-lg leading-tight flex items-center gap-2">
-          <Trophy size={18} style={{ color: "var(--accent)" }} />
-          ROI Day
-        </h2>
-        <p className="text-xs mt-1" style={{ color: "var(--text-tertiary)" }}>Fee, investimento, faturamento e funil por cliente, mês a mês — clique numa célula pra editar. Só mostra clientes cadastrados em Clientes.</p>
-      </div>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "var(--accent)" }}>Operação</p>
+          <h2 className="text-[var(--text-primary)] font-bold text-lg leading-tight flex items-center gap-2">
+            <Trophy size={18} style={{ color: "var(--accent)" }} />
+            ROI Day
+          </h2>
+          <p className="text-xs mt-1" style={{ color: "var(--text-tertiary)" }}>Fee, investimento, faturamento e funil por cliente, mês a mês — clique numa célula pra editar. Só mostra clientes cadastrados em Clientes.</p>
+        </div>
 
-      {/* Month switcher — its own full-width bar so it can never get lost
-          next to the title or wrap off somewhere unexpected. */}
-      <div
-        className="w-full flex items-center justify-center gap-4 rounded-xl py-3"
-        style={{ backgroundColor: "var(--accent)" }}
-      >
-        <button
-          onClick={() => setPeriod((p) => shiftPeriod(p, -1))}
-          className="flex items-center justify-center w-9 h-9 rounded-lg transition-colors"
-          style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "#ffffff" }}
-          aria-label="Mês anterior"
-        >
-          <ChevronLeft size={18} />
-        </button>
-        <span className="text-base font-bold min-w-[180px] text-center" style={{ color: "#ffffff" }}>
-          {monthLabel(period)}
-        </span>
-        <button
-          onClick={() => setPeriod((p) => shiftPeriod(p, 1))}
-          className="flex items-center justify-center w-9 h-9 rounded-lg transition-colors"
-          style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "#ffffff" }}
-          aria-label="Próximo mês"
-        >
-          <ChevronRight size={18} />
-        </button>
+        <div className="flex items-center gap-0.5 rounded-lg border px-1.5 py-1" style={{ borderColor: "var(--border-strong)" }}>
+          <button
+            onClick={() => setPeriod((p) => shiftPeriod(p, -1))}
+            className="flex items-center justify-center w-6 h-6 rounded transition-colors"
+            style={{ color: "var(--text-tertiary)" }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--accent)"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--text-tertiary)"; }}
+            aria-label="Mês anterior"
+          >
+            <ChevronLeft size={14} />
+          </button>
+          <span className="text-xs font-semibold px-1.5 min-w-[104px] text-center" style={{ color: "var(--text-primary)" }}>
+            {monthLabel(period)}
+          </span>
+          <button
+            onClick={() => setPeriod((p) => shiftPeriod(p, 1))}
+            className="flex items-center justify-center w-6 h-6 rounded transition-colors"
+            style={{ color: "var(--text-tertiary)" }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--accent)"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--text-tertiary)"; }}
+            aria-label="Próximo mês"
+          >
+            <ChevronRight size={14} />
+          </button>
+        </div>
       </div>
 
       {neverAdded.length > 0 && (
