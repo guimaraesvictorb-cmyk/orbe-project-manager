@@ -25,6 +25,8 @@
   --success: #22C55E;
   --warning: #F59E0B;
   --danger: #EF4444;
+  --danger-tint: #1a0505;
+  --info-tint: #0a0d12;
 }
 
 :root[data-theme="light"] {
@@ -48,6 +50,8 @@
   --success: #16A34A;
   --warning: #D97706;
   --danger: #DC2626;
+  --danger-tint: #FEF2F2;
+  --info-tint: #EFF6FF;
 }
 
 * {

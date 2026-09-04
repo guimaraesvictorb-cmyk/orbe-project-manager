@@ -188,7 +188,7 @@ export function GoogleAdsIntegration() {
         </button>
 
         {showInstructions && (
-          <div className="rounded-xl p-4 space-y-2 text-xs" style={{ backgroundColor: "#1a0a0a", border: "1px solid #EA433522" }}>
+          <div className="rounded-xl p-4 space-y-2 text-xs" style={{ backgroundColor: "var(--danger-tint)", border: "1px solid #EA433522" }}>
             <p className="font-bold" style={{ color: "#EA4335" }}>Passo a passo:</p>
             <p style={{ color: "var(--text-tertiary)" }}>1. Acesse <a href="https://developers.google.com/oauthplayground" target="_blank" rel="noopener noreferrer" className="underline" style={{ color: "#EA4335" }}>Google OAuth Playground <ExternalLink size={10} className="inline" /></a></p>
             <p style={{ color: "var(--text-tertiary)" }}>2. Selecione o escopo: <strong className="text-[var(--text-primary)]">https://www.googleapis.com/auth/adwords</strong></p>

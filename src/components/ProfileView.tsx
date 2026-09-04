@@ -282,7 +282,7 @@ function TeamPanel({ currentUserId }: { currentUserId: string }) {
       )}
 
       {removeError && (
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs" style={{ backgroundColor: "#1a0505", border: "1px solid #EF444433", color: "var(--danger)" }}>
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs" style={{ backgroundColor: "var(--danger-tint)", border: "1px solid #EF444433", color: "var(--danger)" }}>
           <AlertCircle size={12} />{removeError}
         </div>
       )}
@@ -316,7 +316,7 @@ function TeamPanel({ currentUserId }: { currentUserId: string }) {
                   <p className="text-xs font-semibold text-[var(--text-primary)] flex items-center gap-2 truncate">
                     <span className="truncate">{member.display_name || member.email}</span>
                     {isMe && <span className="flex-shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: "var(--accent-tint)", color: "var(--accent)" }}>Você</span>}
-                    {!member.is_active && <span className="flex-shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: "#1a0505", color: "var(--danger)" }}>Inativo</span>}
+                    {!member.is_active && <span className="flex-shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: "var(--danger-tint)", color: "var(--danger)" }}>Inativo</span>}
                   </p>
                   <p className="text-[11px] mt-0.5 truncate" style={{ color: "var(--text-quaternary)" }}>{member.email}</p>
                   <p className="text-[10px] mt-0.5" style={{ color: "var(--text-quaternary)" }}>
@@ -363,7 +363,7 @@ function TeamPanel({ currentUserId }: { currentUserId: string }) {
               </div>
 
               {isConfirming ? (
-                <div className="flex items-center justify-between gap-3 px-4 py-3 flex-wrap" style={{ backgroundColor: "#1a0505", borderTop: "1px solid #EF444422" }}>
+                <div className="flex items-center justify-between gap-3 px-4 py-3 flex-wrap" style={{ backgroundColor: "var(--danger-tint)", borderTop: "1px solid #EF444422" }}>
                   <p className="text-xs" style={{ color: "var(--danger)" }}>
                     Remover o acesso de <strong>{member.display_name || member.email}</strong>? O login dele será bloqueado.
                   </p>
@@ -495,9 +495,9 @@ export function ProfileView({ profile, userEmail }: ProfileViewProps) {
   ];
 
   return (
-    <div className="flex h-full" style={{ backgroundColor: "#060606" }}>
+    <div className="flex h-full" style={{ backgroundColor: "var(--bg-page)" }}>
       {/* Sub-sidebar */}
-      <aside className="flex-shrink-0 flex flex-col py-6 overflow-y-auto" style={{ width: 200, borderRight: "1px solid var(--bg-surface-2)", backgroundColor: "#060606" }}>
+      <aside className="flex-shrink-0 flex flex-col py-6 overflow-y-auto" style={{ width: 200, borderRight: "1px solid var(--bg-surface-2)", backgroundColor: "var(--bg-page)" }}>
         <p className="text-[9px] font-bold tracking-widest uppercase px-4 mb-1" style={{ color: "var(--text-quaternary)" }}>Conta</p>
         {navItems.map((item) => (
           <button
@@ -639,7 +639,7 @@ export function ProfileView({ profile, userEmail }: ProfileViewProps) {
                   </div>
 
                   {pwError && (
-                    <div className="flex items-center gap-2 mt-4 px-3 py-2 rounded-lg max-w-sm" style={{ backgroundColor: "#1a0505", border: "1px solid #ef444433" }}>
+                    <div className="flex items-center gap-2 mt-4 px-3 py-2 rounded-lg max-w-sm" style={{ backgroundColor: "var(--danger-tint)", border: "1px solid #ef444433" }}>
                       <AlertCircle size={13} style={{ color: "var(--danger)", flexShrink: 0 }} />
                       <p className="text-xs" style={{ color: "var(--danger)" }}>{pwError}</p>
                     </div>

@@ -202,7 +202,7 @@ export function MetaAdsIntegration() {
         </button>
 
         {showInstructions && (
-          <div className="rounded-xl p-4 space-y-2 text-xs" style={{ backgroundColor: "#0a0f1a", border: "1px solid #1877F222" }}>
+          <div className="rounded-xl p-4 space-y-2 text-xs" style={{ backgroundColor: "var(--accent-tint)", border: "1px solid #1877F222" }}>
             <p className="font-bold" style={{ color: "#1877F2" }}>Passo a passo:</p>
             <p style={{ color: "var(--text-tertiary)" }}>1. Acesse <a href="https://developers.facebook.com/tools/explorer" target="_blank" rel="noopener noreferrer" className="underline" style={{ color: "#1877F2" }}>developers.facebook.com/tools/explorer <ExternalLink size={10} className="inline" /></a></p>
             <p style={{ color: "var(--text-tertiary)" }}>2. Clique em "Generate Access Token"</p>

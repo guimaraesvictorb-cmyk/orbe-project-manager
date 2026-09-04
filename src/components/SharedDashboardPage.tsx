@@ -142,7 +142,7 @@ export function SharedDashboardPage({ token }: { token: string }) {
   return (
     <div className="min-h-screen bg-[var(--bg-page)] text-[var(--text-primary)] font-sans">
       {/* Header */}
-      <div style={{ backgroundColor: "#050505", borderBottom: "1px solid var(--bg-surface-2)" }}>
+      <div style={{ backgroundColor: "var(--bg-page)", borderBottom: "1px solid var(--bg-surface-2)" }}>
         <div className="max-w-3xl mx-auto px-6 py-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="text-xl font-bold leading-none" style={{ fontFamily: "Arial, sans-serif", letterSpacing: "-2px" }}>

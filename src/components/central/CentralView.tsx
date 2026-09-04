@@ -169,7 +169,7 @@ export function CentralView() {
       {/* ── Sidebar ─────────────────────────────────────────────────────── */}
       <aside
         className="w-52 flex-shrink-0 border-r overflow-y-auto"
-        style={{ borderColor: "var(--border)", backgroundColor: "#060606" }}
+        style={{ borderColor: "var(--border)", backgroundColor: "var(--bg-page)" }}
         aria-label="Central de Operação — navegação"
       >
         {/* Sidebar header */}

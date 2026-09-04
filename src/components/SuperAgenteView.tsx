@@ -249,7 +249,7 @@ export function SuperAgenteView() {
   ];
 
   return (
-    <div className="flex flex-col h-screen" style={{ backgroundColor: "#040404" }}>
+    <div className="flex flex-col h-screen" style={{ backgroundColor: "var(--bg-page)" }}>
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-3 border-b flex-shrink-0" style={{ borderColor: "var(--bg-surface-2)" }}>
         <div className="flex items-center gap-2">
@@ -261,7 +261,7 @@ export function SuperAgenteView() {
             llama 3.3 · groq
           </span>
           {braveKey && (
-            <span className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "#0a1a0d", color: "var(--accent)", border: "1px solid var(--accent-a22)" }}>
+            <span className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "var(--accent-tint)", color: "var(--accent)", border: "1px solid var(--accent-a22)" }}>
               <Globe size={9} /> busca web ativa
             </span>
           )}
@@ -286,12 +286,12 @@ export function SuperAgenteView() {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4 min-h-0">
         {!groqKey && (
-          <div className="rounded-xl px-4 py-3 text-xs" style={{ backgroundColor: "#1a0a0a", border: "1px solid #DC262633", color: "var(--danger)" }}>
+          <div className="rounded-xl px-4 py-3 text-xs" style={{ backgroundColor: "var(--danger-tint)", border: "1px solid #DC262633", color: "var(--danger)" }}>
             Configure sua chave Groq (gratuita em console.groq.com) clicando em ⚙ acima.
           </div>
         )}
         {!braveKey && groqKey && (
-          <div className="rounded-xl px-4 py-3 text-xs flex items-center justify-between" style={{ backgroundColor: "#0a0d12", border: "1px solid #2563EB33" }}>
+          <div className="rounded-xl px-4 py-3 text-xs flex items-center justify-between" style={{ backgroundColor: "var(--info-tint)", border: "1px solid #2563EB33" }}>
             <span style={{ color: "var(--text-secondary)" }}>
               Configure sua chave <strong>Brave Search</strong> (gratuita em brave.com/search/api) para ativar a busca na internet.
             </span>
@@ -314,7 +314,7 @@ export function SuperAgenteView() {
       </div>
 
       {/* Input */}
-      <div className="flex-shrink-0 border-t px-6 py-4 space-y-3" style={{ borderColor: "var(--bg-surface-2)", backgroundColor: "#040404" }}>
+      <div className="flex-shrink-0 border-t px-6 py-4 space-y-3" style={{ borderColor: "var(--bg-surface-2)", backgroundColor: "var(--bg-page)" }}>
         {messages.length === 0 && (
           <div className="flex flex-wrap gap-2">
             {QUICK.map((q) => (

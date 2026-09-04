@@ -147,7 +147,7 @@ function ConfigModal({ onClose, onSave }: ConfigModalProps) {
         {/* ── Step: form ── */}
         {step === "form" && (
           <div className="px-6 py-5 space-y-4">
-            <div className="rounded-xl px-4 py-3 text-xs space-y-1" style={{ backgroundColor: "#0d1a0d", border: "1px solid var(--accent-a22)" }}>
+            <div className="rounded-xl px-4 py-3 text-xs space-y-1" style={{ backgroundColor: "var(--accent-tint)", border: "1px solid var(--accent-a22)" }}>
               <p className="font-bold" style={{ color: "var(--accent)" }}>Pré-requisito: Evolution API no ar</p>
               <p style={{ color: "#777" }}>Acesse <strong className="text-[var(--text-primary)]">evolution-api.com</strong> e faça deploy gratuito no Railway ou Render. Depois cole a URL e a chave abaixo.</p>
             </div>
@@ -231,7 +231,7 @@ function ConfigModal({ onClose, onSave }: ConfigModalProps) {
         {/* ── Step: connected ── */}
         {step === "connected" && (
           <div className="px-6 py-10 flex flex-col items-center gap-3 text-center">
-            <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ backgroundColor: "#0d1f0d", border: "1px solid var(--accent-a44)" }}>
+            <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ backgroundColor: "var(--accent-tint)", border: "1px solid var(--accent-a44)" }}>
               <Check size={26} style={{ color: "var(--accent)" }} />
             </div>
             <p className="text-sm font-bold text-[var(--text-primary)]">WhatsApp conectado!</p>
@@ -330,7 +330,7 @@ export function WhatsAppView() {
         </div>
 
         {!isConfigured && (
-          <div className="rounded-xl px-4 py-4 text-xs" style={{ backgroundColor: "#1a0a0a", border: "1px solid #DC262633" }}>
+          <div className="rounded-xl px-4 py-4 text-xs" style={{ backgroundColor: "var(--danger-tint)", border: "1px solid #DC262633" }}>
             <p className="font-bold mb-1" style={{ color: "var(--danger)" }}>Evolution API não configurada</p>
             <p style={{ color: "var(--text-tertiary)" }}>Clique em "Configurar API" para conectar seu WhatsApp Business. É gratuito via Railway ou Render.</p>
           </div>

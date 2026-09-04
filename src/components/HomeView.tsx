@@ -310,7 +310,7 @@ export function HomeView({ profile, onNavigate }: HomeViewProps) {
   const hasConversation = messages.length > 1;
 
   return (
-    <div className="flex flex-col flex-1 min-h-0" style={{ backgroundColor: "#040404" }}>
+    <div className="flex flex-col flex-1 min-h-0" style={{ backgroundColor: "var(--bg-page)" }}>
       {/* ── Top bar ────────────────────────────────────────────────────────── */}
       <div
         className="flex items-center justify-between px-6 py-3 border-b flex-shrink-0"
@@ -386,7 +386,7 @@ export function HomeView({ profile, onNavigate }: HomeViewProps) {
         {!apiKey && (
           <div
             className="rounded-xl px-4 py-3 flex items-center justify-between gap-4"
-            style={{ backgroundColor: "#1a0a0a", border: "1px solid #DC262633" }}
+            style={{ backgroundColor: "var(--danger-tint)", border: "1px solid #DC262633" }}
           >
             <p className="text-xs" style={{ color: "var(--danger)" }}>
               Configure sua chave gratuita do Groq para ativar o assistente. Crie em console.groq.com (sem cartão).
@@ -413,7 +413,7 @@ export function HomeView({ profile, onNavigate }: HomeViewProps) {
       {/* ── Input area ─────────────────────────────────────────────────────── */}
       <div
         className="flex-shrink-0 border-t px-6 py-4 space-y-3"
-        style={{ borderColor: "var(--bg-surface-2)", backgroundColor: "#040404" }}
+        style={{ borderColor: "var(--bg-surface-2)", backgroundColor: "var(--bg-page)" }}
       >
         {/* Quick actions */}
         {!hasConversation && (

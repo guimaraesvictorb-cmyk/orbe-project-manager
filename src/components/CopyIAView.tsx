@@ -211,7 +211,7 @@ export function CopyIAView() {
         </div>
 
         {!apiKey && (
-          <div className="rounded-xl px-4 py-3 text-xs" style={{ backgroundColor: "#1a0a0a", border: "1px solid #DC262633", color: "var(--danger)" }}>
+          <div className="rounded-xl px-4 py-3 text-xs" style={{ backgroundColor: "var(--danger-tint)", border: "1px solid #DC262633", color: "var(--danger)" }}>
             Configure sua chave Groq (gratuita) no Orbe AI ou no Super Agente para usar o Copy IA.
           </div>
         )}

@@ -276,7 +276,7 @@ Use APENAS as informações acima. Não invente dados. Se não souber algo sobre
 
   return (
     <div className="flex flex-col h-full" style={{ minHeight: 0 }}>
-      <div className="flex items-center gap-2 px-4 py-2 rounded-xl mb-4" style={{ backgroundColor: "#0a0f0d", border: "1px solid var(--accent-tint)" }}>
+      <div className="flex items-center gap-2 px-4 py-2 rounded-xl mb-4" style={{ backgroundColor: "var(--accent-tint)", border: "1px solid var(--accent-tint)" }}>
         <BookOpen size={12} style={{ color: "var(--accent)" }} />
         <p className="text-[11px]" style={{ color: "var(--text-tertiary)" }}>
           IA especializada em <span className="text-[var(--text-primary)] font-medium">{client.name}</span> —{" "}
@@ -500,7 +500,7 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
   ]
 
   return (
-    <div className="flex flex-col h-full" style={{ backgroundColor: "#060606" }}>
+    <div className="flex flex-col h-full" style={{ backgroundColor: "var(--bg-page)" }}>
       {showShareModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.8)" }}>
           <div className="rounded-2xl border w-full max-w-md" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
@@ -585,7 +585,7 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
       </div>
 
       {confirmingDelete && (
-        <div className="flex items-center justify-between gap-3 px-8 py-3 flex-wrap" style={{ backgroundColor: "#1a0505", borderBottom: "1px solid #EF444422" }}>
+        <div className="flex items-center justify-between gap-3 px-8 py-3 flex-wrap" style={{ backgroundColor: "var(--danger-tint)", borderBottom: "1px solid #EF444422" }}>
           <p className="text-xs" style={{ color: "var(--danger)" }}>
             Excluir <strong>{client.name}</strong>? O cliente sai da carteira ativa, mas o histórico é preservado.
           </p>
@@ -889,7 +889,7 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
                   onClick={handleAISuggest}
                   disabled={suggesting}
                   className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold border transition-all disabled:opacity-50"
-                  style={{ borderColor: "#8B5CF633", color: "#8B5CF6", backgroundColor: "#0f0a1a" }}
+                  style={{ borderColor: "#8B5CF633", color: "#8B5CF6", backgroundColor: "var(--accent-tint)" }}
                 >
                   {suggesting ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
                   {suggesting ? "Gerando sugestões..." : "Sugerir com IA"}

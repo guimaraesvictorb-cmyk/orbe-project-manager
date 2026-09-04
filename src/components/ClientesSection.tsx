@@ -326,7 +326,7 @@ function NewClientModal({ onClose, onSave }: { onClose: () => void; onSave: (dat
           </div>
 
           {saveError && (
-            <p className="text-xs rounded-lg px-3 py-2" style={{ backgroundColor: "#1a0808", color: "var(--danger)", border: "1px solid #EF444433" }}>
+            <p className="text-xs rounded-lg px-3 py-2" style={{ backgroundColor: "var(--danger-tint)", color: "var(--danger)", border: "1px solid #EF444433" }}>
               Erro ao salvar: {saveError}
             </p>
           )}
@@ -534,7 +534,7 @@ export function ClientesSection({ compact = false, onSelectClient }: ClientesSec
                 Churn — {churnedClients.length} cliente{churnedClients.length !== 1 ? "s" : ""}
               </span>
               {churnRevenueLost > 0 && (
-                <span className="text-[11px] px-2 py-0.5 rounded-md" style={{ backgroundColor: "#1a0808", color: "var(--danger)" }}>
+                <span className="text-[11px] px-2 py-0.5 rounded-md" style={{ backgroundColor: "var(--danger-tint)", color: "var(--danger)" }}>
                   − R$ {churnRevenueLost.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}/mês
                 </span>
               )}

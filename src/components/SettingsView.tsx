@@ -358,11 +358,11 @@ export function SettingsView({ profile }: SettingsViewProps) {
   const [section, setSection] = useState<Section>("geral");
 
   return (
-    <div className="flex h-full" style={{ backgroundColor: "#060606" }}>
+    <div className="flex h-full" style={{ backgroundColor: "var(--bg-page)" }}>
       {/* Sub-sidebar */}
       <aside
         className="flex-shrink-0 flex flex-col py-6 overflow-y-auto"
-        style={{ width: 200, borderRight: "1px solid var(--bg-surface-2)", backgroundColor: "#060606" }}
+        style={{ width: 200, borderRight: "1px solid var(--bg-surface-2)", backgroundColor: "var(--bg-page)" }}
       >
         <p className="text-[9px] font-bold tracking-widest uppercase px-4 mb-3" style={{ color: "var(--text-quaternary)" }}>
           Configurações

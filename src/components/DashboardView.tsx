@@ -179,7 +179,7 @@ export function DashboardView() {
                       </div>
                       <span
                         className="flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded"
-                        style={{ backgroundColor: "#2a0a0a", color: "var(--danger)" }}
+                        style={{ backgroundColor: "var(--danger-tint)", color: "var(--danger)" }}
                       >
                         {daysLate}d atraso
                       </span>

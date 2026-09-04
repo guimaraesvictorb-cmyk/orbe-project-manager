@@ -336,7 +336,7 @@ export function TasksView({ clientId, initialTaskId, onConsumeInitial }: { clien
             <span className="text-sm" style={{ color: "var(--text-secondary)" }}>{filtered.length} tarefa{filtered.length !== 1 ? "s" : ""}</span>
             {overdue > 0 && (
               <span className="text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider"
-                style={{ backgroundColor: "#1a0505", color: "var(--danger)", border: "1px solid #EF444433" }}>
+                style={{ backgroundColor: "var(--danger-tint)", color: "var(--danger)", border: "1px solid #EF444433" }}>
                 {overdue} atrasada{overdue !== 1 ? "s" : ""}
               </span>
             )}
@@ -371,7 +371,7 @@ export function TasksView({ clientId, initialTaskId, onConsumeInitial }: { clien
       </div>
 
       {confirmingClear && (
-        <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl flex-wrap" style={{ backgroundColor: "#1a0505", border: "1px solid #EF444422" }}>
+        <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl flex-wrap" style={{ backgroundColor: "var(--danger-tint)", border: "1px solid #EF444422" }}>
           <p className="text-xs" style={{ color: "var(--danger)" }}>
             Excluir as {completedCount} tarefas concluídas? Essa ação não pode ser desfeita.
           </p>

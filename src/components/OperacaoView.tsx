@@ -161,7 +161,7 @@ function PhaseDetail({ phase }: { phase: Phase }) {
         className="mx-6 mt-4 mb-0 px-4 py-3 rounded-xl italic text-sm leading-relaxed"
         style={{
           borderLeft: "3px solid var(--accent)",
-          backgroundColor: "#060f09",
+          backgroundColor: "var(--bg-page)",
           color: "#d4d4d4",
         }}
       >
@@ -239,7 +239,7 @@ export function OperacaoView() {
 
         {/* ── Churn banner ────────────────────────────────────────────────── */}
         {churned.length > 0 && (
-          <div className="rounded-2xl border px-6 py-4 flex flex-wrap items-center gap-6" style={{ backgroundColor: "#0d0808", borderColor: "#EF444433" }}>
+          <div className="rounded-2xl border px-6 py-4 flex flex-wrap items-center gap-6" style={{ backgroundColor: "var(--danger-tint)", borderColor: "#EF444433" }}>
             <div className="flex items-center gap-3">
               <TrendingDown size={18} style={{ color: "var(--danger)" }} />
               <div>
@@ -259,7 +259,7 @@ export function OperacaoView() {
             <div className="w-px h-10 hidden sm:block" style={{ backgroundColor: "#EF444433" }} />
             <div className="flex flex-wrap gap-2">
               {churned.map((c) => (
-                <span key={c.id} className="text-[11px] px-2.5 py-1 rounded-lg font-medium" style={{ backgroundColor: "#1a0808", color: "var(--danger)", border: "1px solid #EF444422" }}>
+                <span key={c.id} className="text-[11px] px-2.5 py-1 rounded-lg font-medium" style={{ backgroundColor: "var(--danger-tint)", color: "var(--danger)", border: "1px solid #EF444422" }}>
                   {c.name}
                 </span>
               ))}
