@@ -220,16 +220,22 @@ export function RoiDayView() {
 
   const periodRows = useMemo(() => rows.filter((r) => r.period === period), [rows, period]);
 
+  // Tracking starts today — there's no data before this, so the filter
+  // shouldn't offer months/years that could never have anything in them.
+  const trackingStart = useMemo(() => periodParts(todayLocal().slice(0, 7)), []);
+
   const yearOptions = useMemo(() => {
-    const current = todayLocal().slice(0, 4);
-    const years = new Set<number>(rows.map((r) => periodParts(r.period).year));
-    years.add(Number(current));
-    const min = Math.min(...years, Number(current) - 1);
-    const max = Math.max(...years, Number(current) + 1);
+    const maxDataYear = Math.max(trackingStart.year, ...rows.map((r) => periodParts(r.period).year));
+    const max = Math.max(maxDataYear, trackingStart.year + 2);
     const list: number[] = [];
-    for (let y = min; y <= max; y++) list.push(y);
+    for (let y = trackingStart.year; y <= max; y++) list.push(y);
     return list;
-  }, [rows]);
+  }, [rows, trackingStart]);
+
+  const monthOptionsForYear = useMemo(() => {
+    const startMonth = periodParts(period).year === trackingStart.year ? trackingStart.month : 1;
+    return MONTH_NAMES.map((name, i) => ({ name, value: i + 1 })).filter((m) => m.value >= startMonth);
+  }, [period, trackingStart]);
 
   // ROI Day only ever tracks clients that exist in Clientes — this is the
   // known-names universe for "missing this month" and "never added" below.
@@ -329,8 +335,8 @@ export function RoiDayView() {
               className="rounded-lg px-2.5 py-1.5 text-xs font-semibold border focus:outline-none cursor-pointer"
               style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border-strong)", color: "var(--text-primary)" }}
             >
-              {MONTH_NAMES.map((name, i) => (
-                <option key={name} value={i + 1}>{name}</option>
+              {monthOptionsForYear.map((m) => (
+                <option key={m.name} value={m.value}>{m.name}</option>
               ))}
             </select>
           </div>
@@ -338,7 +344,12 @@ export function RoiDayView() {
             <label className="text-[9px] font-bold uppercase tracking-widest block" style={{ color: "var(--text-tertiary)" }}>Ano</label>
             <select
               value={periodParts(period).year}
-              onChange={(e) => setPeriod(makePeriod(Number(e.target.value), periodParts(period).month))}
+              onChange={(e) => {
+                const newYear = Number(e.target.value);
+                const currentMonth = periodParts(period).month;
+                const minMonth = newYear === trackingStart.year ? trackingStart.month : 1;
+                setPeriod(makePeriod(newYear, Math.max(currentMonth, minMonth)));
+              }}
               className="rounded-lg px-2.5 py-1.5 text-xs font-semibold border focus:outline-none cursor-pointer"
               style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border-strong)", color: "var(--text-primary)" }}
             >
