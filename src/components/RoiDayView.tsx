@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Trophy, Plus, Trash2, Loader2, FileText, ArrowLeft, Printer, ChevronLeft, ChevronRight } from "lucide-react";
+import { Trophy, Plus, Trash2, Loader2, FileText, ArrowLeft, Printer } from "lucide-react";
 import { useRoiDay } from "../hooks/useRoiDay";
 import { useAuth } from "../hooks/useAuth";
 import { useClients } from "../hooks/useClients";
@@ -38,10 +38,18 @@ function monthLabel(period: string): string {
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
-function shiftPeriod(period: string, delta: number): string {
+const MONTH_NAMES = [
+  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+];
+
+function periodParts(period: string): { year: number; month: number } {
   const [y, m] = period.split("-").map(Number);
-  const d = new Date(y, m - 1 + delta, 1);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  return { year: y, month: m };
+}
+
+function makePeriod(year: number, month: number): string {
+  return `${year}-${String(month).padStart(2, "0")}`;
 }
 
 type ColType = "text" | "money" | "int" | "pct" | "date";
@@ -212,6 +220,17 @@ export function RoiDayView() {
 
   const periodRows = useMemo(() => rows.filter((r) => r.period === period), [rows, period]);
 
+  const yearOptions = useMemo(() => {
+    const current = todayLocal().slice(0, 4);
+    const years = new Set<number>(rows.map((r) => periodParts(r.period).year));
+    years.add(Number(current));
+    const min = Math.min(...years, Number(current) - 1);
+    const max = Math.max(...years, Number(current) + 1);
+    const list: number[] = [];
+    for (let y = min; y <= max; y++) list.push(y);
+    return list;
+  }, [rows]);
+
   // ROI Day only ever tracks clients that exist in Clientes — this is the
   // known-names universe for "missing this month" and "never added" below.
   const clientNames = useMemo(
@@ -301,30 +320,33 @@ export function RoiDayView() {
           <p className="text-xs mt-1" style={{ color: "var(--text-tertiary)" }}>Fee, investimento, faturamento e funil por cliente, mês a mês — clique numa célula pra editar. Só mostra clientes cadastrados em Clientes.</p>
         </div>
 
-        <div className="flex items-center gap-0.5 rounded-lg border px-1.5 py-1" style={{ borderColor: "var(--border-strong)" }}>
-          <button
-            onClick={() => setPeriod((p) => shiftPeriod(p, -1))}
-            className="flex items-center justify-center w-6 h-6 rounded transition-colors"
-            style={{ color: "var(--text-tertiary)" }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--accent)"; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--text-tertiary)"; }}
-            aria-label="Mês anterior"
-          >
-            <ChevronLeft size={14} />
-          </button>
-          <span className="text-xs font-semibold px-1.5 min-w-[104px] text-center" style={{ color: "var(--text-primary)" }}>
-            {monthLabel(period)}
-          </span>
-          <button
-            onClick={() => setPeriod((p) => shiftPeriod(p, 1))}
-            className="flex items-center justify-center w-6 h-6 rounded transition-colors"
-            style={{ color: "var(--text-tertiary)" }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--accent)"; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--text-tertiary)"; }}
-            aria-label="Próximo mês"
-          >
-            <ChevronRight size={14} />
-          </button>
+        <div className="flex items-end gap-2">
+          <div className="space-y-1">
+            <label className="text-[9px] font-bold uppercase tracking-widest block" style={{ color: "var(--text-tertiary)" }}>Mês</label>
+            <select
+              value={periodParts(period).month}
+              onChange={(e) => setPeriod(makePeriod(periodParts(period).year, Number(e.target.value)))}
+              className="rounded-lg px-2.5 py-1.5 text-xs font-semibold border focus:outline-none cursor-pointer"
+              style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border-strong)", color: "var(--text-primary)" }}
+            >
+              {MONTH_NAMES.map((name, i) => (
+                <option key={name} value={i + 1}>{name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-1">
+            <label className="text-[9px] font-bold uppercase tracking-widest block" style={{ color: "var(--text-tertiary)" }}>Ano</label>
+            <select
+              value={periodParts(period).year}
+              onChange={(e) => setPeriod(makePeriod(Number(e.target.value), periodParts(period).month))}
+              className="rounded-lg px-2.5 py-1.5 text-xs font-semibold border focus:outline-none cursor-pointer"
+              style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border-strong)", color: "var(--text-primary)" }}
+            >
+              {yearOptions.map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
