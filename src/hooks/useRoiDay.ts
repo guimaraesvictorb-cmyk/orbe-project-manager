@@ -20,10 +20,10 @@ export function useRoiDay() {
 
   useEffect(() => { refetch() }, [refetch])
 
-  async function addRow(name: string, period: string, createdBy: string) {
+  async function addRow(name: string, period: string, createdBy: string, clientId?: string | null) {
     const { data, error } = await supabase
       .from('roi_day_clients')
-      .insert({ name, period, created_by: createdBy })
+      .insert({ name, period, created_by: createdBy, client_id: clientId ?? null })
       .select()
       .single()
     if (error) return { error: error.message }

@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Trophy, Plus, Trash2, Loader2, FileText, ArrowLeft, Printer, ChevronLeft, ChevronRight } from "lucide-react";
 import { useRoiDay } from "../hooks/useRoiDay";
 import { useAuth } from "../hooks/useAuth";
+import { useClients } from "../hooks/useClients";
 import type { RoiDayClient } from "../lib/database.types";
 import { fmtCurrency0, fmtInt, fmtPct, todayLocal } from "../lib/formatters";
 
@@ -198,13 +199,21 @@ function RoiDayReport({ clientName, history, onBack }: { clientName: string; his
 
 export function RoiDayView() {
   const { profile } = useAuth();
+  const { clients } = useClients();
   const { rows, loading, addRow, addMonthFromPrevious, updateRow, deleteRow } = useRoiDay();
   const [adding, setAdding] = useState(false);
   const [period, setPeriod] = useState(() => todayLocal().slice(0, 7));
   const [reportClient, setReportClient] = useState<string | null>(null);
 
+  const registeredClients = useMemo(
+    () => clients.filter((c) => !c.deleted_at).sort((a, b) => a.name.localeCompare(b.name)),
+    [clients]
+  );
+
   const periodRows = useMemo(() => rows.filter((r) => r.period === period), [rows, period]);
 
+  // ROI Day only ever tracks clients that exist in Clientes — this is the
+  // known-names universe for "missing this month" and "never added" below.
   const clientNames = useMemo(
     () => Array.from(new Set(rows.map((r) => r.name))).sort((a, b) => a.localeCompare(b)),
     [rows]
@@ -213,6 +222,14 @@ export function RoiDayView() {
   const missingThisMonth = useMemo(
     () => clientNames.filter((name) => !periodRows.some((r) => r.name === name)),
     [clientNames, periodRows]
+  );
+
+  // Registered clients that have never had a single ROI Day entry (any
+  // month) — distinct from missingThisMonth, which only covers clients that
+  // already have history but skipped the currently-viewed month.
+  const neverAdded = useMemo(
+    () => registeredClients.filter((c) => !clientNames.includes(c.name)),
+    [registeredClients, clientNames]
   );
 
   const totals = useMemo(() => {
@@ -235,12 +252,10 @@ export function RoiDayView() {
     };
   }, [periodRows]);
 
-  async function handleAddNewClient() {
+  async function handleAddNeverAdded(clientId: string, name: string) {
     if (!profile) return;
-    const name = window.prompt("Nome do cliente:");
-    if (!name || !name.trim()) return;
     setAdding(true);
-    await addRow(name.trim(), period, profile.id);
+    await addRow(name, period, profile.id, clientId);
     setAdding(false);
   }
 
@@ -283,46 +298,51 @@ export function RoiDayView() {
             <Trophy size={18} style={{ color: "var(--accent)" }} />
             ROI Day
           </h2>
-          <p className="text-xs mt-1" style={{ color: "var(--text-tertiary)" }}>Fee, investimento, faturamento e funil por cliente, mês a mês — clique numa célula pra editar.</p>
+          <p className="text-xs mt-1" style={{ color: "var(--text-tertiary)" }}>Fee, investimento, faturamento e funil por cliente, mês a mês — clique numa célula pra editar. Só mostra clientes cadastrados em Clientes.</p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 rounded-lg border px-1" style={{ borderColor: "var(--border)" }}>
-            <button onClick={() => setPeriod((p) => shiftPeriod(p, -1))} className="p-1.5" style={{ color: "var(--text-tertiary)" }} aria-label="Mês anterior">
-              <ChevronLeft size={14} />
-            </button>
-            <input
-              type="month"
-              value={period}
-              onChange={(e) => setPeriod(e.target.value)}
-              className="text-xs text-[var(--text-primary)] focus:outline-none py-1.5"
-              style={{ backgroundColor: "transparent" }}
-            />
-            <button onClick={() => setPeriod((p) => shiftPeriod(p, 1))} className="p-1.5" style={{ color: "var(--text-tertiary)" }} aria-label="Próximo mês">
-              <ChevronRight size={14} />
-            </button>
-          </div>
-          <button
-            onClick={handleAddNewClient}
-            disabled={adding}
-            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg disabled:opacity-50"
-            style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}
-          >
-            {adding ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />}
-            Novo cliente
+        <div
+          className="flex items-center gap-3 rounded-xl border px-3 py-2"
+          style={{ borderColor: "var(--accent-a44)", backgroundColor: "var(--accent-tint)" }}
+        >
+          <button onClick={() => setPeriod((p) => shiftPeriod(p, -1))} className="p-1 rounded" style={{ color: "var(--accent)" }} aria-label="Mês anterior">
+            <ChevronLeft size={16} />
+          </button>
+          <span className="text-sm font-bold min-w-[130px] text-center" style={{ color: "var(--text-primary)" }}>
+            {monthLabel(period)}
+          </span>
+          <button onClick={() => setPeriod((p) => shiftPeriod(p, 1))} className="p-1 rounded" style={{ color: "var(--accent)" }} aria-label="Próximo mês">
+            <ChevronRight size={16} />
           </button>
         </div>
       </div>
 
-      {missingThisMonth.length > 0 && (
+      {neverAdded.length > 0 && (
         <div className="rounded-xl border p-3 flex flex-wrap items-center gap-2" style={{ backgroundColor: "var(--accent-tint)", borderColor: "var(--accent-a33)" }}>
-          <span className="text-xs font-semibold" style={{ color: "var(--text-primary)" }}>Faltam em {monthLabel(period)}:</span>
+          <span className="text-xs font-semibold" style={{ color: "var(--text-primary)" }}>Cadastrados em Clientes mas ainda sem registro no ROI Day:</span>
+          {neverAdded.map((c) => (
+            <button
+              key={c.id}
+              onClick={() => handleAddNeverAdded(c.id, c.name)}
+              disabled={adding}
+              className="flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-lg disabled:opacity-50"
+              style={{ backgroundColor: "var(--bg-surface)", color: "var(--accent)", border: "1px solid var(--accent-a44)" }}
+            >
+              <Plus size={10} />{c.name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {missingThisMonth.length > 0 && (
+        <div className="rounded-xl border p-3 flex flex-wrap items-center gap-2" style={{ backgroundColor: "color-mix(in srgb, var(--warning) 12%, var(--bg-surface))", borderColor: "var(--warning)" }}>
+          <span className="text-xs font-semibold" style={{ color: "var(--text-primary)" }}>Faltam preencher em {monthLabel(period)}:</span>
           {missingThisMonth.map((name) => (
             <button
               key={name}
               onClick={() => handleAddExistingForMonth(name)}
               disabled={adding}
               className="flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-lg disabled:opacity-50"
-              style={{ backgroundColor: "var(--bg-surface)", color: "var(--accent)", border: "1px solid var(--accent-a44)" }}
+              style={{ backgroundColor: "var(--bg-surface)", color: "var(--warning)", border: "1px solid var(--warning)" }}
             >
               <Plus size={10} />{name}
             </button>
