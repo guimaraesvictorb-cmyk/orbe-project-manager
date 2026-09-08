@@ -116,8 +116,8 @@ function MessageBubble({ message }: { message: Message }) {
         className="max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed"
         style={
           isUser
-            ? { backgroundColor: "var(--bg-surface-2)", color: "#e5e5e5", border: "1px solid var(--border-strong)" }
-            : { backgroundColor: "var(--bg-surface)", color: "#d4d4d4", border: "1px solid var(--border)" }
+            ? { backgroundColor: "var(--bg-surface-2)", color: "var(--text-primary)", border: "1px solid var(--border-strong)" }
+            : { backgroundColor: "var(--bg-surface)", color: "var(--text-secondary)", border: "1px solid var(--border)" }
         }
       >
         {lines.map((line, i) => {
@@ -408,7 +408,7 @@ export function HomeView({ profile, onNavigate }: HomeViewProps) {
               style={{
                 backgroundColor: "var(--bg-surface-2)",
                 border: "1px solid var(--border-strong)",
-                color: "#e5e5e5",
+                color: "var(--text-primary)",
                 maxHeight: "120px",
               }}
               onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent-a44)")}
