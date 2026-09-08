@@ -24,8 +24,8 @@ interface NavGroup { label?: string; items: NavItem[] }
 const NAV: NavGroup[] = [
   {
     items: [
-      { view: "home",      label: "Orbe AI",     icon: <Sparkles size={15} /> },
       { view: "dashboard", label: "Dashboard", icon: <LayoutDashboard size={15} /> },
+      { view: "home",      label: "Orbe AI",     icon: <Sparkles size={15} /> },
     ],
   },
   {
@@ -113,8 +113,13 @@ export function AppNav({ active, onChange, profile, onLogout, isOpen, onClose }:
           borderRight: "1px solid var(--border)",
         }}
       >
-      {/* Logo */}
-      <div className="flex items-center gap-3 px-5 py-5 flex-shrink-0" style={{ borderBottom: "1px solid var(--bg-surface-2)" }}>
+      {/* Logo — doubles as a "back to Dashboard" shortcut */}
+      <button
+        onClick={() => handleChange("dashboard")}
+        className="flex items-center gap-3 px-5 py-5 flex-shrink-0 text-left focus:outline-none"
+        style={{ borderBottom: "1px solid var(--bg-surface-2)" }}
+        aria-label="Ir para o Dashboard"
+      >
         <div
           className="text-xl font-bold leading-none select-none flex-shrink-0"
           style={{ fontFamily: "Arial, sans-serif", letterSpacing: "-2px" }}
@@ -125,7 +130,7 @@ export function AppNav({ active, onChange, profile, onLogout, isOpen, onClose }:
           <p className="text-[var(--text-primary)] font-semibold text-xs leading-tight">Operating System</p>
           <p className="text-[10px] leading-tight" style={{ color: "var(--text-quaternary)" }}>Plataforma Orbe</p>
         </div>
-      </div>
+      </button>
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-5 overflow-y-auto">
