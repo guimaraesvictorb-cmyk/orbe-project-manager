@@ -14,7 +14,6 @@ import { useClientAssignments } from "../hooks/useClientAssignments"
 import { isAdminOrCoordenador } from "../lib/permissions"
 import { useAuth } from "../hooks/useAuth"
 import { FLAG_META, STATUS_META } from "../lib/clientMeta"
-import { getGroqApiKey, GROQ_MODEL, GROQ_API_URL } from "../lib/groq"
 import { AdsMetricsTab } from "./ads/AdsMetricsTab"
 import { CompiladoTab } from "./ads/CompiladoTab"
 import { MetaAdsLiveTab } from "./ads/MetaAdsLiveTab"
@@ -195,10 +194,8 @@ Dados do cliente:
 Use APENAS as informações acima. Não invente dados. Se não souber algo sobre o cliente, diga que a informação não foi cadastrada.`
   }, [client, validated])
 
-  const apiKey = useMemo(() => getGroqApiKey(), [])
-
   async function sendMessage(userMsg: string) {
-    if (!userMsg.trim() || streaming || !apiKey) return
+    if (!userMsg.trim() || streaming) return
     setError("")
 
     const newMessages: ChatMessage[] = [...messages, { role: "user", content: userMsg }]
@@ -209,14 +206,14 @@ Use APENAS as informações acima. Não invente dados. Se não souber algo sobre
     abortRef.current = new AbortController()
 
     try {
-      const res = await fetch(GROQ_API_URL, {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/orbe-ai-chat`, {
         method: "POST",
         signal: abortRef.current.signal,
-        headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
+        headers: { "content-type": "application/json", authorization: `Bearer ${session?.access_token ?? ""}` },
         body: JSON.stringify({
-          model: GROQ_MODEL,
-          stream: true,
-          messages: [{ role: "system", content: systemPrompt }, ...newMessages],
+          system: systemPrompt,
+          messages: newMessages,
         }),
       })
 
@@ -258,20 +255,6 @@ Use APENAS as informações acima. Não invente dados. Se não souber algo sobre
     } finally {
       setStreaming(false)
     }
-  }
-
-  if (!apiKey) {
-    return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-center max-w-xs">
-          <Brain size={32} className="mx-auto mb-3" style={{ color: "var(--text-quaternary)" }} />
-          <p className="text-sm font-semibold text-[var(--text-primary)] mb-1">IA não configurada</p>
-          <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
-            Configure sua chave Groq no assistente principal (aba Home) para ativar a IA por cliente.
-          </p>
-        </div>
-      </div>
-    )
   }
 
   return (
@@ -437,17 +420,17 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
   }
 
   async function handleAISuggest() {
-    const apiKey = getGroqApiKey()
-    if (!apiKey || suggesting) return
+    if (suggesting) return
     setSuggesting(true)
     setSuggestError("")
 
     try {
-      const res = await fetch(GROQ_API_URL, {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/orbe-ai-chat`, {
         method: "POST",
-        headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
+        headers: { "content-type": "application/json", authorization: `Bearer ${session?.access_token ?? ""}` },
         body: JSON.stringify({
-          model: GROQ_MODEL,
+          stream: false,
           messages: [
             {
               role: "system",

@@ -3,7 +3,7 @@ import { FileText, Sparkles, Loader2, Printer, RefreshCw } from "lucide-react";
 import { useClients } from "../hooks/useClients";
 import { useClientAdsMetrics } from "../hooks/useClientAdsMetrics";
 import { useTasks } from "../hooks/useTasks";
-import { GROQ_MODEL, GROQ_API_URL, getGroqApiKey } from "../lib/groq";
+import { supabase } from "../lib/supabase";
 import { FLAG_META, STATUS_META } from "../lib/clientMeta";
 import { Footer } from "./Footer";
 import type { Client } from "../lib/database.types";
@@ -25,7 +25,6 @@ function ClientReport({ client }: { client: Client }) {
   const [report, setReport] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const apiKey = getGroqApiKey();
 
   const today = todayLocal();
   const overdue = tasks.filter((t) => t.deadline && t.deadline < today && t.status !== "concluido" && t.status !== "cancelado");
@@ -75,7 +74,6 @@ function ClientReport({ client }: { client: Client }) {
   }, [client, latestMeta, latestGoogle, prevMeta, prevGoogle, open.length, done.length, overdue]);
 
   async function generate() {
-    if (!apiKey) return;
     setLoading(true);
     setError("");
     try {
@@ -102,10 +100,11 @@ O relatório deve ter:
 
 Tom profissional, em português brasileiro. Seja específico com os dados fornecidos.`;
 
-      const res = await fetch(GROQ_API_URL, {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/orbe-ai-chat`, {
         method: "POST",
-        headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({ model: GROQ_MODEL, messages: [{ role: "user", content: prompt }], max_tokens: 2048, temperature: 0.4 }),
+        headers: { "content-type": "application/json", authorization: `Bearer ${session?.access_token ?? ""}` },
+        body: JSON.stringify({ messages: [{ role: "user", content: prompt }], max_tokens: 2048, temperature: 0.4, stream: false }),
       });
       if (!res.ok) throw new Error(`Erro ${res.status}`);
       const json = await res.json();
@@ -134,7 +133,7 @@ Tom profissional, em português brasileiro. Seja específico com os dados fornec
               <Printer size={12} />Imprimir
             </button>
           )}
-          <button onClick={generate} disabled={loading || !apiKey}
+          <button onClick={generate} disabled={loading}
             className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all disabled:opacity-40"
             style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}>
             {loading ? <Loader2 size={12} className="animate-spin" /> : report ? <RefreshCw size={12} /> : <Sparkles size={12} />}
@@ -152,7 +151,6 @@ Tom profissional, em português brasileiro. Seja específico com os dados fornec
           <p className="text-xs" style={{ color: "var(--text-quaternary)" }}>
             Clique em "Gerar relatório com IA" para criar um relatório completo baseado nos dados do cliente
           </p>
-          {!apiKey && <p className="text-xs mt-2" style={{ color: "var(--danger)" }}>Configure sua chave Groq primeiro</p>}
         </div>
       )}
 

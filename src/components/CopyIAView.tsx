@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Sparkles, Copy, Check, Loader2, RefreshCw } from "lucide-react";
-import { GROQ_MODEL, GROQ_API_URL, getGroqApiKey } from "../lib/groq";
+import { supabase } from "../lib/supabase";
 import { Footer } from "./Footer";
 
 type Platform = "meta" | "google" | "instagram" | "whatsapp";
@@ -49,8 +49,7 @@ async function generateCopy(
     tone: Tone;
     audience: string;
     differentials: string;
-  },
-  apiKey: string
+  }
 ): Promise<CopyResult> {
   const platMeta = PLATFORM_META[params.platform];
   const fieldsStr = platMeta.fields.map((f, i) => `${i + 1}. ${f}`).join("\n");
@@ -79,14 +78,15 @@ Regras:
 - ${params.platform === "instagram" ? "Legenda: use emojis estratégicos, hashtags relevantes no final (5-10)." : ""}
 - ${params.platform === "whatsapp" ? "Tom pessoal, sem spam, foco em iniciar conversa." : ""}`;
 
-  const res = await fetch(GROQ_API_URL, {
+  const { data: { session } } = await supabase.auth.getSession();
+  const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/orbe-ai-chat`, {
     method: "POST",
-    headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
+    headers: { "content-type": "application/json", authorization: `Bearer ${session?.access_token ?? ""}` },
     body: JSON.stringify({
-      model: GROQ_MODEL,
       messages: [{ role: "user", content: prompt }],
       max_tokens: 1024,
       temperature: 0.8,
+      stream: false,
     }),
   });
 
@@ -163,15 +163,13 @@ export function CopyIAView() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const apiKey = getGroqApiKey();
-
   async function handleGenerate(e: React.FormEvent) {
     e.preventDefault();
-    if (!apiKey || !form.product) return;
+    if (!form.product) return;
     setLoading(true);
     setError("");
     try {
-      const result = await generateCopy({ platform, objective, tone, ...form }, apiKey);
+      const result = await generateCopy({ platform, objective, tone, ...form });
       setResults((prev) => {
         const idx = prev.findIndex((r) => r.platform === platform);
         return idx >= 0 ? prev.map((r, i) => (i === idx ? result : r)) : [...prev, result];
@@ -184,10 +182,10 @@ export function CopyIAView() {
   }
 
   async function regenerate(p: Platform) {
-    if (!apiKey || !form.product) return;
+    if (!form.product) return;
     setLoading(true);
     try {
-      const result = await generateCopy({ platform: p, objective, tone, ...form }, apiKey);
+      const result = await generateCopy({ platform: p, objective, tone, ...form });
       setResults((prev) => prev.map((r) => (r.platform === p ? result : r)));
     } catch (err: unknown) {
       setError((err as Error).message);
@@ -209,12 +207,6 @@ export function CopyIAView() {
           <h2 className="text-[var(--text-primary)] font-bold text-lg leading-tight">Copy IA</h2>
           <p className="text-xs mt-1" style={{ color: "var(--text-tertiary)" }}>Gere copy de alta conversão para Meta Ads, Google Ads, Instagram e WhatsApp.</p>
         </div>
-
-        {!apiKey && (
-          <div className="rounded-xl px-4 py-3 text-xs" style={{ backgroundColor: "var(--danger-tint)", border: "1px solid #DC262633", color: "var(--danger)" }}>
-            Configure sua chave Groq (gratuita) no Orbe AI ou no Super Agente para usar o Copy IA.
-          </div>
-        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-8">
           {/* Form */}
@@ -282,7 +274,7 @@ export function CopyIAView() {
 
             {error && <p className="text-xs" style={{ color: "var(--danger)" }}>{error}</p>}
 
-            <button type="submit" disabled={loading || !apiKey || !form.product}
+            <button type="submit" disabled={loading || !form.product}
               className="w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-40"
               style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}>
               {loading ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Send, Sparkles, Settings, X, Trash2, Globe, Loader2, Search,
 } from "lucide-react";
-import { GROQ_MODEL, GROQ_API_URL, getGroqApiKey } from "../lib/groq";
+import { supabase } from "../lib/supabase";
 
 const BRAVE_STORAGE_KEY = "orbe_brave_key";
 const AGENT_STORAGE_KEY = "orbe_superagente_msgs";
@@ -75,8 +75,8 @@ function Bubble({ msg }: { msg: Message }) {
       <div
         className="max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed"
         style={isUser
-          ? { backgroundColor: "var(--bg-surface-2)", color: "#e5e5e5", border: "1px solid var(--border-strong)" }
-          : { backgroundColor: "var(--bg-surface)", color: "#d4d4d4", border: "1px solid var(--border)" }}
+          ? { backgroundColor: "var(--bg-surface-2)", color: "var(--text-primary)", border: "1px solid var(--border-strong)" }
+          : { backgroundColor: "var(--bg-surface)", color: "var(--text-secondary)", border: "1px solid var(--border)" }}
       >
         {lines.map((line, i) => {
           if (line.trimStart().startsWith("- ")) {
@@ -129,12 +129,10 @@ export function SuperAgenteView() {
   const [input, setInput] = useState("");
   const [running, setRunning] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [groqDraft, setGroqDraft] = useState(getGroqApiKey());
   const [braveDraft, setBraveDraft] = useState(getBraveKey());
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  const groqKey = getGroqApiKey();
   const braveKey = getBraveKey();
 
   useEffect(() => {
@@ -143,7 +141,6 @@ export function SuperAgenteView() {
   }, [messages]);
 
   function saveSettings() {
-    localStorage.setItem("orbe_groq_key", groqDraft.trim());
     localStorage.setItem(BRAVE_STORAGE_KEY, braveDraft.trim());
     setShowSettings(false);
   }
@@ -159,71 +156,75 @@ export function SuperAgenteView() {
   }, []);
 
   const send = useCallback(async (text: string) => {
-    if (!text.trim() || running || !groqKey) return;
+    if (!text.trim() || running) return;
     setRunning(true);
     setInput("");
 
     const userMsg: Message = { id: Date.now().toString(), role: "user", content: text.trim() };
     setMessages((p) => [...p, userMsg]);
 
-    const history = [...messages, userMsg].map((m) => ({
-      role: m.role === "tool" ? "user" : m.role,
-      content: m.role === "tool" ? `[Resultado da busca web]\n${m.content}` : m.content,
-    }));
+    // Prior turns, text-only — tool_use/tool_result scaffolding from
+    // earlier turns isn't carried forward, only the final answers, so we
+    // never have to keep dangling tool_use ids valid across turn
+    // boundaries (Anthropic requires every tool_use to be immediately
+    // followed by its tool_result, which only matters within one loop).
+    const priorHistory = messages
+      .filter((m) => m.role === "user" || m.role === "assistant")
+      .map((m) => ({ role: m.role, content: m.content }));
+
+    const anthropicHistory: { role: string; content: unknown }[] = [
+      ...priorHistory,
+      { role: "user", content: userMsg.content },
+    ];
 
     try {
       let continueLoop = true;
       while (continueLoop) {
-        const res = await fetch(GROQ_API_URL, {
+        const { data: { session } } = await supabase.auth.getSession();
+        const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/orbe-ai-chat`, {
           method: "POST",
-          headers: { "content-type": "application/json", authorization: `Bearer ${groqKey}` },
+          headers: { "content-type": "application/json", authorization: `Bearer ${session?.access_token ?? ""}` },
           body: JSON.stringify({
-            model: GROQ_MODEL,
-            messages: [{ role: "system", content: SYSTEM_PROMPT }, ...history],
+            system: SYSTEM_PROMPT,
+            messages: anthropicHistory,
+            max_tokens: 2048,
             tools: [{
-              type: "function",
-              function: {
-                name: "web_search",
-                description: "Busca informações atuais na internet. Use para dados recentes, preços, notícias de plataformas, benchmarks ou qualquer informação que possa ter mudado.",
-                parameters: {
-                  type: "object",
-                  properties: { query: { type: "string", description: "Termo de busca em português ou inglês" } },
-                  required: ["query"],
-                },
+              name: "web_search",
+              description: "Busca informações atuais na internet. Use para dados recentes, preços, notícias de plataformas, benchmarks ou qualquer informação que possa ter mudado.",
+              input_schema: {
+                type: "object",
+                properties: { query: { type: "string", description: "Termo de busca em português ou inglês" } },
+                required: ["query"],
               },
             }],
-            tool_choice: "auto",
-            max_tokens: 2048,
           }),
         });
 
         if (!res.ok) throw new Error(`Erro ${res.status}`);
-        const json = await res.json();
-        const choice = json.choices?.[0];
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
 
-        if (choice.finish_reason === "tool_calls") {
-          const calls = choice.message.tool_calls ?? [];
-          history.push({ role: "assistant", content: JSON.stringify(choice.message) });
+        const content: Array<{ type: string; text?: string; id?: string; input?: { query?: string } }> = data.content ?? [];
+        const toolUseBlocks = content.filter((b) => b.type === "tool_use");
 
-          for (const call of calls) {
-            const args = JSON.parse(call.function.arguments ?? "{}");
-            const query = args.query ?? "";
+        if (data.stop_reason === "tool_use" && toolUseBlocks.length > 0) {
+          anthropicHistory.push({ role: "assistant", content });
 
+          const toolResults = [];
+          for (const block of toolUseBlocks) {
+            const query = block.input?.query ?? "";
             const searchId = addMsg({ role: "tool", content: query, toolName: "web_search", isSearching: true });
             const result = await braveSearch(query, braveKey);
             updateMsg(searchId, { content: query, isSearching: false });
-
-            history.push({
-              role: "tool" as never,
-              content: result,
-            } as never);
+            toolResults.push({ type: "tool_result", tool_use_id: block.id, content: result });
           }
+          anthropicHistory.push({ role: "user", content: toolResults });
         } else {
-          const content = choice.message?.content ?? "";
+          const finalText = content.find((b) => b.type === "text")?.text ?? "";
           const aId = addMsg({ role: "assistant", content: "" });
 
           // stream-like effect: add content in chunks
-          const words = content.split(" ");
+          const words = finalText.split(" ");
           let built = "";
           for (const word of words) {
             built += (built ? " " : "") + word;
@@ -234,12 +235,12 @@ export function SuperAgenteView() {
         }
       }
     } catch (err: unknown) {
-      addMsg({ role: "assistant", content: `Erro: ${(err as Error).message}. Verifique sua chave Groq.` });
+      addMsg({ role: "assistant", content: `Erro: ${(err as Error).message}` });
     } finally {
       setRunning(false);
       setTimeout(() => inputRef.current?.focus(), 50);
     }
-  }, [messages, running, groqKey, braveKey, addMsg, updateMsg]);
+  }, [messages, running, braveKey, addMsg, updateMsg]);
 
   const QUICK = [
     { label: "Benchmarks Meta Ads 2025", prompt: "Quais são os benchmarks de CPM, CTR e CPL para Meta Ads no Brasil em 2025? Busque dados atuais." },
@@ -258,7 +259,7 @@ export function SuperAgenteView() {
           </div>
           <span className="text-xs font-bold tracking-widest uppercase" style={{ color: "var(--accent)" }}>Super Agente</span>
           <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "var(--accent-tint)", color: "var(--text-tertiary)", border: "1px solid var(--border)" }}>
-            llama 3.3 · groq
+            claude sonnet 5
           </span>
           {braveKey && (
             <span className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "var(--accent-tint)", color: "var(--accent)", border: "1px solid var(--accent-a22)" }}>
@@ -274,10 +275,10 @@ export function SuperAgenteView() {
               <Trash2 size={14} />
             </button>
           )}
-          <button onClick={() => { setGroqDraft(getGroqApiKey()); setBraveDraft(getBraveKey()); setShowSettings(true); }}
-            className="p-1.5 rounded-lg transition-colors" style={{ color: groqKey ? "var(--text-quaternary)" : "#DC2626" }}
+          <button onClick={() => { setBraveDraft(getBraveKey()); setShowSettings(true); }}
+            className="p-1.5 rounded-lg transition-colors" style={{ color: "var(--text-quaternary)" }}
             onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "var(--text-tertiary)")}
-            onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = groqKey ? "var(--text-quaternary)" : "#DC2626")}>
+            onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "var(--text-quaternary)")}>
             <Settings size={14} />
           </button>
         </div>
@@ -285,12 +286,7 @@ export function SuperAgenteView() {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4 min-h-0">
-        {!groqKey && (
-          <div className="rounded-xl px-4 py-3 text-xs" style={{ backgroundColor: "var(--danger-tint)", border: "1px solid #DC262633", color: "var(--danger)" }}>
-            Configure sua chave Groq (gratuita em console.groq.com) clicando em ⚙ acima.
-          </div>
-        )}
-        {!braveKey && groqKey && (
+        {!braveKey && (
           <div className="rounded-xl px-4 py-3 text-xs flex items-center justify-between" style={{ backgroundColor: "var(--info-tint)", border: "1px solid #2563EB33" }}>
             <span style={{ color: "var(--text-secondary)" }}>
               Configure sua chave <strong>Brave Search</strong> (gratuita em brave.com/search/api) para ativar a busca na internet.
@@ -338,7 +334,7 @@ export function SuperAgenteView() {
             rows={1}
             disabled={running}
             className="flex-1 resize-none rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors leading-relaxed"
-            style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)", color: "#e5e5e5", maxHeight: "120px" }}
+            style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)", color: "var(--text-primary)", maxHeight: "120px" }}
             onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent-a44)")}
             onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border-strong)")}
             onInput={(e) => { const el = e.currentTarget; el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight, 120) + "px"; }}
@@ -366,7 +362,6 @@ export function SuperAgenteView() {
               <button onClick={() => setShowSettings(false)} style={{ color: "var(--text-tertiary)" }}><X size={16} /></button>
             </div>
             {[
-              { label: "Groq API Key (IA — gratuito em console.groq.com)", value: groqDraft, set: setGroqDraft, placeholder: "gsk_..." },
               { label: "Brave Search API Key (busca web — gratuito em brave.com/search/api)", value: braveDraft, set: setBraveDraft, placeholder: "BSA..." },
             ].map(({ label, value, set, placeholder }) => (
               <div key={label} className="space-y-1">
@@ -374,7 +369,7 @@ export function SuperAgenteView() {
                 <input
                   type="password" value={value} onChange={(e) => set(e.target.value)} placeholder={placeholder}
                   className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors"
-                  style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-strong)", color: "#e5e5e5" }}
+                  style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-strong)", color: "var(--text-primary)" }}
                   onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent-a44)")}
                   onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border-strong)")}
                 />
