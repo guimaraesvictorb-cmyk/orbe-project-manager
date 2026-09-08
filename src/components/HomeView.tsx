@@ -1,9 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Send, Sparkles, Settings, X, Trash2, ChevronRight } from "lucide-react";
+import { Send, Sparkles, Trash2, ChevronRight } from "lucide-react";
 import type { Profile } from "../lib/database.types";
 import type { AppView } from "./AppNav";
-
-import { GROQ_STORAGE_KEY, GROQ_MODEL, GROQ_API_URL } from "../lib/groq";
+import { supabase } from "../lib/supabase";
 
 const SYSTEM_PROMPT = `Você é o Orbe AI — assistente interno da Orbe Marketing, agência digital brasileira especializada em tráfego pago, gestão de redes sociais e performance.
 
@@ -178,9 +177,6 @@ interface HomeViewProps {
 
 export function HomeView({ profile, onNavigate }: HomeViewProps) {
   const firstName = profile?.display_name?.split(" ")[0] ?? "time";
-  const [apiKey, setApiKey] = useState(() => (import.meta.env.VITE_GROQ_API_KEY as string | undefined) || localStorage.getItem(GROQ_STORAGE_KEY) || "");
-  const [showSettings, setShowSettings] = useState(false);
-  const [keyDraft, setKeyDraft] = useState(apiKey);
   const [messages, setMessages] = useState<Message[]>([
     { id: "greeting", role: "assistant", content: getGreeting(firstName) },
   ]);
@@ -197,13 +193,6 @@ export function HomeView({ profile, onNavigate }: HomeViewProps) {
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
-
-  const saveApiKey = useCallback(() => {
-    const trimmed = keyDraft.trim();
-    localStorage.setItem(GROQ_STORAGE_KEY, trimmed);
-    setApiKey(trimmed);
-    setShowSettings(false);
-  }, [keyDraft]);
 
   const clearChat = useCallback(() => {
     abortRef.current?.abort();
@@ -229,21 +218,17 @@ export function HomeView({ profile, onNavigate }: HomeViewProps) {
       abortRef.current = ctrl;
 
       try {
-        const res = await fetch(GROQ_API_URL, {
+        const { data: { session } } = await supabase.auth.getSession();
+        const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/orbe-ai-chat`, {
           method: "POST",
           signal: ctrl.signal,
           headers: {
             "content-type": "application/json",
-            "authorization": `Bearer ${apiKey}`,
+            "authorization": `Bearer ${session?.access_token ?? ""}`,
           },
           body: JSON.stringify({
-            model: GROQ_MODEL,
-            max_tokens: 1024,
-            stream: true,
-            messages: [
-              { role: "system", content: SYSTEM_PROMPT },
-              ...history.map((m) => ({ role: m.role, content: m.content })),
-            ],
+            system: SYSTEM_PROMPT,
+            messages: history.map((m) => ({ role: m.role, content: m.content })),
           }),
         });
 
@@ -284,10 +269,7 @@ export function HomeView({ profile, onNavigate }: HomeViewProps) {
         }
       } catch (err: unknown) {
         if ((err as Error).name === "AbortError") return;
-        const errMsg =
-          !apiKey
-            ? "Nenhuma API key configurada. Clique em ⚙ para adicionar sua chave gratuita do Groq (console.groq.com)."
-            : `Erro ao conectar com a IA: ${(err as Error).message}\n\nVerifique se sua chave Groq está correta nas configurações.`;
+        const errMsg = `Erro ao conectar com a IA: ${(err as Error).message}`;
         setMessages((prev) =>
           prev.map((m) => (m.id === assistantId ? { ...m, content: errMsg } : m))
         );
@@ -297,7 +279,7 @@ export function HomeView({ profile, onNavigate }: HomeViewProps) {
         setTimeout(() => inputRef.current?.focus(), 50);
       }
     },
-    [messages, isStreaming, apiKey]
+    [messages, isStreaming]
   );
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -327,7 +309,7 @@ export function HomeView({ profile, onNavigate }: HomeViewProps) {
             Orbe AI
           </span>
           <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{ backgroundColor: "var(--accent-tint)", color: "var(--text-tertiary)", border: "1px solid var(--border)" }}>
-            llama 3.3 · groq
+            claude sonnet 5
           </span>
         </div>
 
@@ -367,40 +349,11 @@ export function HomeView({ profile, onNavigate }: HomeViewProps) {
               <Trash2 size={14} />
             </button>
           )}
-          <button
-            onClick={() => { setKeyDraft(apiKey); setShowSettings(true); }}
-            className="p-1.5 rounded-lg transition-colors duration-150 focus:outline-none"
-            style={{ color: apiKey ? "var(--text-quaternary)" : "#DC2626" }}
-            title="Configurar API key"
-            onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "var(--text-tertiary)")}
-            onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = apiKey ? "var(--text-quaternary)" : "#DC2626")}
-          >
-            <Settings size={14} />
-          </button>
         </div>
       </div>
 
       {/* ── Messages ───────────────────────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4 min-h-0">
-        {/* No-api-key banner */}
-        {!apiKey && (
-          <div
-            className="rounded-xl px-4 py-3 flex items-center justify-between gap-4"
-            style={{ backgroundColor: "var(--danger-tint)", border: "1px solid #DC262633" }}
-          >
-            <p className="text-xs" style={{ color: "var(--danger)" }}>
-              Configure sua chave gratuita do Groq para ativar o assistente. Crie em console.groq.com (sem cartão).
-            </p>
-            <button
-              onClick={() => { setKeyDraft(""); setShowSettings(true); }}
-              className="text-[11px] font-semibold px-3 py-1.5 rounded-lg flex-shrink-0 transition-all duration-150"
-              style={{ backgroundColor: "#DC2626", color: "var(--text-primary)" }}
-            >
-              Configurar
-            </button>
-          </div>
-        )}
-
         {messages.map((msg) => (
           <MessageBubble key={msg.id} message={msg} />
         ))}
@@ -487,81 +440,6 @@ export function HomeView({ profile, onNavigate }: HomeViewProps) {
         </p>
       </div>
 
-      {/* ── Settings modal ─────────────────────────────────────────────────── */}
-      {showSettings && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ backgroundColor: "rgba(0,0,0,0.85)" }}
-          onClick={(e) => { if (e.target === e.currentTarget) setShowSettings(false); }}
-        >
-          <div
-            className="w-full max-w-md rounded-2xl p-6 space-y-4"
-            style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" }}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-[var(--text-primary)] font-semibold text-sm">Configurar Orbe AI</h3>
-                <p className="text-[11px] mt-0.5" style={{ color: "var(--text-tertiary)" }}>
-                  Sua API key é salva localmente, nunca enviada a terceiros.
-                </p>
-              </div>
-              <button
-                onClick={() => setShowSettings(false)}
-                className="p-1.5 rounded-lg transition-colors"
-                style={{ color: "var(--text-tertiary)" }}
-                onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "var(--text-primary)")}
-                onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "var(--text-tertiary)")}
-              >
-                <X size={16} />
-              </button>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-tertiary)" }}>
-                Groq API Key (gratuito)
-              </label>
-              <input
-                type="password"
-                value={keyDraft}
-                onChange={(e) => setKeyDraft(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && saveApiKey()}
-                placeholder="gsk_..."
-                autoFocus
-                className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors"
-                style={{
-                  backgroundColor: "var(--bg-input)",
-                  border: "1px solid var(--border-strong)",
-                  color: "#e5e5e5",
-                }}
-                onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent-a44)")}
-                onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border-strong)")}
-              />
-              <p className="text-[10px]" style={{ color: "var(--text-quaternary)" }}>
-                Gratuito em console.groq.com — sem cartão de crédito
-              </p>
-            </div>
-
-            <div className="flex gap-3 pt-1">
-              <button
-                onClick={() => setShowSettings(false)}
-                className="flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 border"
-                style={{ borderColor: "var(--border-strong)", color: "var(--text-tertiary)" }}
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={saveApiKey}
-                className="flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150"
-                style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}
-                onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.backgroundColor = "var(--accent-hover)")}
-                onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.backgroundColor = "var(--accent)")}
-              >
-                Salvar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
