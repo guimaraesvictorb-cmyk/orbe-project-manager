@@ -106,8 +106,11 @@ function App() {
     if (!canAccessSection(profile, view)) {
       navigate("home");
     }
+    // Re-checks on every view change too, not just login — otherwise typing
+    // a hash directly (e.g. #roi-day) bypasses the guard entirely, since
+    // the sidebar only hides disallowed links rather than blocking them.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile]);
+  }, [profile, view]);
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {

@@ -619,7 +619,12 @@ export function RoiDayView() {
               return (
                 <tr key={r.id} className="group hover:bg-[var(--bg-surface-2)] transition-colors" style={{ borderBottom: "1px solid var(--border)" }}>
                   <td className="sticky left-0 z-10" style={{ backgroundColor: "var(--bg-surface)" }}>
-                    <EditableCell value={r.name} type="text" readOnly={!editable} onCommit={(v) => updateRow(r.id, { name: (v as string) ?? r.name })} />
+                    {/* Name mirrors the registered client and isn't editable
+                        here — every month's row for a client is grouped by
+                        this exact string (averages, "missing this month",
+                        the per-client report), so renaming just one row
+                        would silently split its history in two. */}
+                    <span className="block w-full min-w-[90px] px-1.5 py-1 text-xs truncate" style={{ color: "var(--text-primary)" }} title={r.name}>{r.name}</span>
                   </td>
                   <td>
                     <select

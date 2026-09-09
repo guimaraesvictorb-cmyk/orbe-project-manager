@@ -26,7 +26,7 @@ export function useRoiDay() {
       .insert({ name, period, created_by: createdBy, client_id: clientId ?? null })
       .select()
       .single()
-    if (error) return { error: error.message }
+    if (error) { console.error('Failed to add roi_day_clients row:', error.message); return { error: error.message } }
     setRows((prev) => [...prev, data])
     return { data }
   }
@@ -42,7 +42,7 @@ export function useRoiDay() {
       .insert({ ...rest, period: newPeriod, created_by: createdBy })
       .select()
       .single()
-    if (error) return { error: error.message }
+    if (error) { console.error('Failed to copy roi_day_clients row to new month:', error.message); return { error: error.message } }
     setRows((prevRows) => [...prevRows, data])
     return { data }
   }
@@ -54,14 +54,14 @@ export function useRoiDay() {
       .eq('id', id)
       .select()
       .single()
-    if (error) return { error: error.message }
+    if (error) { console.error('Failed to update roi_day_clients row:', error.message); return { error: error.message } }
     setRows((prev) => prev.map((r) => (r.id === id ? data : r)))
     return { data }
   }
 
   async function deleteRow(id: string) {
     const { error } = await supabase.from('roi_day_clients').delete().eq('id', id)
-    if (error) return { error: error.message }
+    if (error) { console.error('Failed to delete roi_day_clients row:', error.message); return { error: error.message } }
     setRows((prev) => prev.filter((r) => r.id !== id))
     return {}
   }
