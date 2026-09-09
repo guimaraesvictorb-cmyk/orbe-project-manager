@@ -9,19 +9,19 @@ type Tone = "profissional" | "casual" | "urgente" | "inspirador" | "educativo";
 
 const PLATFORM_META: Record<Platform, { label: string; color: string; bg: string; fields: string[] }> = {
   meta: {
-    label: "Meta Ads", color: "#1877F2", bg: "#0a0f1a",
+    label: "Meta Ads", color: "#1877F2", bg: "var(--info-tint)",
     fields: ["Headline (título)", "Texto principal", "Descrição", "Call to Action"],
   },
   google: {
-    label: "Google Ads", color: "#EA4335", bg: "#1a0a0a",
+    label: "Google Ads", color: "#EA4335", bg: "var(--danger-tint)",
     fields: ["Headline 1", "Headline 2", "Headline 3", "Descrição 1", "Descrição 2"],
   },
   instagram: {
-    label: "Instagram", color: "#E1306C", bg: "#1a0a10",
+    label: "Instagram", color: "#E1306C", bg: "var(--danger-tint)",
     fields: ["Legenda", "Stories copy", "CTA do stories"],
   },
   whatsapp: {
-    label: "WhatsApp", color: "#25D366", bg: "#0a1a0e",
+    label: "WhatsApp", color: "#25D366", bg: "var(--success-tint)",
     fields: ["Mensagem de abordagem", "Follow-up", "Mensagem de conversão"],
   },
 };

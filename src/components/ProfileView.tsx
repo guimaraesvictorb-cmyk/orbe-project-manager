@@ -282,7 +282,7 @@ function TeamPanel({ currentUserId }: { currentUserId: string }) {
       )}
 
       {removeError && (
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs" style={{ backgroundColor: "var(--danger-tint)", border: "1px solid #EF444433", color: "var(--danger)" }}>
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs" style={{ backgroundColor: "var(--danger-tint)", border: "1px solid color-mix(in srgb, var(--danger) 20%, transparent)", color: "var(--danger)" }}>
           <AlertCircle size={12} />{removeError}
         </div>
       )}
@@ -300,7 +300,7 @@ function TeamPanel({ currentUserId }: { currentUserId: string }) {
             <div
               key={member.id}
               className="rounded-xl border overflow-hidden transition-colors"
-              style={{ borderColor: isConfirming ? "#EF444444" : "var(--border)", backgroundColor: "var(--bg-surface)" }}
+              style={{ borderColor: isConfirming ? "color-mix(in srgb, var(--danger) 27%, transparent)" : "var(--border)", backgroundColor: "var(--bg-surface)" }}
             >
               <div className="flex flex-wrap items-center gap-3 px-4 py-3.5">
                 {/* Avatar */}
@@ -353,7 +353,7 @@ function TeamPanel({ currentUserId }: { currentUserId: string }) {
                       title="Remover acesso"
                       className="flex items-center justify-center w-8 h-8 rounded-lg border transition-colors"
                       style={{ borderColor: "var(--border-strong)", color: "var(--text-tertiary)" }}
-                      onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#ef444444"; (e.currentTarget as HTMLButtonElement).style.color = "var(--danger)"; }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "color-mix(in srgb, var(--danger) 27%, transparent)"; (e.currentTarget as HTMLButtonElement).style.color = "var(--danger)"; }}
                       onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border-strong)"; (e.currentTarget as HTMLButtonElement).style.color = "var(--text-tertiary)"; }}
                     >
                       <Trash2 size={12} />
@@ -363,7 +363,7 @@ function TeamPanel({ currentUserId }: { currentUserId: string }) {
               </div>
 
               {isConfirming ? (
-                <div className="flex items-center justify-between gap-3 px-4 py-3 flex-wrap" style={{ backgroundColor: "var(--danger-tint)", borderTop: "1px solid #EF444422" }}>
+                <div className="flex items-center justify-between gap-3 px-4 py-3 flex-wrap" style={{ backgroundColor: "var(--danger-tint)", borderTop: "1px solid color-mix(in srgb, var(--danger) 13%, transparent)" }}>
                   <p className="text-xs" style={{ color: "var(--danger)" }}>
                     Remover o acesso de <strong>{member.display_name || member.email}</strong>? O login dele será bloqueado.
                   </p>
@@ -639,7 +639,7 @@ export function ProfileView({ profile, userEmail }: ProfileViewProps) {
                   </div>
 
                   {pwError && (
-                    <div className="flex items-center gap-2 mt-4 px-3 py-2 rounded-lg max-w-sm" style={{ backgroundColor: "var(--danger-tint)", border: "1px solid #ef444433" }}>
+                    <div className="flex items-center gap-2 mt-4 px-3 py-2 rounded-lg max-w-sm" style={{ backgroundColor: "var(--danger-tint)", border: "1px solid color-mix(in srgb, var(--danger) 20%, transparent)" }}>
                       <AlertCircle size={13} style={{ color: "var(--danger)", flexShrink: 0 }} />
                       <p className="text-xs" style={{ color: "var(--danger)" }}>{pwError}</p>
                     </div>

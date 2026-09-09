@@ -37,7 +37,7 @@ export function PhaseDetail({ phase }: PhaseDetailProps) {
         style={{
           borderLeft: "3px solid var(--accent)",
           backgroundColor: "var(--bg-surface)",
-          color: "#e5e5e5",
+          color: "var(--text-secondary)",
         }}
       >
         &ldquo;{phase.why}&rdquo;

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Plus, CheckCircle2, Clock, AlertCircle, XCircle, ChevronDown, Download } from "lucide-react";
 import { useFinancial } from "../hooks/useFinancial";
 import { useClients } from "../hooks/useClients";
@@ -12,20 +13,44 @@ const fmt = fmtCurrency0;
 const currentMonth = currentMonthLocal;
 
 const STATUS_CONFIG: Record<PaymentStatus, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
-  pago:      { label: "Pago",     color: "var(--success)", bg: "#0f2117", icon: <CheckCircle2 size={12} /> },
-  pendente:  { label: "Pendente", color: "var(--warning)", bg: "#1a1200", icon: <Clock size={12} /> },
-  atrasado:  { label: "Atrasado", color: "var(--danger)", bg: "#2a0a0a", icon: <AlertCircle size={12} /> },
+  pago:      { label: "Pago",     color: "var(--success)", bg: "var(--success-tint)", icon: <CheckCircle2 size={12} /> },
+  pendente:  { label: "Pendente", color: "var(--warning)", bg: "var(--warning-tint)", icon: <Clock size={12} /> },
+  atrasado:  { label: "Atrasado", color: "var(--danger)", bg: "var(--danger-tint)", icon: <AlertCircle size={12} /> },
   cancelado: { label: "Cancelado",color: "var(--text-tertiary)",    bg: "var(--bg-surface-2)",    icon: <XCircle size={12} /> },
 };
 
 function StatusDropdown({ record, onUpdate }: { record: FinancialRecord; onUpdate: (id: string, status: PaymentStatus) => void }) {
   const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
   const cfg = STATUS_CONFIG[record.status];
+
+  function openMenu() {
+    const rect = btnRef.current?.getBoundingClientRect();
+    if (rect) setPos({ top: rect.bottom + 4, left: rect.left });
+    setOpen(true);
+  }
+
+  // Same fix as the task status pill: this row lives inside a table wrapped
+  // in an `overflow-hidden` rounded container, which silently clips an
+  // absolutely-positioned dropdown. Portal it to <body> with fixed
+  // positioning instead, so it always escapes.
+  useEffect(() => {
+    if (!open) return;
+    function close() { setOpen(false); }
+    window.addEventListener("scroll", close, true);
+    window.addEventListener("resize", close);
+    return () => {
+      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("resize", close);
+    };
+  }, [open]);
 
   return (
     <div className="relative">
       <button
-        onClick={() => setOpen((p) => !p)}
+        ref={btnRef}
+        onClick={(e) => { e.stopPropagation(); open ? setOpen(false) : openMenu(); }}
         className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold"
         style={{ backgroundColor: cfg.bg, color: cfg.color }}
       >
@@ -33,26 +58,30 @@ function StatusDropdown({ record, onUpdate }: { record: FinancialRecord; onUpdat
         {cfg.label}
         <ChevronDown size={10} />
       </button>
-      {open && (
-        <div
-          className="absolute right-0 top-full mt-1 z-20 rounded-xl border overflow-hidden shadow-xl min-w-[130px]"
-          style={{ backgroundColor: "var(--bg-surface-2)", borderColor: "#222" }}
-        >
-          {(Object.keys(STATUS_CONFIG) as PaymentStatus[]).map((s) => {
-            const c = STATUS_CONFIG[s];
-            return (
-              <button
-                key={s}
-                onClick={() => { onUpdate(record.id, s); setOpen(false); }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-semibold text-left hover:bg-white/5"
-                style={{ color: c.color }}
-              >
-                {c.icon}
-                {c.label}
-              </button>
-            );
-          })}
-        </div>
+      {open && pos && createPortal(
+        <>
+          <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setOpen(false); }} />
+          <div
+            className="fixed z-50 rounded-xl border overflow-hidden shadow-xl min-w-[130px]"
+            style={{ top: pos.top, left: pos.left, backgroundColor: "var(--bg-surface-2)", borderColor: "var(--border-strong)", boxShadow: "0 8px 24px rgba(0,0,0,0.35)" }}
+          >
+            {(Object.keys(STATUS_CONFIG) as PaymentStatus[]).map((s) => {
+              const c = STATUS_CONFIG[s];
+              return (
+                <button
+                  key={s}
+                  onClick={(e) => { e.stopPropagation(); onUpdate(record.id, s); setOpen(false); }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-semibold text-left hover:bg-[var(--accent-tint)]"
+                  style={{ color: c.color }}
+                >
+                  {c.icon}
+                  {c.label}
+                </button>
+              );
+            })}
+          </div>
+        </>,
+        document.body
       )}
     </div>
   );

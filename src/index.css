@@ -27,6 +27,8 @@
   --danger: #EF4444;
   --danger-tint: #1a0505;
   --info-tint: #0a0d12;
+  --success-tint: #0f2117;
+  --warning-tint: #1a1200;
 }
 
 :root[data-theme="light"] {
@@ -52,6 +54,8 @@
   --danger: #DC2626;
   --danger-tint: #FEF2F2;
   --info-tint: #EFF6FF;
+  --success-tint: #F0FDF4;
+  --warning-tint: #FFFBEB;
 }
 
 * {

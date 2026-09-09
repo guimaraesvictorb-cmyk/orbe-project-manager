@@ -11,10 +11,10 @@ import { todayLocal } from "../../lib/formatters";
 
 const STATUS_META: Record<Task["status"], { label: string; color: string; bg: string }> = {
   backlog:      { label: "Backlog",      color: "#525252", bg: "var(--bg-surface-2)" },
-  em_andamento: { label: "Em Andamento", color: "#3B82F6", bg: "#0d1630" },
-  em_revisao:   { label: "Em Revisão",   color: "var(--warning)", bg: "#1a1200" },
-  concluido:    { label: "Concluído",    color: "var(--success)", bg: "#0f2117" },
-  cancelado:    { label: "Cancelado",    color: "var(--danger)", bg: "#1a0505" },
+  em_andamento: { label: "Em Andamento", color: "#3B82F6", bg: "var(--info-tint)" },
+  em_revisao:   { label: "Em Revisão",   color: "var(--warning)", bg: "var(--warning-tint)" },
+  concluido:    { label: "Concluído",    color: "var(--success)", bg: "var(--success-tint)" },
+  cancelado:    { label: "Cancelado",    color: "var(--danger)", bg: "var(--danger-tint)" },
 };
 
 const PRIORITY_META: Record<Task["priority"], { label: string; color: string }> = {
@@ -191,7 +191,7 @@ function TaskModal({ task, clients, profiles, onClose, onSave, onDelete, onDupli
           <div className="flex gap-3 pt-1">
             {task && onDelete && (
               <button type="button" onClick={() => { onDelete(task.id); onClose(); }}
-                className="px-4 py-2.5 rounded-xl text-xs font-semibold border" style={{ borderColor: "#EF444433", color: "var(--danger)" }}>
+                className="px-4 py-2.5 rounded-xl text-xs font-semibold border" style={{ borderColor: "color-mix(in srgb, var(--danger) 20%, transparent)", color: "var(--danger)" }}>
                 Deletar
               </button>
             )}
@@ -355,7 +355,7 @@ export function TasksView({ clientId, initialTaskId, onConsumeInitial }: { clien
             <button onClick={() => setConfirmingClear(true)}
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold border transition-colors"
               style={{ borderColor: "var(--border-strong)", color: "var(--text-tertiary)" }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--danger)"; (e.currentTarget as HTMLButtonElement).style.borderColor = "#ef444444"; }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--danger)"; (e.currentTarget as HTMLButtonElement).style.borderColor = "color-mix(in srgb, var(--danger) 27%, transparent)"; }}
               onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--text-tertiary)"; (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border-strong)"; }}>
               <Trash2 size={13} /> Limpar concluídas ({completedCount})
             </button>
@@ -371,7 +371,7 @@ export function TasksView({ clientId, initialTaskId, onConsumeInitial }: { clien
       </div>
 
       {confirmingClear && (
-        <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl flex-wrap" style={{ backgroundColor: "var(--danger-tint)", border: "1px solid #EF444422" }}>
+        <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl flex-wrap" style={{ backgroundColor: "var(--danger-tint)", border: "1px solid color-mix(in srgb, var(--danger) 13%, transparent)" }}>
           <p className="text-xs" style={{ color: "var(--danger)" }}>
             Excluir as {completedCount} tarefas concluídas? Essa ação não pode ser desfeita.
           </p>
@@ -403,10 +403,10 @@ export function TasksView({ clientId, initialTaskId, onConsumeInitial }: { clien
         <div className="flex items-center gap-2 flex-wrap">
           {([
             ["todas",     "Todas as datas", "var(--text-tertiary)",    "transparent"],
-            ["hoje",      "Hoje",           "#3B82F6", "#0d1630"],
-            ["semana",    "Esta semana",    "#8B5CF6", "#130d1f"],
-            ["mes",       "Este mês",       "var(--warning)", "#1a1200"],
-            ["atrasadas", "Atrasadas",      "var(--danger)", "#1a0505"],
+            ["hoje",      "Hoje",           "#3B82F6", "var(--info-tint)"],
+            ["semana",    "Esta semana",    "#8B5CF6", "var(--accent-tint)"],
+            ["mes",       "Este mês",       "var(--warning)", "var(--warning-tint)"],
+            ["atrasadas", "Atrasadas",      "var(--danger)", "var(--danger-tint)"],
           ] as [typeof filterDate, string, string, string][]).map(([v, label, color, bg]) => (
             <button key={v} onClick={() => setFilterDate(v)}
               className="text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider transition-all"

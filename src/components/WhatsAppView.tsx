@@ -405,7 +405,7 @@ export function WhatsAppView() {
               </div>
               <div className="px-5 pb-4">
                 <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "var(--text-quaternary)" }}>Preview com variáveis substituídas:</p>
-                <div className="rounded-xl p-3 text-xs leading-relaxed whitespace-pre-wrap" style={{ backgroundColor: "var(--bg-surface-2)", color: "#d4d4d4" }}>
+                <div className="rounded-xl p-3 text-xs leading-relaxed whitespace-pre-wrap" style={{ backgroundColor: "var(--bg-surface-2)", color: "var(--text-secondary)" }}>
                   {buildMessage()}
                 </div>
               </div>

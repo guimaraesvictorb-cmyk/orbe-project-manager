@@ -13,7 +13,7 @@ function ReportContent({ html }: { html: string }) {
   return (
     <div
       className="prose prose-invert max-w-none text-sm leading-relaxed"
-      style={{ color: "#d4d4d4" }}
+      style={{ color: "var(--text-secondary)" }}
       dangerouslySetInnerHTML={{ __html: html }}
     />
   );

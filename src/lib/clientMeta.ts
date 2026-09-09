@@ -1,9 +1,9 @@
 import type { Client } from "./database.types"
 
 export const FLAG_META = {
-  green:  { label: "Green",  color: "var(--success)", bg: "#0f2117" },
-  yellow: { label: "Yellow", color: "var(--warning)", bg: "#1a1200" },
-  red:    { label: "Red",    color: "var(--danger)", bg: "#1a0505" },
+  green:  { label: "Green",  color: "var(--success)", bg: "var(--success-tint)" },
+  yellow: { label: "Yellow", color: "var(--warning)", bg: "var(--warning-tint)" },
+  red:    { label: "Red",    color: "var(--danger)", bg: "var(--danger-tint)" },
 } as const
 
 export const STATUS_META: Record<Client["status"], { label: string; color: string }> = {

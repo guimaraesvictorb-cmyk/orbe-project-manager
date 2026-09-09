@@ -21,9 +21,9 @@ import { MetaAdsLiveTab } from "./ads/MetaAdsLiveTab"
 const ROLE_LABELS: Record<string, string> = { gt: "Gestor de Tráfego", gp: "Gestor de Projetos" }
 
 const SOURCE_META = {
-  manual:       { label: "Manual", color: "#2563EB", bg: "#0a0f1a" },
-  ai_suggested: { label: "IA",     color: "#8B5CF6", bg: "#0f0a1a" },
-  web:          { label: "Web",    color: "var(--warning)", bg: "#1a1200" },
+  manual:       { label: "Manual", color: "#2563EB", bg: "var(--info-tint)" },
+  ai_suggested: { label: "IA",     color: "#8B5CF6", bg: "var(--accent-tint)" },
+  web:          { label: "Web",    color: "var(--warning)", bg: "var(--warning-tint)" },
 }
 
 type Tab = "overview" | "checklist" | "meta" | "google" | "compilado" | "knowledge" | "ai"
@@ -284,7 +284,7 @@ Use APENAS as informações acima. Não invente dados. Se não souber algo sobre
               style={
                 msg.role === "user"
                   ? { backgroundColor: "var(--accent-tint)", color: "var(--text-primary)", borderBottomRightRadius: 4 }
-                  : { backgroundColor: "var(--bg-surface-2)", color: "#ddd", borderBottomLeftRadius: 4 }
+                  : { backgroundColor: "var(--bg-surface-2)", color: "var(--text-secondary)", borderBottomLeftRadius: 4 }
               }
             >
               {msg.content || (streaming && i === messages.length - 1
@@ -559,7 +559,7 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
           {canEdit && onDelete && (
             <button onClick={() => setConfirmingDelete(true)} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors flex-shrink-0"
               style={{ borderColor: "var(--border-strong)", color: "var(--text-tertiary)" }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--danger)"; (e.currentTarget as HTMLButtonElement).style.borderColor = "#ef444444"; }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--danger)"; (e.currentTarget as HTMLButtonElement).style.borderColor = "color-mix(in srgb, var(--danger) 27%, transparent)"; }}
               onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--text-tertiary)"; (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border-strong)"; }}>
               <Trash2 size={12} />Excluir cliente
             </button>
@@ -568,7 +568,7 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
       </div>
 
       {confirmingDelete && (
-        <div className="flex items-center justify-between gap-3 px-8 py-3 flex-wrap" style={{ backgroundColor: "var(--danger-tint)", borderBottom: "1px solid #EF444422" }}>
+        <div className="flex items-center justify-between gap-3 px-8 py-3 flex-wrap" style={{ backgroundColor: "var(--danger-tint)", borderBottom: "1px solid color-mix(in srgb, var(--danger) 13%, transparent)" }}>
           <p className="text-xs" style={{ color: "var(--danger)" }}>
             Excluir <strong>{client.name}</strong>? O cliente sai da carteira ativa, mas o histórico é preservado.
           </p>

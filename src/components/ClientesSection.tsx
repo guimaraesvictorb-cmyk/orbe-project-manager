@@ -58,7 +58,7 @@ function ClientCard({ client, suggestion, onHealthChange, onStatusChange, onSele
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-[var(--text-primary)] font-semibold text-sm leading-snug truncate">{client.name}</p>
+            <p className="text-[var(--text-primary)] font-semibold text-sm leading-snug truncate" title={client.name}>{client.name}</p>
             {/* Health flag — clicável */}
             <div className="relative">
               <button
@@ -104,7 +104,7 @@ function ClientCard({ client, suggestion, onHealthChange, onStatusChange, onSele
             <button
               onClick={(e) => { e.stopPropagation(); onHealthChange(client.id, suggestion.suggestedFlag); }}
               className="font-bold px-1.5 py-0.5 rounded uppercase tracking-wider"
-              style={{ color: FLAG_META[suggestion.suggestedFlag].color, backgroundColor: "rgba(255,255,255,0.06)" }}
+              style={{ color: FLAG_META[suggestion.suggestedFlag].color, backgroundColor: "var(--bg-surface-2)" }}
             >
               Aplicar
             </button>
@@ -123,7 +123,7 @@ function ClientCard({ client, suggestion, onHealthChange, onStatusChange, onSele
         {client.primary_contact_name && (
           <div className="flex justify-between">
             <span style={{ color: "var(--text-tertiary)" }}>Contato</span>
-            <span className="text-[var(--text-primary)] truncate ml-2">{client.primary_contact_name}</span>
+            <span className="text-[var(--text-primary)] truncate ml-2" title={client.primary_contact_name}>{client.primary_contact_name}</span>
           </div>
         )}
         {client.monthly_fee && (
@@ -153,7 +153,7 @@ function ClientCard({ client, suggestion, onHealthChange, onStatusChange, onSele
             onMouseLeave={(e) => ((e.currentTarget as HTMLAnchorElement).style.color = "var(--text-quaternary)")}
           >
             <ExternalLink size={11} />
-            <span className="truncate">{client.website.replace(/^https?:\/\//, "")}</span>
+            <span className="truncate" title={client.website}>{client.website.replace(/^https?:\/\//, "")}</span>
           </a>
         ) : <span />}
 

@@ -53,7 +53,7 @@ export function RoutineDetail({ routine, onBack }: RoutineDetailProps) {
       {/* Description blockquote */}
       <div
         className="px-4 py-3 rounded-xl text-sm italic leading-relaxed"
-        style={{ borderLeft: `3px solid ${routine.color}`, backgroundColor: "var(--bg-page)", color: "#d4d4d4" }}
+        style={{ borderLeft: `3px solid ${routine.color}`, backgroundColor: "var(--bg-page)", color: "var(--text-secondary)" }}
       >
         {routine.description}
       </div>

@@ -91,7 +91,7 @@ function LeadCard({
               key={s.id}
               onClick={() => { onMove(lead.id, s.id, lead.stage_id); setShowMove(false); }}
               disabled={s.id === lead.stage_id}
-              className="w-full text-left text-[11px] px-2 py-1 rounded hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full text-left text-[11px] px-2 py-1 rounded hover:bg-[var(--accent-tint)] disabled:opacity-40 disabled:cursor-not-allowed"
               style={{ color: s.id === lead.stage_id ? "var(--text-tertiary)" : "var(--text-secondary)" }}
             >
               {s.name}
