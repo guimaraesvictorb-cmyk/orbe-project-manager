@@ -7,6 +7,7 @@ export type TaskPriority = 'baixa' | 'media' | 'alta' | 'urgente'
 export type PlaybookTrigger = 'onboarding' | 'quarter_start' | 'month_close' | 'manual'
 export type PaymentStatus = 'pendente' | 'pago' | 'atrasado' | 'cancelado'
 export type FinancialType = 'mensalidade' | 'bonus' | 'ajuste' | 'custo_fixo'
+export type PayeeType = 'equipe' | 'fornecedor'
 
 export interface Profile {
   id: string
@@ -313,6 +314,44 @@ export interface RoiDayClient {
   updated_at: string
 }
 
+export interface Payee {
+  id: string
+  name: string
+  type: PayeeType
+  payment_method: string | null
+  pix_key: string | null
+  bank_details: string | null
+  contact_name: string | null
+  contact_email: string | null
+  contact_phone: string | null
+  invoice_wait_days: number | null
+  payment_offset_days: number | null
+  default_amount: number | null
+  is_active: boolean
+  notes: string | null
+  created_by: string | null
+  created_at: string
+  updated_at: string
+  deleted_at: string | null
+}
+
+export interface Payable {
+  id: string
+  payee_id: string | null
+  description: string | null
+  amount: number
+  due_date: string
+  invoice_received_date: string | null
+  paid_date: string | null
+  status: PaymentStatus
+  payment_method: string | null
+  notes: string | null
+  created_by: string | null
+  created_at: string
+  updated_at: string
+  deleted_at: string | null
+}
+
 export interface UTMCapture {
   id: string
   lead_id: string | null
@@ -351,6 +390,8 @@ export type Database = {
       leads: { Row: Lead; Insert: Omit<Lead, 'id' | 'created_at' | 'updated_at'>; Update: Partial<Lead> }
       lead_activities: { Row: LeadActivity; Insert: Omit<LeadActivity, 'id' | 'created_at'>; Update: Partial<LeadActivity> }
       roi_day_clients: { Row: RoiDayClient; Insert: Omit<RoiDayClient, 'id' | 'created_at' | 'updated_at'>; Update: Partial<RoiDayClient> }
+      payees: { Row: Payee; Insert: Omit<Payee, 'id' | 'created_at' | 'updated_at'>; Update: Partial<Payee> }
+      payables: { Row: Payable; Insert: Omit<Payable, 'id' | 'created_at' | 'updated_at'>; Update: Partial<Payable> }
     }
   }
 }
