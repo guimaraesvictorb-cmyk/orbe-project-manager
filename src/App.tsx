@@ -10,7 +10,8 @@ import { ClientsProvider } from "./contexts/ClientsContext";
 import { TasksProvider } from "./contexts/TasksContext";
 import { CommandPalette } from "./components/CommandPalette";
 import { NotificationBell } from "./components/NotificationBell";
-import { Loader2, Menu, Search, Sun, Moon } from "lucide-react";
+import { Menu, Search, Sun, Moon } from "lucide-react";
+import { OrbeMark } from "./components/OrbeMark";
 
 // Every view below is loaded on demand — only the one you're actually looking
 // at ships to the browser, instead of all ~16 in one bundle.
@@ -125,8 +126,8 @@ function App() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[var(--bg-page)] flex items-center justify-center">
-        <Loader2 size={24} className="animate-spin" style={{ color: "var(--accent)" }} />
+      <div className="min-h-screen orbe-ambient flex items-center justify-center">
+        <OrbeMark size={44} animated glow />
       </div>
     );
   }
@@ -152,9 +153,10 @@ function App() {
         <div className="flex-1 flex flex-col min-h-0 min-w-0">
           {/* Top bar */}
           <div
-            className="no-print flex-shrink-0 flex items-center gap-3 px-4 py-3"
-            style={{ borderBottom: "1px solid var(--bg-surface-2)" }}
+            className="no-print flex-shrink-0 flex items-center gap-3 px-4 py-3 relative"
+            style={{ borderBottom: "1px solid var(--border)", background: "var(--bg-page)" }}
           >
+            <div className="absolute bottom-0 left-0 right-0 h-px" style={{ background: "linear-gradient(90deg, transparent, var(--accent-a33) 30%, var(--accent-a33) 70%, transparent)" }} />
             <button
               onClick={() => setMobileNavOpen(true)}
               className="lg:hidden p-1.5 rounded-lg"
@@ -163,13 +165,22 @@ function App() {
             >
               <Menu size={20} />
             </button>
-            <span className="lg:hidden text-sm font-semibold">Orbe</span>
+            <div className="lg:hidden flex items-center gap-1.5">
+              <OrbeMark size={20} />
+              <span className="font-display text-sm font-bold">ORBE</span>
+            </div>
             <button
               onClick={() => setPaletteOpen(true)}
-              className="flex-1 lg:flex-none lg:w-72 flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs transition-colors"
-              style={{ borderColor: "var(--border)", color: "var(--text-tertiary)" }}
-              onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.borderColor = "var(--accent-a44)")}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border)")}
+              className="flex-1 lg:flex-none lg:w-72 flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs transition-all duration-150"
+              style={{ borderColor: "var(--border)", color: "var(--text-tertiary)", backgroundColor: "var(--bg-surface)" }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--accent-a44)";
+                (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 0 3px var(--accent-a22)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border)";
+                (e.currentTarget as HTMLButtonElement).style.boxShadow = "none";
+              }}
             >
               <Search size={13} />
               <span className="flex-1 text-left">Buscar clientes ou tarefas...</span>
@@ -182,10 +193,10 @@ function App() {
             />
           </div>
 
-          <main className="flex-1 overflow-y-auto min-h-0 min-w-0">
+          <main className="orbe-ambient flex-1 overflow-y-auto min-h-0 min-w-0">
           <Suspense fallback={
             <div className="flex items-center justify-center h-full">
-              <Loader2 size={24} className="animate-spin" style={{ color: "var(--accent)" }} />
+              <OrbeMark size={36} animated glow />
             </div>
           }>
           {view === "home"       && <HomeView profile={profile} onNavigate={navigate} />}

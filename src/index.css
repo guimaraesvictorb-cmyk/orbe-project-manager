@@ -29,6 +29,9 @@
   --info-tint: #0a0d12;
   --success-tint: #0f2117;
   --warning-tint: #1a1200;
+  --orbit-line: rgba(0, 163, 220, 0.06);
+  --glow-strong: rgba(0, 163, 220, 0.16);
+  --glow-soft: rgba(0, 163, 220, 0.07);
 }
 
 :root[data-theme="light"] {
@@ -56,6 +59,9 @@
   --info-tint: #EFF6FF;
   --success-tint: #F0FDF4;
   --warning-tint: #FFFBEB;
+  --orbit-line: rgba(0, 133, 194, 0.05);
+  --glow-strong: rgba(0, 133, 194, 0.12);
+  --glow-soft: rgba(0, 133, 194, 0.05);
 }
 
 * {
@@ -98,6 +104,45 @@ html, body {
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+::selection {
+  background: var(--accent-a33);
+  color: var(--text-primary);
+}
+
+/* Ambient app background: two soft accent blooms + a faint field of
+   concentric rings radiating from the top-left, echoing the brand mark.
+   Applied as extra background-image layers so it costs nothing structural —
+   just swap out a flat var(--bg-page) fill for this stack. */
+.orbe-ambient {
+  background-image:
+    radial-gradient(1100px 550px at 96% -12%, var(--glow-soft), transparent 60%),
+    radial-gradient(900px 480px at -10% 108%, var(--glow-soft), transparent 60%),
+    repeating-radial-gradient(circle at 8% 6%, transparent 0px, transparent 68px, var(--orbit-line) 69px, transparent 71px);
+  background-color: var(--bg-page);
+}
+
+/* A bolder version for full-bleed moments (login) where there's no content
+   competing for attention underneath. */
+.orbe-ambient-bold {
+  background-image:
+    radial-gradient(900px 650px at 15% 10%, var(--glow-strong), transparent 55%),
+    radial-gradient(700px 600px at 85% 90%, var(--glow-soft), transparent 55%),
+    repeating-radial-gradient(circle at 50% 45%, transparent 0px, transparent 54px, var(--orbit-line) 55px, transparent 57px);
+  background-color: var(--bg-page);
+}
+
+.orbe-glass {
+  background: color-mix(in srgb, var(--bg-surface) 82%, transparent);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orbe-mark-anim * {
+    animation: none !important;
+  }
 }
 
 /* Print / export-to-PDF */

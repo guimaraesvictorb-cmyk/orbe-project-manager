@@ -34,19 +34,13 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
   }
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center p-4"
-      style={{
-        backgroundColor: "var(--bg-page)",
-        backgroundImage: `radial-gradient(ellipse at 50% 50%, var(--accent-tint)66 0%, transparent 70%)`,
-      }}
-    >
-      <div className="w-full max-w-sm">
+    <div className="orbe-ambient-bold min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+      <div className="w-full max-w-sm relative">
         {/* Logo */}
         <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-3 mb-3">
-            <OrbeMark size={40} />
-            <span className="font-display text-[var(--text-primary)] font-bold text-xl tracking-tight">ORBE</span>
+          <div className="inline-flex items-center gap-3 mb-4">
+            <OrbeMark size={52} animated glow />
+            <span className="font-display text-[var(--text-primary)] font-bold text-2xl tracking-tight">ORBE</span>
           </div>
           <p className="text-[11px] tracking-widest uppercase" style={{ color: "var(--text-tertiary)" }}>
             Plataforma Operacional Interna
@@ -56,8 +50,8 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
         {/* Form */}
         <form
           onSubmit={handleSubmit}
-          className="rounded-2xl p-6 space-y-4"
-          style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)" }}
+          className="orbe-glass rounded-2xl p-6 space-y-4"
+          style={{ border: "1px solid var(--border)", boxShadow: "0 24px 64px -24px var(--glow-strong), inset 0 1px 0 var(--accent-a22)" }}
         >
           <div className="space-y-1.5">
             <label className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-tertiary)" }}>
@@ -73,8 +67,8 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
               required
               className="w-full rounded-lg px-3 py-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-quaternary)] focus:outline-none transition-colors"
               style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-strong)" }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent-a44)")}
-              onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border-strong)")}
+              onFocus={(e) => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-a22)"; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border-strong)"; e.currentTarget.style.boxShadow = "none"; }}
             />
           </div>
 
@@ -92,8 +86,8 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
                 required
                 className="w-full rounded-lg px-3 py-2.5 pr-10 text-sm text-[var(--text-primary)] placeholder-[var(--text-quaternary)] focus:outline-none transition-colors"
                 style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-strong)" }}
-                onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent-a44)")}
-                onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border-strong)")}
+                onFocus={(e) => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-a22)"; }}
+                onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border-strong)"; e.currentTarget.style.boxShadow = "none"; }}
               />
               <button
                 type="button"
@@ -117,8 +111,9 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
             disabled={loading || !email || !password}
             className="w-full py-3 rounded-xl text-sm font-bold transition-all duration-150 flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
             style={{
-              backgroundColor: loading || !email || !password ? "var(--accent-tint)" : "var(--accent)",
-              color: loading || !email || !password ? "var(--text-quaternary)" : "var(--bg-page)",
+              background: loading || !email || !password ? "var(--accent-tint)" : "linear-gradient(135deg, var(--accent), var(--accent-hover))",
+              color: loading || !email || !password ? "var(--text-quaternary)" : "#ffffff",
+              boxShadow: loading || !email || !password ? "none" : "0 8px 24px -8px var(--glow-strong)",
             }}
           >
             {loading ? <Loader2 size={15} className="animate-spin" /> : "Entrar"}

@@ -110,20 +110,21 @@ export function AppNav({ active, onChange, profile, onLogout, isOpen, onClose }:
         className={`no-print flex flex-col flex-shrink-0 h-screen overflow-y-auto fixed inset-y-0 left-0 z-40 transition-transform duration-200 lg:static lg:translate-x-0 ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
         style={{
           width: 260,
-          backgroundColor: "var(--bg-surface)",
+          background: "linear-gradient(180deg, var(--bg-surface), var(--bg-page) 130%)",
           borderRight: "1px solid var(--border)",
+          boxShadow: "16px 0 48px -28px var(--glow-strong)",
         }}
       >
       {/* Logo — doubles as a "back to Dashboard" shortcut */}
       <button
         onClick={() => handleChange("dashboard")}
         className="flex items-center gap-3 px-5 py-5 flex-shrink-0 text-left focus:outline-none"
-        style={{ borderBottom: "1px solid var(--bg-surface-2)" }}
+        style={{ borderBottom: "1px solid var(--accent-a22)" }}
         aria-label="Ir para o Dashboard"
       >
-        <OrbeMark size={30} className="flex-shrink-0" />
+        <OrbeMark size={32} className="flex-shrink-0" animated glow />
         <div>
-          <p className="font-display font-bold text-base leading-none text-[var(--text-primary)]">ORBE</p>
+          <p className="font-display font-bold text-base leading-none tracking-wide text-[var(--text-primary)]">ORBE</p>
           <p className="text-[10px] leading-tight mt-1" style={{ color: "var(--text-quaternary)" }}>Operating System</p>
         </div>
       </button>
@@ -144,10 +145,12 @@ export function AppNav({ active, onChange, profile, onLogout, isOpen, onClose }:
                   <button
                     key={view}
                     onClick={() => handleChange(view)}
-                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-xs font-medium transition-all duration-100 focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
+                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-xs font-medium transition-all duration-150 focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
                     style={{
-                      backgroundColor: isActive ? "var(--accent-tint)" : "transparent",
+                      background: isActive ? "linear-gradient(135deg, var(--accent-tint), transparent)" : "transparent",
+                      boxShadow: isActive ? "0 0 0 1px var(--accent-a33), 0 4px 16px -6px var(--glow-strong)" : "none",
                       color: isActive ? "var(--text-primary)" : "var(--text-tertiary)",
+                      transform: isActive ? "translateX(1px)" : "none",
                     }}
                     onMouseEnter={(e) => {
                       if (!isActive) {
@@ -163,7 +166,7 @@ export function AppNav({ active, onChange, profile, onLogout, isOpen, onClose }:
                     }}
                     aria-current={isActive ? "page" : undefined}
                   >
-                    <span style={{ color: isActive ? "var(--accent)" : "inherit" }}>{icon}</span>
+                    <span style={{ color: isActive ? "var(--accent)" : "inherit", filter: isActive ? "drop-shadow(0 0 6px var(--accent-a44))" : "none" }}>{icon}</span>
                     {label}
                     {isActive && (
                       <ChevronRight size={11} className="ml-auto flex-shrink-0" style={{ color: "var(--accent)" }} />

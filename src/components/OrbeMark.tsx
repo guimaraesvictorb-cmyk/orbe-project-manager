@@ -1,3 +1,5 @@
+import { useId, useMemo } from "react";
+
 // Símbolo da marca ORBE — núcleo + duas órbitas assimétricas + 3 satélites,
 // construído a partir das proporções do Manual da Marca (v1.0, 2026):
 // núcleo 0.58x, órbita interna 1.00x, órbita externa 1.52x, espessura 0.163x.
@@ -30,8 +32,16 @@ const satMaior = polarToCartesian(CX, CY, OUTER_R, OUTER_GAP_START);
 const satMedio = polarToCartesian(CX, CY, INNER_R, INNER_GAP_END);
 const satMenor = polarToCartesian(CX, CY, X * 1.26, 5);
 
-export function OrbeMark({ size = 24, className }: { size?: number; className?: string }) {
-  const gradId = "orbe-core-grad";
+function prefersReducedMotion() {
+  return typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+}
+
+export function OrbeMark({ size = 24, className, animated = false, glow = false }: { size?: number; className?: string; animated?: boolean; glow?: boolean }) {
+  const reactId = useId();
+  const gradId = `orbe-core-grad-${reactId}`;
+  const glowId = `orbe-glow-${reactId}`;
+  const spin = useMemo(() => animated && !prefersReducedMotion(), [animated]);
+
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" fill="none" className={className} aria-hidden="true">
       <defs>
@@ -39,13 +49,30 @@ export function OrbeMark({ size = 24, className }: { size?: number; className?: 
           <stop offset="0%" stopColor="#123B52" />
           <stop offset="100%" stopColor="#062A3C" />
         </radialGradient>
+        {glow && (
+          <filter id={glowId} x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur stdDeviation="2.2" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        )}
       </defs>
-      <path d={innerArcD} stroke="#0085C2" strokeWidth={STROKE} strokeLinecap="round" fill="none" />
-      <path d={outerArcD} stroke="#0085C2" strokeWidth={STROKE} strokeLinecap="round" fill="none" />
-      <circle cx={CX} cy={CY} r={CORE_R} fill={`url(#${gradId})`} />
-      <circle cx={satMaior.x} cy={satMaior.y} r={X * 0.25} fill="#4FC3E8" />
-      <circle cx={satMedio.x} cy={satMedio.y} r={X * 0.173} fill="#0085C2" />
-      <circle cx={satMenor.x} cy={satMenor.y} r={X * 0.091} fill="#4FC3E8" />
+      <g filter={glow ? `url(#${glowId})` : undefined}>
+        <g>
+          <path d={innerArcD} stroke="#0085C2" strokeWidth={STROKE} strokeLinecap="round" fill="none" />
+          <circle cx={satMedio.x} cy={satMedio.y} r={X * 0.173} fill="#0085C2" />
+          {spin && <animateTransform attributeName="transform" type="rotate" from="0 32 32" to="360 32 32" dur="26s" repeatCount="indefinite" />}
+        </g>
+        <g>
+          <path d={outerArcD} stroke="#4FC3E8" strokeWidth={STROKE} strokeLinecap="round" fill="none" />
+          <circle cx={satMaior.x} cy={satMaior.y} r={X * 0.25} fill="#4FC3E8" />
+          {spin && <animateTransform attributeName="transform" type="rotate" from="360 32 32" to="0 32 32" dur="38s" repeatCount="indefinite" />}
+        </g>
+        <circle cx={satMenor.x} cy={satMenor.y} r={X * 0.091} fill="#4FC3E8" />
+        <circle cx={CX} cy={CY} r={CORE_R} fill={`url(#${gradId})`} />
+      </g>
     </svg>
   );
 }
