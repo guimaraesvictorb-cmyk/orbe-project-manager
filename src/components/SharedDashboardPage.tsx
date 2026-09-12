@@ -3,6 +3,7 @@ import { supabase } from "../lib/supabase";
 import { FLAG_META, STATUS_META } from "../lib/clientMeta";
 import { fmt, fmtInt } from "../lib/formatters";
 import { Loader2, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { OrbeMark } from "./OrbeMark";
 
 interface SharedMetric {
   id: string;
@@ -145,9 +146,7 @@ export function SharedDashboardPage({ token }: { token: string }) {
       <div style={{ backgroundColor: "var(--bg-page)", borderBottom: "1px solid var(--bg-surface-2)" }}>
         <div className="max-w-3xl mx-auto px-6 py-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="text-xl font-bold leading-none" style={{ fontFamily: "Arial, sans-serif", letterSpacing: "-2px" }}>
-              <span className="text-[var(--text-primary)]">Orbe</span>
-            </div>
+            <OrbeMark size={28} />
             <div>
               <p className="text-[var(--text-primary)] font-semibold text-xs leading-tight">Dashboard do Cliente</p>
               <p className="text-[10px]" style={{ color: "var(--text-quaternary)" }}>Orbe Marketing</p>

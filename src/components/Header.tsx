@@ -1,5 +1,6 @@
 import { LogOut, ShieldCheck } from "lucide-react";
 import type { Profile } from "../lib/database.types";
+import { OrbeMark } from "./OrbeMark";
 
 interface HeaderProps {
   profile: Profile | null;
@@ -22,18 +23,13 @@ export function Header({ profile, onLogout }: HeaderProps) {
       <div className="max-w-screen-xl mx-auto flex items-center justify-between gap-4">
         {/* Left: Logo + title */}
         <div className="flex items-center gap-4 min-w-0">
-          <div
-            className="flex-shrink-0 text-2xl font-bold leading-none select-none"
-            style={{ fontFamily: "Arial, sans-serif", letterSpacing: "-1px" }}
-          >
-            <span className="text-[var(--text-primary)]">Orbe</span>
-          </div>
+          <OrbeMark size={32} className="flex-shrink-0" />
 
           <div className="hidden sm:block w-px h-8 bg-[var(--border-subtle)]" />
 
           <div className="min-w-0">
-            <p className="text-[var(--text-primary)] font-semibold text-sm leading-tight tracking-wide">
-              Operating System
+            <p className="font-display text-[var(--text-primary)] font-bold text-sm leading-tight tracking-wide">
+              ORBE · Operating System
             </p>
             <p className="text-xs leading-tight mt-0.5" style={{ color: "var(--text-secondary)" }}>
               Plataforma Operacional Orbe

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, type FormEvent } from "react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { supabase } from "../lib/supabase";
+import { OrbeMark } from "./OrbeMark";
 
 interface LoginPageProps {
   onSuccess: () => void;
@@ -44,13 +45,8 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
         {/* Logo */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-3 mb-3">
-            <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-black text-sm"
-              style={{ backgroundColor: "var(--accent)" }}
-            >
-              Orbe
-            </div>
-            <span className="text-[var(--text-primary)] font-bold text-xl tracking-tight">Operating System</span>
+            <OrbeMark size={40} />
+            <span className="font-display text-[var(--text-primary)] font-bold text-xl tracking-tight">ORBE</span>
           </div>
           <p className="text-[11px] tracking-widest uppercase" style={{ color: "var(--text-tertiary)" }}>
             Plataforma Operacional Interna

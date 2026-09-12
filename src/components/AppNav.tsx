@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import type { Profile } from "../lib/database.types";
 import { getAllowedSections, isAdminOrCoordenador } from "../lib/permissions";
+import { OrbeMark } from "./OrbeMark";
 
 export type AppView =
   | "home" | "dashboard"
@@ -120,15 +121,10 @@ export function AppNav({ active, onChange, profile, onLogout, isOpen, onClose }:
         style={{ borderBottom: "1px solid var(--bg-surface-2)" }}
         aria-label="Ir para o Dashboard"
       >
-        <div
-          className="text-xl font-bold leading-none select-none flex-shrink-0"
-          style={{ fontFamily: "Arial, sans-serif", letterSpacing: "-2px" }}
-        >
-          <span className="text-[var(--text-primary)]">Orbe</span>
-        </div>
+        <OrbeMark size={30} className="flex-shrink-0" />
         <div>
-          <p className="text-[var(--text-primary)] font-semibold text-xs leading-tight">Operating System</p>
-          <p className="text-[10px] leading-tight" style={{ color: "var(--text-quaternary)" }}>Plataforma Orbe</p>
+          <p className="font-display font-bold text-base leading-none text-[var(--text-primary)]">ORBE</p>
+          <p className="text-[10px] leading-tight mt-1" style={{ color: "var(--text-quaternary)" }}>Operating System</p>
         </div>
       </button>
 

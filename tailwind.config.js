@@ -13,7 +13,9 @@ export default {
         "card-border": "#262626",
       },
       fontFamily: {
-        sans: ["Inter", "Helvetica Neue", "sans-serif"],
+        sans: ["Instrument Sans", "Inter", "Helvetica Neue", "sans-serif"],
+        display: ["Outfit", "Instrument Sans", "sans-serif"],
+        mono: ["JetBrains Mono", "monospace"],
       },
     },
   },

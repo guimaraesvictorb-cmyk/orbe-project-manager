@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@600;700;800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -16,12 +16,12 @@
   --text-secondary: #A3A3A3;
   --text-tertiary: #555555;
   --text-quaternary: #333333;
-  --accent: #7B61FF;
-  --accent-hover: #6247E5;
-  --accent-tint: #1A1230;
-  --accent-a44: #7B61FF44;
-  --accent-a33: #7B61FF33;
-  --accent-a22: #7B61FF22;
+  --accent: #00A3DC;
+  --accent-hover: #0085C2;
+  --accent-tint: #0A2536;
+  --accent-a44: #00A3DC44;
+  --accent-a33: #00A3DC33;
+  --accent-a22: #00A3DC22;
   --success: #22C55E;
   --warning: #F59E0B;
   --danger: #EF4444;
@@ -43,12 +43,12 @@
   --text-secondary: #52525b;
   --text-tertiary: #71717a;
   --text-quaternary: #a1a1aa;
-  --accent: #6D28D9;
-  --accent-hover: #5B21B6;
-  --accent-tint: #F3F0FF;
-  --accent-a44: #6D28D944;
-  --accent-a33: #6D28D933;
-  --accent-a22: #6D28D922;
+  --accent: #0085C2;
+  --accent-hover: #006C9A;
+  --accent-tint: #F2F7FA;
+  --accent-a44: #0085C244;
+  --accent-a33: #0085C233;
+  --accent-a22: #0085C222;
   --success: #16A34A;
   --warning: #D97706;
   --danger: #DC2626;
@@ -67,7 +67,7 @@ html, body {
   padding: 0;
   background-color: var(--bg-page);
   color: var(--text-primary);
-  font-family: "Inter", "Helvetica Neue", sans-serif;
+  font-family: "Instrument Sans", "Inter", "Helvetica Neue", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background-color 0.15s ease, color 0.15s ease;
