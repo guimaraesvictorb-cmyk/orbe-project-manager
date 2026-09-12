@@ -32,6 +32,16 @@ const satMaior = polarToCartesian(CX, CY, OUTER_R, OUTER_GAP_START);
 const satMedio = polarToCartesian(CX, CY, INNER_R, INNER_GAP_END);
 const satMenor = polarToCartesian(CX, CY, X * 1.26, 5);
 
+// Comet tails: short faint arcs trailing each satellite opposite its ring's
+// direction of travel (inner ring spins clockwise, outer counter-clockwise),
+// each faded via a gradient so it reads as a trail rather than a static arc.
+const innerTrailD = describeArc(CX, CY, INNER_R, 28, INNER_GAP_END - 1);
+const outerTrailD = describeArc(CX, CY, OUTER_R, OUTER_GAP_START + 1, 172);
+const innerTrailTail = polarToCartesian(CX, CY, INNER_R, 28);
+const innerTrailHead = polarToCartesian(CX, CY, INNER_R, INNER_GAP_END - 1);
+const outerTrailHead = polarToCartesian(CX, CY, OUTER_R, OUTER_GAP_START + 1);
+const outerTrailTail = polarToCartesian(CX, CY, OUTER_R, 172);
+
 function prefersReducedMotion() {
   return typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 }
@@ -40,6 +50,8 @@ export function OrbeMark({ size = 24, className, animated = false, glow = false 
   const reactId = useId();
   const gradId = `orbe-core-grad-${reactId}`;
   const glowId = `orbe-glow-${reactId}`;
+  const innerTrailId = `orbe-trail-inner-${reactId}`;
+  const outerTrailId = `orbe-trail-outer-${reactId}`;
   const spin = useMemo(() => animated && !prefersReducedMotion(), [animated]);
 
   return (
@@ -58,14 +70,28 @@ export function OrbeMark({ size = 24, className, animated = false, glow = false 
             </feMerge>
           </filter>
         )}
+        {spin && (
+          <>
+            <linearGradient id={innerTrailId} gradientUnits="userSpaceOnUse" x1={innerTrailTail.x} y1={innerTrailTail.y} x2={innerTrailHead.x} y2={innerTrailHead.y}>
+              <stop offset="0%" stopColor="#0085C2" stopOpacity="0" />
+              <stop offset="100%" stopColor="#0085C2" stopOpacity="0.55" />
+            </linearGradient>
+            <linearGradient id={outerTrailId} gradientUnits="userSpaceOnUse" x1={outerTrailTail.x} y1={outerTrailTail.y} x2={outerTrailHead.x} y2={outerTrailHead.y}>
+              <stop offset="0%" stopColor="#4FC3E8" stopOpacity="0" />
+              <stop offset="100%" stopColor="#4FC3E8" stopOpacity="0.55" />
+            </linearGradient>
+          </>
+        )}
       </defs>
       <g filter={glow ? `url(#${glowId})` : undefined}>
         <g>
+          {spin && <path d={innerTrailD} stroke={`url(#${innerTrailId})`} strokeWidth={STROKE * 0.8} strokeLinecap="round" fill="none" />}
           <path d={innerArcD} stroke="#0085C2" strokeWidth={STROKE} strokeLinecap="round" fill="none" />
           <circle cx={satMedio.x} cy={satMedio.y} r={X * 0.173} fill="#0085C2" />
           {spin && <animateTransform attributeName="transform" type="rotate" from="0 32 32" to="360 32 32" dur="26s" repeatCount="indefinite" />}
         </g>
         <g>
+          {spin && <path d={outerTrailD} stroke={`url(#${outerTrailId})`} strokeWidth={STROKE * 0.8} strokeLinecap="round" fill="none" />}
           <path d={outerArcD} stroke="#4FC3E8" strokeWidth={STROKE} strokeLinecap="round" fill="none" />
           <circle cx={satMaior.x} cy={satMaior.y} r={X * 0.25} fill="#4FC3E8" />
           {spin && <animateTransform attributeName="transform" type="rotate" from="360 32 32" to="0 32 32" dur="38s" repeatCount="indefinite" />}

@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import "./index.css";
 import { useAuth } from "./hooks/useAuth";
 import { canAccessSection, isAdminOrCoordenador } from "./lib/permissions";
@@ -12,6 +12,7 @@ import { CommandPalette } from "./components/CommandPalette";
 import { NotificationBell } from "./components/NotificationBell";
 import { Menu, Search, Sun, Moon } from "lucide-react";
 import { OrbeMark } from "./components/OrbeMark";
+import { useMouseGlow } from "./hooks/useMouseGlow";
 
 // Every view below is loaded on demand — only the one you're actually looking
 // at ships to the browser, instead of all ~16 in one bundle.
@@ -63,6 +64,8 @@ function ThemeToggleButton() {
 
 function App() {
   const { user, profile, isAuthenticated, isLoading, logout } = useAuth();
+  const mainRef = useRef<HTMLElement>(null);
+  useMouseGlow(mainRef);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [pendingClientId, setPendingClientId] = useState<string | undefined>();
@@ -193,7 +196,7 @@ function App() {
             />
           </div>
 
-          <main className="orbe-ambient flex-1 overflow-y-auto min-h-0 min-w-0">
+          <main ref={mainRef} className="orbe-ambient flex-1 overflow-y-auto min-h-0 min-w-0">
           <Suspense fallback={
             <div className="flex items-center justify-center h-full">
               <OrbeMark size={36} animated glow />

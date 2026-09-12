@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { Search, Users, CheckSquare, CornerDownLeft } from "lucide-react";
 import { useClients } from "../hooks/useClients";
 import { useTasks } from "../hooks/useTasks";
+import { OrbeMark } from "./OrbeMark";
 
 interface CommandPaletteProps {
   open: boolean;
@@ -69,7 +70,7 @@ export function CommandPalette({ open, onClose, onSelectClient, onSelectTask }: 
   return (
     <div
       className="fixed inset-0 z-[60] flex items-start justify-center pt-[15vh] px-4"
-      style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
+      style={{ backgroundColor: "rgba(0,0,0,0.65)", backdropFilter: "blur(2px)" }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
       role="presentation"
     >
@@ -77,11 +78,12 @@ export function CommandPalette({ open, onClose, onSelectClient, onSelectTask }: 
         role="dialog"
         aria-modal="true"
         aria-label="Busca global"
-        className="w-full max-w-lg rounded-2xl overflow-hidden"
-        style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" }}
+        className="orbe-glass w-full max-w-lg rounded-2xl overflow-hidden"
+        style={{ border: "1px solid var(--accent-a33)", boxShadow: "0 32px 80px -24px var(--glow-strong), 0 0 0 1px var(--border-strong)" }}
       >
         <div className="flex items-center gap-3 px-4 py-3.5" style={{ borderBottom: results.length > 0 ? "1px solid var(--border)" : "none" }}>
-          <Search size={16} style={{ color: "var(--text-tertiary)" }} />
+          <OrbeMark size={18} />
+          <Search size={14} style={{ color: "var(--text-tertiary)" }} />
           <input
             ref={inputRef}
             value={query}
@@ -111,8 +113,11 @@ export function CommandPalette({ open, onClose, onSelectClient, onSelectTask }: 
                 key={`${r.kind}-${r.id}`}
                 onClick={() => select(r)}
                 onMouseEnter={() => setActiveIndex(i)}
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors"
-                style={{ backgroundColor: i === activeIndex ? "var(--accent-tint)" : "transparent" }}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-all duration-100"
+                style={{
+                  background: i === activeIndex ? "linear-gradient(135deg, var(--accent-tint), transparent)" : "transparent",
+                  boxShadow: i === activeIndex ? "inset 2px 0 0 var(--accent)" : "none",
+                }}
               >
                 <span className="flex-shrink-0" style={{ color: i === activeIndex ? "var(--accent)" : "var(--text-tertiary)" }}>
                   {r.kind === "client" ? <Users size={14} /> : <CheckSquare size={14} />}

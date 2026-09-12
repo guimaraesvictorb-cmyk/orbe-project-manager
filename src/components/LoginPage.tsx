@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, type FormEvent } from "react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { OrbeMark } from "./OrbeMark";
+import { useMouseGlow } from "../hooks/useMouseGlow";
 
 interface LoginPageProps {
   onSuccess: () => void;
@@ -14,6 +15,8 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const emailRef = useRef<HTMLInputElement>(null);
+  const pageRef = useRef<HTMLDivElement>(null);
+  useMouseGlow(pageRef, 70, 20);
 
   useEffect(() => { emailRef.current?.focus(); }, []);
 
@@ -34,7 +37,8 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
   }
 
   return (
-    <div className="orbe-ambient-bold min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+    <div ref={pageRef} className="orbe-ambient-bold min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+      <OrbeMark size={820} animated className="orbe-watermark" />
       <div className="w-full max-w-sm relative">
         {/* Logo */}
         <div className="text-center mb-10">

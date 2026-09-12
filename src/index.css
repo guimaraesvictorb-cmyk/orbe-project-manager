@@ -117,6 +117,7 @@ html, body {
    just swap out a flat var(--bg-page) fill for this stack. */
 .orbe-ambient {
   background-image:
+    radial-gradient(420px circle at var(--mx, 70%) var(--my, 15%), var(--glow-strong), transparent 65%),
     radial-gradient(1100px 550px at 96% -12%, var(--glow-soft), transparent 60%),
     radial-gradient(900px 480px at -10% 108%, var(--glow-soft), transparent 60%),
     repeating-radial-gradient(circle at 8% 6%, transparent 0px, transparent 68px, var(--orbit-line) 69px, transparent 71px);
@@ -127,10 +128,28 @@ html, body {
    competing for attention underneath. */
 .orbe-ambient-bold {
   background-image:
-    radial-gradient(900px 650px at 15% 10%, var(--glow-strong), transparent 55%),
+    radial-gradient(560px circle at var(--mx, 70%) var(--my, 15%), var(--glow-strong), transparent 60%),
+    radial-gradient(900px 650px at 15% 10%, var(--glow-soft), transparent 55%),
     radial-gradient(700px 600px at 85% 90%, var(--glow-soft), transparent 55%),
     repeating-radial-gradient(circle at 50% 45%, transparent 0px, transparent 54px, var(--orbit-line) 55px, transparent 57px);
   background-color: var(--bg-page);
+}
+
+@keyframes orbe-watermark-spin {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+.orbe-watermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0.05;
+  pointer-events: none;
+  animation: orbe-watermark-spin 140s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .orbe-watermark { animation: none; }
 }
 
 .orbe-glass {
