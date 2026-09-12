@@ -7,6 +7,14 @@ import { useClients } from "../hooks/useClients";
 import { useAuth } from "../hooks/useAuth";
 import type { FinancialRecord, PaymentStatus, Payable, Payee, PayeeType } from "../lib/database.types";
 import { Footer } from "./Footer";
+import { FiscalTab } from "./financeiro/FiscalTab";
+import { FerramentasTab } from "./financeiro/FerramentasTab";
+import { InvestimentosTab } from "./financeiro/InvestimentosTab";
+import { RentabilidadeTab } from "./financeiro/RentabilidadeTab";
+import { ContratosTab } from "./financeiro/ContratosTab";
+import { ReservaTab } from "./financeiro/ReservaTab";
+import { VisaoGeralTab } from "./financeiro/VisaoGeralTab";
+import { useToolsSubscriptions, useContracts } from "../hooks/useTorreControle";
 import { exportToCSV } from "../lib/csvExport";
 import { fmtCurrency0, todayLocal, currentMonthLocal } from "../lib/formatters";
 
@@ -98,14 +106,26 @@ function StatusDropdown({ status, onUpdate }: { status: PaymentStatus; onUpdate:
   );
 }
 
-function Tabs({ tab, setTab, alertCount }: { tab: string; setTab: (t: "recebimentos" | "pagamentos" | "alertas") => void; alertCount: number }) {
-  const items: { id: "recebimentos" | "pagamentos" | "alertas"; label: string; badge?: number }[] = [
-    { id: "recebimentos", label: "Contas a receber" },
-    { id: "pagamentos", label: "Contas a pagar" },
+export type FinanceiroTab =
+  | "recebimentos" | "pagamentos" | "fiscal" | "ferramentas"
+  | "investimentos" | "rentabilidade" | "contratos" | "reserva"
+  | "visao-geral" | "alertas";
+
+function Tabs({ tab, setTab, alertCount }: { tab: string; setTab: (t: FinanceiroTab) => void; alertCount: number }) {
+  const items: { id: FinanceiroTab; label: string; badge?: number }[] = [
+    { id: "recebimentos", label: "A receber" },
+    { id: "pagamentos", label: "A pagar" },
+    { id: "fiscal", label: "Fiscal" },
+    { id: "ferramentas", label: "Ferramentas" },
+    { id: "investimentos", label: "Investimentos" },
+    { id: "rentabilidade", label: "Rentabilidade" },
+    { id: "contratos", label: "Contratos" },
+    { id: "reserva", label: "Reserva" },
+    { id: "visao-geral", label: "Visão geral" },
     { id: "alertas", label: "Alertas", badge: alertCount },
   ];
   return (
-    <div className="flex items-center gap-1 p-1 rounded-xl border w-fit" style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-surface)" }}>
+    <div className="flex flex-wrap items-center gap-1 p-1 rounded-xl border" style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-surface)" }}>
       {items.map((it) => {
         const isActive = tab === it.id;
         return (
@@ -174,6 +194,7 @@ function NewRecordModal({
       status: form.status,
       payment_method: null,
       invoice_number: null,
+      invoice_status: "a_emitir",
       notes: null,
       data_source: "manual",
       external_id: null,
@@ -618,6 +639,7 @@ function generateMensalidades(clients: { id: string; monthly_fee: number | null 
       status: "pendente" as PaymentStatus,
       payment_method: null,
       invoice_number: null,
+      invoice_status: "a_emitir" as const,
       notes: null,
       data_source: "manual" as const,
       external_id: null,
@@ -627,17 +649,24 @@ function generateMensalidades(clients: { id: string; monthly_fee: number | null 
 }
 
 type AlertItem = {
-  kind: "receber" | "pagar";
+  kind: "receber" | "pagar" | "ferramenta" | "contrato";
   id: string;
   label: string;
-  amount: number;
+  amount: number | null;
   due_date: string;
-  status: PaymentStatus;
+  status: PaymentStatus | null;
   days: number;
 };
 
+const ALERT_KIND_LABELS: Record<AlertItem["kind"], { label: string; color: string; bg: string }> = {
+  receber: { label: "A receber", color: "var(--success)", bg: "var(--success-tint)" },
+  pagar: { label: "A pagar", color: "var(--accent)", bg: "var(--info-tint)" },
+  ferramenta: { label: "Ferramenta", color: "var(--warning)", bg: "var(--warning-tint)" },
+  contrato: { label: "Contrato", color: "var(--danger)", bg: "var(--danger-tint)" },
+};
+
 export function FinanceiroView() {
-  const [tab, setTab] = useState<"recebimentos" | "pagamentos" | "alertas">("recebimentos");
+  const [tab, setTab] = useState<FinanceiroTab>("recebimentos");
   const [month, setMonth] = useState(currentMonth());
   const [showModal, setShowModal] = useState(false);
   const [showPayableModal, setShowPayableModal] = useState(false);
@@ -651,6 +680,8 @@ export function FinanceiroView() {
   const { payees, createPayee, updatePayee, deletePayee } = usePayees();
   const { clients } = useClients();
   const { profile } = useAuth();
+  const { items: tools } = useToolsSubscriptions();
+  const { items: contracts } = useContracts();
 
   const payeeMap = Object.fromEntries(payees.map((p) => [p.id, p.name]));
 
@@ -678,10 +709,40 @@ export function FinanceiroView() {
         status: p.status,
         days: daysUntil(p.due_date),
       }));
-    return [...fromReceivables, ...fromPayables]
-      .filter((a) => a.days <= 7)
+    const fromTools: AlertItem[] = tools
+      .filter((t) => t.is_active && t.renewal_date)
+      .map((t) => ({
+        kind: "ferramenta" as const,
+        id: t.id,
+        label: t.name,
+        amount: t.amount,
+        due_date: t.renewal_date!,
+        status: null,
+        days: daysUntil(t.renewal_date!),
+      }));
+    const clientMapLocal2 = Object.fromEntries(clients.map((c) => [c.id, c.name]));
+    const fromContracts: AlertItem[] = contracts
+      .filter((c) => c.status !== "encerrado" && c.end_date)
+      .map((c) => {
+        const maxDays = c.alert_days_before.length ? Math.max(...c.alert_days_before) : 60;
+        const name = c.party_type === "cliente" ? (c.client_id ? clientMapLocal2[c.client_id] : null) : (c.payee_id ? payeeMap[c.payee_id] : null);
+        return {
+          kind: "contrato" as const,
+          id: c.id,
+          label: name ?? "—",
+          amount: c.value,
+          due_date: c.end_date!,
+          status: null,
+          days: daysUntil(c.end_date!),
+          _maxDays: maxDays,
+        };
+      })
+      .filter((c) => c.days <= c._maxDays)
+      .map(({ _maxDays, ...rest }) => rest);
+    return [...fromReceivables, ...fromPayables, ...fromTools, ...fromContracts]
+      .filter((a) => a.days <= 7 || a.kind === "contrato")
       .sort((a, b) => a.days - b.days);
-  }, [allReceivables, allPayables, clients, payeeMap]);
+  }, [allReceivables, allPayables, clients, payeeMap, tools, contracts]);
 
   async function handleMarkStatus(id: string, status: PaymentStatus) {
     const updates: Partial<FinancialRecord> = { status };
@@ -964,11 +1025,19 @@ export function FinanceiroView() {
           </>
         )}
 
+        {tab === "fiscal" && <FiscalTab />}
+        {tab === "ferramentas" && <FerramentasTab />}
+        {tab === "investimentos" && <InvestimentosTab />}
+        {tab === "rentabilidade" && <RentabilidadeTab />}
+        {tab === "contratos" && <ContratosTab />}
+        {tab === "reserva" && <ReservaTab />}
+        {tab === "visao-geral" && <VisaoGeralTab />}
+
         {tab === "alertas" && (
           <div className="rounded-2xl border overflow-hidden" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
             <div className="px-5 py-3 border-b flex items-center gap-2" style={{ borderColor: "var(--border)" }}>
               <Bell size={14} style={{ color: "var(--accent)" }} />
-              <p className="text-xs font-semibold text-[var(--text-primary)]">Vencendo em até 7 dias ou já atrasado</p>
+              <p className="text-xs font-semibold text-[var(--text-primary)]">Receber/pagar em até 7 dias, ferramentas renovando, contratos vencendo</p>
             </div>
             {alerts.length === 0 ? (
               <div className="px-5 py-10 text-center">
@@ -984,16 +1053,13 @@ export function FinanceiroView() {
                       <div className="flex items-center gap-3 min-w-0">
                         <span
                           className="px-2 py-0.5 rounded text-[10px] font-bold uppercase flex-shrink-0"
-                          style={{
-                            backgroundColor: a.kind === "receber" ? "var(--success-tint)" : "var(--info-tint)",
-                            color: a.kind === "receber" ? "var(--success)" : "var(--accent)",
-                          }}
+                          style={{ backgroundColor: ALERT_KIND_LABELS[a.kind].bg, color: ALERT_KIND_LABELS[a.kind].color }}
                         >
-                          {a.kind === "receber" ? "A receber" : "A pagar"}
+                          {ALERT_KIND_LABELS[a.kind].label}
                         </span>
                         <div className="min-w-0">
                           <p className="text-xs font-semibold text-[var(--text-primary)] truncate">{a.label}</p>
-                          <p className="text-[11px]" style={{ color: "var(--text-tertiary)" }}>{fmtDate(a.due_date)} · {fmt(a.amount)}</p>
+                          <p className="text-[11px]" style={{ color: "var(--text-tertiary)" }}>{fmtDate(a.due_date)}{a.amount != null && ` · ${fmt(a.amount)}`}</p>
                         </div>
                       </div>
                       <span

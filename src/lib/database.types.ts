@@ -8,6 +8,14 @@ export type PlaybookTrigger = 'onboarding' | 'quarter_start' | 'month_close' | '
 export type PaymentStatus = 'pendente' | 'pago' | 'atrasado' | 'cancelado'
 export type FinancialType = 'mensalidade' | 'bonus' | 'ajuste' | 'custo_fixo'
 export type PayeeType = 'equipe' | 'fornecedor'
+export type InvoiceStatus = 'a_emitir' | 'emitida' | 'enviada'
+export type ToolCategory = 'ia' | 'design' | 'agendamento' | 'hospedagem' | 'produtividade' | 'outro'
+export type BillingCycle = 'mensal' | 'anual'
+export type InvestmentCategory = 'site' | 'infraestrutura' | 'equipamento' | 'ferramenta' | 'capacitacao' | 'outro'
+export type InvestmentStatus = 'planejado' | 'realizado'
+export type ContractPartyType = 'cliente' | 'fornecedor'
+export type ContractStatus = 'vigente' | 'em_renovacao' | 'encerrado'
+export type WithdrawalType = 'pro_labore' | 'distribuicao_lucro' | 'reserva'
 
 export interface Profile {
   id: string
@@ -188,6 +196,7 @@ export interface FinancialRecord {
   status: PaymentStatus
   payment_method: string | null
   invoice_number: string | null
+  invoice_status: InvoiceStatus
   notes: string | null
   data_source: string
   external_id: string | null
@@ -352,6 +361,103 @@ export interface Payable {
   deleted_at: string | null
 }
 
+export interface CompanySettings {
+  id: string
+  cnae: string | null
+  nbs_code: string | null
+  regime: string | null
+  cash_balance: number
+  reserve_balance: number
+  reserve_pct_target: number
+  updated_by: string | null
+  updated_at: string
+}
+
+export interface ToolSubscription {
+  id: string
+  name: string
+  category: ToolCategory
+  amount: number
+  billing_cycle: BillingCycle
+  card_or_account: string | null
+  access_owner: string | null
+  renewal_date: string | null
+  is_active: boolean
+  notes: string | null
+  created_by: string | null
+  created_at: string
+  updated_at: string
+  deleted_at: string | null
+}
+
+export interface CompanyInvestment {
+  id: string
+  title: string
+  category: InvestmentCategory
+  amount: number
+  invested_at: string
+  motivo: string | null
+  expected_return: string | null
+  expected_return_date: string | null
+  status: InvestmentStatus
+  created_by: string | null
+  created_at: string
+  updated_at: string
+  deleted_at: string | null
+}
+
+export interface TeamCost {
+  id: string
+  person_name: string
+  profile_id: string | null
+  monthly_cost: number
+  hours_available_month: number
+  is_active: boolean
+  created_by: string | null
+  created_at: string
+  updated_at: string
+  deleted_at: string | null
+}
+
+export interface TeamAllocation {
+  id: string
+  team_cost_id: string
+  client_id: string | null
+  alloc_pct: number
+  created_at: string
+  updated_at: string
+}
+
+export interface Contract {
+  id: string
+  party_type: ContractPartyType
+  client_id: string | null
+  payee_id: string | null
+  document_url: string | null
+  value: number | null
+  start_date: string | null
+  end_date: string | null
+  readjustment_index: string | null
+  next_readjustment_date: string | null
+  alert_days_before: number[]
+  status: ContractStatus
+  notes: string | null
+  created_by: string | null
+  created_at: string
+  updated_at: string
+  deleted_at: string | null
+}
+
+export interface ProfitWithdrawal {
+  id: string
+  type: WithdrawalType
+  amount: number
+  withdrawal_date: string
+  notes: string | null
+  created_by: string | null
+  created_at: string
+}
+
 export interface UTMCapture {
   id: string
   lead_id: string | null
@@ -392,6 +498,13 @@ export type Database = {
       roi_day_clients: { Row: RoiDayClient; Insert: Omit<RoiDayClient, 'id' | 'created_at' | 'updated_at'>; Update: Partial<RoiDayClient> }
       payees: { Row: Payee; Insert: Omit<Payee, 'id' | 'created_at' | 'updated_at'>; Update: Partial<Payee> }
       payables: { Row: Payable; Insert: Omit<Payable, 'id' | 'created_at' | 'updated_at'>; Update: Partial<Payable> }
+      company_settings: { Row: CompanySettings; Insert: Omit<CompanySettings, 'updated_at'>; Update: Partial<CompanySettings> }
+      tools_subscriptions: { Row: ToolSubscription; Insert: Omit<ToolSubscription, 'id' | 'created_at' | 'updated_at'>; Update: Partial<ToolSubscription> }
+      company_investments: { Row: CompanyInvestment; Insert: Omit<CompanyInvestment, 'id' | 'created_at' | 'updated_at'>; Update: Partial<CompanyInvestment> }
+      team_costs: { Row: TeamCost; Insert: Omit<TeamCost, 'id' | 'created_at' | 'updated_at'>; Update: Partial<TeamCost> }
+      team_allocations: { Row: TeamAllocation; Insert: Omit<TeamAllocation, 'id' | 'created_at' | 'updated_at'>; Update: Partial<TeamAllocation> }
+      contracts: { Row: Contract; Insert: Omit<Contract, 'id' | 'created_at' | 'updated_at'>; Update: Partial<Contract> }
+      profit_withdrawals: { Row: ProfitWithdrawal; Insert: Omit<ProfitWithdrawal, 'id' | 'created_at'>; Update: Partial<ProfitWithdrawal> }
     }
   }
 }
