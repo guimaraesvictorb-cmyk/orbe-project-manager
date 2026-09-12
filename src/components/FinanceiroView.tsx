@@ -801,8 +801,8 @@ export function FinanceiroView() {
   }
 
   return (
-    <div className="flex flex-col min-h-0">
-      <div className="max-w-screen-xl mx-auto w-full px-6 py-8 space-y-6">
+    <div className="flex flex-col min-h-full">
+      <div className="flex-1 max-w-screen-xl mx-auto w-full px-6 py-8 space-y-6">
 
         {/* Header */}
         <div className="flex items-start justify-between gap-4 flex-wrap">

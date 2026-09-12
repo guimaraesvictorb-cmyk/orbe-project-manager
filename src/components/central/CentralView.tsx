@@ -165,7 +165,7 @@ export function CentralView() {
   }
 
   return (
-    <div className="flex min-h-0 flex-1">
+    <div className="flex min-h-full flex-1">
       {/* ── Sidebar ─────────────────────────────────────────────────────── */}
       <aside
         className="w-52 flex-shrink-0 border-r overflow-y-auto"

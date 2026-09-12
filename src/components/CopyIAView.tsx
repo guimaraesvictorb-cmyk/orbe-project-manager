@@ -200,8 +200,8 @@ export function CopyIAView() {
   const inpStyle = { backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" };
 
   return (
-    <div className="flex flex-col min-h-0">
-      <div className="max-w-screen-xl mx-auto w-full px-6 py-8 space-y-8">
+    <div className="flex flex-col min-h-full">
+      <div className="flex-1 max-w-screen-xl mx-auto w-full px-6 py-8 space-y-8">
         <div>
           <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "var(--accent)" }}>Ferramentas de IA</p>
           <h2 className="text-[var(--text-primary)] font-bold text-lg leading-tight">Copy IA</h2>

@@ -200,7 +200,7 @@ export function LeadsCapturadosView() {
   const converted = captures.filter((c) => c.lead_id).length;
 
   return (
-    <div className="flex flex-col min-h-0">
+    <div className="flex flex-col min-h-full">
       {convertTarget && (
         <ConvertModal
           capture={convertTarget}
@@ -209,7 +209,7 @@ export function LeadsCapturadosView() {
         />
       )}
 
-      <div className="max-w-screen-xl mx-auto w-full px-6 py-8 space-y-6">
+      <div className="flex-1 max-w-screen-xl mx-auto w-full px-6 py-8 space-y-6">
         <div className="flex items-start justify-between">
           <div>
             <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "var(--accent)" }}>Geração de Leads</p>

@@ -313,9 +313,9 @@ export function WhatsAppView() {
   const inpStyle = { backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" };
 
   return (
-    <div className="flex flex-col min-h-0">
+    <div className="flex flex-col min-h-full">
       {showConfig && <ConfigModal onClose={() => setShowConfig(false)} onSave={() => setConfigVersion((v) => v + 1)} />}
-      <div className="max-w-screen-xl mx-auto w-full px-6 py-8 space-y-6">
+      <div className="flex-1 max-w-screen-xl mx-auto w-full px-6 py-8 space-y-6">
         <div className="flex items-start justify-between">
           <div>
             <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "var(--accent)" }}>Comunicação</p>

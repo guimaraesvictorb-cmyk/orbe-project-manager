@@ -195,8 +195,8 @@ export function OperacaoView() {
   const churnRevenueLost = useMemo(() => churned.reduce((s, c) => s + (c.monthly_fee ?? 0), 0), [churned]);
 
   return (
-    <div className="flex flex-col min-h-0">
-      <div className="max-w-screen-xl mx-auto w-full px-6 py-8 space-y-8">
+    <div className="flex flex-col min-h-full">
+      <div className="flex-1 max-w-screen-xl mx-auto w-full px-6 py-8 space-y-8">
 
         {/* ── Pipeline operacional ────────────────────────────────────────── */}
         <section aria-labelledby="pipeline-title">

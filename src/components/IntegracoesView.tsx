@@ -14,8 +14,8 @@ export function IntegracoesView() {
   ];
 
   return (
-    <div className="flex flex-col min-h-0">
-      <div className="max-w-screen-xl mx-auto w-full px-6 py-8 space-y-6">
+    <div className="flex flex-col min-h-full">
+      <div className="flex-1 max-w-screen-xl mx-auto w-full px-6 py-8 space-y-6">
         <div>
           <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "var(--accent)" }}>Integrações</p>
           <h2 className="text-[var(--text-primary)] font-bold text-lg leading-tight">Plataformas de Anúncio</h2>

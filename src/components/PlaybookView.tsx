@@ -40,7 +40,7 @@ export function PlaybookView() {
   const activePhase = PHASES.find((p) => p.id === activePhaseId) ?? PHASES[2];
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col min-h-full">
       <ControlBar
         search={search}
         onSearchChange={setSearch}
@@ -48,7 +48,7 @@ export function PlaybookView() {
         onFilterChange={setActiveFilter}
       />
 
-      <main className="max-w-screen-xl mx-auto w-full px-6 py-8 space-y-8">
+      <main className="flex-1 max-w-screen-xl mx-auto w-full px-6 py-8 space-y-8">
         <section aria-label="Fases do cliente">
           <PhaseGrid
             phases={filteredPhases}
