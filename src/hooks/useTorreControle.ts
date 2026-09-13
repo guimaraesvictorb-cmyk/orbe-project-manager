@@ -121,3 +121,42 @@ export function useTeamAllocations() {
 
   return { allocations, loading, fetchAllocations, createAllocation, updateAllocation, deleteAllocation }
 }
+
+// Shared by tools<->clients and investments<->clients: a plain many-to-many
+// junction with no id of its own, so the natural API is "replace this
+// entity's full client list" rather than incremental add/remove rows.
+function makeEntityClientsHook(table: 'tool_subscription_clients' | 'investment_clients', entityColumn: 'tool_id' | 'investment_id') {
+  return function useEntityClients() {
+    const [links, setLinks] = useState<Record<string, string>[]>([])
+    const [loading, setLoading] = useState(true)
+
+    const fetchLinks = useCallback(async () => {
+      setLoading(true)
+      const { data, error } = await supabase.from(table).select('*')
+      if (error) console.error(`useEntityClients(${table}).fetchLinks`, error)
+      setLinks(data ?? [])
+      setLoading(false)
+    }, [])
+
+    useEffect(() => { fetchLinks() }, [fetchLinks])
+
+    function clientIdsFor(entityId: string) {
+      return links.filter((l) => l[entityColumn] === entityId).map((l) => l.client_id)
+    }
+
+    async function setClientIdsFor(entityId: string, clientIds: string[]) {
+      await supabase.from(table).delete().eq(entityColumn, entityId)
+      if (clientIds.length > 0) {
+        const { error } = await supabase.from(table).insert(clientIds.map((client_id) => ({ [entityColumn]: entityId, client_id })))
+        if (error) { console.error(`useEntityClients(${table}).setClientIdsFor`, error); return { error: error.message } }
+      }
+      await fetchLinks()
+      return {}
+    }
+
+    return { links, loading, clientIdsFor, setClientIdsFor }
+  }
+}
+
+export const useToolClients = makeEntityClientsHook('tool_subscription_clients', 'tool_id')
+export const useInvestmentClients = makeEntityClientsHook('investment_clients', 'investment_id')

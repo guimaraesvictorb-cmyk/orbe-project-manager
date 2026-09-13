@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Plus, Pencil, Trash2, X } from "lucide-react";
-import { useTeamCosts, useTeamAllocations, useToolsSubscriptions } from "../../hooks/useTorreControle";
+import { useTeamCosts, useTeamAllocations, useToolsSubscriptions, useToolClients } from "../../hooks/useTorreControle";
 import { useClients } from "../../hooks/useClients";
 import { useAuth } from "../../hooks/useAuth";
 import type { TeamCost } from "../../lib/database.types";
@@ -11,6 +11,7 @@ const fmt = fmtCurrency0;
 function TeamCostModal({ onClose, onSave, editing }: { onClose: () => void; onSave: (t: Omit<TeamCost, "id" | "created_at" | "updated_at" | "deleted_at" | "created_by" | "profile_id">) => void; editing: TeamCost | null }) {
   const [form, setForm] = useState({
     person_name: editing?.person_name ?? "",
+    frente: editing?.frente ?? "",
     monthly_cost: editing?.monthly_cost != null ? String(editing.monthly_cost) : "",
     hours_available_month: editing?.hours_available_month != null ? String(editing.hours_available_month) : "160",
     is_active: editing?.is_active ?? true,
@@ -21,6 +22,7 @@ function TeamCostModal({ onClose, onSave, editing }: { onClose: () => void; onSa
     if (!form.person_name || !form.monthly_cost) return;
     onSave({
       person_name: form.person_name,
+      frente: form.frente || null,
       monthly_cost: parseFloat(form.monthly_cost),
       hours_available_month: parseFloat(form.hours_available_month) || 160,
       is_active: form.is_active,
@@ -33,6 +35,7 @@ function TeamCostModal({ onClose, onSave, editing }: { onClose: () => void; onSa
         <h3 className="text-[var(--text-primary)] font-semibold text-sm">{editing ? "Editar" : "Nova"} pessoa</h3>
         <form onSubmit={submit} className="space-y-3">
           <input value={form.person_name} onChange={(e) => setForm((p) => ({ ...p, person_name: e.target.value }))} placeholder="Nome" className="w-full bg-[var(--bg-page)] border rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)]" style={{ borderColor: "var(--border-subtle)" }} required />
+          <input value={form.frente} onChange={(e) => setForm((p) => ({ ...p, frente: e.target.value }))} placeholder="Frente (ex: Tráfego, Design, Atendimento)" className="w-full bg-[var(--bg-page)] border rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent)]" style={{ borderColor: "var(--border-subtle)" }} />
           <div className="grid grid-cols-2 gap-3">
             <input type="number" value={form.monthly_cost} onChange={(e) => setForm((p) => ({ ...p, monthly_cost: e.target.value }))} placeholder="Custo mensal (R$)" className="bg-[var(--bg-page)] border rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent)]" style={{ borderColor: "var(--border-subtle)" }} required />
             <input type="number" value={form.hours_available_month} onChange={(e) => setForm((p) => ({ ...p, hours_available_month: e.target.value }))} placeholder="Horas/mês" className="bg-[var(--bg-page)] border rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent)]" style={{ borderColor: "var(--border-subtle)" }} />
@@ -51,6 +54,7 @@ export function RentabilidadeTab() {
   const { items: teamCosts, createItem: createTeamCost, updateItem: updateTeamCost, softDeleteItem: deleteTeamCost } = useTeamCosts();
   const { allocations, createAllocation, deleteAllocation } = useTeamAllocations();
   const { items: tools } = useToolsSubscriptions();
+  const { clientIdsFor: toolClientIdsFor } = useToolClients();
   const { clients } = useClients();
   const { profile } = useAuth();
   const [showModal, setShowModal] = useState<null | "new" | TeamCost>(null);
@@ -59,9 +63,32 @@ export function RentabilidadeTab() {
   const [newAllocPct, setNewAllocPct] = useState("100");
 
   const activeClients = clients.filter((c) => c.status === "ativo");
+  const activeClientIds = new Set(activeClients.map((c) => c.id));
   const activeTools = tools.filter((t) => t.is_active);
-  const fixedToolsMonthly = activeTools.reduce((s, t) => s + (t.billing_cycle === "anual" ? t.amount / 12 : t.amount), 0);
-  const fixedPerClient = activeClients.length > 0 ? fixedToolsMonthly / activeClients.length : 0;
+
+  // Custo fixo por cliente: ferramentas atreladas a um ou mais clientes são
+  // rateadas só entre eles (quanto mais clientes usam, mais barato fica para
+  // cada um); ferramentas sem cliente marcado ("gerais") são rateadas entre
+  // todos os clientes ativos.
+  const toolCostByClient = useMemo(() => {
+    const byClient: Record<string, number> = {};
+    for (const c of activeClients) byClient[c.id] = 0;
+    let generalMonthly = 0;
+    for (const t of activeTools) {
+      const monthly = t.billing_cycle === "anual" ? t.amount / 12 : t.amount;
+      const assigned = toolClientIdsFor(t.id).filter((id) => activeClientIds.has(id));
+      if (assigned.length === 0) {
+        generalMonthly += monthly;
+      } else {
+        const share = monthly / assigned.length;
+        for (const id of assigned) byClient[id] = (byClient[id] ?? 0) + share;
+      }
+    }
+    const generalPerClient = activeClients.length > 0 ? generalMonthly / activeClients.length : 0;
+    for (const c of activeClients) byClient[c.id] = (byClient[c.id] ?? 0) + generalPerClient;
+    return byClient;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeClients, activeTools, toolClientIdsFor]);
 
   async function handleSaveTeamCost(t: Omit<TeamCost, "id" | "created_at" | "updated_at" | "deleted_at" | "created_by" | "profile_id">) {
     if (showModal && showModal !== "new") {
@@ -87,12 +114,13 @@ export function RentabilidadeTab() {
           const tc = teamCosts.find((t) => t.id === a.team_cost_id);
           return s + (tc ? (tc.monthly_cost * a.alloc_pct) / 100 : 0);
         }, 0);
+      const custoFixo = toolCostByClient[c.id] ?? 0;
       const receita = c.monthly_fee ?? 0;
-      const custoTotal = custoEquipe + fixedPerClient;
+      const custoTotal = custoEquipe + custoFixo;
       const margem = receita - custoTotal;
-      return { client: c, receita, custoEquipe, custoFixo: fixedPerClient, margem, margemPct: receita > 0 ? (margem / receita) * 100 : 0 };
+      return { client: c, receita, custoEquipe, custoFixo, margem, margemPct: receita > 0 ? (margem / receita) * 100 : 0 };
     }).sort((a, b) => b.margem - a.margem);
-  }, [activeClients, allocations, teamCosts, fixedPerClient]);
+  }, [activeClients, allocations, teamCosts, toolCostByClient]);
 
   return (
     <div className="space-y-6">
@@ -117,7 +145,14 @@ export function RentabilidadeTab() {
                 <div key={t.id} className="px-5 py-3 space-y-2">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xs font-semibold text-[var(--text-primary)]">{t.person_name}</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-xs font-semibold text-[var(--text-primary)]">{t.person_name}</p>
+                        {t.frente && (
+                          <span className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded" style={{ backgroundColor: "var(--accent-tint)", color: "var(--accent)" }}>
+                            {t.frente}
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[11px]" style={{ color: "var(--text-tertiary)" }}>
                         {fmt(t.monthly_cost)}/mês · {fmtCurrency(custoHora)}/hora ({t.hours_available_month}h)
                       </p>
@@ -178,7 +213,7 @@ export function RentabilidadeTab() {
           </div>
         )}
         <p className="px-5 py-2.5 text-[10px] border-t" style={{ color: "var(--text-quaternary)", borderColor: "var(--border)" }}>
-          Custo equipe = soma dos custos de pessoas alocadas × % de alocação. Custo fixo = ferramentas ativas ÷ nº de clientes ativos (rateio simples). Não inclui taxa de utilização por falta de apontamento de horas na plataforma.
+          Custo equipe = soma dos custos de pessoas alocadas × % de alocação. Custo fixo = ferramentas marcadas para este cliente (rateada entre quem usa) + parte das ferramentas gerais (sem cliente marcado, rateada entre todos). Não inclui taxa de utilização por falta de apontamento de horas na plataforma.
         </p>
       </div>
 

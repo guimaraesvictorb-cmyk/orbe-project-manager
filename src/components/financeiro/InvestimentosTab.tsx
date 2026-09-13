@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
-import { useCompanyInvestments } from "../../hooks/useTorreControle";
+import { useCompanyInvestments, useInvestmentClients } from "../../hooks/useTorreControle";
+import { useClients } from "../../hooks/useClients";
 import { useAuth } from "../../hooks/useAuth";
 import type { CompanyInvestment, InvestmentCategory, InvestmentStatus } from "../../lib/database.types";
 import { fmtCurrency0, todayLocal } from "../../lib/formatters";
@@ -11,7 +12,15 @@ const CATEGORY_LABELS: Record<InvestmentCategory, string> = {
   site: "Site", infraestrutura: "Infraestrutura", equipamento: "Equipamento", ferramenta: "Ferramenta maior", capacitacao: "Capacitação", outro: "Outro",
 };
 
-function InvestmentModal({ onClose, onSave, editing }: { onClose: () => void; onSave: (i: Omit<CompanyInvestment, "id" | "created_at" | "updated_at" | "deleted_at" | "created_by">) => void; editing: CompanyInvestment | null }) {
+function InvestmentModal({
+  onClose, onSave, editing, clients, initialClientIds,
+}: {
+  onClose: () => void;
+  onSave: (i: Omit<CompanyInvestment, "id" | "created_at" | "updated_at" | "deleted_at" | "created_by">, clientIds: string[]) => void;
+  editing: CompanyInvestment | null;
+  clients: { id: string; name: string }[];
+  initialClientIds: string[];
+}) {
   const [form, setForm] = useState({
     title: editing?.title ?? "",
     category: (editing?.category ?? "ferramenta") as InvestmentCategory,
@@ -22,6 +31,11 @@ function InvestmentModal({ onClose, onSave, editing }: { onClose: () => void; on
     expected_return_date: editing?.expected_return_date ?? "",
     status: (editing?.status ?? "planejado") as InvestmentStatus,
   });
+  const [clientIds, setClientIds] = useState<string[]>(initialClientIds);
+
+  function toggleClient(id: string) {
+    setClientIds((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]));
+  }
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -35,7 +49,7 @@ function InvestmentModal({ onClose, onSave, editing }: { onClose: () => void; on
       expected_return: form.expected_return || null,
       expected_return_date: form.expected_return_date || null,
       status: form.status,
-    });
+    }, clientIds);
   }
 
   return (
@@ -62,6 +76,19 @@ function InvestmentModal({ onClose, onSave, editing }: { onClose: () => void; on
             <input value={form.expected_return} onChange={(e) => setForm((p) => ({ ...p, expected_return: e.target.value }))} placeholder="Retorno esperado" className="bg-[var(--bg-page)] border rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent)]" style={{ borderColor: "var(--border-subtle)" }} />
             <input type="date" value={form.expected_return_date} onChange={(e) => setForm((p) => ({ ...p, expected_return_date: e.target.value }))} className="bg-[var(--bg-page)] border rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)]" style={{ borderColor: "var(--border-subtle)" }} />
           </div>
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-widest mb-1.5 block" style={{ color: "var(--text-tertiary)" }}>
+              Clientes relacionados ({clientIds.length || "geral, todos"})
+            </label>
+            <div className="grid grid-cols-2 gap-1.5 max-h-32 overflow-y-auto p-2 rounded-lg border" style={{ borderColor: "var(--border-subtle)" }}>
+              {clients.map((c) => (
+                <label key={c.id} className="flex items-center gap-1.5 text-[11px]" style={{ color: "var(--text-secondary)" }}>
+                  <input type="checkbox" checked={clientIds.includes(c.id)} onChange={() => toggleClient(c.id)} />
+                  {c.name}
+                </label>
+              ))}
+            </div>
+          </div>
           <div className="flex gap-2 pt-2">
             <button type="button" onClick={onClose} className="flex-1 py-2 rounded-xl text-xs border" style={{ borderColor: "var(--border-subtle)", color: "var(--text-secondary)" }}>Cancelar</button>
             <button type="submit" className="flex-1 py-2 rounded-xl text-xs font-semibold" style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}>Salvar</button>
@@ -74,18 +101,26 @@ function InvestmentModal({ onClose, onSave, editing }: { onClose: () => void; on
 
 export function InvestimentosTab() {
   const { items: investments, createItem, updateItem, softDeleteItem } = useCompanyInvestments();
+  const { clientIdsFor, setClientIdsFor } = useInvestmentClients();
+  const { clients } = useClients();
   const { profile } = useAuth();
   const [showModal, setShowModal] = useState<null | "new" | CompanyInvestment>(null);
 
+  const activeClients = clients.filter((c) => c.status === "ativo");
+  const clientMap = Object.fromEntries(activeClients.map((c) => [c.id, c.name]));
   const totalPlanejado = investments.filter((i) => i.status === "planejado").reduce((s, i) => s + i.amount, 0);
   const totalRealizado = investments.filter((i) => i.status === "realizado").reduce((s, i) => s + i.amount, 0);
 
-  async function handleSave(i: Omit<CompanyInvestment, "id" | "created_at" | "updated_at" | "deleted_at" | "created_by">) {
+  async function handleSave(i: Omit<CompanyInvestment, "id" | "created_at" | "updated_at" | "deleted_at" | "created_by">, clientIds: string[]) {
+    let investmentId: string | undefined;
     if (showModal && showModal !== "new") {
-      await updateItem(showModal.id, i);
+      const { data } = await updateItem(showModal.id, i);
+      investmentId = data?.id;
     } else if (profile?.id) {
-      await createItem({ ...i, created_by: profile.id });
+      const { data } = await createItem({ ...i, created_by: profile.id });
+      investmentId = data?.id;
     }
+    if (investmentId) await setClientIdsFor(investmentId, clientIds);
     setShowModal(null);
   }
 
@@ -116,7 +151,7 @@ export function InvestimentosTab() {
           <table className="w-full text-xs">
             <thead>
               <tr style={{ borderBottom: "1px solid var(--border)" }}>
-                {["Título", "Categoria", "Valor", "Data", "Status", ""].map((h) => (
+                {["Título", "Categoria", "Valor", "Clientes", "Data", "Status", ""].map((h) => (
                   <th key={h} className="text-left px-4 py-2.5 font-bold uppercase tracking-widest" style={{ color: "var(--text-quaternary)", fontSize: "10px" }}>{h}</th>
                 ))}
               </tr>
@@ -127,6 +162,12 @@ export function InvestimentosTab() {
                   <td className="px-4 py-3 font-medium text-[var(--text-primary)]">{i.title}</td>
                   <td className="px-4 py-3" style={{ color: "var(--text-secondary)" }}>{CATEGORY_LABELS[i.category]}</td>
                   <td className="px-4 py-3 font-semibold text-[var(--text-primary)]">{fmt(i.amount)}</td>
+                  <td className="px-4 py-3" style={{ color: "var(--text-secondary)" }}>
+                    {(() => {
+                      const names = clientIdsFor(i.id).map((id) => clientMap[id]).filter(Boolean);
+                      return names.length > 0 ? names.join(", ") : <span style={{ color: "var(--text-quaternary)" }}>Geral</span>;
+                    })()}
+                  </td>
                   <td className="px-4 py-3" style={{ color: "var(--text-secondary)" }}>{new Date(i.invested_at + "T12:00:00").toLocaleDateString("pt-BR")}</td>
                   <td className="px-4 py-3">
                     <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase" style={{ backgroundColor: i.status === "realizado" ? "var(--success-tint)" : "var(--warning-tint)", color: i.status === "realizado" ? "var(--success)" : "var(--warning)" }}>
@@ -148,7 +189,13 @@ export function InvestimentosTab() {
       </div>
 
       {showModal && (
-        <InvestmentModal onClose={() => setShowModal(null)} onSave={handleSave} editing={showModal === "new" ? null : showModal} />
+        <InvestmentModal
+          onClose={() => setShowModal(null)}
+          onSave={handleSave}
+          editing={showModal === "new" ? null : showModal}
+          clients={activeClients}
+          initialClientIds={showModal === "new" ? [] : clientIdsFor(showModal.id)}
+        />
       )}
     </div>
   );

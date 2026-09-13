@@ -112,9 +112,9 @@ export type FinanceiroTab =
   | "visao-geral" | "alertas";
 
 function Tabs({ tab, setTab, alertCount }: { tab: string; setTab: (t: FinanceiroTab) => void; alertCount: number }) {
-  const items: { id: FinanceiroTab; label: string; badge?: number }[] = [
-    { id: "recebimentos", label: "A receber" },
-    { id: "pagamentos", label: "A pagar" },
+  const items: { id: FinanceiroTab; label: string; badge?: number; color?: string; tint?: string }[] = [
+    { id: "recebimentos", label: "A receber", color: "var(--success)", tint: "var(--success-tint)" },
+    { id: "pagamentos", label: "A pagar", color: "var(--warning)", tint: "var(--warning-tint)" },
     { id: "fiscal", label: "Fiscal" },
     { id: "ferramentas", label: "Ferramentas" },
     { id: "investimentos", label: "Investimentos" },
@@ -134,8 +134,8 @@ function Tabs({ tab, setTab, alertCount }: { tab: string; setTab: (t: Financeiro
             onClick={() => setTab(it.id)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
             style={{
-              backgroundColor: isActive ? "var(--accent-tint)" : "transparent",
-              color: isActive ? "var(--accent)" : "var(--text-tertiary)",
+              backgroundColor: isActive ? (it.tint ?? "var(--accent-tint)") : "transparent",
+              color: isActive ? (it.color ?? "var(--accent)") : "var(--text-tertiary)",
             }}
           >
             {it.label}
@@ -317,6 +317,7 @@ function PayeeModal({
     contact_phone: editing?.contact_phone ?? "",
     invoice_wait_days: editing?.invoice_wait_days != null ? String(editing.invoice_wait_days) : "",
     payment_offset_days: editing?.payment_offset_days != null ? String(editing.payment_offset_days) : "",
+    payment_day: editing?.payment_day != null ? String(editing.payment_day) : "",
     default_amount: editing?.default_amount != null ? String(editing.default_amount) : "",
     is_active: editing?.is_active ?? true,
     notes: editing?.notes ?? "",
@@ -336,6 +337,7 @@ function PayeeModal({
       contact_phone: form.contact_phone || null,
       invoice_wait_days: form.invoice_wait_days ? parseInt(form.invoice_wait_days, 10) : null,
       payment_offset_days: form.payment_offset_days ? parseInt(form.payment_offset_days, 10) : null,
+      payment_day: form.payment_day ? parseInt(form.payment_day, 10) : null,
       default_amount: form.default_amount ? parseFloat(form.default_amount) : null,
       is_active: form.is_active,
       notes: form.notes || null,
@@ -418,7 +420,7 @@ function PayeeModal({
               />
             </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div>
               <label className="text-[10px] font-bold uppercase tracking-widest mb-1 block" style={{ color: "var(--text-tertiary)" }}>Valor padrão</label>
               <input
@@ -426,6 +428,19 @@ function PayeeModal({
                 value={form.default_amount}
                 onChange={(e) => setForm((p) => ({ ...p, default_amount: e.target.value }))}
                 className="w-full bg-[var(--bg-page)] border rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)]"
+                style={{ borderColor: "var(--border-subtle)" }}
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-widest mb-1 block" style={{ color: "var(--text-tertiary)" }}>Dia do pagamento</label>
+              <input
+                type="number"
+                min={1}
+                max={31}
+                value={form.payment_day}
+                onChange={(e) => setForm((p) => ({ ...p, payment_day: e.target.value }))}
+                placeholder="ex: 5"
+                className="w-full bg-[var(--bg-page)] border rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent)]"
                 style={{ borderColor: "var(--border-subtle)" }}
               />
             </div>
@@ -648,8 +663,25 @@ function generateMensalidades(clients: { id: string; monthly_fee: number | null 
     }));
 }
 
+function generatePayables(payees: Payee[], month: string, userId: string) {
+  return payees
+    .filter((p) => p.is_active && p.payment_day)
+    .map((p) => ({
+      payee_id: p.id,
+      description: `Pagamento ${month}`,
+      amount: p.default_amount ?? 0,
+      due_date: `${month}-${String(p.payment_day).padStart(2, "0")}`,
+      invoice_received_date: null,
+      paid_date: null,
+      status: "pendente" as PaymentStatus,
+      payment_method: p.payment_method,
+      notes: null,
+      created_by: userId,
+    }));
+}
+
 type AlertItem = {
-  kind: "receber" | "pagar" | "ferramenta" | "contrato";
+  kind: "receber" | "pagar" | "ferramenta" | "contrato" | "nf_fornecedor";
   id: string;
   label: string;
   amount: number | null;
@@ -663,6 +695,7 @@ const ALERT_KIND_LABELS: Record<AlertItem["kind"], { label: string; color: strin
   pagar: { label: "A pagar", color: "var(--accent)", bg: "var(--info-tint)" },
   ferramenta: { label: "Ferramenta", color: "var(--warning)", bg: "var(--warning-tint)" },
   contrato: { label: "Contrato", color: "var(--danger)", bg: "var(--danger-tint)" },
+  nf_fornecedor: { label: "Cobrar NF", color: "var(--warning)", bg: "var(--warning-tint)" },
 };
 
 export function FinanceiroView() {
@@ -709,6 +742,25 @@ export function FinanceiroView() {
         status: p.status,
         days: daysUntil(p.due_date),
       }));
+    const fromNfFornecedor: AlertItem[] = allPayables
+      .filter((p) => (p.status === "pendente" || p.status === "atrasado") && !p.invoice_received_date && p.payee_id)
+      .map((p) => {
+        const payee = payees.find((pe) => pe.id === p.payee_id);
+        const offset = payee?.payment_offset_days ?? 0;
+        const nfDeadline = new Date(p.due_date + "T00:00:00");
+        nfDeadline.setDate(nfDeadline.getDate() - offset);
+        const nfDeadlineStr = `${nfDeadline.getFullYear()}-${String(nfDeadline.getMonth() + 1).padStart(2, "0")}-${String(nfDeadline.getDate()).padStart(2, "0")}`;
+        return {
+          kind: "nf_fornecedor" as const,
+          id: p.id,
+          label: payee?.name ?? p.description ?? "—",
+          amount: null,
+          due_date: nfDeadlineStr,
+          status: null,
+          days: daysUntil(nfDeadlineStr),
+        };
+      })
+      .filter((a) => a.days <= 7);
     const fromTools: AlertItem[] = tools
       .filter((t) => t.is_active && t.renewal_date)
       .map((t) => ({
@@ -739,10 +791,10 @@ export function FinanceiroView() {
       })
       .filter((c) => c.days <= c._maxDays)
       .map(({ _maxDays, ...rest }) => rest);
-    return [...fromReceivables, ...fromPayables, ...fromTools, ...fromContracts]
+    return [...fromReceivables, ...fromPayables, ...fromNfFornecedor, ...fromTools, ...fromContracts]
       .filter((a) => a.days <= 7 || a.kind === "contrato")
       .sort((a, b) => a.days - b.days);
-  }, [allReceivables, allPayables, clients, payeeMap, tools, contracts]);
+  }, [allReceivables, allPayables, clients, payeeMap, payees, tools, contracts]);
 
   async function handleMarkStatus(id: string, status: PaymentStatus) {
     const updates: Partial<FinancialRecord> = { status };
@@ -782,6 +834,13 @@ export function FinanceiroView() {
       (r) => !existing.includes(r.client_id)
     );
     for (const r of toCreate) await createRecord(r);
+  }
+
+  async function handleGeneratePayables() {
+    if (!profile?.id) return;
+    const existing = payables.filter((p) => p.payee_id).map((p) => p.payee_id);
+    const toCreate = generatePayables(payees, month, profile.id).filter((p) => !existing.includes(p.payee_id));
+    for (const p of toCreate) await createPayable(p);
   }
 
   const clientMap = Object.fromEntries(clients.map((c) => [c.id, c.name]));
@@ -858,7 +917,7 @@ export function FinanceiroView() {
               <button
                 onClick={() => setShowModal(true)}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg"
-                style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}
+                style={{ backgroundColor: "var(--success)", color: "var(--bg-page)" }}
               >
                 <Plus size={13} />
                 Novo lançamento
@@ -869,11 +928,11 @@ export function FinanceiroView() {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               {[
                 { label: "Total faturado", value: fmt(totalAmount), color: "var(--text-secondary)" },
-                { label: "Recebido", value: fmt(totalPaid), color: "var(--accent)" },
+                { label: "Recebido", value: fmt(totalPaid), color: "var(--success)" },
                 { label: "Pendente", value: fmt(totalPending), color: "var(--warning)" },
                 { label: "Atrasado", value: fmt(totalOverdue), color: "var(--danger)" },
               ].map(({ label, value, color }) => (
-                <div key={label} className="rounded-xl border p-4" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
+                <div key={label} className="rounded-xl border p-4" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)", borderLeft: "3px solid var(--success)" }}>
                   <p className="text-[10px] font-bold tracking-widest uppercase mb-2" style={{ color: "var(--text-tertiary)" }}>{label}</p>
                   <p className="text-xl font-bold" style={{ color }}>{value}</p>
                 </div>
@@ -958,9 +1017,18 @@ export function FinanceiroView() {
                 Equipe/fornecedores
               </button>
               <button
+                onClick={handleGeneratePayables}
+                className="px-3 py-1.5 text-xs border rounded-lg transition-colors"
+                style={{ borderColor: "var(--border-subtle)", color: "var(--text-secondary)" }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--warning)"; (e.currentTarget as HTMLButtonElement).style.color = "var(--warning)"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border-subtle)"; (e.currentTarget as HTMLButtonElement).style.color = "var(--text-secondary)"; }}
+              >
+                Gerar pagamentos do mês
+              </button>
+              <button
                 onClick={() => setShowPayableModal(true)}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg"
-                style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}
+                style={{ backgroundColor: "var(--warning)", color: "var(--bg-page)" }}
               >
                 <Plus size={13} />
                 Novo pagamento
@@ -970,11 +1038,11 @@ export function FinanceiroView() {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               {[
                 { label: "Total do mês", value: fmt(payTotal), color: "var(--text-secondary)" },
-                { label: "Pago", value: fmt(payPaid), color: "var(--accent)" },
+                { label: "Pago", value: fmt(payPaid), color: "var(--success)" },
                 { label: "Pendente", value: fmt(payPending), color: "var(--warning)" },
                 { label: "Atrasado", value: fmt(payOverdue), color: "var(--danger)" },
               ].map(({ label, value, color }) => (
-                <div key={label} className="rounded-xl border p-4" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
+                <div key={label} className="rounded-xl border p-4" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)", borderLeft: "3px solid var(--warning)" }}>
                   <p className="text-[10px] font-bold tracking-widest uppercase mb-2" style={{ color: "var(--text-tertiary)" }}>{label}</p>
                   <p className="text-xl font-bold" style={{ color }}>{value}</p>
                 </div>

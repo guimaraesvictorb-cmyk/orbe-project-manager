@@ -334,7 +334,7 @@ interface ClientDetailViewProps {
   onUpdate?: (updates: Partial<Client>) => Promise<{ data?: Client; error?: string }>
 }
 
-const OVERVIEW_FIELDS: Array<{ key: keyof Client; label: string; type: string; placeholder?: string }> = [
+const OVERVIEW_FIELDS: Array<{ key: keyof Client; label: string; type: string; placeholder?: string; options?: [string, string][] }> = [
   { key: "primary_contact_name", label: "Contato", type: "text", placeholder: "Nome do contato" },
   { key: "primary_contact_email", label: "E-mail", type: "email", placeholder: "email@empresa.com" },
   { key: "primary_contact_phone", label: "Telefone", type: "text", placeholder: "(11) 99999-9999" },
@@ -347,6 +347,10 @@ const OVERVIEW_FIELDS: Array<{ key: keyof Client; label: string; type: string; p
   { key: "proxima_reuniao", label: "Próxima reunião", type: "datetime-local" },
   { key: "contract_start", label: "Início do contrato", type: "date" },
   { key: "contract_end", label: "Fim do contrato", type: "date" },
+  { key: "nf_request_day", label: "Dia de pedir NF ao contador", type: "number", placeholder: "ex: 25" },
+  { key: "nf_send_day", label: "Dia de enviar NF ao cliente", type: "number", placeholder: "ex: 1" },
+  { key: "nf_contact_name", label: "Enviar NF para (nome)", type: "text", placeholder: "Nome de quem recebe a NF" },
+  { key: "nf_contact_method", label: "Como enviar a NF", type: "select", options: [["whatsapp", "WhatsApp"], ["email", "E-mail"]] },
   { key: "meta_ads_account_id", label: "ID conta Meta Ads", type: "text", placeholder: "act_..." },
   { key: "google_ads_account_id", label: "ID conta Google Ads", type: "text", placeholder: "XXX-XXX-XXXX" },
   { key: "ga4_property_id", label: "ID propriedade GA4", type: "text", placeholder: "properties/..." },
@@ -403,13 +407,17 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
   async function saveOverview() {
     if (!onUpdate) return
     setSavingOverview(true)
-    const { monthly_fee, monthly_investment, ...rest } = overviewForm
+    const { monthly_fee, monthly_investment, nf_request_day, nf_send_day, ...rest } = overviewForm
     const feeStr = monthly_fee as unknown as string | number | null | undefined
     const investStr = monthly_investment as unknown as string | number | null | undefined
+    const nfRequestStr = nf_request_day as unknown as string | number | null | undefined
+    const nfSendStr = nf_send_day as unknown as string | number | null | undefined
     await onUpdate({
       ...rest,
       monthly_fee: feeStr === "" || feeStr == null ? null : Number(feeStr),
       monthly_investment: investStr === "" || investStr == null ? null : Number(investStr),
+      nf_request_day: nfRequestStr === "" || nfRequestStr == null ? null : Number(nfRequestStr),
+      nf_send_day: nfSendStr === "" || nfSendStr == null ? null : Number(nfSendStr),
     })
     setSavingOverview(false)
     setEditingOverview(false)
@@ -677,14 +685,26 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
                   {OVERVIEW_FIELDS.map((f) => (
                     <div key={f.key} className={f.type === "datetime-local" || f.key === "meta_ads_account_id" || f.key === "google_ads_account_id" || f.key === "ga4_property_id" ? "col-span-2 sm:col-span-1" : ""}>
                       <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "var(--text-tertiary)" }}>{f.label}</label>
-                      <input
-                        type={f.type}
-                        value={(overviewForm[f.key] as string | number | null | undefined) ?? ""}
-                        onChange={(e) => setOverviewForm((form) => ({ ...form, [f.key]: e.target.value }))}
-                        placeholder={f.placeholder}
-                        className="w-full rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-quaternary)] focus:outline-none transition-colors"
-                        style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-strong)" }}
-                      />
+                      {f.type === "select" ? (
+                        <select
+                          value={(overviewForm[f.key] as string | null | undefined) ?? ""}
+                          onChange={(e) => setOverviewForm((form) => ({ ...form, [f.key]: e.target.value || null }))}
+                          className="w-full rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] focus:outline-none transition-colors"
+                          style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-strong)" }}
+                        >
+                          <option value="">—</option>
+                          {f.options?.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                        </select>
+                      ) : (
+                        <input
+                          type={f.type}
+                          value={(overviewForm[f.key] as string | number | null | undefined) ?? ""}
+                          onChange={(e) => setOverviewForm((form) => ({ ...form, [f.key]: e.target.value }))}
+                          placeholder={f.placeholder}
+                          className="w-full rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-quaternary)] focus:outline-none transition-colors"
+                          style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-strong)" }}
+                        />
+                      )}
                     </div>
                   ))}
                 </div>
@@ -714,6 +734,10 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
                 <Field label={<><Calendar size={11} className="inline mr-1" />Próxima reunião</>} value={client.proxima_reuniao && new Date(client.proxima_reuniao).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })} />
                 <Field label="Início do contrato" value={client.contract_start && new Date(client.contract_start).toLocaleDateString("pt-BR")} />
                 <Field label="Fim do contrato" value={client.contract_end && new Date(client.contract_end).toLocaleDateString("pt-BR")} />
+                <Field label="Dia de pedir NF ao contador" value={client.nf_request_day} />
+                <Field label="Dia de enviar NF ao cliente" value={client.nf_send_day} />
+                <Field label="Enviar NF para" value={client.nf_contact_name} />
+                <Field label="Como enviar a NF" value={client.nf_contact_method === "whatsapp" ? "WhatsApp" : client.nf_contact_method === "email" ? "E-mail" : null} />
                 <Field label={<><Hash size={11} className="inline mr-1" />ID conta Meta Ads</>} value={client.meta_ads_account_id} />
                 <Field label={<><Hash size={11} className="inline mr-1" />ID conta Google Ads</>} value={client.google_ads_account_id} />
                 <Field label={<><Hash size={11} className="inline mr-1" />ID propriedade GA4</>} value={client.ga4_property_id} />

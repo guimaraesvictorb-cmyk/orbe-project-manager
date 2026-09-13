@@ -16,6 +16,7 @@ export type InvestmentStatus = 'planejado' | 'realizado'
 export type ContractPartyType = 'cliente' | 'fornecedor'
 export type ContractStatus = 'vigente' | 'em_renovacao' | 'encerrado'
 export type WithdrawalType = 'pro_labore' | 'distribuicao_lucro' | 'reserva'
+export type NfContactMethod = 'whatsapp' | 'email'
 
 export interface Profile {
   id: string
@@ -50,6 +51,10 @@ export interface Client {
   tipo_servico: string | null
   origem_lead: string | null
   proxima_reuniao: string | null
+  nf_request_day: number | null
+  nf_send_day: number | null
+  nf_contact_name: string | null
+  nf_contact_method: NfContactMethod | null
   data_source: string
   meta_ads_account_id: string | null
   google_ads_account_id: string | null
@@ -335,6 +340,7 @@ export interface Payee {
   contact_phone: string | null
   invoice_wait_days: number | null
   payment_offset_days: number | null
+  payment_day: number | null
   default_amount: number | null
   is_active: boolean
   notes: string | null
@@ -409,6 +415,7 @@ export interface CompanyInvestment {
 export interface TeamCost {
   id: string
   person_name: string
+  frente: string | null
   profile_id: string | null
   monthly_cost: number
   hours_available_month: number
@@ -417,6 +424,16 @@ export interface TeamCost {
   created_at: string
   updated_at: string
   deleted_at: string | null
+}
+
+export interface ToolSubscriptionClient {
+  tool_id: string
+  client_id: string
+}
+
+export interface InvestmentClient {
+  investment_id: string
+  client_id: string
 }
 
 export interface TeamAllocation {
@@ -503,6 +520,8 @@ export type Database = {
       company_investments: { Row: CompanyInvestment; Insert: Omit<CompanyInvestment, 'id' | 'created_at' | 'updated_at'>; Update: Partial<CompanyInvestment> }
       team_costs: { Row: TeamCost; Insert: Omit<TeamCost, 'id' | 'created_at' | 'updated_at'>; Update: Partial<TeamCost> }
       team_allocations: { Row: TeamAllocation; Insert: Omit<TeamAllocation, 'id' | 'created_at' | 'updated_at'>; Update: Partial<TeamAllocation> }
+      tool_subscription_clients: { Row: ToolSubscriptionClient; Insert: ToolSubscriptionClient; Update: Partial<ToolSubscriptionClient> }
+      investment_clients: { Row: InvestmentClient; Insert: InvestmentClient; Update: Partial<InvestmentClient> }
       contracts: { Row: Contract; Insert: Omit<Contract, 'id' | 'created_at' | 'updated_at'>; Update: Partial<Contract> }
       profit_withdrawals: { Row: ProfitWithdrawal; Insert: Omit<ProfitWithdrawal, 'id' | 'created_at'>; Update: Partial<ProfitWithdrawal> }
     }
