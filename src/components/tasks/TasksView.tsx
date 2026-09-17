@@ -24,6 +24,12 @@ const PRIORITY_META: Record<Task["priority"], { label: string; color: string }> 
   urgente: { label: "Urgente", color: "var(--danger)" },
 };
 
+const PLATFORM_META: Record<NonNullable<Task["platform"]>, { label: string; color: string; bg: string }> = {
+  meta:   { label: "Meta",   color: "#1877F2", bg: "color-mix(in srgb, #1877F2 14%, transparent)" },
+  google: { label: "Google", color: "#EA4335", bg: "color-mix(in srgb, #EA4335 14%, transparent)" },
+  ambos:  { label: "Meta + Google", color: "var(--accent)", bg: "var(--accent-tint)" },
+};
+
 function StatusBadge({ status, onChange }: { status: Task["status"]; onChange: (s: Task["status"]) => void }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
@@ -155,6 +161,16 @@ function TaskModal({ task, clients, profiles, onClose, onSave, onDelete, onDupli
               </select>
             </div>
             <div className="space-y-1">
+              <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--text-tertiary)" }}>Plataforma</label>
+              <select value={form.platform ?? ""} onChange={(e) => setForm((f) => ({ ...f, platform: (e.target.value || null) as Task["platform"] }))}
+                className={inputCls} style={{ ...inputStyle, appearance: "none" as const }}>
+                <option value="">—</option>
+                <option value="meta">Meta</option>
+                <option value="google">Google</option>
+                <option value="ambos">Meta + Google</option>
+              </select>
+            </div>
+            <div className="space-y-1">
               <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--text-tertiary)" }}>Deadline</label>
               <input type="date" value={form.deadline ?? ""} onChange={(e) => setForm((f) => ({ ...f, deadline: e.target.value || null }))}
                 className={inputCls} style={inputStyle}
@@ -180,7 +196,7 @@ function TaskModal({ task, clients, profiles, onClose, onSave, onDelete, onDupli
                 <option value="mensal">Mensalmente</option>
               </select>
               {form.recurrence && form.recurrence !== "nenhuma" && (
-                <p className="text-[10px]" style={{ color: "var(--text-quaternary)" }}>Repete sempre a partir do Deadline, não da data em que for concluída.</p>
+                <p className="text-[10px]" style={{ color: "var(--text-quaternary)" }}>Ao marcar como Concluída, uma nova tarefa nasce automaticamente no Backlog para o próximo ciclo.</p>
               )}
             </div>
           </div>
@@ -306,6 +322,7 @@ export function TasksView({ clientId, initialTaskId, onConsumeInitial }: { clien
       external_id: null,
       last_synced_at: null,
       recurrence: task.recurrence,
+      platform: task.platform,
       created_by: profile.id,
     });
   }
@@ -460,6 +477,11 @@ export function TasksView({ clientId, initialTaskId, onConsumeInitial }: { clien
                         <div className="flex items-center gap-2">
                           {isOverdue && <span className="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" />}
                           <span className="text-sm text-[var(--text-primary)]">{task.title}</span>
+                          {task.platform && (
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded flex-shrink-0" style={{ color: PLATFORM_META[task.platform].color, backgroundColor: PLATFORM_META[task.platform].bg }}>
+                              {PLATFORM_META[task.platform].label}
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="px-4 py-3">
@@ -528,7 +550,14 @@ export function TasksView({ clientId, initialTaskId, onConsumeInitial }: { clien
                           <p className="text-sm text-[var(--text-primary)] leading-snug">{task.title}</p>
                           {isOverdue && <span className="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0 mt-1.5" />}
                         </div>
-                        {client && <span className="text-[9px] font-medium px-1.5 py-0.5 rounded" style={{ backgroundColor: "var(--bg-surface-2)", color: "var(--text-tertiary)" }}>{client.name}</span>}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {client && <span className="text-[9px] font-medium px-1.5 py-0.5 rounded" style={{ backgroundColor: "var(--bg-surface-2)", color: "var(--text-tertiary)" }}>{client.name}</span>}
+                          {task.platform && (
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ color: PLATFORM_META[task.platform].color, backgroundColor: PLATFORM_META[task.platform].bg }}>
+                              {PLATFORM_META[task.platform].label}
+                            </span>
+                          )}
+                        </div>
                         <div className="flex items-center justify-between mt-2">
                           <span className="text-[10px] font-semibold" style={{ color: PRIORITY_META[task.priority].color }}>{PRIORITY_META[task.priority].label}</span>
                           {task.deadline && <span className="text-[10px]" style={{ color: isOverdue ? "var(--danger)" : "var(--text-quaternary)" }}>{new Date(task.deadline + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}</span>}

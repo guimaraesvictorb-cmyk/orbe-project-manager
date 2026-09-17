@@ -13,7 +13,13 @@ function nextDeadline(deadline: string | null, recurrence: TaskRecurrence): stri
   if (recurrence === 'nenhuma') return deadline
   const base = deadline ? new Date(deadline + 'T00:00:00') : new Date()
   base.setDate(base.getDate() + RECURRENCE_DAYS[recurrence])
-  return base.toISOString().split('T')[0]
+  // If the task was completed late enough that "old deadline + interval" is
+  // still in the past (e.g. it sat untouched for two weeks), anchor to today
+  // instead — otherwise the newly spawned task is born already overdue, and
+  // a person who fell behind once stays "atrasado" forever no matter how
+  // promptly they complete each one from then on.
+  const today = new Date(new Date().toDateString())
+  return (base < today ? today : base).toISOString().split('T')[0]
 }
 
 interface TasksContextValue {

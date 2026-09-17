@@ -149,6 +149,7 @@ export interface WorkflowTrigger {
 }
 
 export type TaskRecurrence = 'nenhuma' | 'diaria' | 'semanal' | 'quinzenal' | 'mensal'
+export type TaskPlatform = 'meta' | 'google' | 'ambos'
 
 export interface Task {
   id: string
@@ -170,6 +171,7 @@ export interface Task {
   external_id: string | null
   last_synced_at: string | null
   recurrence: TaskRecurrence
+  platform: TaskPlatform | null
   created_by: string
   created_at: string
   updated_at: string
