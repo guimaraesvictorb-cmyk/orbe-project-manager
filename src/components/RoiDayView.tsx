@@ -106,7 +106,14 @@ function averageByClient(rows: RoiDayClient[]): RoiDayClient[] {
     const latest = [...entries].sort((a, b) => b.period.localeCompare(a.period))[0];
     const avg: RoiDayClient = { ...latest, period: "max" };
     for (const key of NUMERIC_FIELDS) {
-      const vals = entries.map((e) => e[key]).filter((v): v is number => typeof v === "number");
+      // Postgres numeric columns come back over the REST API as strings
+      // (to avoid float precision loss), not JS numbers — a strict
+      // `typeof v === "number"` check here was silently treating every row
+      // as empty, so "Máximo" showed every numeric column as blank.
+      const vals = entries
+        .map((e) => e[key])
+        .map((v) => (v == null ? null : Number(v)))
+        .filter((v): v is number => v != null && !Number.isNaN(v));
       (avg as unknown as Record<string, number | null>)[key] = vals.length
         ? vals.reduce((s, v) => s + v, 0) / vals.length
         : null;
@@ -769,11 +776,18 @@ export function RoiDayView() {
               // Margem de Mídia e Fee: quantas vezes o fee é coberto pela
               // margem que a mídia gerou. Fórmula original da planilha:
               // ((Fat.Realizado × MC%) − Inv.Realizado) ÷ FEE.
-              const mmf = r.fee && r.mc_pct != null
-                ? (((r.fat_realizado ?? 0) * (r.mc_pct / 100)) - (r.inv_realizado ?? 0)) / r.fee
+              // Coerção explícita com Number(): campos numeric do Postgres
+              // chegam como string via REST, e um `r.fee &&`/`typeof` direto
+              // sobre isso já causou bug antes (ver averageByClient acima).
+              const feeNum = r.fee != null ? Number(r.fee) : null;
+              const mcPctNum = r.mc_pct != null ? Number(r.mc_pct) : null;
+              const fatRealizadoNum = r.fat_realizado != null ? Number(r.fat_realizado) : 0;
+              const invRealizadoNum = r.inv_realizado != null ? Number(r.inv_realizado) : 0;
+              const mmf = feeNum && mcPctNum != null
+                ? ((fatRealizadoNum * (mcPctNum / 100)) - invRealizadoNum) / feeNum
                 : null;
-              const metaFatMmf = r.fee && r.mc_pct
-                ? minFatRealizadoForMmfTarget(r.fee, r.mc_pct, r.inv_realizado ?? 0)
+              const metaFatMmf = feeNum && mcPctNum
+                ? minFatRealizadoForMmfTarget(feeNum, mcPctNum, invRealizadoNum)
                 : null;
               const lt = monthsSince(r.data_entrada);
               return (
