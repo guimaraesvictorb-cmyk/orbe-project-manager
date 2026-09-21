@@ -11,6 +11,15 @@ const ROI_DAY_PLATFORMS: RoiDayPlatform[] = ["meta", "google", "linkedin", "tikt
 const ROI_DAY_PLATFORM_LABELS: Record<RoiDayPlatform, string> = {
   meta: "Meta Ads", google: "Google Ads", linkedin: "LinkedIn Ads", tiktok: "TikTok Ads", outro: "Outro",
 };
+// O valor digitado é o que aparece no gerenciador de anúncios (pré-imposto);
+// pra algumas plataformas isso não é o custo real — a Meta cobra ~12,15% de
+// imposto por cima em contas brasileiras. Guardamos o valor cru (bate com o
+// gerenciador) e só aplicamos esse acréscimo na hora de somar pro total
+// investido — é uma aproximação, não um cálculo fiscal exato.
+const ROI_DAY_PLATFORM_TAX_RATE: Partial<Record<RoiDayPlatform, number>> = { meta: 0.1215 };
+function grossInvestment(platform: RoiDayPlatform, raw: number): number {
+  return raw * (1 + (ROI_DAY_PLATFORM_TAX_RATE[platform] ?? 0));
+}
 
 const ROI_STATUS_OPTIONS = ["Ativo", "Onboarding", "Transição", "Aviso Prévio", "Churn"];
 
@@ -215,7 +224,7 @@ function InvestmentBreakdownCell({
 
   function commitPlatform(p: RoiDayPlatform, raw: string) {
     const amount = parseNumInput(raw) ?? 0;
-    const newTotal = ROI_DAY_PLATFORMS.reduce((s, plat) => s + (plat === p ? amount : (parseNumInput(drafts[plat] ?? "") ?? 0)), 0);
+    const newTotal = ROI_DAY_PLATFORMS.reduce((s, plat) => s + grossInvestment(plat, plat === p ? amount : (parseNumInput(drafts[plat] ?? "") ?? 0)), 0);
     onCommit(p, amount, newTotal);
   }
 
@@ -240,25 +249,35 @@ function InvestmentBreakdownCell({
             onClick={(e) => e.stopPropagation()}
           >
             <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--text-tertiary)" }}>Investimento por plataforma</p>
-            {ROI_DAY_PLATFORMS.map((p) => (
-              <div key={p} className="flex items-center justify-between gap-2">
-                <label className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{ROI_DAY_PLATFORM_LABELS[p]}</label>
-                <input
-                  value={drafts[p] ?? ""}
-                  onChange={(e) => setDrafts((d) => ({ ...d, [p]: e.target.value }))}
-                  onBlur={(e) => commitPlatform(p, e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") (e.currentTarget as HTMLInputElement).blur(); }}
-                  inputMode="decimal"
-                  placeholder="0"
-                  className="w-24 rounded px-1.5 py-1 text-xs text-right text-[var(--text-primary)] focus:outline-none"
-                  style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-subtle)" }}
-                />
-              </div>
-            ))}
+            <p className="text-[10px] leading-snug" style={{ color: "var(--text-quaternary)" }}>Digite o valor do gerenciador (sem imposto) — a Meta soma ~12,15% automaticamente no total.</p>
+            {ROI_DAY_PLATFORMS.map((p) => {
+              const rate = ROI_DAY_PLATFORM_TAX_RATE[p];
+              const rawVal = parseNumInput(drafts[p] ?? "");
+              return (
+                <div key={p} className="space-y-0.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <label className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{ROI_DAY_PLATFORM_LABELS[p]}</label>
+                    <input
+                      value={drafts[p] ?? ""}
+                      onChange={(e) => setDrafts((d) => ({ ...d, [p]: e.target.value }))}
+                      onBlur={(e) => commitPlatform(p, e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") (e.currentTarget as HTMLInputElement).blur(); }}
+                      inputMode="decimal"
+                      placeholder="0"
+                      className="w-24 rounded px-1.5 py-1 text-xs text-right text-[var(--text-primary)] focus:outline-none"
+                      style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-subtle)" }}
+                    />
+                  </div>
+                  {rate && rawVal != null && rawVal > 0 && (
+                    <p className="text-right text-[10px]" style={{ color: "var(--text-quaternary)" }}>≈ {fmtCurrency0(grossInvestment(p, rawVal))} c/ imposto</p>
+                  )}
+                </div>
+              );
+            })}
             <div className="flex items-center justify-between pt-2" style={{ borderTop: "1px solid var(--border)" }}>
               <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--text-tertiary)" }}>Total</span>
               <span className="text-xs font-bold" style={{ color: "var(--accent)" }}>
-                {fmtCurrency0(ROI_DAY_PLATFORMS.reduce((s, p) => s + (parseNumInput(drafts[p] ?? "") ?? 0), 0))}
+                {fmtCurrency0(ROI_DAY_PLATFORMS.reduce((s, p) => s + grossInvestment(p, parseNumInput(drafts[p] ?? "") ?? 0), 0))}
               </span>
             </div>
           </div>
