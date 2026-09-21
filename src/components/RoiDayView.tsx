@@ -4,6 +4,7 @@ import { Trophy, Plus, Trash2, Loader2, FileText, ArrowLeft, Printer, ChevronDow
 import { useRoiDay, useRoiDayInvestments } from "../hooks/useRoiDay";
 import { useAuth } from "../hooks/useAuth";
 import { useClients } from "../hooks/useClients";
+import { isAdminOrCoordenador } from "../lib/permissions";
 import type { RoiDayClient, RoiDayInvestment, RoiDayPlatform } from "../lib/database.types";
 import { fmtCurrency0, fmtInt, fmtPct, todayLocal } from "../lib/formatters";
 
@@ -416,6 +417,10 @@ export function RoiDayView() {
   const displayRows = viewMode === "max" ? maxRows : periodRows;
   const editable = viewMode === "month";
   const canViewFee = !!profile?.can_view_financials;
+  // Only Victor (the owner) curates which clients are tracked in ROI Day —
+  // GT/GP can fill in the metrics for their own clients (enforced by RLS on
+  // private.roi_day_clients) but never add or remove a tracked client/month.
+  const canManageRoster = isAdminOrCoordenador(profile);
 
   const compareRows = useMemo(() => rows.filter((r) => r.period === comparePeriod), [rows, comparePeriod]);
 
@@ -647,7 +652,7 @@ export function RoiDayView() {
         </div>
       </div>
 
-      {viewMode === "month" && neverAdded.length > 0 && (
+      {canManageRoster && viewMode === "month" && neverAdded.length > 0 && (
         <div className="rounded-xl border p-3 flex flex-wrap items-center gap-2" style={{ backgroundColor: "var(--accent-tint)", borderColor: "var(--accent-a33)" }}>
           <span className="text-xs font-semibold" style={{ color: "var(--text-primary)" }}>Cadastrados em Clientes mas ainda sem registro no ROI Day:</span>
           {neverAdded.map((c) => (
@@ -664,7 +669,7 @@ export function RoiDayView() {
         </div>
       )}
 
-      {viewMode === "month" && missingThisMonth.length > 0 && (
+      {canManageRoster && viewMode === "month" && missingThisMonth.length > 0 && (
         <div className="rounded-xl border p-3 flex flex-wrap items-center gap-2" style={{ backgroundColor: "color-mix(in srgb, var(--warning) 12%, var(--bg-surface))", borderColor: "var(--warning)" }}>
           <span className="text-xs font-semibold" style={{ color: "var(--text-primary)" }}>Faltam preencher em {monthLabel(period)}:</span>
           {missingThisMonth.map((name) => (
@@ -700,7 +705,9 @@ export function RoiDayView() {
       {displayRows.length === 0 ? (
         <div className="rounded-xl border py-16 text-center" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
           <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Nenhum registro em {viewMode === "max" ? "nenhum mês ainda" : monthLabel(period)}</p>
-          <p className="text-xs mt-1" style={{ color: "var(--text-quaternary)" }}>Use os atalhos acima ou "Novo cliente" pra começar o mês.</p>
+          <p className="text-xs mt-1" style={{ color: "var(--text-quaternary)" }}>
+            {canManageRoster ? "Use os atalhos acima pra começar o mês." : "Fale com o Victor pra cadastrar um cliente aqui."}
+          </p>
         </div>
       ) : (
       <div className="rounded-xl border overflow-auto" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
@@ -817,7 +824,7 @@ export function RoiDayView() {
                       <button onClick={() => setReportClient(r.name)} className="p-1" style={{ color: "var(--text-quaternary)" }} aria-label="Relatório">
                         <FileText size={12} />
                       </button>
-                      {editable && (
+                      {editable && canManageRoster && (
                         <button onClick={() => { if (confirm(`Remover "${r.name}" de ${monthLabel(period)}?`)) deleteRow(r.id); }} className="p-1" style={{ color: "var(--text-quaternary)" }} aria-label="Remover">
                           <Trash2 size={12} />
                         </button>

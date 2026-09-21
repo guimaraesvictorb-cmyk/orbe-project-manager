@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { ExternalLink, Plus, Search, Loader2, X, Check, TrendingDown, ChevronDown, ChevronUp, Download } from "lucide-react";
 import { useClients } from "../hooks/useClients";
 import { useAuth } from "../hooks/useAuth";
+import { isAdminOrCoordenador } from "../lib/permissions";
 import type { Client } from "../lib/database.types";
 import { FLAG_META, STATUS_META } from "../lib/clientMeta";
 import { exportToCSV } from "../lib/csvExport";
@@ -357,7 +358,10 @@ interface ClientesSectionProps {
 
 export function ClientesSection({ compact = false, onSelectClient }: ClientesSectionProps) {
   const { clients, loading, createClient, updateHealthFlag, updateStatus } = useClients();
-  const { user, isAuthenticated } = useAuth();
+  const { user, profile, isAuthenticated } = useAuth();
+  // Only Victor (or a coordenador) registers new clients — GTs/GPs work the
+  // clients they're assigned to, but the roster itself is curated by him.
+  const canCreateClient = isAdminOrCoordenador(profile);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("todos");
   const [filterFlag, setFilterFlag] = useState("todos");
@@ -449,7 +453,7 @@ export function ClientesSection({ compact = false, onSelectClient }: ClientesSec
               <Download size={13} />
               Exportar CSV
             </button>
-            {isAuthenticated && (
+            {isAuthenticated && canCreateClient && (
               <button
                 onClick={() => setShowNewModal(true)}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-150"
@@ -497,7 +501,7 @@ export function ClientesSection({ compact = false, onSelectClient }: ClientesSec
           <p className="text-xs mb-4" style={{ color: "var(--text-quaternary)" }}>
             {activeClients.length === 0 ? "Adicione o primeiro cliente da Orbe" : "Tente ajustar os filtros"}
           </p>
-          {activeClients.length === 0 && isAuthenticated && (
+          {activeClients.length === 0 && isAuthenticated && canCreateClient && (
             <button
               onClick={() => setShowNewModal(true)}
               className="text-xs font-semibold px-4 py-2 rounded-lg"
