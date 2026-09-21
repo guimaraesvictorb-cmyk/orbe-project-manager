@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
-import type { RoiDayClient } from '../lib/database.types'
+import type { RoiDayClient, RoiDayInvestment, RoiDayPlatform } from '../lib/database.types'
 
 export function useRoiDay() {
   const [rows, setRows] = useState<RoiDayClient[]>([])
@@ -67,4 +67,56 @@ export function useRoiDay() {
   }
 
   return { rows, loading, refetch, addRow, addMonthFromPrevious, updateRow, deleteRow }
+}
+
+// Investimento realizado por plataforma (Meta, Google, LinkedIn, TikTok...)
+// para um mês de um cliente — o total soma automaticamente em
+// roi_day_clients.inv_realizado (ver RoiDayView, que chama updateRow depois
+// de cada mudança aqui) em vez de exigir digitar o total à mão.
+export function useRoiDayInvestments() {
+  const [investments, setInvestments] = useState<RoiDayInvestment[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const fetchInvestments = useCallback(async () => {
+    setLoading(true)
+    const { data, error } = await supabase.from('roi_day_investments').select('*')
+    if (error) console.error('Failed to fetch roi_day_investments:', error.message)
+    setInvestments(data ?? [])
+    setLoading(false)
+  }, [])
+
+  useEffect(() => { fetchInvestments() }, [fetchInvestments])
+
+  function investmentsFor(roiDayClientId: string) {
+    return investments.filter((i) => i.roi_day_client_id === roiDayClientId)
+  }
+
+  async function setInvestment(roiDayClientId: string, platform: RoiDayPlatform, amount: number) {
+    if (amount <= 0) {
+      const { error } = await supabase
+        .from('roi_day_investments')
+        .delete()
+        .eq('roi_day_client_id', roiDayClientId)
+        .eq('platform', platform)
+      if (error) { console.error('Failed to delete roi_day_investments row:', error.message); return { error: error.message } }
+      setInvestments((prev) => prev.filter((i) => !(i.roi_day_client_id === roiDayClientId && i.platform === platform)))
+      return {}
+    }
+    const { data, error } = await supabase
+      .from('roi_day_investments')
+      .upsert({ roi_day_client_id: roiDayClientId, platform, amount }, { onConflict: 'roi_day_client_id,platform' })
+      .select()
+      .single()
+    if (error) { console.error('Failed to upsert roi_day_investments row:', error.message); return { error: error.message } }
+    setInvestments((prev) => {
+      const idx = prev.findIndex((i) => i.roi_day_client_id === roiDayClientId && i.platform === platform)
+      if (idx === -1) return [...prev, data]
+      const next = [...prev]
+      next[idx] = data
+      return next
+    })
+    return { data }
+  }
+
+  return { investments, loading, fetchInvestments, investmentsFor, setInvestment }
 }

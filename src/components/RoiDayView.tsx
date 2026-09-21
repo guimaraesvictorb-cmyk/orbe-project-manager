@@ -1,10 +1,16 @@
 import { useMemo, useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Trophy, Plus, Trash2, Loader2, FileText, ArrowLeft, Printer, ChevronDown, Check, Calendar } from "lucide-react";
-import { useRoiDay } from "../hooks/useRoiDay";
+import { useRoiDay, useRoiDayInvestments } from "../hooks/useRoiDay";
 import { useAuth } from "../hooks/useAuth";
 import { useClients } from "../hooks/useClients";
-import type { RoiDayClient } from "../lib/database.types";
+import type { RoiDayClient, RoiDayInvestment, RoiDayPlatform } from "../lib/database.types";
 import { fmtCurrency0, fmtInt, fmtPct, todayLocal } from "../lib/formatters";
+
+const ROI_DAY_PLATFORMS: RoiDayPlatform[] = ["meta", "google", "linkedin", "tiktok", "outro"];
+const ROI_DAY_PLATFORM_LABELS: Record<RoiDayPlatform, string> = {
+  meta: "Meta Ads", google: "Google Ads", linkedin: "LinkedIn Ads", tiktok: "TikTok Ads", outro: "Outro",
+};
 
 const ROI_STATUS_OPTIONS = ["Ativo", "Onboarding", "Transição", "Aviso Prévio", "Churn"];
 
@@ -167,6 +173,102 @@ function EditableCell({ value, type, onCommit, placeholder, readOnly }: {
   );
 }
 
+// Inv. Realizado deixa de ser um total digitado à mão: clicar abre um
+// detalhamento por plataforma (Meta, Google, LinkedIn, TikTok...) e o total
+// soma sozinho — é esse total que sobe pra roi_day_clients.inv_realizado.
+function InvestmentBreakdownCell({
+  total, items, onCommit, readOnly,
+}: {
+  total: number | null;
+  items: RoiDayInvestment[];
+  onCommit: (platform: RoiDayPlatform, amount: number, newTotal: number) => void;
+  readOnly?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const btnRef = useRef<HTMLButtonElement>(null);
+
+  function openPopover() {
+    if (readOnly) return;
+    const rect = btnRef.current?.getBoundingClientRect();
+    if (rect) setPos({ top: rect.bottom + 4, left: rect.left });
+    const next: Record<string, string> = {};
+    for (const p of ROI_DAY_PLATFORMS) {
+      const it = items.find((i) => i.platform === p);
+      next[p] = it ? String(it.amount) : "";
+    }
+    setDrafts(next);
+    setOpen(true);
+  }
+
+  useEffect(() => {
+    if (!open) return;
+    function close() { setOpen(false); }
+    window.addEventListener("scroll", close, true);
+    window.addEventListener("resize", close);
+    return () => {
+      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("resize", close);
+    };
+  }, [open]);
+
+  function commitPlatform(p: RoiDayPlatform, raw: string) {
+    const amount = parseNumInput(raw) ?? 0;
+    const newTotal = ROI_DAY_PLATFORMS.reduce((s, plat) => s + (plat === p ? amount : (parseNumInput(drafts[plat] ?? "") ?? 0)), 0);
+    onCommit(p, amount, newTotal);
+  }
+
+  return (
+    <div className="relative">
+      <button
+        ref={btnRef}
+        onClick={(e) => { e.stopPropagation(); open ? setOpen(false) : openPopover(); }}
+        disabled={readOnly}
+        className={`w-full min-w-[90px] text-left px-1.5 py-1 rounded text-xs transition-colors truncate flex items-center gap-1 ${readOnly ? "cursor-default" : "hover:bg-[var(--bg-surface-2)]"}`}
+        style={{ color: total == null ? "var(--text-quaternary)" : "var(--text-secondary)" }}
+      >
+        {total == null ? "—" : fmtCurrency0(total)}
+        {items.length > 0 && <span className="text-[9px] font-bold" style={{ color: "var(--accent)" }}>({items.length})</span>}
+      </button>
+      {open && pos && createPortal(
+        <>
+          <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setOpen(false); }} />
+          <div
+            className="fixed z-50 rounded-xl border p-3 w-56 space-y-2"
+            style={{ top: pos.top, left: pos.left, backgroundColor: "var(--bg-surface-2)", borderColor: "var(--border-strong)", boxShadow: "0 8px 24px rgba(0,0,0,0.35)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--text-tertiary)" }}>Investimento por plataforma</p>
+            {ROI_DAY_PLATFORMS.map((p) => (
+              <div key={p} className="flex items-center justify-between gap-2">
+                <label className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{ROI_DAY_PLATFORM_LABELS[p]}</label>
+                <input
+                  value={drafts[p] ?? ""}
+                  onChange={(e) => setDrafts((d) => ({ ...d, [p]: e.target.value }))}
+                  onBlur={(e) => commitPlatform(p, e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") (e.currentTarget as HTMLInputElement).blur(); }}
+                  inputMode="decimal"
+                  placeholder="0"
+                  className="w-24 rounded px-1.5 py-1 text-xs text-right text-[var(--text-primary)] focus:outline-none"
+                  style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-subtle)" }}
+                />
+              </div>
+            ))}
+            <div className="flex items-center justify-between pt-2" style={{ borderTop: "1px solid var(--border)" }}>
+              <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--text-tertiary)" }}>Total</span>
+              <span className="text-xs font-bold" style={{ color: "var(--accent)" }}>
+                {fmtCurrency0(ROI_DAY_PLATFORMS.reduce((s, p) => s + (parseNumInput(drafts[p] ?? "") ?? 0), 0))}
+              </span>
+            </div>
+          </div>
+        </>,
+        document.body
+      )}
+    </div>
+  );
+}
+
 function Th({ children }: { children: React.ReactNode }) {
   return (
     <th className="text-left text-[9px] font-bold tracking-widest uppercase px-2 py-2 whitespace-nowrap" style={{ color: "var(--text-tertiary)" }}>
@@ -261,6 +363,12 @@ export function RoiDayView() {
   const { profile } = useAuth();
   const { clients } = useClients();
   const { rows, loading, addRow, addMonthFromPrevious, updateRow, deleteRow } = useRoiDay();
+  const { investmentsFor, setInvestment } = useRoiDayInvestments();
+
+  async function handlePlatformInvestment(roiDayClientId: string, platform: RoiDayPlatform, amount: number, newTotal: number) {
+    await setInvestment(roiDayClientId, platform, amount);
+    await updateRow(roiDayClientId, { inv_realizado: newTotal });
+  }
   const [adding, setAdding] = useState(false);
   const [period, setPeriod] = useState(() => todayLocal().slice(0, 7));
   const [viewMode, setViewMode] = useState<"month" | "max">("month");
@@ -641,7 +749,14 @@ export function RoiDayView() {
                   <td><EditableCell value={r.nps} type="int" readOnly={!editable} onCommit={(v) => updateRow(r.id, { nps: v as number | null })} /></td>
                   <td><EditableCell value={r.fee} type="money" readOnly={!editable} onCommit={(v) => updateRow(r.id, { fee: v as number | null })} /></td>
                   <td><EditableCell value={r.inv_meta} type="money" readOnly={!editable} onCommit={(v) => updateRow(r.id, { inv_meta: v as number | null })} /></td>
-                  <td><EditableCell value={r.inv_realizado} type="money" readOnly={!editable} onCommit={(v) => updateRow(r.id, { inv_realizado: v as number | null })} /></td>
+                  <td>
+                    <InvestmentBreakdownCell
+                      total={r.inv_realizado}
+                      items={investmentsFor(r.id)}
+                      readOnly={!editable}
+                      onCommit={(platform, amount, newTotal) => handlePlatformInvestment(r.id, platform, amount, newTotal)}
+                    />
+                  </td>
                   <td className="px-1.5 py-1" style={{ color: "var(--text-quaternary)" }}>{invPct == null ? "—" : fmtPct(invPct)}</td>
                   <td><EditableCell value={r.fat_meta} type="money" readOnly={!editable} onCommit={(v) => updateRow(r.id, { fat_meta: v as number | null })} /></td>
                   <td><EditableCell value={r.fat_realizado} type="money" readOnly={!editable} onCommit={(v) => updateRow(r.id, { fat_realizado: v as number | null })} /></td>

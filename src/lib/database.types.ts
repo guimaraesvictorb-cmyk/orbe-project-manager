@@ -330,6 +330,17 @@ export interface RoiDayClient {
   updated_at: string
 }
 
+export type RoiDayPlatform = 'meta' | 'google' | 'linkedin' | 'tiktok' | 'outro'
+
+export interface RoiDayInvestment {
+  id: string
+  roi_day_client_id: string
+  platform: RoiDayPlatform
+  amount: number
+  created_at: string
+  updated_at: string
+}
+
 export interface Payee {
   id: string
   name: string
@@ -515,6 +526,7 @@ export type Database = {
       leads: { Row: Lead; Insert: Omit<Lead, 'id' | 'created_at' | 'updated_at'>; Update: Partial<Lead> }
       lead_activities: { Row: LeadActivity; Insert: Omit<LeadActivity, 'id' | 'created_at'>; Update: Partial<LeadActivity> }
       roi_day_clients: { Row: RoiDayClient; Insert: Omit<RoiDayClient, 'id' | 'created_at' | 'updated_at'>; Update: Partial<RoiDayClient> }
+      roi_day_investments: { Row: RoiDayInvestment; Insert: Omit<RoiDayInvestment, 'id' | 'created_at' | 'updated_at'>; Update: Partial<RoiDayInvestment> }
       payees: { Row: Payee; Insert: Omit<Payee, 'id' | 'created_at' | 'updated_at'>; Update: Partial<Payee> }
       payables: { Row: Payable; Insert: Omit<Payable, 'id' | 'created_at' | 'updated_at'>; Update: Partial<Payable> }
       company_settings: { Row: CompanySettings; Insert: Omit<CompanySettings, 'updated_at'>; Update: Partial<CompanySettings> }
