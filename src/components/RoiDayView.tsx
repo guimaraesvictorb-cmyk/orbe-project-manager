@@ -8,6 +8,20 @@ import { isAdminOrCoordenador } from "../lib/permissions";
 import type { RoiDayClient, RoiDayInvestment, RoiDayPlatform } from "../lib/database.types";
 import { fmtCurrency0, fmtInt, fmtPct, todayLocal } from "../lib/formatters";
 
+// Meta mínima de MMF — fixa por decisão do Victor: um número de referência
+// que ninguém (nem ele, pela plataforma) deve poder editar, só uma constante
+// no código mesmo. Abaixo disso a operação do cliente está no vermelho;
+// tudo que passar disso é lucro extra sobre o mínimo esperado.
+const MMF_TARGET = 2;
+
+// Dado o MMF mínimo fixo acima, resolve a fórmula do MMF para Fat.Realizado:
+// MMF = ((Fat.Realizado × MC%) − Inv.Realizado) ÷ FEE  =>
+// Fat.Realizado = (MMF_TARGET × FEE + Inv.Realizado) ÷ (MC% / 100)
+function minFatRealizadoForMmfTarget(fee: number, mcPct: number, invRealizado: number): number | null {
+  if (mcPct === 0) return null;
+  return (MMF_TARGET * fee + invRealizado) / (mcPct / 100);
+}
+
 const ROI_DAY_PLATFORMS: RoiDayPlatform[] = ["meta", "google", "linkedin", "tiktok", "outro"];
 const ROI_DAY_PLATFORM_LABELS: Record<RoiDayPlatform, string> = {
   meta: "Meta Ads", google: "Google Ads", linkedin: "LinkedIn Ads", tiktok: "TikTok Ads", outro: "Outro",
@@ -737,6 +751,7 @@ export function RoiDayView() {
               <Th>ROI</Th>
               <Th>MC%</Th>
               <Th>MMF</Th>
+              <Th>Meta MMF ({MMF_TARGET})</Th>
               <Th>Data entrada</Th>
               <Th>LT (meses)</Th>
               <Th>Localização</Th>
@@ -756,6 +771,9 @@ export function RoiDayView() {
               // ((Fat.Realizado × MC%) − Inv.Realizado) ÷ FEE.
               const mmf = r.fee && r.mc_pct != null
                 ? (((r.fat_realizado ?? 0) * (r.mc_pct / 100)) - (r.inv_realizado ?? 0)) / r.fee
+                : null;
+              const metaFatMmf = r.fee && r.mc_pct
+                ? minFatRealizadoForMmfTarget(r.fee, r.mc_pct, r.inv_realizado ?? 0)
                 : null;
               const lt = monthsSince(r.data_entrada);
               return (
@@ -811,8 +829,11 @@ export function RoiDayView() {
                   <td className="px-1.5 py-1 font-semibold" style={{ color: roas == null ? "var(--text-quaternary)" : "var(--accent)" }}>{roas == null ? "—" : roas.toFixed(2) + "x"}</td>
                   <td className="px-1.5 py-1 font-semibold" style={{ color: roi == null ? "var(--text-quaternary)" : roi >= 0 ? "var(--success)" : "var(--danger)" }}>{roi == null ? "—" : fmtPct(roi)}</td>
                   <td><EditableCell value={r.mc_pct} type="pct" readOnly={!editable} onCommit={(v) => updateRow(r.id, { mc_pct: v as number | null })} /></td>
-                  <td className="px-1.5 py-1 font-semibold" style={{ color: mmf == null ? "var(--text-quaternary)" : mmf >= 1 ? "var(--success)" : "var(--danger)" }} title="Margem de Mídia e Fee: ((Fat. Realizado × MC%) − Inv. Realizado) ÷ FEE">
+                  <td className="px-1.5 py-1 font-semibold" style={{ color: mmf == null ? "var(--text-quaternary)" : mmf >= MMF_TARGET ? "var(--success)" : "var(--danger)" }} title={`Margem de Mídia e Fee: ((Fat. Realizado × MC%) − Inv. Realizado) ÷ FEE. Meta mínima fixa: ${MMF_TARGET.toFixed(2)}`}>
                     {mmf == null ? "—" : mmf.toFixed(2)}
+                  </td>
+                  <td className="px-1.5 py-1" style={{ color: "var(--text-quaternary)" }} title={`Fat. Realizado mínimo pra bater MMF ${MMF_TARGET} (meta fixa)`}>
+                    {metaFatMmf == null ? "—" : fmtCurrency0(metaFatMmf)}
                   </td>
                   <td><EditableCell value={r.data_entrada} type="date" readOnly={!editable} onCommit={(v) => updateRow(r.id, { data_entrada: v as string | null })} /></td>
                   <td className="px-1.5 py-1" style={{ color: "var(--text-quaternary)" }}>{lt == null ? "—" : lt}</td>
@@ -867,7 +888,7 @@ export function RoiDayView() {
               <td className="px-1.5 py-2 text-xs font-bold">{fmtInt(totals.sql_count)}</td>
               <td />
               <td className="px-1.5 py-2 text-xs font-bold">{fmtInt(totals.vendas)}</td>
-              <td colSpan={9} />
+              <td colSpan={10} />
             </tr>
           </tfoot>
         </table>
