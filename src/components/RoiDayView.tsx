@@ -1,6 +1,6 @@
 import { useMemo, useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { Trophy, Plus, Trash2, Loader2, FileText, ArrowLeft, Printer, ChevronDown, Check, Calendar } from "lucide-react";
+import { Trophy, Plus, Trash2, Loader2, FileText, ArrowLeft, Printer, ChevronDown, Check, Calendar, Lock } from "lucide-react";
 import { useRoiDay, useRoiDayInvestments } from "../hooks/useRoiDay";
 import { useAuth } from "../hooks/useAuth";
 import { useClients } from "../hooks/useClients";
@@ -415,6 +415,7 @@ export function RoiDayView() {
   const maxRows = useMemo(() => averageByClient(rows), [rows]);
   const displayRows = viewMode === "max" ? maxRows : periodRows;
   const editable = viewMode === "month";
+  const canViewFee = !!profile?.can_view_financials;
 
   const compareRows = useMemo(() => rows.filter((r) => r.period === comparePeriod), [rows, comparePeriod]);
 
@@ -742,6 +743,12 @@ export function RoiDayView() {
               const fatPct = r.fat_meta ? ((r.fat_realizado ?? 0) / r.fat_meta) * 100 : null;
               const roas = r.inv_realizado ? (r.fat_realizado ?? 0) / r.inv_realizado : null;
               const roi = r.inv_realizado ? (((r.fat_realizado ?? 0) - r.inv_realizado) / r.inv_realizado) * 100 : null;
+              // Margem de Mídia e Fee: quantas vezes o fee é coberto pela
+              // margem que a mídia gerou. Fórmula original da planilha:
+              // ((Fat.Realizado × MC%) − Inv.Realizado) ÷ FEE.
+              const mmf = r.fee && r.mc_pct != null
+                ? (((r.fat_realizado ?? 0) * (r.mc_pct / 100)) - (r.inv_realizado ?? 0)) / r.fee
+                : null;
               const lt = monthsSince(r.data_entrada);
               return (
                 <tr key={r.id} className="group hover:bg-[var(--bg-surface-2)] transition-colors" style={{ borderBottom: "1px solid var(--border)" }}>
@@ -766,7 +773,15 @@ export function RoiDayView() {
                     </select>
                   </td>
                   <td><EditableCell value={r.nps} type="int" readOnly={!editable} onCommit={(v) => updateRow(r.id, { nps: v as number | null })} /></td>
-                  <td><EditableCell value={r.fee} type="money" readOnly={!editable} onCommit={(v) => updateRow(r.id, { fee: v as number | null })} /></td>
+                  <td>
+                    {canViewFee ? (
+                      <EditableCell value={r.fee} type="money" readOnly={!editable} onCommit={(v) => updateRow(r.id, { fee: v as number | null })} />
+                    ) : (
+                      <span className="w-full min-w-[90px] flex items-center gap-1 px-1.5 py-1 text-xs" style={{ color: "var(--text-quaternary)" }} title="Somente Victor e Beatriz veem esse valor">
+                        <Lock size={10} />
+                      </span>
+                    )}
+                  </td>
                   <td><EditableCell value={r.inv_meta} type="money" readOnly={!editable} onCommit={(v) => updateRow(r.id, { inv_meta: v as number | null })} /></td>
                   <td>
                     <InvestmentBreakdownCell
@@ -792,7 +807,9 @@ export function RoiDayView() {
                   <td className="px-1.5 py-1 font-semibold" style={{ color: roas == null ? "var(--text-quaternary)" : "var(--accent)" }}>{roas == null ? "—" : roas.toFixed(2) + "x"}</td>
                   <td className="px-1.5 py-1 font-semibold" style={{ color: roi == null ? "var(--text-quaternary)" : roi >= 0 ? "var(--success)" : "var(--danger)" }}>{roi == null ? "—" : fmtPct(roi)}</td>
                   <td><EditableCell value={r.mc_pct} type="pct" readOnly={!editable} onCommit={(v) => updateRow(r.id, { mc_pct: v as number | null })} /></td>
-                  <td><EditableCell value={r.mmf} type="money" readOnly={!editable} onCommit={(v) => updateRow(r.id, { mmf: v as number | null })} /></td>
+                  <td className="px-1.5 py-1 font-semibold" style={{ color: mmf == null ? "var(--text-quaternary)" : mmf >= 1 ? "var(--success)" : "var(--danger)" }} title="Margem de Mídia e Fee: ((Fat. Realizado × MC%) − Inv. Realizado) ÷ FEE">
+                    {mmf == null ? "—" : mmf.toFixed(2)}
+                  </td>
                   <td><EditableCell value={r.data_entrada} type="date" readOnly={!editable} onCommit={(v) => updateRow(r.id, { data_entrada: v as string | null })} /></td>
                   <td className="px-1.5 py-1" style={{ color: "var(--text-quaternary)" }}>{lt == null ? "—" : lt}</td>
                   <td><EditableCell value={r.localizacao} type="text" readOnly={!editable} onCommit={(v) => updateRow(r.id, { localizacao: v as string | null })} /></td>
@@ -821,8 +838,14 @@ export function RoiDayView() {
               </td>
               <td /><td />
               <td className="px-1.5 py-2 text-xs font-bold" style={{ color: "var(--accent)" }}>
-                {fmtCurrency0(totals.fee)}
-                {compareOn && <DeltaBadge value={pctDelta(totals.fee, compareTotals.fee)} />}
+                {canViewFee ? (
+                  <>
+                    {fmtCurrency0(totals.fee)}
+                    {compareOn && <DeltaBadge value={pctDelta(totals.fee, compareTotals.fee)} />}
+                  </>
+                ) : (
+                  <Lock size={10} style={{ color: "var(--text-quaternary)" }} />
+                )}
               </td>
               <td className="px-1.5 py-2 text-xs font-bold">{fmtCurrency0(totals.inv_meta)}</td>
               <td className="px-1.5 py-2 text-xs font-bold">
