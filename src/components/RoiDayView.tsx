@@ -1,6 +1,6 @@
 import { useMemo, useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { Trophy, Plus, Trash2, Loader2, FileText, ArrowLeft, Printer, ChevronDown, Check, Calendar, Lock } from "lucide-react";
+import { Trophy, Plus, Trash2, Loader2, FileText, ArrowLeft, Printer, ChevronDown, Check, Calendar } from "lucide-react";
 import { useRoiDay, useRoiDayInvestments } from "../hooks/useRoiDay";
 import { useAuth } from "../hooks/useAuth";
 import { useClients } from "../hooks/useClients";
@@ -299,7 +299,7 @@ function Th({ children }: { children: React.ReactNode }) {
 // Full history for one client, month over month — meant to be printed /
 // exported to PDF via the browser's own print dialog (same pattern as
 // Financeiro and Relatórios).
-function RoiDayReport({ clientName, history, onBack }: { clientName: string; history: RoiDayClient[]; onBack: () => void }) {
+function RoiDayReport({ clientName, history, onBack, canViewFee }: { clientName: string; history: RoiDayClient[]; onBack: () => void; canViewFee: boolean }) {
   const sorted = [...history].sort((a, b) => a.period.localeCompare(b.period));
   const first = sorted[0];
   const last = sorted[sorted.length - 1];
@@ -329,7 +329,7 @@ function RoiDayReport({ clientName, history, onBack }: { clientName: string; his
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: "FEE atual", value: fmtCurrency0(last.fee) },
+          ...(canViewFee ? [{ label: "FEE atual", value: fmtCurrency0(last.fee) }] : []),
           { label: "Faturamento realizado (último mês)", value: fmtCurrency0(last.fat_realizado) },
           { label: "ROAS (último mês)", value: last.inv_realizado ? ((last.fat_realizado ?? 0) / last.inv_realizado).toFixed(2) + "x" : "—" },
           { label: "Tempo de casa", value: (monthsSince(last.data_entrada) ?? "—") + " meses" },
@@ -526,6 +526,7 @@ export function RoiDayView() {
         clientName={reportClient}
         history={rows.filter((r) => r.name === reportClient)}
         onBack={() => setReportClient(null)}
+        canViewFee={canViewFee}
       />
     );
   }
@@ -709,7 +710,7 @@ export function RoiDayView() {
               <th className="sticky left-0 z-10 text-left text-[9px] font-bold tracking-widest uppercase px-2 py-2 whitespace-nowrap" style={{ color: "var(--text-tertiary)", backgroundColor: "var(--bg-surface-2)" }}>Cliente</th>
               <Th>Status</Th>
               <Th>NPS</Th>
-              <Th>FEE</Th>
+              {canViewFee && <Th>FEE</Th>}
               <Th>Inv. Meta</Th>
               <Th>Inv. Realizado</Th>
               <Th>% Meta Inv.</Th>
@@ -773,15 +774,11 @@ export function RoiDayView() {
                     </select>
                   </td>
                   <td><EditableCell value={r.nps} type="int" readOnly={!editable} onCommit={(v) => updateRow(r.id, { nps: v as number | null })} /></td>
-                  <td>
-                    {canViewFee ? (
+                  {canViewFee && (
+                    <td>
                       <EditableCell value={r.fee} type="money" readOnly={!editable} onCommit={(v) => updateRow(r.id, { fee: v as number | null })} />
-                    ) : (
-                      <span className="w-full min-w-[90px] flex items-center gap-1 px-1.5 py-1 text-xs" style={{ color: "var(--text-quaternary)" }} title="Somente Victor e Beatriz veem esse valor">
-                        <Lock size={10} />
-                      </span>
-                    )}
-                  </td>
+                    </td>
+                  )}
                   <td><EditableCell value={r.inv_meta} type="money" readOnly={!editable} onCommit={(v) => updateRow(r.id, { inv_meta: v as number | null })} /></td>
                   <td>
                     <InvestmentBreakdownCell
@@ -837,16 +834,12 @@ export function RoiDayView() {
                 {viewMode === "max" ? `Média (${displayRows.length})` : `Total (${displayRows.length})`}
               </td>
               <td /><td />
-              <td className="px-1.5 py-2 text-xs font-bold" style={{ color: "var(--accent)" }}>
-                {canViewFee ? (
-                  <>
-                    {fmtCurrency0(totals.fee)}
-                    {compareOn && <DeltaBadge value={pctDelta(totals.fee, compareTotals.fee)} />}
-                  </>
-                ) : (
-                  <Lock size={10} style={{ color: "var(--text-quaternary)" }} />
-                )}
-              </td>
+              {canViewFee && (
+                <td className="px-1.5 py-2 text-xs font-bold" style={{ color: "var(--accent)" }}>
+                  {fmtCurrency0(totals.fee)}
+                  {compareOn && <DeltaBadge value={pctDelta(totals.fee, compareTotals.fee)} />}
+                </td>
+              )}
               <td className="px-1.5 py-2 text-xs font-bold">{fmtCurrency0(totals.inv_meta)}</td>
               <td className="px-1.5 py-2 text-xs font-bold">
                 {fmtCurrency0(totals.inv_realizado)}
