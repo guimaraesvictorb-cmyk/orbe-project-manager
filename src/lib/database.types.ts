@@ -346,6 +346,19 @@ export interface RoiDayInvestment {
   updated_at: string
 }
 
+// Espelha RoiDayInvestment, mas pro lado da META (o investimento planejado
+// por plataforma) em vez do realizado — a aba "Investimento por Cliente"
+// gerencia as duas lado a lado; roi_day_clients.inv_meta/inv_realizado
+// são só os totais somados, sincronizados a partir daqui.
+export interface RoiDayInvestmentTarget {
+  id: string
+  roi_day_client_id: string
+  platform: RoiDayPlatform
+  amount: number
+  created_at: string
+  updated_at: string
+}
+
 export interface Payee {
   id: string
   name: string
@@ -545,6 +558,7 @@ export type Database = {
       lead_activities: { Row: LeadActivity; Insert: Omit<LeadActivity, 'id' | 'created_at'>; Update: Partial<LeadActivity> }
       roi_day_clients: { Row: RoiDayClient; Insert: Omit<RoiDayClient, 'id' | 'created_at' | 'updated_at'>; Update: Partial<RoiDayClient> }
       roi_day_investments: { Row: RoiDayInvestment; Insert: Omit<RoiDayInvestment, 'id' | 'created_at' | 'updated_at'>; Update: Partial<RoiDayInvestment> }
+      roi_day_investment_targets: { Row: RoiDayInvestmentTarget; Insert: Omit<RoiDayInvestmentTarget, 'id' | 'created_at' | 'updated_at'>; Update: Partial<RoiDayInvestmentTarget> }
       payees: { Row: Payee; Insert: Omit<Payee, 'id' | 'created_at' | 'updated_at'>; Update: Partial<Payee> }
       payables: { Row: Payable; Insert: Omit<Payable, 'id' | 'created_at' | 'updated_at'>; Update: Partial<Payable> }
       payee_allocations: { Row: PayeeAllocation; Insert: Omit<PayeeAllocation, 'id' | 'created_at' | 'updated_at'>; Update: Partial<PayeeAllocation> }
