@@ -3,6 +3,7 @@ import "./index.css";
 import { useAuth } from "./hooks/useAuth";
 import { canAccessSection, isAdminOrCoordenador } from "./lib/permissions";
 import { LoginPage } from "./components/LoginPage";
+import { ResetPasswordPage } from "./components/ResetPasswordPage";
 import { AppNav, type AppView } from "./components/AppNav";
 import { HomeView } from "./components/HomeView";
 import { ThemeProvider, useTheme } from "./contexts/ThemeContext";
@@ -63,7 +64,7 @@ function ThemeToggleButton() {
 }
 
 function App() {
-  const { user, profile, isAuthenticated, isLoading, logout } = useAuth();
+  const { user, profile, isAuthenticated, isLoading, isPasswordRecovery, clearPasswordRecovery, logout } = useAuth();
   const mainRef = useRef<HTMLElement>(null);
   useMouseGlow(mainRef);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -133,6 +134,10 @@ function App() {
         <OrbeMark size={44} animated glow />
       </div>
     );
+  }
+
+  if (isPasswordRecovery) {
+    return <ResetPasswordPage onDone={clearPasswordRecovery} />;
   }
 
   if (!isAuthenticated) {

@@ -11,16 +11,11 @@ import { fmtCurrency0, fmtInt, fmtPct, todayLocal } from "../lib/formatters";
 // Meta mínima de MMF — fixa por decisão do Victor: um número de referência
 // que ninguém (nem ele, pela plataforma) deve poder editar, só uma constante
 // no código mesmo. Abaixo disso a operação do cliente está no vermelho;
-// tudo que passar disso é lucro extra sobre o mínimo esperado.
+// tudo que passar disso é lucro extra sobre o mínimo esperado. O cálculo do
+// alvo de Fat.Realizado que isso implica é feito no banco (mesma constante
+// 2 hardcoded na view public.roi_day_clients), não aqui — só o limiar de
+// cor (verde/vermelho) do MMF em si precisa dela no front.
 const MMF_TARGET = 2;
-
-// Dado o MMF mínimo fixo acima, resolve a fórmula do MMF para Fat.Realizado:
-// MMF = ((Fat.Realizado × MC%) − Inv.Realizado) ÷ FEE  =>
-// Fat.Realizado = (MMF_TARGET × FEE + Inv.Realizado) ÷ (MC% / 100)
-function minFatRealizadoForMmfTarget(fee: number, mcPct: number, invRealizado: number): number | null {
-  if (mcPct === 0) return null;
-  return (MMF_TARGET * fee + invRealizado) / (mcPct / 100);
-}
 
 const ROI_DAY_PLATFORMS: RoiDayPlatform[] = ["meta", "google", "linkedin", "tiktok", "outro"];
 const ROI_DAY_PLATFORM_LABELS: Record<RoiDayPlatform, string> = {
@@ -91,6 +86,7 @@ function shiftPeriod(period: string, delta: number): string {
 const NUMERIC_FIELDS: (keyof RoiDayClient)[] = [
   "nps", "fee", "inv_meta", "inv_realizado", "fat_meta", "fat_realizado", "gmv_mes",
   "relevancia_pct", "leads", "cpl", "mql", "cpmql", "sql_count", "cpsql", "vendas", "cpv", "mc_pct", "mmf",
+  "meta_mmf_fat_realizado",
 ];
 
 // One synthetic row per client, averaging every numeric field across all of
@@ -774,21 +770,12 @@ export function RoiDayView() {
               const roas = r.inv_realizado ? (r.fat_realizado ?? 0) / r.inv_realizado : null;
               const roi = r.inv_realizado ? (((r.fat_realizado ?? 0) - r.inv_realizado) / r.inv_realizado) * 100 : null;
               // Margem de Mídia e Fee: quantas vezes o fee é coberto pela
-              // margem que a mídia gerou. Fórmula original da planilha:
-              // ((Fat.Realizado × MC%) − Inv.Realizado) ÷ FEE.
-              // Coerção explícita com Number(): campos numeric do Postgres
-              // chegam como string via REST, e um `r.fee &&`/`typeof` direto
-              // sobre isso já causou bug antes (ver averageByClient acima).
-              const feeNum = r.fee != null ? Number(r.fee) : null;
-              const mcPctNum = r.mc_pct != null ? Number(r.mc_pct) : null;
-              const fatRealizadoNum = r.fat_realizado != null ? Number(r.fat_realizado) : 0;
-              const invRealizadoNum = r.inv_realizado != null ? Number(r.inv_realizado) : 0;
-              const mmf = feeNum && mcPctNum != null
-                ? ((fatRealizadoNum * (mcPctNum / 100)) - invRealizadoNum) / feeNum
-                : null;
-              const metaFatMmf = feeNum && mcPctNum
-                ? minFatRealizadoForMmfTarget(feeNum, mcPctNum, invRealizadoNum)
-                : null;
+              // margem que a mídia gerou. Calculado no banco (não a partir
+              // de r.fee, que chega mascarado/null pra quem não tem
+              // can_view_financials) — assim GT/GP enxergam essa métrica
+              // derivada mesmo sem ver o fee em si. Ver public.roi_day_clients.
+              const mmf = r.mmf != null ? Number(r.mmf) : null;
+              const metaFatMmf = r.meta_mmf_fat_realizado != null ? Number(r.meta_mmf_fat_realizado) : null;
               const lt = monthsSince(r.data_entrada);
               return (
                 <tr key={r.id} className="group hover:bg-[var(--bg-surface-2)] transition-colors" style={{ borderBottom: "1px solid var(--border)" }}>

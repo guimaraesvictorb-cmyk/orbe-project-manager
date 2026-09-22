@@ -9,6 +9,12 @@ interface AuthState {
   profile: Profile | null
   isAuthenticated: boolean
   isLoading: boolean
+  // True while the user is mid "esqueci minha senha" flow (they clicked the
+  // emailed link and Supabase gave them a recovery session) — the app shows
+  // a "defina uma nova senha" screen instead of the normal logged-in view
+  // until they finish, see clearPasswordRecovery.
+  isPasswordRecovery: boolean
+  clearPasswordRecovery: () => void
   login: (email: string, password: string) => Promise<{ error?: string }>
   logout: () => Promise<void>
 }
@@ -29,12 +35,13 @@ async function fetchProfile(userId: string): Promise<Profile | null> {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<Omit<AuthState, 'login' | 'logout'>>({
+  const [state, setState] = useState<Omit<AuthState, 'login' | 'logout' | 'clearPasswordRecovery'>>({
     user: null,
     session: null,
     profile: null,
     isAuthenticated: false,
     isLoading: true,
+    isPasswordRecovery: false,
   })
 
   useEffect(() => {
@@ -47,7 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       clearTimeout(timeout)
       if (session) {
         // Autentica imediatamente, perfil carrega em background
-        setState({ user: session.user, session, profile: null, isAuthenticated: true, isLoading: false })
+        setState((s) => ({ user: session.user, session, profile: null, isAuthenticated: true, isLoading: false, isPasswordRecovery: s.isPasswordRecovery }))
         fetchProfile(session.user.id).then((profile) => {
           if (profile) setState((s) => ({ ...s, profile }))
         })
@@ -59,7 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setState((s) => ({ ...s, isLoading: false }))
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       clearTimeout(timeout)
       if (session) {
         setState((s) => ({
@@ -68,12 +75,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           session,
           isAuthenticated: true,
           isLoading: false,
+          isPasswordRecovery: event === 'PASSWORD_RECOVERY' ? true : s.isPasswordRecovery,
         }))
         fetchProfile(session.user.id).then((profile) => {
           if (profile) setState((s) => ({ ...s, profile }))
         })
       } else {
-        setState({ user: null, session: null, profile: null, isAuthenticated: false, isLoading: false })
+        setState({ user: null, session: null, profile: null, isAuthenticated: false, isLoading: false, isPasswordRecovery: false })
       }
     })
 
@@ -90,8 +98,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut()
   }
 
+  function clearPasswordRecovery() {
+    setState((s) => ({ ...s, isPasswordRecovery: false }))
+  }
+
   return (
-    <AuthContext.Provider value={{ ...state, login, logout }}>
+    <AuthContext.Provider value={{ ...state, login, logout, clearPasswordRecovery }}>
       {children}
     </AuthContext.Provider>
   )

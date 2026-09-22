@@ -328,6 +328,10 @@ export interface RoiDayClient {
   created_by: string | null
   created_at: string
   updated_at: string
+  // Calculados no banco (não a partir do fee mascarado que chega ao
+  // front) — assim quem não pode ver o fee em si ainda enxerga essa
+  // métrica derivada. Ver a view public.roi_day_clients.
+  meta_mmf_fat_realizado: number | null
 }
 
 export type RoiDayPlatform = 'meta' | 'google' | 'linkedin' | 'tiktok' | 'outro'
