@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
-import type { Payable, Payee } from '../lib/database.types'
+import type { Payable, Payee, PayeeAllocation } from '../lib/database.types'
 import { todayLocal } from '../lib/formatters'
 
 interface UsePayablesOptions {
@@ -51,12 +51,19 @@ export function usePayables(options: UsePayablesOptions = {}) {
     return updateRecord(id, { status: 'pago', paid_date: paidDate ?? todayLocal() })
   }
 
+  async function deleteRecord(id: string) {
+    const { error } = await supabase.from('payables').update({ deleted_at: new Date().toISOString() }).eq('id', id)
+    if (error) { console.error('usePayables.deleteRecord', error); return { error: error.message } }
+    setRecords((prev) => prev.filter((r) => r.id !== id))
+    return {}
+  }
+
   const totalAmount = records.reduce((s, r) => s + r.amount, 0)
   const totalPaid = records.filter((r) => r.status === 'pago').reduce((s, r) => s + r.amount, 0)
   const totalPending = records.filter((r) => r.status === 'pendente').reduce((s, r) => s + r.amount, 0)
   const totalOverdue = records.filter((r) => r.status === 'atrasado').reduce((s, r) => s + r.amount, 0)
 
-  return { records, loading, fetchRecords, createRecord, updateRecord, markAsPaid, totalAmount, totalPaid, totalPending, totalOverdue }
+  return { records, loading, fetchRecords, createRecord, updateRecord, deleteRecord, markAsPaid, totalAmount, totalPaid, totalPending, totalOverdue }
 }
 
 export function usePayees() {
@@ -99,4 +106,38 @@ export function usePayees() {
   }
 
   return { payees, loading, fetchPayees, createPayee, updatePayee, deletePayee }
+}
+
+// Em quais clientes um beneficiário (equipe/fornecedor) atua, e quanto do
+// tempo/valor dele vai pra cada um — pedido da Beatriz, visível direto no
+// cadastro do beneficiário.
+export function usePayeeAllocations() {
+  const [allocations, setAllocations] = useState<PayeeAllocation[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const fetchAllocations = useCallback(async () => {
+    setLoading(true)
+    const { data, error } = await supabase.from('payee_allocations').select('*')
+    if (error) console.error('usePayeeAllocations.fetchAllocations', error)
+    setAllocations(data ?? [])
+    setLoading(false)
+  }, [])
+
+  useEffect(() => { fetchAllocations() }, [fetchAllocations])
+
+  async function createAllocation(input: Omit<PayeeAllocation, 'id' | 'created_at' | 'updated_at'>) {
+    const { data, error } = await supabase.from('payee_allocations').insert(input).select().single()
+    if (error) { console.error('usePayeeAllocations.createAllocation', error); return { error: error.message } }
+    setAllocations((prev) => [...prev, data])
+    return { data }
+  }
+
+  async function deleteAllocation(id: string) {
+    const { error } = await supabase.from('payee_allocations').delete().eq('id', id)
+    if (error) { console.error('usePayeeAllocations.deleteAllocation', error); return { error: error.message } }
+    setAllocations((prev) => prev.filter((a) => a.id !== id))
+    return {}
+  }
+
+  return { allocations, loading, fetchAllocations, createAllocation, deleteAllocation }
 }

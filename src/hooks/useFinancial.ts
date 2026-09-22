@@ -55,10 +55,17 @@ export function useFinancial(options: UseFinancialOptions = {}) {
     })
   }
 
+  async function deleteRecord(id: string) {
+    const { error } = await supabase.from('financial_records').update({ deleted_at: new Date().toISOString() }).eq('id', id)
+    if (error) { console.error('useFinancial.deleteRecord', error); return { error: error.message } }
+    setRecords((prev) => prev.filter((r) => r.id !== id))
+    return {}
+  }
+
   const totalAmount = records.reduce((s, r) => s + r.amount, 0)
   const totalPaid = records.filter((r) => r.status === 'pago').reduce((s, r) => s + r.amount, 0)
   const totalPending = records.filter((r) => r.status === 'pendente').reduce((s, r) => s + r.amount, 0)
   const totalOverdue = records.filter((r) => r.status === 'atrasado').reduce((s, r) => s + r.amount, 0)
 
-  return { records, loading, fetchRecords, createRecord, updateRecord, markAsPaid, totalAmount, totalPaid, totalPending, totalOverdue }
+  return { records, loading, fetchRecords, createRecord, updateRecord, deleteRecord, markAsPaid, totalAmount, totalPaid, totalPending, totalOverdue }
 }

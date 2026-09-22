@@ -204,6 +204,7 @@ export interface FinancialRecord {
   payment_method: string | null
   invoice_number: string | null
   invoice_status: InvoiceStatus
+  nf_deadline: string | null
   notes: string | null
   data_source: string
   external_id: string | null
@@ -384,6 +385,19 @@ export interface Payable {
   deleted_at: string | null
 }
 
+// Em quais clientes/projetos um beneficiário (equipe/fornecedor) atua —
+// pedido explícito da Beatriz: ver isso direto no cadastro do beneficiário,
+// não só na aba Rentabilidade (que usa team_costs/team_allocations, um
+// sistema separado deste).
+export interface PayeeAllocation {
+  id: string
+  payee_id: string
+  client_id: string | null
+  alloc_pct: number
+  created_at: string
+  updated_at: string
+}
+
 export interface CompanySettings {
   id: string
   cnae: string | null
@@ -533,6 +547,7 @@ export type Database = {
       roi_day_investments: { Row: RoiDayInvestment; Insert: Omit<RoiDayInvestment, 'id' | 'created_at' | 'updated_at'>; Update: Partial<RoiDayInvestment> }
       payees: { Row: Payee; Insert: Omit<Payee, 'id' | 'created_at' | 'updated_at'>; Update: Partial<Payee> }
       payables: { Row: Payable; Insert: Omit<Payable, 'id' | 'created_at' | 'updated_at'>; Update: Partial<Payable> }
+      payee_allocations: { Row: PayeeAllocation; Insert: Omit<PayeeAllocation, 'id' | 'created_at' | 'updated_at'>; Update: Partial<PayeeAllocation> }
       company_settings: { Row: CompanySettings; Insert: Omit<CompanySettings, 'updated_at'>; Update: Partial<CompanySettings> }
       tools_subscriptions: { Row: ToolSubscription; Insert: Omit<ToolSubscription, 'id' | 'created_at' | 'updated_at'>; Update: Partial<ToolSubscription> }
       company_investments: { Row: CompanyInvestment; Insert: Omit<CompanyInvestment, 'id' | 'created_at' | 'updated_at'>; Update: Partial<CompanyInvestment> }

@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { Plus, CheckCircle2, Clock, AlertCircle, XCircle, ChevronDown, Download, Bell, Users2, Pencil, Trash2 } from "lucide-react";
+import { Plus, CheckCircle2, Clock, AlertCircle, XCircle, ChevronDown, Download, Bell, Users2, Pencil, Trash2, X } from "lucide-react";
 import { useFinancial } from "../hooks/useFinancial";
-import { usePayables, usePayees } from "../hooks/usePayables";
+import { usePayables, usePayees, usePayeeAllocations } from "../hooks/usePayables";
 import { useClients } from "../hooks/useClients";
 import { useAuth } from "../hooks/useAuth";
-import type { FinancialRecord, PaymentStatus, Payable, Payee, PayeeType } from "../lib/database.types";
+import type { FinancialRecord, PaymentStatus, Payable, Payee, PayeeType, PayeeAllocation } from "../lib/database.types";
 import { Footer } from "./Footer";
 import { FiscalTab } from "./financeiro/FiscalTab";
 import { FerramentasTab } from "./financeiro/FerramentasTab";
@@ -173,6 +173,7 @@ function NewRecordModal({
     description: "",
     amount: "",
     due_date: `${defaultMonth}-10`,
+    nf_deadline: "",
     status: "pendente" as PaymentStatus,
   });
 
@@ -190,6 +191,7 @@ function NewRecordModal({
       description: form.description || null,
       amount: parseFloat(form.amount),
       due_date: form.due_date,
+      nf_deadline: form.nf_deadline || null,
       paid_date: null,
       status: form.status,
       payment_method: null,
@@ -283,6 +285,16 @@ function NewRecordModal({
                 required
               />
             </div>
+          </div>
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-widest mb-1 block" style={{ color: "var(--text-tertiary)" }}>Prazo p/ envio de NF (opcional)</label>
+            <input
+              type="date"
+              value={form.nf_deadline}
+              onChange={(e) => setForm((p) => ({ ...p, nf_deadline: e.target.value }))}
+              className="w-full bg-[var(--bg-page)] border rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)]"
+              style={{ borderColor: "var(--border-subtle)" }}
+            />
           </div>
           <div className="flex gap-2 pt-2">
             <button type="button" onClick={onClose} className="flex-1 py-2 rounded-xl text-xs border" style={{ borderColor: "var(--border-subtle)", color: "var(--text-secondary)" }}>
@@ -485,12 +497,20 @@ function PayeesManagerModal({
   onNew,
   onEdit,
   onDeactivate,
+  clientMap,
+  allocationsFor,
+  onAllocate,
+  onRemoveAllocation,
 }: {
   onClose: () => void;
   payees: Payee[];
   onNew: () => void;
   onEdit: (p: Payee) => void;
   onDeactivate: (id: string) => void;
+  clientMap: Record<string, string>;
+  allocationsFor: (payeeId: string) => PayeeAllocation[];
+  onAllocate: (p: Payee) => void;
+  onRemoveAllocation: (id: string) => void;
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.8)" }}>
@@ -505,29 +525,87 @@ function PayeesManagerModal({
         <div className="flex-1 overflow-y-auto space-y-2">
           {payees.length === 0 ? (
             <p className="text-xs text-center py-8" style={{ color: "var(--text-tertiary)" }}>Nenhum cadastro ainda.</p>
-          ) : payees.map((p) => (
-            <div key={p.id} className="flex items-center justify-between gap-3 p-3 rounded-xl border" style={{ borderColor: "var(--border-subtle)", opacity: p.is_active ? 1 : 0.5 }}>
-              <div className="min-w-0">
-                <p className="text-xs font-semibold text-[var(--text-primary)] truncate">{p.name}</p>
-                <p className="text-[10px] uppercase tracking-widest font-bold" style={{ color: "var(--text-quaternary)" }}>
-                  {p.type === "equipe" ? "Equipe" : "Fornecedor"}
-                  {p.default_amount != null && ` · ${fmt(p.default_amount)}`}
-                </p>
+          ) : payees.map((p) => {
+            const allocs = allocationsFor(p.id);
+            return (
+            <div key={p.id} className="p-3 rounded-xl border space-y-2" style={{ borderColor: "var(--border-subtle)", opacity: p.is_active ? 1 : 0.5 }}>
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-[var(--text-primary)] truncate">{p.name}</p>
+                  <p className="text-[10px] uppercase tracking-widest font-bold" style={{ color: "var(--text-quaternary)" }}>
+                    {p.type === "equipe" ? "Equipe" : "Fornecedor"}
+                    {p.default_amount != null && ` · ${fmt(p.default_amount)}`}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <button onClick={() => onAllocate(p)} className="text-[11px] font-semibold px-2" style={{ color: "var(--accent)" }}>
+                    Projetos
+                  </button>
+                  <button onClick={() => onEdit(p)} className="p-1.5 rounded-lg" style={{ color: "var(--text-tertiary)" }}>
+                    <Pencil size={13} />
+                  </button>
+                  <button onClick={() => onDeactivate(p.id)} className="p-1.5 rounded-lg" style={{ color: "var(--danger)" }}>
+                    <Trash2 size={13} />
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center gap-1 flex-shrink-0">
-                <button onClick={() => onEdit(p)} className="p-1.5 rounded-lg" style={{ color: "var(--text-tertiary)" }}>
-                  <Pencil size={13} />
-                </button>
-                <button onClick={() => onDeactivate(p.id)} className="p-1.5 rounded-lg" style={{ color: "var(--danger)" }}>
-                  <Trash2 size={13} />
-                </button>
-              </div>
+              {allocs.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {allocs.map((a) => (
+                    <span key={a.id} className="flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full" style={{ backgroundColor: "var(--accent-tint)", color: "var(--accent)" }}>
+                      {a.client_id ? (clientMap[a.client_id] ?? "—") : "—"} · {a.alloc_pct}%
+                      <button onClick={() => onRemoveAllocation(a.id)}><X size={10} /></button>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
-          ))}
+            );
+          })}
         </div>
         <button onClick={onClose} className="mt-4 py-2 rounded-xl text-xs border" style={{ borderColor: "var(--border-subtle)", color: "var(--text-secondary)" }}>
           Fechar
         </button>
+      </div>
+    </div>
+  );
+}
+
+function PayeeAllocateModal({
+  payee,
+  clients,
+  onClose,
+  onAdd,
+}: {
+  payee: Payee;
+  clients: { id: string; name: string }[];
+  onClose: () => void;
+  onAdd: (clientId: string, pct: number) => void;
+}) {
+  const [clientId, setClientId] = useState("");
+  const [pct, setPct] = useState("100");
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.8)" }}>
+      <div className="w-full max-w-sm rounded-2xl border p-6 space-y-4" style={{ backgroundColor: "var(--bg-surface-2)", borderColor: "var(--border)" }}>
+        <h3 className="text-[var(--text-primary)] font-semibold text-sm">Em quais clientes/projetos {payee.name} atua?</h3>
+        <div className="grid grid-cols-2 gap-3">
+          <select value={clientId} onChange={(e) => setClientId(e.target.value)} className="bg-[var(--bg-page)] border rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)]" style={{ borderColor: "var(--border-subtle)" }}>
+            <option value="">— cliente —</option>
+            {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+          <input type="number" value={pct} onChange={(e) => setPct(e.target.value)} placeholder="% do tempo" className="bg-[var(--bg-page)] border rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)]" style={{ borderColor: "var(--border-subtle)" }} />
+        </div>
+        <div className="flex gap-2">
+          <button onClick={onClose} className="flex-1 py-2 rounded-xl text-xs border" style={{ borderColor: "var(--border-subtle)", color: "var(--text-secondary)" }}>Fechar</button>
+          <button
+            onClick={() => { if (clientId && pct) { onAdd(clientId, parseFloat(pct)); setClientId(""); setPct("100"); } }}
+            className="flex-1 py-2 rounded-xl text-xs font-semibold"
+            style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}
+          >
+            Adicionar
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -650,6 +728,7 @@ function generateMensalidades(clients: { id: string; monthly_fee: number | null 
       description: `Mensalidade ${month}`,
       amount: c.monthly_fee!,
       due_date: `${month}-10`,
+      nf_deadline: null,
       paid_date: null,
       status: "pendente" as PaymentStatus,
       payment_method: null,
@@ -681,7 +760,7 @@ function generatePayables(payees: Payee[], month: string, userId: string) {
 }
 
 type AlertItem = {
-  kind: "receber" | "pagar" | "ferramenta" | "contrato" | "nf_fornecedor";
+  kind: "receber" | "pagar" | "ferramenta" | "contrato" | "nf_fornecedor" | "nf_cliente";
   id: string;
   label: string;
   amount: number | null;
@@ -696,27 +775,37 @@ const ALERT_KIND_LABELS: Record<AlertItem["kind"], { label: string; color: strin
   ferramenta: { label: "Ferramenta", color: "var(--warning)", bg: "var(--warning-tint)" },
   contrato: { label: "Contrato", color: "var(--danger)", bg: "var(--danger-tint)" },
   nf_fornecedor: { label: "Cobrar NF", color: "var(--warning)", bg: "var(--warning-tint)" },
+  nf_cliente: { label: "Enviar NF", color: "var(--success)", bg: "var(--success-tint)" },
 };
 
 export function FinanceiroView() {
-  const [tab, setTab] = useState<FinanceiroTab>("recebimentos");
+  // Abre em Alertas por padrão — o "painel inicial com as atividades da
+  // semana" que a Beatriz pediu (pagar X, enviar NF pra XYZ), pra não ter
+  // que clicar em nada pra ver o que precisa de atenção.
+  const [tab, setTab] = useState<FinanceiroTab>("alertas");
   const [month, setMonth] = useState(currentMonth());
   const [showModal, setShowModal] = useState(false);
   const [showPayableModal, setShowPayableModal] = useState(false);
   const [showPayeesManager, setShowPayeesManager] = useState(false);
   const [editingPayee, setEditingPayee] = useState<Payee | null | "new">(null);
 
-  const { records, loading, createRecord, updateRecord, totalAmount, totalPaid, totalPending, totalOverdue } = useFinancial({ month });
-  const { records: payables, loading: payablesLoading, createRecord: createPayable, updateRecord: updatePayable, totalAmount: payTotal, totalPaid: payPaid, totalPending: payPending, totalOverdue: payOverdue } = usePayables({ month });
+  const { records, loading, createRecord, updateRecord, deleteRecord, totalAmount, totalPaid, totalPending, totalOverdue } = useFinancial({ month });
+  const { records: payables, loading: payablesLoading, createRecord: createPayable, updateRecord: updatePayable, deleteRecord: deletePayable, totalAmount: payTotal, totalPaid: payPaid, totalPending: payPending, totalOverdue: payOverdue } = usePayables({ month });
   const { records: allReceivables } = useFinancial({});
   const { records: allPayables } = usePayables({});
   const { payees, createPayee, updatePayee, deletePayee } = usePayees();
+  const { allocations: payeeAllocations, createAllocation: createPayeeAllocation, deleteAllocation: deletePayeeAllocation } = usePayeeAllocations();
+  const [allocatingPayeeFor, setAllocatingPayeeFor] = useState<Payee | null>(null);
   const { clients } = useClients();
   const { profile } = useAuth();
   const { items: tools } = useToolsSubscriptions();
   const { items: contracts } = useContracts();
 
   const payeeMap = Object.fromEntries(payees.map((p) => [p.id, p.name]));
+  const clientMap = Object.fromEntries(clients.map((c) => [c.id, c.name]));
+  function payeeAllocationsFor(payeeId: string): PayeeAllocation[] {
+    return payeeAllocations.filter((a) => a.payee_id === payeeId);
+  }
 
   const alerts: AlertItem[] = useMemo(() => {
     const clientMapLocal = Object.fromEntries(clients.map((c) => [c.id, c.name]));
@@ -761,6 +850,18 @@ export function FinanceiroView() {
         };
       })
       .filter((a) => a.days <= 7);
+    const fromNfCliente: AlertItem[] = allReceivables
+      .filter((r) => (r.status === "pendente" || r.status === "atrasado") && r.nf_deadline)
+      .map((r) => ({
+        kind: "nf_cliente" as const,
+        id: r.id,
+        label: (r.client_id ? clientMapLocal[r.client_id] : null) ?? r.description ?? "—",
+        amount: null,
+        due_date: r.nf_deadline!,
+        status: null,
+        days: daysUntil(r.nf_deadline!),
+      }))
+      .filter((a) => a.days <= 7);
     const fromTools: AlertItem[] = tools
       .filter((t) => t.is_active && t.renewal_date)
       .map((t) => ({
@@ -791,7 +892,7 @@ export function FinanceiroView() {
       })
       .filter((c) => c.days <= c._maxDays)
       .map(({ _maxDays, ...rest }) => rest);
-    return [...fromReceivables, ...fromPayables, ...fromNfFornecedor, ...fromTools, ...fromContracts]
+    return [...fromReceivables, ...fromPayables, ...fromNfFornecedor, ...fromNfCliente, ...fromTools, ...fromContracts]
       .filter((a) => a.days <= 7 || a.kind === "contrato")
       .sort((a, b) => a.days - b.days);
   }, [allReceivables, allPayables, clients, payeeMap, payees, tools, contracts]);
@@ -842,8 +943,6 @@ export function FinanceiroView() {
     const toCreate = generatePayables(payees, month, profile.id).filter((p) => !existing.includes(p.payee_id));
     for (const p of toCreate) await createPayable(p);
   }
-
-  const clientMap = Object.fromEntries(clients.map((c) => [c.id, c.name]));
 
   function handleExport() {
     exportToCSV(`financeiro-${month}.csv`, records.map((r) => ({
@@ -964,7 +1063,7 @@ export function FinanceiroView() {
                 <table className="w-full text-xs">
                   <thead>
                     <tr style={{ borderBottom: "1px solid var(--border)" }}>
-                      {["Cliente", "Descrição", "Tipo", "Vencimento", "Valor", "Status"].map((h) => (
+                      {["Cliente", "Descrição", "Tipo", "Vencimento", "Prazo NF", "Valor", "Status", ""].map((h) => (
                         <th key={h} className="text-left px-4 py-2.5 font-bold uppercase tracking-widest" style={{ color: "var(--text-quaternary)", fontSize: "10px" }}>
                           {h}
                         </th>
@@ -984,9 +1083,17 @@ export function FinanceiroView() {
                         <td className="px-4 py-3" style={{ color: "var(--text-secondary)" }}>
                           {fmtDate(r.due_date)}
                         </td>
+                        <td className="px-4 py-3" style={{ color: "var(--text-tertiary)" }}>
+                          {r.nf_deadline ? fmtDate(r.nf_deadline) : "—"}
+                        </td>
                         <td className="px-4 py-3 font-semibold text-[var(--text-primary)]">{fmt(r.amount)}</td>
                         <td className="px-4 py-3">
                           <StatusDropdown status={r.status} onUpdate={(s) => handleMarkStatus(r.id, s)} />
+                        </td>
+                        <td className="px-4 py-3">
+                          <button onClick={() => { if (confirm(`Excluir "${r.description ?? "este lançamento"}"?`)) deleteRecord(r.id); }} style={{ color: "var(--text-quaternary)" }} aria-label="Excluir">
+                            <Trash2 size={13} />
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -1066,7 +1173,7 @@ export function FinanceiroView() {
                 <table className="w-full text-xs">
                   <thead>
                     <tr style={{ borderBottom: "1px solid var(--border)" }}>
-                      {["Beneficiário", "Descrição", "Vencimento", "Valor", "Status"].map((h) => (
+                      {["Beneficiário", "Descrição", "Vencimento", "Valor", "Status", ""].map((h) => (
                         <th key={h} className="text-left px-4 py-2.5 font-bold uppercase tracking-widest" style={{ color: "var(--text-quaternary)", fontSize: "10px" }}>
                           {h}
                         </th>
@@ -1082,6 +1189,11 @@ export function FinanceiroView() {
                         <td className="px-4 py-3 font-semibold text-[var(--text-primary)]">{fmt(p.amount)}</td>
                         <td className="px-4 py-3">
                           <StatusDropdown status={p.status} onUpdate={(s) => handleMarkPayableStatus(p.id, s)} />
+                        </td>
+                        <td className="px-4 py-3">
+                          <button onClick={() => { if (confirm(`Excluir "${p.description ?? "este pagamento"}"?`)) deletePayable(p.id); }} style={{ color: "var(--text-quaternary)" }} aria-label="Excluir">
+                            <Trash2 size={13} />
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -1175,6 +1287,19 @@ export function FinanceiroView() {
           onNew={() => setEditingPayee("new")}
           onEdit={(p) => setEditingPayee(p)}
           onDeactivate={(id) => deletePayee(id)}
+          clientMap={clientMap}
+          allocationsFor={payeeAllocationsFor}
+          onAllocate={(p) => setAllocatingPayeeFor(p)}
+          onRemoveAllocation={(id) => deletePayeeAllocation(id)}
+        />
+      )}
+
+      {allocatingPayeeFor && (
+        <PayeeAllocateModal
+          payee={allocatingPayeeFor}
+          clients={clients.filter((c) => c.status === "ativo")}
+          onClose={() => setAllocatingPayeeFor(null)}
+          onAdd={(clientId, pct) => createPayeeAllocation({ payee_id: allocatingPayeeFor.id, client_id: clientId, alloc_pct: pct })}
         />
       )}
 
