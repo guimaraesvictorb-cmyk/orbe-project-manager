@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Task, TaskRecurrence } from '../lib/database.types'
+import { todayLocal } from '../lib/formatters'
 
 const RECURRENCE_DAYS: Record<Exclude<TaskRecurrence, 'nenhuma'>, number> = {
   diaria: 1,
@@ -11,15 +12,17 @@ const RECURRENCE_DAYS: Record<Exclude<TaskRecurrence, 'nenhuma'>, number> = {
 
 function nextDeadline(deadline: string | null, recurrence: TaskRecurrence): string | null {
   if (recurrence === 'nenhuma') return deadline
-  const base = deadline ? new Date(deadline + 'T00:00:00') : new Date()
+  // A próxima ocorrência conta a partir do que for mais tarde: o prazo antigo
+  // (concluída no prazo ou adiantada mantém o ritmo) ou hoje (concluída
+  // atrasada não gera uma tarefa que já nasce vencida ou vencendo hoje).
+  const today = todayLocal()
+  const anchor = deadline && deadline > today ? deadline : today
+  const base = new Date(anchor + 'T00:00:00')
   base.setDate(base.getDate() + RECURRENCE_DAYS[recurrence])
-  // If the task was completed late enough that "old deadline + interval" is
-  // still in the past (e.g. it sat untouched for two weeks), anchor to today
-  // instead — otherwise the newly spawned task is born already overdue, and
-  // a person who fell behind once stays "atrasado" forever no matter how
-  // promptly they complete each one from then on.
-  const today = new Date(new Date().toDateString())
-  return (base < today ? today : base).toISOString().split('T')[0]
+  const y = base.getFullYear()
+  const m = String(base.getMonth() + 1).padStart(2, '0')
+  const d = String(base.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
 }
 
 interface TasksContextValue {
