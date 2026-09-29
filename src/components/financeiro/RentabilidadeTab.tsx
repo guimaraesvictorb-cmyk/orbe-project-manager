@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
 import { Plus, Pencil, Trash2, X } from "lucide-react";
-import { useTeamCosts, useTeamAllocations, useToolsSubscriptions, useToolClients } from "../../hooks/useTorreControle";
+import { useTeamCosts, useTeamAllocations, useToolsSubscriptions, useToolClients, useContracts } from "../../hooks/useTorreControle";
 import { useClients } from "../../hooks/useClients";
 import { useAuth } from "../../hooks/useAuth";
 import type { TeamCost } from "../../lib/database.types";
 import { fmtCurrency0, fmtCurrency, fmtPct } from "../../lib/formatters";
+import { effectiveMonthlyFee } from "../../lib/financeiro";
 
 const fmt = fmtCurrency0;
 
@@ -55,6 +56,7 @@ export function RentabilidadeTab() {
   const { allocations, createAllocation, deleteAllocation } = useTeamAllocations();
   const { items: tools } = useToolsSubscriptions();
   const { clientIdsFor: toolClientIdsFor } = useToolClients();
+  const { items: contracts } = useContracts();
   const { clients } = useClients();
   const { profile } = useAuth();
   const [showModal, setShowModal] = useState<null | "new" | TeamCost>(null);
@@ -115,12 +117,12 @@ export function RentabilidadeTab() {
           return s + (tc ? (tc.monthly_cost * a.alloc_pct) / 100 : 0);
         }, 0);
       const custoFixo = toolCostByClient[c.id] ?? 0;
-      const receita = c.monthly_fee ?? 0;
+      const receita = effectiveMonthlyFee(c, contracts);
       const custoTotal = custoEquipe + custoFixo;
       const margem = receita - custoTotal;
       return { client: c, receita, custoEquipe, custoFixo, margem, margemPct: receita > 0 ? (margem / receita) * 100 : 0 };
     }).sort((a, b) => b.margem - a.margem);
-  }, [activeClients, allocations, teamCosts, toolCostByClient]);
+  }, [activeClients, allocations, teamCosts, toolCostByClient, contracts]);
 
   return (
     <div className="space-y-6">

@@ -5,7 +5,8 @@ import { useFinancial } from "../hooks/useFinancial";
 import { usePayables, usePayees, usePayeeAllocations } from "../hooks/usePayables";
 import { useClients } from "../hooks/useClients";
 import { useAuth } from "../hooks/useAuth";
-import type { FinancialRecord, PaymentStatus, Payable, Payee, PayeeType, PayeeAllocation } from "../lib/database.types";
+import type { FinancialRecord, PaymentStatus, Payable, Payee, PayeeType, PayeeAllocation, Contract } from "../lib/database.types";
+import { effectiveMonthlyFee } from "../lib/financeiro";
 import { Footer } from "./Footer";
 import { FiscalTab } from "./financeiro/FiscalTab";
 import { FerramentasTab } from "./financeiro/FerramentasTab";
@@ -116,8 +117,7 @@ function Tabs({ tab, setTab, alertCount }: { tab: string; setTab: (t: Financeiro
     { id: "recebimentos", label: "A receber", color: "var(--success)", tint: "var(--success-tint)" },
     { id: "pagamentos", label: "A pagar", color: "var(--warning)", tint: "var(--warning-tint)" },
     { id: "fiscal", label: "Fiscal" },
-    { id: "ferramentas", label: "Ferramentas" },
-    { id: "investimentos", label: "Investimentos" },
+    { id: "ferramentas", label: "Ferramentas & Investimentos" },
     { id: "rentabilidade", label: "Rentabilidade" },
     { id: "contratos", label: "Contratos" },
     { id: "reserva", label: "Reserva" },
@@ -719,14 +719,15 @@ function NewPayableModal({
   );
 }
 
-function generateMensalidades(clients: { id: string; monthly_fee: number | null }[], month: string, userId: string) {
+function generateMensalidades(clients: { id: string; monthly_fee: number | null }[], contracts: Contract[], month: string, userId: string) {
   return clients
-    .filter((c) => c.monthly_fee && c.monthly_fee > 0)
-    .map((c) => ({
+    .map((c) => ({ client: c, amount: effectiveMonthlyFee(c, contracts) }))
+    .filter(({ amount }) => amount > 0)
+    .map(({ client: c, amount }) => ({
       client_id: c.id,
       type: "mensalidade" as const,
       description: `Mensalidade ${month}`,
-      amount: c.monthly_fee!,
+      amount,
       due_date: `${month}-10`,
       nf_deadline: null,
       paid_date: null,
@@ -931,7 +932,7 @@ export function FinanceiroView() {
   async function handleGenerateMensalidades() {
     if (!profile?.id) return;
     const existing = records.filter((r) => r.type === "mensalidade").map((r) => r.client_id);
-    const toCreate = generateMensalidades(clients.filter((c) => c.status === "ativo"), month, profile.id).filter(
+    const toCreate = generateMensalidades(clients.filter((c) => c.status === "ativo"), contracts, month, profile.id).filter(
       (r) => !existing.includes(r.client_id)
     );
     for (const r of toCreate) await createRecord(r);
@@ -1206,12 +1207,32 @@ export function FinanceiroView() {
         )}
 
         {tab === "fiscal" && <FiscalTab />}
-        {tab === "ferramentas" && <FerramentasTab />}
-        {tab === "investimentos" && <InvestimentosTab />}
+        {tab === "ferramentas" && (
+          <div className="space-y-8">
+            <FerramentasTab />
+            <div>
+              <p className="text-xs font-semibold mb-3" style={{ color: "var(--text-primary)" }}>Investimentos</p>
+              <InvestimentosTab />
+            </div>
+          </div>
+        )}
         {tab === "rentabilidade" && <RentabilidadeTab />}
         {tab === "contratos" && <ContratosTab />}
         {tab === "reserva" && <ReservaTab />}
-        {tab === "visao-geral" && <VisaoGeralTab />}
+        {tab === "visao-geral" && (
+          <>
+            <div className="no-print flex items-center justify-end">
+              <input
+                type="month"
+                value={month}
+                onChange={(e) => setMonth(e.target.value)}
+                className="bg-[var(--bg-page)] border rounded-lg px-3 py-1.5 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)]"
+                style={{ borderColor: "var(--border-subtle)" }}
+              />
+            </div>
+            <VisaoGeralTab month={month} />
+          </>
+        )}
 
         {tab === "alertas" && (
           <div className="rounded-2xl border overflow-hidden" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>

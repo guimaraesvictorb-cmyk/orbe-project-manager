@@ -3,14 +3,15 @@ import { useFinancial } from "../../hooks/useFinancial";
 import { usePayables } from "../../hooks/usePayables";
 import { useToolsSubscriptions, useTeamCosts, useCompanySettings } from "../../hooks/useTorreControle";
 import { useClients } from "../../hooks/useClients";
-import { fmtCurrency0, fmtPct, currentMonthLocal } from "../../lib/formatters";
+import { fmtCurrency0, fmtPct } from "../../lib/formatters";
 import { calcAliquotaEfetiva, trailing12Window } from "../../lib/fiscal";
 
 const fmt = fmtCurrency0;
 
-function nextMonths(n: number): string[] {
+function monthsFrom(start: string, n: number): string[] {
+  const [y, m] = start.split("-").map(Number);
+  const d = new Date(y, m - 1, 1);
   const out: string[] = [];
-  const d = new Date();
   for (let i = 0; i < n; i++) {
     out.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
     d.setMonth(d.getMonth() + 1);
@@ -18,7 +19,7 @@ function nextMonths(n: number): string[] {
   return out;
 }
 
-export function VisaoGeralTab() {
+export function VisaoGeralTab({ month }: { month: string }) {
   const { records: allReceivables } = useFinancial({});
   const { records: allPayables } = usePayables({});
   const { items: tools } = useToolsSubscriptions();
@@ -29,7 +30,6 @@ export function VisaoGeralTab() {
   const [editingCash, setEditingCash] = useState(false);
   const [cashForm, setCashForm] = useState("");
 
-  const month = currentMonthLocal();
   const activeClients = clients.filter((c) => c.status === "ativo");
 
   const fixedToolsMonthly = tools.filter((t) => t.is_active).reduce((s, t) => s + (t.billing_cycle === "anual" ? t.amount / 12 : t.amount), 0);
@@ -51,12 +51,12 @@ export function VisaoGeralTab() {
   const pctImpostos = receitaMes > 0 ? (impostos / receitaMes) * 100 : 0;
 
   const fluxo = useMemo(() => {
-    return nextMonths(3).map((m) => {
+    return monthsFrom(month, 3).map((m) => {
       const entradas = allReceivables.filter((r) => (r.status === "pendente" || r.status === "atrasado") && r.due_date.startsWith(m)).reduce((s, r) => s + r.amount, 0);
       const saidas = allPayables.filter((p) => (p.status === "pendente" || p.status === "atrasado") && p.due_date.startsWith(m)).reduce((s, p) => s + p.amount, 0);
       return { month: m, entradas, saidas, saldo: entradas - saidas };
     });
-  }, [allReceivables, allPayables]);
+  }, [allReceivables, allPayables, month]);
 
   const custoFixoMensal = fixedTeamMonthly + fixedToolsMonthly;
   const reservaMin = custoFixoMensal * 3;
