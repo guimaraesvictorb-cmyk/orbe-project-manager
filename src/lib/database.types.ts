@@ -359,6 +359,19 @@ export interface RoiDayInvestmentTarget {
   updated_at: string
 }
 
+// Uma cópia do modelo padrão de apresentação (PPTX), gerada pra um cliente
+// num mês/ano — fica em storage no bucket orbe-presentations, caminho
+// "{client_id}/{arquivo}.pptx"; esta linha é só o índice/histórico.
+export interface ClientPresentation {
+  id: string
+  client_id: string
+  period: string // 'YYYY-MM'
+  storage_path: string
+  title: string
+  created_by: string | null
+  created_at: string
+}
+
 export interface Payee {
   id: string
   name: string
@@ -559,6 +572,7 @@ export type Database = {
       roi_day_clients: { Row: RoiDayClient; Insert: Omit<RoiDayClient, 'id' | 'created_at' | 'updated_at'>; Update: Partial<RoiDayClient> }
       roi_day_investments: { Row: RoiDayInvestment; Insert: Omit<RoiDayInvestment, 'id' | 'created_at' | 'updated_at'>; Update: Partial<RoiDayInvestment> }
       roi_day_investment_targets: { Row: RoiDayInvestmentTarget; Insert: Omit<RoiDayInvestmentTarget, 'id' | 'created_at' | 'updated_at'>; Update: Partial<RoiDayInvestmentTarget> }
+      client_presentations: { Row: ClientPresentation; Insert: Omit<ClientPresentation, 'id' | 'created_at'>; Update: Partial<ClientPresentation> }
       payees: { Row: Payee; Insert: Omit<Payee, 'id' | 'created_at' | 'updated_at'>; Update: Partial<Payee> }
       payables: { Row: Payable; Insert: Omit<Payable, 'id' | 'created_at' | 'updated_at'>; Update: Partial<Payable> }
       payee_allocations: { Row: PayeeAllocation; Insert: Omit<PayeeAllocation, 'id' | 'created_at' | 'updated_at'>; Update: Partial<PayeeAllocation> }
