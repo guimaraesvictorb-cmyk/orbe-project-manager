@@ -102,6 +102,41 @@ function TaskModal({ task, clients, profiles, onClose, onSave, onDelete, onDupli
   const [duplicating, setDuplicating] = useState(false);
   const inputStyle = { backgroundColor: "var(--bg-input)", border: "1px solid var(--border-strong)" };
   const inputCls = "w-full rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-quaternary)] focus:outline-none transition-colors";
+  const titleRef = useRef<HTMLTextAreaElement>(null);
+
+  // Alguns títulos chegam a ter 100+ caracteres (convenção de tags entre
+  // colchetes do time) — o campo cresce em altura conforme o texto, em vez
+  // de rolar escondido dentro de uma linha só.
+  useEffect(() => {
+    const el = titleRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [form.title]);
+
+  function handleTitleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    // Tab normalmente pula pro próximo campo do formulário — nesse título
+    // longo isso atrapalha quem usa Tab pra espaçar as tags, então aqui ele
+    // insere espaço em vez de trocar de campo.
+    if (e.key === "Tab") {
+      e.preventDefault();
+      const el = e.currentTarget;
+      const start = el.selectionStart ?? el.value.length;
+      const end = el.selectionEnd ?? el.value.length;
+      const value = form.title ?? "";
+      const next = `${value.slice(0, start)}  ${value.slice(end)}`;
+      setForm((f) => ({ ...f, title: next }));
+      requestAnimationFrame(() => { el.selectionStart = el.selectionEnd = start + 2; });
+      return;
+    }
+    // Era um <input> de uma linha só, onde Enter salvava o formulário —
+    // virando <textarea> pra poder crescer, Enter passaria a quebrar linha
+    // por padrão. Mantém o comportamento antigo (salvar) em vez disso.
+    if (e.key === "Enter") {
+      e.preventDefault();
+      e.currentTarget.form?.requestSubmit();
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -125,8 +160,10 @@ function TaskModal({ task, clients, profiles, onClose, onSave, onDelete, onDupli
           <button onClick={onClose} style={{ color: "var(--text-tertiary)" }}><X size={16} /></button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-3">
-          <input value={form.title ?? ""} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-            placeholder="Título da tarefa *" required autoFocus className={inputCls} style={inputStyle}
+          <textarea ref={titleRef} value={form.title ?? ""} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+            onKeyDown={handleTitleKeyDown}
+            placeholder="Título da tarefa *" required autoFocus rows={1}
+            className={`${inputCls} resize-none leading-snug`} style={{ ...inputStyle, overflow: "hidden" }}
             onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent-a44)")}
             onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border-strong)")} />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
