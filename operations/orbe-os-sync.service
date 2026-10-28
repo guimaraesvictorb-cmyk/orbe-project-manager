@@ -1,0 +1,18 @@
+[Unit]
+Description=ORBE WhatsApp to Orbe OS synchronization
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/orbe/whatsapp
+ExecStart=/usr/bin/python3 /opt/orbe/whatsapp/operations/orbe_os_sync.py
+TimeoutStartSec=55
+UMask=0077
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/opt/orbe/whatsapp/private
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+

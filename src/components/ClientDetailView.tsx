@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from "react"
+import { useState, useRef, useEffect, useMemo, lazy, Suspense } from "react"
 import {
   ArrowLeft, Globe, User, Phone, Mail, DollarSign, Tag,
   Plus, Check, Trash2, Brain, Send, Loader2, Sparkles,
@@ -18,6 +18,8 @@ import { AdsMetricsTab } from "./ads/AdsMetricsTab"
 import { CompiladoTab } from "./ads/CompiladoTab"
 import { MetaAdsLiveTab } from "./ads/MetaAdsLiveTab"
 
+const WhatsAppTrackingView = lazy(() => import('./WhatsAppTrackingView').then(m => ({default:m.WhatsAppTrackingView})))
+
 const ROLE_LABELS: Record<string, string> = { gt: "Gestor de Tráfego", gp: "Gestor de Projetos" }
 
 const SOURCE_META = {
@@ -26,7 +28,7 @@ const SOURCE_META = {
   web:          { label: "Web",    color: "var(--warning)", bg: "var(--warning-tint)" },
 }
 
-type Tab = "overview" | "checklist" | "meta" | "google" | "compilado" | "knowledge" | "ai"
+type Tab = "overview" | "checklist" | "meta" | "google" | "compilado" | "tracking" | "knowledge" | "ai"
 
 interface ChatMessage { role: "user" | "assistant"; content: string }
 
@@ -486,6 +488,7 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
     { id: "meta",       label: "Meta Ads" },
     { id: "google",     label: "Google Ads" },
     { id: "compilado",  label: "Compilado" },
+    { id: "tracking", label: "Rastreamento" },
     { id: "knowledge",  label: `Conhecimento${pending.length ? ` (${pending.length})` : ""}` },
     { id: "ai",         label: "IA" },
   ]
@@ -879,6 +882,7 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
         {tab === "meta"      && <MetaAdsLiveTab client={client} />}
         {tab === "google"    && <AdsMetricsTab clientId={client.id} platform="google" />}
         {tab === "compilado" && <CompiladoTab clientId={client.id} />}
+        {tab === "tracking" && <Suspense fallback={<p>Carregando rastreamento…</p>}><WhatsAppTrackingView clientId={client.id} embedded/></Suspense>}
 
         {tab === "knowledge" && (
           <div className="max-w-2xl space-y-6">

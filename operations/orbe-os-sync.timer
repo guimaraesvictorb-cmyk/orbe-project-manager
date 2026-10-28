@@ -1,0 +1,11 @@
+[Unit]
+Description=Refresh Orbe OS tracking every 30 seconds
+
+[Timer]
+OnBootSec=30
+OnUnitActiveSec=30
+AccuracySec=3
+Unit=orbe-os-sync.service
+
+[Install]
+WantedBy=timers.target
