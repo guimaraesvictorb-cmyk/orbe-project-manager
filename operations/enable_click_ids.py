@@ -36,8 +36,11 @@ def main():
     try:
         subprocess.run(['docker','restart','-t','20',container],check=True,stdout=subprocess.DEVNULL,timeout=45)
         check="import urllib.request,json; r=json.load(urllib.request.urlopen('http://127.0.0.1:8080/healthz',timeout=5)); assert r['status']=='ok'"
-        for attempt in range(12):
-            result=subprocess.run(['docker','exec',container,'python','-c',check],capture_output=True,timeout=10)
+        for attempt in range(4):
+            try:
+                result=subprocess.run(['docker','exec',container,'python','-c',check],capture_output=True,timeout=45)
+            except subprocess.TimeoutExpired:
+                continue
             if result.returncode==0:break
             time.sleep(1)
         else:raise RuntimeError('health_failed')
