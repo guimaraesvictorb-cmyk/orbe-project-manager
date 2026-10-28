@@ -44,6 +44,21 @@ export async function kommoRequest<T>(origin: string,token: string,path: string,
   if(!response.ok)throw new Error(response.status===401?'kommo_token_invalid':response.status===403?'kommo_permission_denied':'kommo_unavailable');
   return (response.status===204?null:await response.json()) as T;
 }
+export type KommoWebhook={id:number;destination:string;disabled:boolean;settings:string[]};
+export type KommoWebhooks={_embedded?:{webhooks?:KommoWebhook[]}};
+export async function ensureKommoWebhook(origin:string,token:string,destination:string,existing:KommoWebhooks|null) {
+  const find=(list:KommoWebhooks|null)=>list?._embedded?.webhooks?.find(h=>h.destination===destination);
+  const ready=(h:KommoWebhook|undefined)=>Boolean(h&&!h.disabled&&Array.isArray(h.settings)&&h.settings.includes('add_message'));
+  let hook=find(existing);
+  if(!ready(hook)) {
+    await kommoRequest(origin,token,'/api/v4/webhooks',{method:'POST',body:JSON.stringify({destination,settings:['add_message']})});
+    // Confirm the persisted subscription independently of the creation response envelope.
+    hook=find(await kommoRequest<KommoWebhooks|null>(origin,token,'/api/v4/webhooks'));
+  }
+  if(!ready(hook))throw new Error('webhook_not_confirmed');
+  decimal(hook!.id);
+  return hook!;
+}
 export type KommoMessage={id:string;contact_id:string;chat_id:string;talk_id:string;lead_id:string;text:string;created_at:string;type:string;origin:string;reference:string};
 // Whitelist-only form parsing. No generic bracket expansion / prototype assignment.
 export function parseWebhook(body: unknown) {

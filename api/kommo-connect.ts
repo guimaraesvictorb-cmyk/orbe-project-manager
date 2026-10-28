@@ -1,9 +1,8 @@
 import {randomBytes} from 'node:crypto';
 import {answer,owner,type Request} from './_lib/trackingServer.js';
 import type {ServerResponse} from 'node:http';
-import {decimal,digest,kommoOrigin,kommoRequest,object,ORBE_ORIGIN,scalar,seal,unseal} from './_lib/kommo.js';
+import {decimal,digest,ensureKommoWebhook,kommoOrigin,kommoRequest,object,ORBE_ORIGIN,scalar,seal,unseal,type KommoWebhooks} from './_lib/kommo.js';
 import type {KommoConfig} from './_lib/kommoEnrichment.js';
-type Hooks={_embedded?:{webhooks?:{id:number;destination:string;disabled:boolean;settings:string[]}[]}};
 export default async function handler(req:Request,res:ServerResponse) {
   if(req.method!=='POST')return answer(res,405,{error:'method_not_allowed'});
   if(req.headers.origin && req.headers.origin!==ORBE_ORIGIN)return answer(res,403,{error:'forbidden'});
@@ -19,17 +18,13 @@ export default async function handler(req:Request,res:ServerResponse) {
     const accountId=decimal(account.id);
     if(`${account.subdomain}.kommo.com`!==new URL(origin).hostname)throw new Error('account_mismatch');
     // Check admin/webhook permission before creating any local connection.
-    const hooks=await kommoRequest<Hooks|null>(origin,token,'/api/v4/webhooks');
+    const hooks=await kommoRequest<KommoWebhooks|null>(origin,token,'/api/v4/webhooks');
     const previous=await db<KommoConfig[]>(`rest/v1/wa_kommo_credentials?client_id=eq.${clientId}&limit=1`);
     if(previous[0]&&(previous[0].account_origin!==origin||previous[0].account_id!==accountId))return answer(res,409,{error:'account_already_bound'});
     const secret=previous[0]?unseal(previous[0].webhook_ciphertext,clientId):randomBytes(32).toString('base64url');
     const id=await db<string>('rest/v1/rpc/wa_kommo_prepare',{method:'POST',body:JSON.stringify({p_client_id:clientId,p_owner:user.id,p_account_id:accountId,p_origin:origin,p_name:scalar(account.name,100),p_destination:destination,p_token:seal(token,clientId),p_webhook:seal(secret,clientId),p_hash:digest(secret)})});
     const destinationUrl=`${ORBE_ORIGIN}/api/kommo-webhook?key=${secret}`;
-    let hook=hooks?._embedded?.webhooks?.find(h=>h.destination===destinationUrl);
-    if(!hook || hook.disabled || !hook.settings.includes('add_message')) {
-      hook=await kommoRequest(origin,token,'/api/v4/webhooks',{method:'POST',body:JSON.stringify({destination:destinationUrl,settings:['add_message']})});
-    }
-    if(!hook || hook.destination!==destinationUrl || hook.disabled || !hook.settings.includes('add_message'))throw new Error('webhook_not_confirmed');
+    const hook=await ensureKommoWebhook(origin,token,destinationUrl,hooks);
     await db('rest/v1/rpc/wa_kommo_enable',{method:'POST',body:JSON.stringify({p_connection:id,p_webhook_id:String(hook.id)})});
     return answer(res,200,{ok:true,connection_id:id,status:'waiting_message',account_name:account.name});
   }catch(error){

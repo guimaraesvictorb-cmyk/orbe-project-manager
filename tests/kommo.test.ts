@@ -1,7 +1,24 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {kommoOrigin,parseWebhook,embed,references,visibleText,contactIdentity,seal,unseal} from '../api/_lib/kommo.ts'
+import {kommoOrigin,parseWebhook,embed,references,visibleText,contactIdentity,seal,unseal,ensureKommoWebhook} from '../api/_lib/kommo.ts'
 const ref='D47162B59539C57FE8585270B0D7A664'
+test('activation confirms a persisted webhook and reuses it without touching other subscriptions',async()=>{
+  const original=globalThis.fetch,destination='https://studio.agenciaorbe.co/api/kommo-webhook?key=test';
+  const hook={id:123,destination,disabled:false,settings:['add_message']};
+  const unrelated={...hook,id:456,destination:'https://other.example/events'};
+  const calls:RequestInit[]=[];
+  try{
+    globalThis.fetch=async(_url,init)=>{calls.push(init??{});return new Response(JSON.stringify(init?.method==='POST'?{_embedded:{webhooks:[hook]}}:{_embedded:{webhooks:[unrelated,hook]}}),{status:200})};
+    assert.equal((await ensureKommoWebhook('https://example.kommo.com','test',destination,{_embedded:{webhooks:[unrelated]}})).id,123);
+    assert.equal(calls.length,2);assert.equal(calls[0].method,'POST');assert.equal(calls[1].method,undefined);
+    assert.deepEqual(JSON.parse(String(calls[0].body)),{destination,settings:['add_message']});
+    calls.length=0;
+    assert.equal((await ensureKommoWebhook('https://example.kommo.com','test',destination,{_embedded:{webhooks:[unrelated,hook]}})).id,123);
+    assert.equal(calls.length,0);
+    globalThis.fetch=async(_url,init)=>new Response(JSON.stringify(init?.method==='POST'?hook:{_embedded:{webhooks:[unrelated]}}),{status:200});
+    await assert.rejects(ensureKommoWebhook('https://example.kommo.com','test',destination,null),/webhook_not_confirmed/);
+  }finally{globalThis.fetch=original}
+})
 const message=()=>({id:'test-message-1',contact_id:'123',chat_id:'chat-1',talk_id:'20',entity_type:'lead',entity_id:'987',text:embed('Olá! Quero saber mais.',ref),created_at:String(Math.floor(Date.now()/1000)),message_type:'text',type:'incoming',author:{type:'external'},origin:'whatsapp'})
 const nested=()=>({account:{id:'456',subdomain:'example'},message:{add:[message()]}})
 function form(input:unknown){const result=new URLSearchParams();function walk(value:unknown,key:string){if(value&&typeof value==='object'){for(const [k,v] of Object.entries(value))walk(v,key?`${key}[${k}]`:k)}else result.append(key,String(value))}walk(input,'');return result.toString()}

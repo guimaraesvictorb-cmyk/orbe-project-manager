@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 const errors:Record<string,string>={
   kommo_token_invalid:'A chave da Kommo não foi aceita ou expirou. Gere uma nova chave na integração ORBE.',
   kommo_permission_denied:'A integração precisa da autorização de um administrador da conta Kommo.',
+  webhook_not_confirmed:'A Kommo ainda não confirmou o recebimento de eventos. Tente conectar novamente com a mesma chave.',
   invalid_account:'Use o endereço da conta, como https://empresa.kommo.com, sem outros caminhos.',
   invalid_credentials_or_phone:'Confira a chave e informe o WhatsApp com 55, DDD e número.',
   encryption_not_configured:'A ativação ainda não está disponível no servidor. Seus dados não foram enviados à Kommo.',
