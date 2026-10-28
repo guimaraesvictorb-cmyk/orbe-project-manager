@@ -1,0 +1,60 @@
+<script>
+(function () {
+  if (!/^(planos\.rayafit\.com\.br|www\.rayafit\.com\.br|rayafit\.com\.br)$/.test(location.hostname)) return;
+  if (window.__orbeRayafitTracking) return;
+  window.__orbeRayafitTracking = true;
+  var keys = ['utm_source','utm_medium','utm_campaign','utm_content','utm_term','gclid','fbclid'];
+  var incoming = new URLSearchParams(location.search), values = {}, hasSource = false;
+  for (var i = 0; i < keys.length; i++) {
+    var k = keys[i], all = incoming.getAll(k), v = all.length === 1 ? all[0] : '';
+    if (v && v.length <= (k === 'gclid' || k === 'fbclid' ? 1024 : 256) && !/[\u0000-\u001F\u007F{}]/.test(v) && (!(k === 'gclid' || k === 'fbclid') || /^[A-Za-z0-9_.~-]+$/.test(v))) { values[k] = v; hasSource = true; }
+  }
+  try {
+    if (hasSource) sessionStorage.setItem('orbe_rayafit_source_v1', JSON.stringify({at: Date.now(), values: values}));
+    else {
+      var saved = JSON.parse(sessionStorage.getItem('orbe_rayafit_source_v1') || 'null');
+      if (saved && saved.at <= Date.now() && Date.now() - saved.at < 1800000) values = saved.values;
+    }
+  } catch (e) {}
+  if (!values.utm_source && !values.gclid && !values.fbclid) {
+    values.utm_source = 'site_rayafit';
+    values.utm_medium = 'nao_informado';
+  }
+  function decorate(a) {
+    if (!a || a.tagName !== 'A' || !a.href) return;
+    try {
+      var original = new URL(a.href, location.href), phone = '';
+      if (original.protocol !== 'https:') return;
+      if (original.hostname === 'wa.me') phone = original.pathname.replace(/\D/g, '');
+      else if (original.hostname === 'api.whatsapp.com' && original.pathname.replace(/\/$/,'') === '/send') phone = (original.searchParams.get('phone') || '').replace(/\D/g, '');
+      else return;
+      if (phone !== '5527988417089') return;
+      var greeting = original.searchParams.get('text') || 'Olá! Gostaria de mais informações.';
+      if (greeting.length > 500 || /[\uFE00-\uFE0F\u200B\u200C\u2060\u2063]|\[ORBE:/.test(greeting)) return;
+      var target = new URL('https://studio.agenciaorbe.co/api/wa-redirect');
+      target.searchParams.set('connection','1fd22072-6932-4122-941f-cb31c55efd66');
+      target.searchParams.set('text',greeting);
+      for (var j = 0; j < keys.length; j++) if (typeof values[keys[j]] === 'string' && values[keys[j]]) target.searchParams.set(keys[j], values[keys[j]]);
+      a.setAttribute('href',target.toString());
+    } catch (e) {}
+  }
+  function scan(node) {
+    if (!node || node.nodeType !== 1) return;
+    decorate(node);
+    var links = node.querySelectorAll('a[href]');
+    for (var i = 0; i < links.length; i++) decorate(links[i]);
+  }
+  function start() {
+    scan(document.documentElement);
+    new MutationObserver(function (mutations) {
+      for (var i = 0; i < mutations.length; i++) {
+        var m = mutations[i];
+        if (m.type === 'attributes') decorate(m.target);
+        else for (var j = 0; j < m.addedNodes.length; j++) scan(m.addedNodes[j]);
+      }
+    }).observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['href']});
+  }
+  if (document.documentElement) start();
+  else document.addEventListener('DOMContentLoaded',start,{once:true});
+})();
+</script>

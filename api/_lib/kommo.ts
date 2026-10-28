@@ -121,3 +121,31 @@ export function contactIdentity(contact:unknown) {
   for(const raw of fields){const f=object(raw);if(f.field_code!=='PHONE'||!Array.isArray(f.values))continue;for(const v of f.values){const n=String(object(v).value??'').replace(/\D/g,'');if(/^[1-9][0-9]{9,14}$/.test(n))phones.add(n);}}
   return {name:typeof c.name==='string'?c.name.slice(0,160):'',phone:phones.size===1?[...phones][0]:'',phone_status:phones.size===1?'crm_contact':phones.size>1?'ambiguous':'missing'};
 }
+
+// CRM fields describe the lead's acquisition, not every later WhatsApp message.
+export function leadAttribution(input:unknown,binding:{account:string;lead:string;contact:string;messageAt:string}) {
+  const lead=object(input);
+  if(String(lead.account_id)!==binding.account||String(lead.id)!==binding.lead)return null;
+  const embedded=lead._embedded?object(lead._embedded):{};
+  const contacts:unknown[]=Array.isArray(embedded.contacts)?embedded.contacts:[];
+  if(!contacts.some(c=>String(object(c).id)===binding.contact))return null;
+  const created=Number(lead.created_at),message=Date.parse(binding.messageAt)/1000;
+  if(!Number.isSafeInteger(created)||created<1577836800||!Number.isFinite(message)||Math.abs(message-created)>600)return null;
+  const values:Record<string,string>={};
+  for(const raw of Array.isArray(lead.custom_fields_values)?lead.custom_fields_values:[]) {
+    const field=object(raw),code=String(field.field_code??'').toLowerCase(),name=String(field.field_name??'').trim().toLowerCase();
+    const key=sourceFields.find(k=>k===code||k===name);
+    if(!key||!Array.isArray(field.values))continue;
+    for(const entry of field.values) {
+      const rawValue=object(entry).value;
+      if(typeof rawValue!=='string')return null;
+      const value=rawValue.trim();if(!value)continue;
+      if(value.length>(key.endsWith('clid')?1024:256)||(/[{}]/u.test(value)||[...value].some(c=>c.charCodeAt(0)<32||c.charCodeAt(0)===127)))return null;
+      if(key.endsWith('clid')&&!/^[A-Za-z0-9_.~-]+$/.test(value))return null;
+      if(values[key]&&values[key]!==value)return null;
+      values[key]=value;
+    }
+  }
+  if(!values.utm_source&&!values.gclid&&!values.fbclid)return null;
+  return {createdAt:new Date(created*1000).toISOString(),fields:values};
+}

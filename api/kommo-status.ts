@@ -18,7 +18,7 @@ export default async function handler(req:Request,res:ServerResponse) {
     const status=installed?(states[0]?.last_received_at?'receiving':'waiting_message'):'error';
     await db(`rest/v1/wa_tracking_setups?client_id=eq.${client}`,{method:'PATCH',body:JSON.stringify({activation_status:status,activation_error:installed?'':'A Kommo não está enviando os eventos. Reconecte a integração.',last_verified_at:new Date().toISOString()})});
     const pending=await db<{payload:{kommo_contact_id:string}}[]>(`rest/v1/wa_tracking_records?connection_id=eq.${cfg.connection_id}&entity=eq.messages&payload->>identity_checked=eq.false&select=payload&limit=10`);
-    if(pending.length)waitUntil(enrich(cfg.connection_id,pending.map(r=>r.payload.kommo_contact_id)).catch(()=>{}));
+    waitUntil(enrich(cfg.connection_id,pending.map(r=>r.payload.kommo_contact_id)).catch(()=>{}));
     return answer(res,200,{status});
   }catch{return answer(res,400,{error:'Não foi possível confirmar a autorização da Kommo. Verifique a chave e as permissões da integração.'});}
 }

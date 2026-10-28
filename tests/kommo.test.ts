@@ -1,7 +1,24 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {kommoOrigin,parseWebhook,embed,references,visibleText,contactIdentity,seal,unseal,ensureKommoWebhook} from '../api/_lib/kommo.ts'
+import {kommoOrigin,parseWebhook,embed,references,visibleText,contactIdentity,seal,unseal,ensureKommoWebhook,leadAttribution} from '../api/_lib/kommo.ts'
 const ref='D47162B59539C57FE8585270B0D7A664'
+const binding={account:'456',lead:'987',contact:'123',messageAt:'2026-10-28T22:16:45Z'};
+const nativeLead=()=>({account_id:456,id:987,created_at:1793225805,_embedded:{contacts:[{id:123}]},custom_fields_values:[{field_code:'UTM_SOURCE',field_name:'utm_source',values:[{value:'ig'}]},{field_code:'UTM_CAMPAIGN',field_name:'utm_campaign',values:[{value:'Rayafit Alecrim'}]}]});
+test('native CRM acquisition fields require the exact account, lead, contact and creation window',()=>{
+ assert.equal(leadAttribution(nativeLead(),binding)?.fields.utm_source,'ig');
+ for(const b of [{...binding,account:'999'},{...binding,contact:'789'},{...binding,lead:'654'},{...binding,messageAt:'2026-10-29T22:16:45Z'}])assert.equal(leadAttribution(nativeLead(),b),null);
+ const unlinked=nativeLead();unlinked._embedded.contacts=[];assert.equal(leadAttribution(unlinked,binding),null);
+});
+test('native attribution rejects unresolved macros and conflicts instead of guessing campaign origin',()=>{
+ for(const value of ['{{campaign.name}}','bad\nsource','x'.repeat(257)]){const l=nativeLead();l.custom_fields_values[0].values=[{value}];assert.equal(leadAttribution(l,binding),null)}
+ const conflicting=nativeLead();conflicting.custom_fields_values[0].values.push({value:'fb'});assert.equal(leadAttribution(conflicting,binding),null);
+ const organic=nativeLead();organic.custom_fields_values=[{field_code:'',field_name:'Fonte',values:[{value:'Orgânico'}]}];assert.equal(leadAttribution(organic,binding),null);
+});
+test('custom UTM field names and click IDs are accepted without importing arbitrary CRM fields',()=>{
+ const l=nativeLead();l.custom_fields_values[0].field_code='';l.custom_fields_values.push({field_code:'',field_name:'fbclid',values:[{value:'abc_DEF-123'}]},{field_code:'',field_name:'private_notes',values:[{value:'do not import'}]});
+ const result=leadAttribution(l,binding);assert.equal(result?.fields.fbclid,'abc_DEF-123');assert.equal(result?.fields.private_notes,undefined);
+ l.custom_fields_values[2].values[0].value='bad?token';assert.equal(leadAttribution(l,binding),null);
+});
 test('activation confirms a persisted webhook and reuses it without touching other subscriptions',async()=>{
   const original=globalThis.fetch,destination='https://studio.agenciaorbe.co/api/kommo-webhook?key=test';
   const hook={id:123,destination,disabled:false,settings:['add_message']};
