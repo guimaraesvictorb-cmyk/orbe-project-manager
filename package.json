@@ -1,17 +1,18 @@
 {
   "name": "orbe-operating-system",
   "private": true,
-  "version": "1.16.2",
+  "version": "1.17.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test:tracking": "node --test tests/tracking.test.ts"
+    "test:tracking": "node --test tests/tracking.test.ts tests/kommo.test.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.106.0",
+    "@vercel/functions": "3.6.1",
     "lucide-react": "^1.16.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6"

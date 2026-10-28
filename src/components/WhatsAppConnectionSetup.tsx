@@ -3,6 +3,7 @@ import { QrCode, Workflow, ShieldCheck } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { systemNames, type TrackingSetup } from '../lib/whatsappSetup'
+import { KommoActivation } from './KommoActivation'
 const input='w-full rounded-lg border border-[var(--border)] bg-[var(--bg-surface-2)] px-3 py-2 text-sm mt-1'
 const methods=[
   {id:'qr' as const,title:'QR Code',icon:QrCode,text:'WhatsApp por aparelho vinculado, como no piloto ORBE. Conexão não oficial.'},
@@ -10,7 +11,7 @@ const methods=[
   {id:'official' as const,title:'Outra API oficial',icon:ShieldCheck,text:'Para WhatsApp oficial conectado diretamente ou por outro fornecedor.'},
 ]
 
-export function WhatsAppConnectionSetup({clientId}:{clientId:string}) {
+export function WhatsAppConnectionSetup({clientId,onConnected}:{clientId:string;onConnected?:()=>void}) {
   const {profile}=useAuth()
   const [setup,setSetup]=useState<TrackingSetup|null>(null)
   const [exists,setExists]=useState(false)
@@ -29,9 +30,9 @@ export function WhatsAppConnectionSetup({clientId}:{clientId:string}) {
     })
     return()=>{active=false}
   },[clientId,profile?.id])
-  async function save(event:React.FormEvent) {
-    event.preventDefault()
-    if(!setup||!profile)return
+  async function save(event?:React.FormEvent):Promise<boolean> {
+    event?.preventDefault()
+    if(!setup||!profile)return false
     setSaving(true);setError('');setNotice('')
     try {
       if(setup.connection_method==='undecided')throw new Error('Escolha como conectar o WhatsApp.')
@@ -41,8 +42,9 @@ export function WhatsAppConnectionSetup({clientId}:{clientId:string}) {
       const values={connection_method:setup.connection_method,system:setup.system,destination,account_url:setup.account_url,notes:setup.notes,activation_requested:true,updated_at:new Date().toISOString()}
       const result=exists?await supabase.from('wa_tracking_setups').update(values).eq('client_id',clientId):await supabase.from('wa_tracking_setups').insert({...values,client_id:clientId,owner_user_id:profile.id})
       if(result.error)throw new Error('Não foi possível salvar. Verifique seu acesso a este cliente.')
-      setExists(true);setSetup({...setup,...values});setNotice('Configuração salva. A conexão ainda precisa ser ativada e validada.')
-    }catch(e){setError(e instanceof Error?e.message:'Não foi possível salvar.')}finally{setSaving(false)}
+      setExists(true);setSetup({...setup,...values});setNotice(setup.connection_method==='kommo'?'Dados salvos. Continue em “Ativar conexão com a Kommo” abaixo.':'Configuração salva. A conexão ainda precisa ser ativada e validada.')
+      return true
+    }catch(e){setError(e instanceof Error?e.message:'Não foi possível salvar.');return false}finally{setSaving(false)}
   }
   if(loading)return <p className="text-sm text-[var(--text-tertiary)]">Carregando configuração…</p>
   if(!setup)return <p role="alert">{error}</p>
@@ -56,8 +58,9 @@ export function WhatsAppConnectionSetup({clientId}:{clientId:string}) {
       {setup.connection_method==='kommo'&&<label className="text-xs md:col-span-2">Endereço da conta Kommo<input type="url" placeholder="https://empresa.kommo.com" maxLength={500} className={input} value={setup.account_url} onChange={e=>setSetup({...setup,account_url:e.target.value})}/></label>}
       <label className="text-xs md:col-span-2">Observações<textarea rows={2} maxLength={1000} className={input} value={setup.notes} onChange={e=>setSetup({...setup,notes:e.target.value})}/></label>
     </div>
-    <p className="text-xs text-[var(--text-tertiary)]">Salvar registra a configuração. O QR será disponibilizado após preparar a conexão do número; a Kommo e outras APIs precisam da autorização da conta. Nenhuma senha ou chave deve ser informada neste formulário.</p>
+    <p className="text-xs text-[var(--text-tertiary)]">Salvar registra os dados do cliente. {setup.connection_method==='kommo'?'Para ativar, conclua a autorização no painel abaixo.':'A conexão por QR ou outra API ainda precisa de preparação.'} Não coloque senhas ou chaves nas observações.</p>
     <div className="flex items-center flex-wrap gap-4"><button disabled={saving} className="rounded-lg px-4 py-2 bg-[var(--accent)] text-white text-sm disabled:opacity-50">{saving?'Salvando…':'Salvar configuração'}</button><span className="text-xs text-[var(--text-tertiary)]">{setup.activation_requested?'Aguardando ativação':'Ainda não conectado'}</span></div>
     {error&&<p role="alert" className="text-sm text-[var(--danger)]">{error}</p>}{notice&&<p role="status" className="text-sm text-[var(--accent)]">{notice}</p>}
+    {setup.connection_method==='kommo'&&setup.traffic_active&&<KommoActivation clientId={clientId} accountUrl={setup.account_url} destination={setup.destination} beforeConnect={()=>save()} onConnected={onConnected}/>}
   </form>
 }
