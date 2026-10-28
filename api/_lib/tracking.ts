@@ -1,10 +1,11 @@
 export const UTM_FIELDS = ['utm_source','utm_medium','utm_campaign','utm_content','utm_term'] as const;
+export const CLICK_ID_FIELDS = ['gclid','fbclid'] as const;
 export type Connection = { id: string; instance: string; destination: string; enabled: boolean; capture_mode: string; allowed_senders: string[] };
 export type TrackingEvent = { entity: 'leads'|'messages'|'clicks'; key: string; revision: number; occurred_at: string; record: Record<string, string|number> };
 const columns = {
-  clicks: ['reference','created_at','destination','instance','linked_sender_id',...UTM_FIELDS],
-  messages: ['name','phone','text','received_at','source_status','instance','contact_id','message_id','type','source_ref','attribution_reason',...UTM_FIELDS],
-  leads: ['name','phone','first_message','last_message','first_interaction','last_interaction','source_status','instance','contact_id','message_count',...UTM_FIELDS],
+  clicks: ['reference','created_at','destination','instance','linked_sender_id',...UTM_FIELDS,...CLICK_ID_FIELDS],
+  messages: ['name','phone','text','received_at','source_status','instance','contact_id','message_id','type','source_ref','attribution_reason',...UTM_FIELDS,...CLICK_ID_FIELDS],
+  leads: ['name','phone','first_message','last_message','first_interaction','last_interaction','source_status','instance','contact_id','message_count',...UTM_FIELDS,...CLICK_ID_FIELDS],
 };
 function object(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('invalid_object');
@@ -32,7 +33,8 @@ export function validateBatch(body: unknown, connection: Connection) {
         if (!Number.isSafeInteger(value) || Number(value)<1) throw new Error('invalid_count');
         record[field] = Number(value);
       } else {
-        record[field] = text(value ?? '', ['text','first_message','last_message'].includes(field) ? 32768 : 256);
+        record[field] = text(value ?? '', ['text','first_message','last_message'].includes(field) ? 32768 : ['gclid','fbclid'].includes(field) ? 1024 : 256);
+        if (['gclid','fbclid'].includes(field) && record[field] && !/^[A-Za-z0-9_.~-]+$/.test(String(record[field]))) throw new Error('invalid_click_id');
       }
     }
     if (record.instance !== connection.instance) throw new Error('wrong_instance');

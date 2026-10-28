@@ -1,0 +1,14 @@
+[
+  [
+    "UTM_FIELDS = (\"utm_source\", \"utm_medium\", \"utm_campaign\", \"utm_content\", \"utm_term\")",
+    "UTM_FIELDS = (\"utm_source\", \"utm_medium\", \"utm_campaign\", \"utm_content\", \"utm_term\")\nCLICK_ID_FIELDS = (\"gclid\", \"fbclid\")"
+  ],
+  [
+    "        # Unrecognized query keys (including ad-platform click IDs) are discarded.\n",
+    "        for field in CLICK_ID_FIELDS:\n            values = parsed.get(field, [\"\"])\n            if len(values) != 1:\n                raise InputError(\"duplicate_click_id\")\n            value = string(values[0], 1024, \"invalid_click_id\")\n            if value and not re.fullmatch(r\"[A-Za-z0-9_.~-]+\", value):\n                raise InputError(\"invalid_click_id\")\n            utms[field] = value\n        # Only the five UTMs and supported click IDs are retained.\n"
+  ],
+  [
+    "        utms = json.loads(click[\"utms\"]) if click else dict.fromkeys(UTM_FIELDS, \"\")",
+    "        utms = {**dict.fromkeys((*UTM_FIELDS, *CLICK_ID_FIELDS), \"\"), **(json.loads(click[\"utms\"]) if click else {})}"
+  ]
+]

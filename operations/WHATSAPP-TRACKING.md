@@ -2,7 +2,10 @@
 
 Rastreamento now opens a client hub, the general UTM generator, and a private ORBE
 pilot. Client details include the same tracking tab. Each connected number has
-its own messages, contacts, clicks, saved greeting links and five UTM fields.
+its own messages, contacts, clicks, saved greeting links and five UTM fields. GCLID and FBCLID are captured when present on incoming
+tracking URLs and remain outside the WhatsApp greeting. They are not generated
+or inferred. Landing-page buttons must forward these parameters; historical
+clicks without stored IDs cannot be backfilled. No conversion API is activated.
 
 The pilot source is the existing tracker SQLite outbox on the ORBE VPS. A new
 read-only bridge independently mirrors it to the server-only Vercel endpoint
