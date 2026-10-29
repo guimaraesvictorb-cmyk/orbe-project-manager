@@ -26,7 +26,7 @@ test('received-message payload excludes CRM identity and rejects stale or imposs
 });
 const source=readFileSync(new URL('../public/rayafit-ga4-bridge.js',import.meta.url),'utf8');
 function bridge(hostname='planos.rayafit.com.br') {
- const links=['https://studio.agenciaorbe.co/api/wa-redirect?connection=1fd22072-6932-4122-941f-cb31c55efd66&utm_source=google','https://studio.agenciaorbe.co/api/wa-redirect?connection=other'].map(href=>({href,setAttribute(_key:string,value:string){this.href=value;}}));
+ const links=['https://studio.agenciaorbe.co/api/wa-redirect?connection=1fd22072-6932-4122-941f-cb31c55efd66&utm_source=google','https://studio.agenciaorbe.co/api/wa-redirect?connection=other'].map(href=>({href,rel:'noopener noreferrer',referrerPolicy:'',setAttribute(_key:string,value:string){this.href=value;}}));
  const callbacks:{key:string;callback:(value:string)=>void}[]=[];
  const window:{__orbeGa4Consent?:(granted:boolean)=>void;gtag:(a:string,b:string,key:string,callback:(value:string)=>void)=>void}={gtag(_a,_b,key,callback){callbacks.push({key,callback});}};
  let mutate=()=>{};
@@ -38,6 +38,8 @@ test('bridge only adds existing GA IDs after explicit consent and removes them o
  b.window.__orbeGa4Consent!(true);b.resolve();
  let u=new URL(b.links[0].href);assert.equal(u.searchParams.get('ga_client_id'),'123.456');assert.equal(u.searchParams.get('utm_source'),'google');
  assert.equal(new URL(b.links[1].href).searchParams.get('ga_client_id'),null);
+ assert.equal(b.links[0].rel,'noopener');assert.equal(b.links[0].referrerPolicy,'origin');
+ assert.equal(b.links[1].rel,'noopener noreferrer');assert.equal(b.links[1].referrerPolicy,'');
  b.window.__orbeGa4Consent!(false);b.mutate();u=new URL(b.links[0].href);assert.equal(u.searchParams.get('ga_client_id'),null);assert.equal(u.searchParams.get('ga_consent'),null);
 });
 test('late callbacks cannot restore IDs after consent withdrawal; unrelated sites are ignored',()=>{

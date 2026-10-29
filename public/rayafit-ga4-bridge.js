@@ -17,6 +17,10 @@
           u.searchParams.set(keys[1], client);
           u.searchParams.set(keys[2], session);
           u.searchParams.set(keys[3], 'granted');
+          // The receiver validates the site's origin; send only that origin.
+          // Preserve noopener while allowing the required Referer header.
+          a.rel = (a.rel || '').split(/\s+/).filter(function (v) { return v && v.toLowerCase() !== 'noreferrer'; }).join(' ');
+          a.referrerPolicy = 'origin';
         }
         if (a.href !== u.toString()) a.setAttribute('href', u.toString());
       } catch (_) { /* A malformed link must not interrupt navigation. */ }
