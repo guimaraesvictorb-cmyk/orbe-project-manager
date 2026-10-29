@@ -1,6 +1,7 @@
 import {randomBytes} from 'node:crypto';
 import type {ServerResponse} from 'node:http';
 import {answer,storage,type Request} from './_lib/trackingServer.js';
+import {analyticsContext} from './_lib/ga4.js';
 import {embed,sourceFields} from './_lib/kommo.js';
 export default async function handler(req:Request,res:ServerResponse) {
   res.setHeader('Cache-Control','no-store');res.setHeader('Referrer-Policy','no-referrer');
@@ -15,8 +16,14 @@ export default async function handler(req:Request,res:ServerResponse) {
     const db=storage(),rows=await db<{id:string;destination:string;instance:string}[]>(`rest/v1/wa_tracking_connections?id=eq.${id}&enabled=eq.true&provider=eq.kommo&select=id,destination,instance&limit=1`);
     if(!rows[0])return answer(res,404,{error:'link_unavailable'});
     const reference=randomBytes(16).toString('hex').toUpperCase(),now=new Date().toISOString();
-    const record:Record<string,string>={reference,created_at:now,instance:rows[0].instance,destination:rows[0].destination,linked_sender_id:''};
+    const record:Record<string,unknown>={reference,created_at:now,instance:rows[0].instance,destination:rows[0].destination,linked_sender_id:''};
     for(const field of sourceFields){const value=params.get(field)??'';if(value.length>(field.endsWith('clid')?1024:256)||value.includes('\0')||(field.endsWith('clid')&&value&&!/^[A-Za-z0-9_.~-]+$/.test(value)))return answer(res,400,{error:'invalid_source'});record[field]=value;}
+    // Optional analytics must never break the WhatsApp redirect.
+    if(params.has('ga_measurement_id'))try {
+      const streams=await db<{measurement_id:string;site_hostname:string}[]>(`rest/v1/wa_ga4_streams?connection_id=eq.${id}&enabled=eq.true&select=measurement_id,site_hostname`);
+      const context=analyticsContext(params,req.headers.referer,streams);
+      if(context)record.ga_context=context;
+    }catch {/* Continue collecting the original attribution without GA4. */}
     await db('rest/v1/wa_tracking_records',{method:'POST',body:JSON.stringify({connection_id:id,entity:'clicks',entity_key:reference,revision:1,occurred_at:now,payload:record})});
     const target=new URL('https://api.whatsapp.com/send/');target.searchParams.set('phone',rows[0].destination);target.searchParams.set('text',embed(greeting,reference));
     res.statusCode=302;res.setHeader('Location',target.toString());res.end();

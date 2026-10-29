@@ -1,14 +1,14 @@
 {
   "name": "orbe-operating-system",
   "private": true,
-  "version": "1.17.7",
+  "version": "1.17.8",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test:tracking": "node --test tests/tracking.test.ts tests/kommo.test.ts tests/rayafit-site.test.ts"
+    "test:tracking": "node --test tests/tracking.test.ts tests/kommo.test.ts tests/rayafit-site.test.ts tests/ga4.test.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.106.0",
