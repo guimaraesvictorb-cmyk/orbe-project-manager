@@ -4,9 +4,42 @@ import { useClients } from '../hooks/useClients'
 import { supabase } from '../lib/supabase'
 import type { TrackingConnection } from '../lib/whatsappTracking'
 import { syncIsFresh } from '../lib/whatsappTracking'
+import { useAuth } from '../contexts/AuthContext'
 import { systemNames, type TrackingSetup } from '../lib/whatsappSetup'
 const WhatsAppTrackingView=lazy(()=>import('./WhatsAppTrackingView').then(m=>({default:m.WhatsAppTrackingView})))
 const UTMLinkBuilder=lazy(()=>import('./UTMLinkBuilder').then(m=>({default:m.UTMLinkBuilder})))
+
+function ClientLogo({id,name}:{id:string;name:string}) {
+  const {profile}=useAuth()
+  const [url,setUrl]=useState('')
+  const [busy,setBusy]=useState(false)
+  const [error,setError]=useState('')
+  useEffect(()=>{let active=true;supabase.auth.getSession().then(async({data})=>{
+    if(!data.session)return
+    try{const r=await fetch(`/api/client-logo?client_id=${id}`,{headers:{Authorization:`Bearer ${data.session.access_token}`}});if(r.ok){const logo=await r.json();if(active)setUrl(logo.url)}}catch{/* Initials remain available when no logo is present. */}
+  });return()=>{active=false}},[id])
+  async function upload(file:File) {
+    setError('')
+    if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>5*1024*1024){setError('Use PNG, JPG ou WebP de até 5 MB.');return}
+    setBusy(true)
+    try {
+      const bitmap=await createImageBitmap(file)
+      const canvas=document.createElement('canvas');canvas.width=256;canvas.height=256
+      const ctx=canvas.getContext('2d');if(!ctx)throw new Error('Não foi possível abrir a imagem.')
+      const ratio=Math.min(240/bitmap.width,240/bitmap.height)
+      ctx.drawImage(bitmap,(256-bitmap.width*ratio)/2,(256-bitmap.height*ratio)/2,bitmap.width*ratio,bitmap.height*ratio);bitmap.close()
+      const {data}=await supabase.auth.getSession();if(!data.session)throw new Error('Entre novamente.')
+      const r=await fetch(`/api/client-logo?client_id=${id}`,{method:'POST',headers:{Authorization:`Bearer ${data.session.access_token}`,'Content-Type':'application/json'},body:JSON.stringify({image:canvas.toDataURL('image/png')})})
+      const result=await r.json();if(!r.ok)throw new Error(result.error)
+      setUrl(result.url)
+    }catch(e){setError(e instanceof Error?e.message:'Não foi possível salvar o logo.')}finally{setBusy(false)}
+  }
+  return <div className="mb-4 flex items-center gap-3">
+    <div className="h-14 w-14 shrink-0 rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] flex items-center justify-center overflow-hidden">{url?<img src={url} alt={`Logo ${name}`} onError={()=>setUrl('')} className="h-full w-full object-contain p-1"/>:<span aria-hidden="true" className="font-semibold text-[var(--text-tertiary)]">{name.split(' ').slice(0,2).map(n=>n[0]).join('')}</span>}</div>
+    {profile?.role==='admin'&&<label className="text-xs text-[var(--accent)] cursor-pointer">{busy?'Salvando…':url?'Trocar logo':'+ Adicionar logo'}<input type="file" accept="image/png,image/jpeg,image/webp" disabled={busy} className="sr-only" aria-label={`Logo de ${name}`} onChange={e=>{const f=e.target.files?.[0];e.target.value='';if(f)void upload(f)}}/></label>}
+    {error&&<p role="alert" className="text-xs text-[var(--danger)]">{error}</p>}
+  </div>
+}
 
 export function RastreamentoView() {
   const {clients}=useClients()
@@ -16,7 +49,7 @@ export function RastreamentoView() {
   const [connections,setConnections]=useState<TrackingConnection[]>([])
   const [setups,setSetups]=useState<TrackingSetup[]>([])
   const [error,setError]=useState('')
-  useEffect(()=>{let active=true;Promise.all([supabase.from('wa_tracking_connections').select('*'),supabase.from('wa_tracking_setups').select('*')]).then(([channels,plans])=>{if(active){setConnections(channels.data??[]);setSetups(plans.data??[]);if(channels.error||plans.error)setError('Não foi possível consultar as conexões. Atualize a página.')}});return()=>{active=false}},[selected])
+  useEffect(()=>{let active=true;const refresh=()=>Promise.all([supabase.from('wa_tracking_connections').select('*'),supabase.from('wa_tracking_setups').select('*')]).then(([channels,plans])=>{if(active){setConnections(channels.data??[]);setSetups(plans.data??[]);setError(channels.error||plans.error?'Não foi possível consultar as conexões. Atualize a página.':'')}});void refresh();const timer=window.setInterval(refresh,30000);return()=>{active=false;window.clearInterval(timer)}},[selected])
   const visible=clients.filter(c=>c.name.toLocaleLowerCase('pt-BR').includes(search.toLocaleLowerCase('pt-BR')))
   if(selected!==null) return <div className="min-w-0"><div className="m-6 mb-0 space-y-3"><button onClick={()=>setSelected(null)} className="flex items-center gap-2 text-sm text-[var(--accent)]"><ArrowLeft size={16}/>Todos os clientes</button><p className="text-xl font-semibold">{selected==='pilot'?'ORBE · piloto interno':clients.find(c=>c.id===selected)?.name}</p></div><Suspense fallback={<p className="p-6">Carregando…</p>}><WhatsAppTrackingView key={selected} clientId={selected==='pilot'?undefined:selected} pilotOnly={selected==='pilot'}/></Suspense></div>
   return <div className="p-4 md:p-6 space-y-6 min-w-0">
@@ -27,7 +60,7 @@ export function RastreamentoView() {
       <div className="relative max-w-md"><Search size={16} className="absolute left-3 top-3 text-[var(--text-tertiary)]"/><input aria-label="Buscar cliente" placeholder="Buscar cliente" value={search} onChange={e=>setSearch(e.target.value)} className="w-full pl-9 pr-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-surface)]"/></div>
       <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
         {connections.some(c=>!c.client_id)&&!search&&<button onClick={()=>setSelected('pilot')} className="text-left rounded-xl p-5 border border-[var(--accent)] bg-[var(--accent-tint)]"><p className="text-xs text-[var(--accent)] uppercase tracking-widest">Piloto interno</p><h2 className="font-semibold mt-2">ORBE · teste validado</h2><p className="text-xs text-[var(--text-tertiary)] mt-2">Ver mensagens reais, cinco UTMs e criar links para o número de teste.</p><p className="text-sm text-[var(--accent)] mt-4">Abrir acompanhamento →</p></button>}
-        {visible.map(client=>{const channel=connections.filter(c=>c.client_id===client.id);const setup=setups.find(s=>s.client_id===client.id);return <button key={client.id} onClick={()=>setSelected(client.id)} className="text-left rounded-xl p-5 border border-[var(--border)] bg-[var(--bg-surface)] hover:border-[var(--accent)] transition-colors"><h2 className="font-semibold">{client.name}</h2><p className={`text-xs mt-2 ${channel.some(c=>syncIsFresh(c.last_sync_at))?'text-[var(--accent)]':'text-[var(--text-tertiary)]'}`}>{channel.length?`${channel.length} número(s) cadastrado(s)`:'WhatsApp ainda não conectado'}</p>{setup&&<p className="text-xs text-[var(--text-tertiary)] mt-2">{systemNames[setup.system]}{!setup.traffic_active?' · Sem tráfego ativo':''}{setup.activation_status==='receiving'?' · Recebendo mensagens':setup.activation_status==='waiting_message'?' · Conectada, aguardando mensagem':setup.activation_status==='error'?' · Precisa de atenção':setup.activation_requested?' · Aguardando ativação':''}</p>}<p className="text-sm text-[var(--accent)] mt-4">{channel.length?'Ver rastreamento':'Configurar conexão'} →</p></button>})}
+        {visible.map(client=>{const channel=connections.filter(c=>c.client_id===client.id);const setup=setups.find(s=>s.client_id===client.id);const connected=!error&&channel.some(c=>c.enabled&&c.connection_state==='open'&&(c.provider==='kommo'?setup?.activation_status==='receiving'||setup?.activation_status==='waiting_message':syncIsFresh(c.last_sync_at)));return <article key={client.id} className="text-left rounded-xl p-5 border border-[var(--border)] bg-[var(--bg-surface)] hover:border-[var(--accent)] transition-colors"><ClientLogo id={client.id} name={client.name}/><div className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-semibold">{client.name}</h2>{connected&&<span className="inline-flex items-center gap-2 rounded-full bg-[var(--success-tint)] px-2.5 py-1 text-xs font-medium text-[var(--success)]"><span aria-hidden="true" className="h-2 w-2 shrink-0 rounded-full bg-[var(--success)]"/>Conexão ativa</span>}</div><p className={`text-xs mt-2 ${channel.some(c=>syncIsFresh(c.last_sync_at))?'text-[var(--accent)]':'text-[var(--text-tertiary)]'}`}>{channel.length?`${channel.length} número(s) cadastrado(s)`:'WhatsApp ainda não conectado'}</p>{setup&&<p className="text-xs text-[var(--text-tertiary)] mt-2">{systemNames[setup.system]}{!setup.traffic_active?' · Sem tráfego ativo':''}{setup.activation_status==='receiving'?' · Recebendo mensagens':setup.activation_status==='waiting_message'?' · Conectada, aguardando mensagem':setup.activation_status==='error'?' · Precisa de atenção':setup.activation_requested?' · Aguardando ativação':''}</p>}<button onClick={()=>setSelected(client.id)} className="text-sm text-[var(--accent)] mt-4">{channel.length?'Ver rastreamento':'Configurar conexão'} →</button></article>})}
       </div>
       {visible.length===0&&<p className="text-sm text-[var(--text-tertiary)]">Nenhum cliente encontrado.</p>}
       <p className="text-xs text-[var(--text-tertiary)]">Cada cliente tem suas próprias conexões e registros. Mensagens sem evidência da origem permanecem como “Origem não identificada”.</p>
