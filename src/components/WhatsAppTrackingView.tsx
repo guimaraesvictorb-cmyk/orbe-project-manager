@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Copy, Check, RefreshCw, MessageSquare, AlertCircle } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
+import { previousContactOrigin } from '../lib/conversationOrigin'
 import { Footer } from './Footer'
 import { WhatsAppConnectionSetup } from './WhatsAppConnectionSetup'
 import { KommoConnectionStatus } from './KommoConnectionStatus'
@@ -23,6 +24,7 @@ export function WhatsAppTrackingView({clientId,embedded=false,pilotOnly=false}:{
   const [tab,setTab]=useState<Tab>('overview')
   const [start,setStart]=useState(''); const [end,setEnd]=useState(''); const [source,setSource]=useState('')
   const [summary,setSummary]=useState<TrackingSummary>(emptySummary)
+  const [originEvidence,setOriginEvidence]=useState<TrackingRecord[]>([])
   const [records,setRecords]=useState<TrackingRecord[]>([]); const [total,setTotal]=useState(0); const [page,setPage]=useState(0)
   const [links,setLinks]=useState<TrackingLink[]>([])
   const [loading,setLoading]=useState(true); const [error,setError]=useState(''); const [saving,setSaving]=useState(false)
@@ -60,6 +62,19 @@ export function WhatsAppTrackingView({clientId,embedded=false,pilotOnly=false}:{
       ])
       if(sr.error||rr.error||lr.error)throw sr.error||rr.error||lr.error
       if(request!==sequence.current)return
+      const pageRows=rr.data as TrackingRecord[]
+      const contactIds=[...new Set(pageRows.map(r=>String(r.payload.contact_id||'')).filter(Boolean))]
+      let evidence:TrackingRecord[]=[]
+      if(entity==='messages'&&contactIds.length){
+        const newest=pageRows.reduce((a,r)=>r.occurred_at>a?r.occurred_at:a,'')
+        const origins=await supabase.from('wa_tracking_records').select('entity,entity_key,occurred_at,payload')
+          .eq('connection_id',id).eq('entity','messages').eq('payload->>source_status','Identificada')
+          .in('payload->>contact_id',contactIds).lte('occurred_at',newest).order('occurred_at',{ascending:false}).limit(1000)
+        if(origins.error)throw origins.error
+        evidence=origins.data as TrackingRecord[]
+      }
+      if(request!==sequence.current)return
+      setOriginEvidence(evidence)
       setSummary(sr.data as TrackingSummary);setRecords(rr.data as TrackingRecord[]);setTotal(rr.count??0);setLinks(lr.data as TrackingLink[])
     } catch {if(request===sequence.current)setError(start&&end&&start>end?'A data inicial deve vir antes da data final.':'Não foi possível atualizar os dados. Tente novamente.')} finally {if(request===sequence.current)setLoading(false)}
   },[clientId,pilotOnly,connectionId,start,end,source,tab,page])
@@ -113,8 +128,10 @@ export function WhatsAppTrackingView({clientId,embedded=false,pilotOnly=false}:{
         </>}
         {['messages','leads','clicks'].includes(tab)&&<div className={`${panelClass} overflow-hidden`}>
           <div className="p-4 flex justify-between text-sm"><span>{total} {tab==='messages'?'mensagens':tab==='leads'?'contatos':'cliques'}</span>{loading&&<span className={muted}>Atualizando…</span>}</div>
+          {tab==='messages'&&<p className={`px-4 pb-4 text-xs ${muted}`}>Quando uma mensagem não traz origem, mostramos o histórico já comprovado do contato, se houver. Esse histórico não é contado como um novo clique ou uma nova conversão da campanha. O filtro de origem considera apenas a origem confirmada da própria mensagem.</p>}
           {tab==='leads'&&<p className={`px-4 pb-4 text-xs ${muted}`}>O período filtra a primeira interação. As UTMs do contato representam sua primeira origem identificada; cada mensagem mantém a própria origem.</p>}
-          {records.length===0?<p className={`p-6 text-sm ${muted}`}>Nenhum registro para os filtros selecionados.</p>:<div className="overflow-x-auto"><table className="w-full text-sm min-w-[850px]"><thead className={`text-left ${muted}`}><tr><th className="p-4">{tab==='clicks'?'Data do clique':'Contato'}</th><th className="p-4">{tab==='leads'?'Última mensagem':tab==='clicks'?'Mensagem recebida':'Mensagem'}</th><th className="p-4">Origem / campanha</th><th className="p-4">UTMs e IDs de clique</th></tr></thead><tbody>{records.map(row=>{const p=row.payload;return <tr key={row.entity_key} className="border-t border-[var(--border)] align-top"><td className="p-4"><p className="font-medium">{tab==='clicks'?date(row.occurred_at):String(p.name||'Sem nome')}</p>{tab!=='clicks'&&<><p className={`text-xs ${muted}`}>{p.phone?phone(p.phone):'Telefone não confirmado'}</p><p className={`text-xs mt-1 ${muted}`}>{date(row.occurred_at)}</p></>}</td><td className="p-4 max-w-sm"><p className="whitespace-pre-wrap break-words">{tab==='clicks'?(p.linked_sender_id?'Sim':'Ainda não'):String(tab==='leads'?p.last_message:p.text)}</p>{tab==='leads'&&<p className={`text-xs mt-2 ${muted}`}>{p.message_count} mensagem(ns) · última em {date(p.last_interaction)}</p>}</td><td className="p-4"><p className="font-medium">{String(p.utm_source||(p.gclid?'Google · clique':p.fbclid?'Meta · clique':'Sem origem'))}</p><p className={`text-xs mt-1 ${muted}`}>{String(p.utm_campaign||'—')}</p>{tab!=='clicks'&&<p className={`text-xs mt-2 ${p.source_status==='Identificada'?'text-[var(--accent)]':muted}`}>{p.attribution_reason==='kommo_lead_first_touch'?'Identificada · origem do lead na Kommo':String(p.source_status)}</p>}</td><td className="p-4"><dl className="text-xs space-y-1">{[...utmFields,'gclid','fbclid'].map(k=><div key={k} className="flex gap-2"><dt className={`${muted} w-16 shrink-0`}>{k.replace('utm_','')}</dt><dd className="break-all">{String(p[k]||'—')}</dd></div>)}</dl></td></tr>})}</tbody></table></div>}
+          {records.length===0?<p className={`p-6 text-sm ${muted}`}>Nenhum registro para os filtros selecionados.</p>:<div className="overflow-x-auto"><table className="w-full text-sm min-w-[850px]"><thead className={`text-left ${muted}`}><tr><th className="p-4">{tab==='clicks'?'Data do clique':'Contato'}</th><th className="p-4">{tab==='leads'?'Última mensagem':tab==='clicks'?'Mensagem recebida':'Mensagem'}</th><th className="p-4">Origem / campanha</th><th className="p-4">UTMs e IDs de clique</th></tr></thead><tbody>{records.map(row=>{const p=row.payload;const prior=previousContactOrigin(row,originEvidence);return <tr key={row.entity_key} className="border-t border-[var(--border)] align-top"><td className="p-4"><p className="font-medium">{tab==='clicks'?date(row.occurred_at):String(p.name||'Sem nome')}</p>{tab!=='clicks'&&<><p className={`text-xs ${muted}`}>{p.phone?phone(p.phone):'Telefone não confirmado'}</p><p className={`text-xs mt-1 ${muted}`}>{date(row.occurred_at)}</p></>}</td><td className="p-4 max-w-sm"><p className="whitespace-pre-wrap break-words">{tab==='clicks'?(p.linked_sender_id?'Sim':'Ainda não'):String(tab==='leads'?p.last_message:p.text)}</p>{tab==='messages'&&<p className={`px-4 pb-4 text-xs ${muted}`}>Quando uma mensagem não traz origem, mostramos o histórico já comprovado do contato, se houver. Esse histórico não é contado como um novo clique ou uma nova conversão da campanha. O filtro de origem considera apenas a origem confirmada da própria mensagem.</p>}
+          {tab==='leads'&&<p className={`text-xs mt-2 ${muted}`}>{p.message_count} mensagem(ns) · última em {date(p.last_interaction)}</p>}</td><td className="p-4"><p className="font-medium">{String(p.utm_source||(p.gclid?'Google · clique':p.fbclid?'Meta · clique':'Sem origem'))}</p><p className={`text-xs mt-1 ${muted}`}>{String(p.utm_campaign||'—')}</p>{tab!=='clicks'&&<p className={`text-xs mt-2 ${p.source_status==='Identificada'?'text-[var(--accent)]':muted}`}>{p.attribution_reason==='kommo_lead_first_touch'?'Identificada · origem do lead na Kommo':String(p.source_status)}</p>}{prior&&<div className="mt-3 border-t border-[var(--border)] pt-3 text-xs"><p className="font-medium">Origem anterior do contato: {String(prior.payload.utm_source||'Clique identificado')}</p><p className={muted}>{String(prior.payload.utm_campaign||'Sem campanha')} · {date(prior.occurred_at)}</p>{prior.payload.utm_content&&<p className={`mt-1 ${muted}`}>{String(prior.payload.utm_content)}</p>}<p className={`mt-1 ${muted}`}>Histórico comprovado; a origem desta nova mensagem não foi confirmada.</p></div>}</td><td className="p-4"><dl className="text-xs space-y-1">{[...utmFields,'gclid','fbclid'].map(k=><div key={k} className="flex gap-2"><dt className={`${muted} w-16 shrink-0`}>{k.replace('utm_','')}</dt><dd className="break-all">{String(p[k]||'—')}</dd></div>)}</dl></td></tr>})}</tbody></table></div>}
           <div className="p-4 flex justify-end items-center gap-4 border-t border-[var(--border)] text-sm"><button disabled={page===0||loading} className="disabled:opacity-30" onClick={()=>setPage(p=>p-1)}>Anterior</button><span>Página {page+1}</span><button disabled={(page+1)*50>=total||loading} className="disabled:opacity-30" onClick={()=>setPage(p=>p+1)}>Próxima</button></div>
         </div>}
         {tab==='links'&&connection&&<div className="grid lg:grid-cols-2 gap-6">
