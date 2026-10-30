@@ -1,6 +1,9 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {evolutionMessage} from '../api/_lib/evolution.ts';
+import {registerHooks} from 'node:module';
+// Vercel emits .js; Node's source-only test runner resolves that one local dependency to .ts.
+registerHooks({resolve(specifier,context,next){return next(specifier==='./kommo.js'&&context.parentURL?.endsWith('/api/_lib/evolution.ts')?'./kommo.ts':specifier,context)}});
+const {evolutionMessage}=await import('../api/_lib/evolution.ts');
 import {embed} from '../api/_lib/kommo.ts';
 const instance='orbe-qr-test',ref='A'.repeat(32);
 const event=()=>({event:'messages.upsert',instance,apikey:'NEVER_PERSIST',data:{key:{id:'message1',fromMe:false,remoteJid:'5511999999999@s.whatsapp.net'},messageTimestamp:Math.floor(Date.now()/1000),pushName:'Test',message:{conversation:embed('Olá!',ref)}}});

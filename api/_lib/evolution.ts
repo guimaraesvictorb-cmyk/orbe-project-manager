@@ -1,4 +1,4 @@
-import {object,references,scalar,visibleText} from './kommo.ts';
+import {object,references,scalar,visibleText} from './kommo.js';
 /** Only a normalized, direct inbound message survives. Raw envelopes are never stored. */
 export function evolutionMessage(raw:unknown,instance:string) {
  const envelope=object(raw);

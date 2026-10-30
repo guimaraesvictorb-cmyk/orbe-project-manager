@@ -35,7 +35,7 @@ function ClientLogo({id,name}:{id:string;name:string}) {
     }catch(e){setError(e instanceof Error?e.message:'Não foi possível salvar o logo.')}finally{setBusy(false)}
   }
   return <div className="mb-4 flex items-center gap-3">
-    <div className="h-14 w-14 shrink-0 rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] flex items-center justify-center overflow-hidden">{url?<img src={url} alt={`Logo ${name}`} onError={()=>setUrl('')} className="h-full w-full object-contain p-1"/>:<span aria-hidden="true" className="font-semibold text-[var(--text-tertiary)]">{name.split(' ').slice(0,2).map(n=>n[0]).join('')}</span>}</div>
+    <div style={{backgroundColor:url?(id==='14d33095-9db2-4f7f-b667-10110c52c919'?'#111827':'#ffffff'):undefined}} className="h-24 w-40 shrink-0 rounded-xl border border-[var(--border)] flex items-center justify-center overflow-hidden">{url?<img src={url} alt={`Logo ${name}`} onError={()=>setUrl('')} className="h-full w-full object-contain p-3"/>:<span aria-hidden="true" className="font-semibold text-[var(--text-tertiary)]">{name.split(' ').slice(0,2).map(n=>n[0]).join('')}</span>}</div>
     {profile?.role==='admin'&&<label className="text-xs text-[var(--accent)] cursor-pointer">{busy?'Salvando…':url?'Trocar logo':'+ Adicionar logo'}<input type="file" accept="image/png,image/jpeg,image/webp" disabled={busy} className="sr-only" aria-label={`Logo de ${name}`} onChange={e=>{const f=e.target.files?.[0];e.target.value='';if(f)void upload(f)}}/></label>}
     {error&&<p role="alert" className="text-xs text-[var(--danger)]">{error}</p>}
   </div>
