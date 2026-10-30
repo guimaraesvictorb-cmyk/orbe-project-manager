@@ -13,7 +13,7 @@ export default async function handler(req:Request,res:ServerResponse) {
     if(!/^[0-9a-f-]{36}$/.test(id))return answer(res,404,{error:'link_unavailable'});
     const greeting=params.get('text')||'Olá! Gostaria de mais informações.';
     if(!greeting.trim()||greeting.length>500||/[\uFE00-\uFE0F\u200B\u200C\u2060\u2063]|\[ORBE:/u.test(greeting))return answer(res,400,{error:'invalid_greeting'});
-    const db=storage(),rows=await db<{id:string;destination:string;instance:string}[]>(`rest/v1/wa_tracking_connections?id=eq.${id}&enabled=eq.true&provider=eq.kommo&select=id,destination,instance&limit=1`);
+    const db=storage(),rows=await db<{id:string;destination:string;instance:string}[]>(`rest/v1/wa_tracking_connections?id=eq.${id}&enabled=eq.true&provider=in.(kommo,evolution)&select=id,destination,instance&limit=1`);
     if(!rows[0])return answer(res,404,{error:'link_unavailable'});
     const reference=randomBytes(16).toString('hex').toUpperCase(),now=new Date().toISOString();
     const record:Record<string,unknown>={reference,created_at:now,instance:rows[0].instance,destination:rows[0].destination,linked_sender_id:''};
