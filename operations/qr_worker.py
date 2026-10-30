@@ -101,7 +101,7 @@ class Worker:
                 else:self.state('wrong_number')
                 return
             # Commit number verification before accepting any message events.
-            self.state('open',number=number)
+            self.state('open',number=number,profile_name=str(rows[0].get('profileName') or '')[:100])
             if self.last_status=='open': self.webhook(True)
             self.flush()
         elif active:

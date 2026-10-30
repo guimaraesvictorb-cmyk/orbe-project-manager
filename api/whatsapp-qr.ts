@@ -67,7 +67,7 @@ export default async function handler(req:Request,res:ServerResponse){
    const patch={status,qr_ciphertext:qr?seal(qr,conn.id):'',worker_seen_at:now,error_code:status==='error'?'provider_unavailable':status==='wrong_number'?'wrong_number':'',...(status==='open'?{verified_at:verified}:{})};
    const updated=await db<Session[]>(`rest/v1/wa_qr_sessions?connection_id=eq.${conn.id}&request_id=eq.${session.request_id}`,{method:'PATCH',body:JSON.stringify(patch)});
    if(!updated.length)return answer(res,409,{error:'stale_request'});
-   await db(`rest/v1/wa_tracking_connections?id=eq.${conn.id}`,{method:'PATCH',body:JSON.stringify({enabled:status==='open',connection_state:status==='open'?'open':status==='close'?'close':'connecting',last_sync_at:now})});
+   await db(`rest/v1/wa_tracking_connections?id=eq.${conn.id}`,{method:'PATCH',body:JSON.stringify({enabled:status==='open',connection_state:status==='open'?'open':status==='close'?'close':'connecting',last_sync_at:now,...(status==='open'?{name:Array.from(scalar(input.profile_name,100)).filter(c=>c.charCodeAt(0)>=32&&c.charCodeAt(0)!==127).join('').trim()||'WhatsApp conectado'}:{})})});
    await db(`rest/v1/wa_tracking_setups?client_id=eq.${conn.client_id}`,{method:'PATCH',body:JSON.stringify({connection_id:conn.id,activation_status:status==='open'?(conn.last_received_at?'receiving':'waiting_message'):['wrong_number','error'].includes(status)?'error':'authorizing',activation_error:patch.error_code,last_verified_at:status==='open'?now:null})});
    return answer(res,200,{ok:true,verified_at:updated[0].verified_at,destination:status==='open'?number:conn.destination});
   }
