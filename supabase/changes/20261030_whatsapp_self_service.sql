@@ -1,12 +1,12 @@
 BEGIN;
-ALTER TABLE public.wa_tracking_connections DROP CONSTRAINT wa_tracking_connections_destination_check;
+ALTER TABLE public.wa_tracking_connections DROP CONSTRAINT IF EXISTS wa_tracking_connections_destination_check;
 ALTER TABLE public.wa_tracking_connections ADD CONSTRAINT wa_tracking_connections_destination_check CHECK(destination='' OR destination ~ '^[1-9][0-9]{9,14}$');
-CREATE TABLE public.wa_qr_workers(id text PRIMARY KEY,token_hash text UNIQUE NOT NULL CHECK(token_hash ~ '^[a-f0-9]{64}$'),enabled boolean NOT NULL DEFAULT true,last_seen_at timestamptz);
+CREATE TABLE IF NOT EXISTS public.wa_qr_workers(id text PRIMARY KEY,token_hash text UNIQUE NOT NULL CHECK(token_hash ~ '^[a-f0-9]{64}$'),enabled boolean NOT NULL DEFAULT true,last_seen_at timestamptz);
 ALTER TABLE public.wa_qr_workers ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.wa_qr_workers FROM PUBLIC,anon,authenticated;
 GRANT ALL ON public.wa_qr_workers TO service_role;
-ALTER TABLE public.wa_qr_sessions ADD COLUMN worker_id text NOT NULL DEFAULT 'orbe-vps';
-CREATE FUNCTION public.wa_qr_prepare(p_client uuid,p_user uuid) RETURNS uuid LANGUAGE plpgsql SET search_path='' AS $$
+ALTER TABLE public.wa_qr_sessions ADD COLUMN IF NOT EXISTS worker_id text NOT NULL DEFAULT 'orbe-vps';
+CREATE OR REPLACE FUNCTION public.wa_qr_prepare(p_client uuid,p_user uuid) RETURNS uuid LANGUAGE plpgsql SET search_path='' AS $$
 DECLARE conn uuid; title text; method text;
 BEGIN
  IF NOT EXISTS(SELECT 1 FROM public.profiles p WHERE p.id=p_user AND p.is_active AND (p.role='admin' OR EXISTS(SELECT 1 FROM public.client_assignments a WHERE a.client_id=p_client AND a.user_id=p_user AND a.is_active))) THEN RAISE EXCEPTION 'forbidden';END IF;
@@ -29,7 +29,7 @@ BEGIN
 END $$;
 REVOKE ALL ON FUNCTION public.wa_qr_prepare(uuid,uuid) FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.wa_qr_prepare(uuid,uuid) TO service_role;
-CREATE FUNCTION public.wa_qr_verify(p_connection uuid,p_number text) RETURNS timestamptz LANGUAGE plpgsql SET search_path='' AS $$
+CREATE OR REPLACE FUNCTION public.wa_qr_verify(p_connection uuid,p_number text) RETURNS timestamptz LANGUAGE plpgsql SET search_path='' AS $$
 DECLARE verified timestamptz; destination text;
 BEGIN
  IF p_number !~ '^[1-9][0-9]{9,14}$' THEN RAISE EXCEPTION 'invalid_number';END IF;
