@@ -61,7 +61,7 @@ class Worker:
         with self.db() as db: db.execute('CREATE TABLE IF NOT EXISTS outbox (id INTEGER PRIMARY KEY,event TEXT NOT NULL)')
     def db(self):return sqlite3.connect(self.db_path,timeout=10)
     def cloud(self,action,**values):return call('https://studio.agenciaorbe.co/api/whatsapp-qr',self.config['token'],{'action':action,**values})
-    def evo(self,path,body=None,global_key=False):return call('http://evolution:8080'+path,self.global_key if global_key else self.instance_key,body)
+    def evo(self,path,body=None,global_key=False,method=None):return call('http://evolution:8080'+path,self.global_key if global_key else self.instance_key,body,method)
     def webhook(self,enabled):
         self.evo('/webhook/set/'+self.instance,{'webhook':{'enabled':enabled,'url':'http://orbe-qr-worker:8090/events','headers':{'Authorization':'Bearer '+self.webhook_key},'byEvents':False,'base64':False,'events':['MESSAGES_UPSERT','CONNECTION_UPDATE']}})
     def state(self,status,**values):
@@ -87,7 +87,7 @@ class Worker:
             if number!=self.session['destination']:
                 self.webhook(False)
                 if self.session['status']=='requested':
-                    self.evo('/instance/logout/'+self.instance,{},False)
+                    self.evo('/instance/logout/'+self.instance,method='DELETE')
                     self.state('connecting')
                 else:self.state('wrong_number')
                 return
@@ -119,6 +119,9 @@ class Worker:
         while True:
             try:self.tick()
             except Exception:
+                try:
+                    if self.session and self.session.get('request_id'):self.state('error')
+                except Exception:pass
                 # Do not log bodies, API keys, QR contents or private contact data.
                 print('ORBE_QR_RETRY',flush=True)
             time.sleep(5)

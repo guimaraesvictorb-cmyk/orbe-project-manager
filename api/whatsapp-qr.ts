@@ -69,7 +69,7 @@ export default async function handler(req:Request,res:ServerResponse){
    }
   }
   const online=recent(session.worker_seen_at),expired=!session.expires_at||Date.parse(session.expires_at)<=Date.now();
-  const status=!online?'offline':session.status==='qr'&&expired?'expired':session.status;
+  const status=!online?'offline':['requested','connecting','qr'].includes(session.status)&&expired?'expired':session.status;
   return answer(res,200,{ok:true,status,connection_id:conn.id,destination:conn.destination,expires_at:session.expires_at,
    qr:status==='qr'&&session.qr_ciphertext?unseal(session.qr_ciphertext,conn.id):null});
  }catch(error){const code=error instanceof Error?error.message:'';return answer(res,['unauthorized','forbidden'].includes(code)?403:503,{error:['unauthorized','forbidden'].includes(code)?code:'qr_temporarily_unavailable'});}
