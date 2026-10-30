@@ -1,6 +1,7 @@
 import type { TrackingRecord } from './whatsappTracking'
 export function trackingChannel(p:TrackingRecord['payload']) {
  const source=String(p.utm_source||'').trim().toLowerCase()
+ if(/^(site|site_rayafit|website|site_institucional)$/.test(source))return 'Site'
  if(/instagram|linktree/.test(source))return 'Instagram'
  if(/google/.test(source)||p.gclid)return 'Google'
  if(/meta|facebook/.test(source)||p.fbclid)return 'Meta'

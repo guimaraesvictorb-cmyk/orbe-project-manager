@@ -125,7 +125,7 @@ export function WhatsAppTrackingView({clientId,embedded=false,pilotOnly=false}:{
           {(start||end||source)&&<button className="text-sm text-[var(--accent)] py-2" onClick={()=>{setStart('');setEnd('');setSource('');setPage(0)}}>Limpar filtros</button>}
         </div>}
         {tab==='overview'&&<>
-          <TrackingDashboard key={`${connectionId}:${start}:${end}:${source}`} revision={summary.messages} source={source.trim()} connectionId={connectionId} start={periodBounds(start,end).start} end={periodBounds(start,end).end}/>
+          <TrackingDashboard clientId={connection?.client_id} key={`${connectionId}:${start}:${end}:${source}`} revision={summary.messages} source={source.trim()} connectionId={connectionId} start={periodBounds(start,end).start} end={periodBounds(start,end).end}/>
           <h2 className="font-semibold">Atividade de conversas no período</h2>
           <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">{[['Cliques',summary.clicks],['Contatos que enviaram mensagem',summary.contacts],['Mensagens recebidas',summary.messages],['Mensagens com origem',summary.identified]].map(([label,value])=><div className={`${panelClass} p-5`} key={String(label)}><p className={`text-xs ${muted}`}>{label}</p><p className="text-3xl font-semibold mt-2">{value}</p></div>)}</div>
           <p className={`text-xs ${muted}`}>{summary.unidentified} mensagem(ns) sem origem identificada no período. Abrir o link registra um clique; o contato aparece após enviar uma mensagem.</p>
