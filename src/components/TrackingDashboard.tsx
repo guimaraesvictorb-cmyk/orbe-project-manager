@@ -1,0 +1,19 @@
+import { useEffect, useState } from 'react'
+import { supabase } from '../lib/supabase'
+import type { TrackingRecord } from '../lib/whatsappTracking'
+
+import { trackingChannel as channel, campaignName, firstContacts } from '../lib/trackingDashboard'
+export function TrackingDashboard({connectionId,start,end,source,revision}:{connectionId:string;start:string|null;end:string|null;source:string;revision:number}){
+ const [rows,setRows]=useState<TrackingRecord[]>([]),[state,setState]=useState('Carregando primeiros contatos…')
+ useEffect(()=>{let cancelled=false;void(async()=>{try{
+ const all:TrackingRecord[]=[];let offset=0
+ while(true){const r=await supabase.from('wa_tracking_records').select('entity,entity_key,occurred_at,payload').eq('connection_id',connectionId).eq('entity','messages').order('occurred_at').order('entity_key').range(offset,offset+999);if(r.error)throw r.error
+ all.push(...r.data as TrackingRecord[])
+ if(r.data.length<1000)break;offset+=1000;if(cancelled)return}
+ if(!cancelled){setRows(firstContacts(all,start,end,source));setState('')}
+ }catch{if(!cancelled)setState('Não foi possível carregar o dashboard.')}})();return()=>{cancelled=true}},[connectionId,start,end,source,revision])
+ const groups=new Map<string,number>();for(const row of rows){const key=channel(row.payload);groups.set(key,(groups.get(key)||0)+1)}
+ const campaigns=new Map<string,{channel:string;name:string;count:number}>();for(const row of rows){const c=channel(row.payload),name=campaignName(row.payload),key=c+'\0'+name;const entry=campaigns.get(key)||{channel:c,name,count:0};entry.count++;campaigns.set(key,entry)}
+ const unknown=groups.get('Origem não identificada')||0
+ return <section className="space-y-4"><h2 className="text-lg font-semibold">Primeiros contatos por canal</h2><p className="text-sm text-[var(--text-tertiary)]">Cada contato conta uma vez, na primeira mensagem observada pelo Orbe. O histórico anterior à integração pode não estar disponível. Linktree é agrupado como Instagram.</p>{state?<p role="status">{state}</p>:<><div className="grid grid-cols-1 sm:grid-cols-3 gap-3">{[['Primeiros contatos',rows.length],['Com origem',rows.length-unknown],['Origem não identificada',unknown]].map(([label,value])=><div key={label} className="p-5 rounded-xl border border-[var(--border)] bg-[var(--bg-surface)]"><p className="text-sm">{label}</p><strong className="text-3xl">{value}</strong></div>)}</div><div className="space-y-3">{[...groups].sort((a,b)=>b[1]-a[1]).map(([name,count])=><div key={name}><div className="flex justify-between text-sm"><span>{name}</span><span>{count} · {rows.length?Math.round(count/rows.length*100):0}%</span></div><div className="h-2 mt-2 rounded bg-[var(--bg-surface-2)]"><div className="h-2 rounded bg-[var(--accent)]" style={{width:`${rows.length?count/rows.length*100:0}%`}}/></div></div>)}</div><div className="overflow-x-auto rounded-xl border border-[var(--border)]"><table className="w-full text-sm"><caption className="text-left p-4 font-semibold">Primeiros contatos por campanha</caption><thead><tr className="text-left"><th className="p-4">Canal</th><th className="p-4">Nome da campanha</th><th className="p-4">Contatos</th></tr></thead><tbody>{[...campaigns.values()].sort((a,b)=>b.count-a.count).map(c=><tr key={c.channel+c.name} className="border-t border-[var(--border)]"><td className="p-4">{c.channel}</td><td className="p-4">{c.name}</td><td className="p-4">{c.count}</td></tr>)}</tbody></table></div></>}</section>
+}
