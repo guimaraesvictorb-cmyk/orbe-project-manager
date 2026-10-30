@@ -19,4 +19,19 @@ class QRWorkerTest(unittest.TestCase):
    worker.cloud=lambda *a,**k:{'ok':True}
    worker.flush()
    with worker.db() as db:self.assertEqual(db.execute('SELECT count(*) FROM outbox').fetchone()[0],0)
+ def test_first_pairing_discovers_number_without_preregistration(self):
+  with tempfile.TemporaryDirectory() as tmp:
+   worker=module.Worker({'token':'synthetic'},'',str(Path(tmp)/'queue.sqlite3'))
+   from datetime import datetime,timezone,timedelta
+   session={'instance':'orbe-qr-test','destination':'','request_id':'request','expires_at':(datetime.now(timezone.utc)+timedelta(minutes=2)).isoformat(),'verified_at':None,'status':'qr'}
+   calls=[]
+   def cloud(action,**values):
+    calls.append((action,values))
+    return session if action=='worker_poll' else {'ok':True,'verified_at':'2026-10-30T20:00:00Z','destination':'5511999999999'}
+   worker.cloud=cloud;worker.instances=lambda:[{'name':'orbe-qr-test','ownerJid':'5511999999999@s.whatsapp.net'}]
+   worker.evo=lambda *a,**k:{'instance':{'state':'open'}}
+   hooks=[];worker.webhook=lambda enabled:hooks.append(enabled);worker.flush=lambda:None
+   worker.tick()
+   self.assertEqual(worker.session['destination'],'5511999999999');self.assertEqual(hooks,[True])
+   self.assertTrue(any(a=='worker_state' and v.get('number')=='5511999999999' for a,v in calls))
 if __name__=='__main__':unittest.main()

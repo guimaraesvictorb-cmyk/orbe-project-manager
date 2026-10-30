@@ -49,6 +49,7 @@ export function WhatsAppConnectionSetup({clientId,onConnected}:{clientId:string;
   }
   if(loading)return <p className="text-sm text-[var(--text-tertiary)]">Carregando configuração…</p>
   if(!setup)return <p role="alert">{error}</p>
+  if(setup.connection_method==='qr')return <section className="space-y-5 rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] p-5 md:p-6"><div><h2 className="font-semibold text-lg">Conectar WhatsApp</h2><p className="text-sm text-[var(--text-tertiary)] mt-1">Conexão por aparelho vinculado (não oficial). O número aparece após a leitura do QR.</p></div><div className="flex flex-wrap gap-3">{methods.map(({id,title})=><button key={id} type="button" aria-pressed={setup.connection_method===id} onClick={()=>setSetup({...setup,connection_method:id})} className={`rounded-lg px-3 py-2 text-sm border ${setup.connection_method===id?'border-[var(--accent)] text-[var(--accent)]':'border-[var(--border)]'}`}>{title}</button>)}</div><QRActivation key={clientId} clientId={clientId} beforeConnect={async()=>true} onConnected={onConnected}/></section>
   return <form onSubmit={save} className="space-y-5 rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] p-5 md:p-6">
     <div><h2 className="font-semibold text-lg">Conectar WhatsApp</h2><p className="text-sm text-[var(--text-tertiary)] mt-1">Escolha o caminho de conexão e o sistema usado pelo cliente.</p></div>
     {!setup.traffic_active&&<p className="text-sm text-[var(--text-tertiary)]">Tráfego ainda não iniciado. Esta configuração não ativa a coleta.</p>}
@@ -59,10 +60,9 @@ export function WhatsAppConnectionSetup({clientId,onConnected}:{clientId:string;
       {setup.connection_method==='kommo'&&<label className="text-xs md:col-span-2">Endereço da conta Kommo<input type="url" placeholder="https://empresa.kommo.com" maxLength={500} className={input} value={setup.account_url} onChange={e=>setSetup({...setup,account_url:e.target.value})}/></label>}
       <label className="text-xs md:col-span-2">Observações<textarea rows={2} maxLength={1000} className={input} value={setup.notes} onChange={e=>setSetup({...setup,notes:e.target.value})}/></label>
     </div>
-    <p className="text-xs text-[var(--text-tertiary)]">Salvar registra os dados do cliente. {setup.connection_method==='kommo'?'Para ativar, conclua a autorização no painel abaixo.':setup.connection_method==='qr'?'Para conectar o aparelho, use o painel de QR abaixo.':'A conexão por outra API ainda precisa de preparação.'} Não coloque senhas ou chaves nas observações.</p>
+    <p className="text-xs text-[var(--text-tertiary)]">Salvar registra os dados do cliente. {setup.connection_method==='kommo'?'Para ativar, conclua a autorização no painel abaixo.':'A conexão por outra API ainda precisa de preparação.'} Não coloque senhas ou chaves nas observações.</p>
     <div className="flex items-center flex-wrap gap-4"><button disabled={saving} className="rounded-lg px-4 py-2 bg-[var(--accent)] text-white text-sm disabled:opacity-50">{saving?'Salvando…':'Salvar configuração'}</button><span className="text-xs text-[var(--text-tertiary)]">{setup.activation_requested?'Aguardando ativação':'Ainda não conectado'}</span></div>
     {error&&<p role="alert" className="text-sm text-[var(--danger)]">{error}</p>}{notice&&<p role="status" className="text-sm text-[var(--accent)]">{notice}</p>}
-    {setup.connection_method==='qr'&&setup.traffic_active&&<QRActivation key={clientId} clientId={clientId} destination={setup.destination} beforeConnect={()=>save()} onConnected={onConnected}/>}
     {setup.connection_method==='kommo'&&setup.traffic_active&&<KommoActivation clientId={clientId} accountUrl={setup.account_url} destination={setup.destination} beforeConnect={()=>save()} onConnected={onConnected}/>}
   </form>
 }

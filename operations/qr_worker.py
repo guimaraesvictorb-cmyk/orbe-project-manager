@@ -60,7 +60,7 @@ class Worker:
         self.instance=None;self.session=None;self.last_status=None
         with self.db() as db: db.execute('CREATE TABLE IF NOT EXISTS outbox (id INTEGER PRIMARY KEY,event TEXT NOT NULL)')
     def db(self):return sqlite3.connect(self.db_path,timeout=10)
-    def cloud(self,action,**values):return call('https://studio.agenciaorbe.co/api/whatsapp-qr',self.config['token'],{'action':action,**values})
+    def cloud(self,action,**values):return call('https://studio.agenciaorbe.co/api/whatsapp-qr',self.config.get('cloud_token',self.config['token']),{'action':action,**({'connection_id':self.config['connection_id']} if 'connection_id' in self.config else {}),**values})
     def evo(self,path,body=None,global_key=False,method=None):return call('http://evolution:8080'+path,self.global_key if global_key else self.instance_key,body,method)
     def webhook(self,enabled):
         self.evo('/webhook/set/'+self.instance,{'webhook':{'enabled':enabled,'url':'http://orbe-qr-worker:8090/events','headers':{'Authorization':'Bearer '+self.webhook_key},'byEvents':False,'base64':False,'events':['MESSAGES_UPSERT','CONNECTION_UPDATE']}})
@@ -69,6 +69,7 @@ class Worker:
         if result.get('ok'):
             self.last_status=status
             if result.get('verified_at'):self.session['verified_at']=result['verified_at']
+            if result.get('destination'):self.session['destination']=result['destination']
     def instances(self):return self.evo('/instance/fetchInstances?instanceName='+self.instance)
     def tick(self):
         self.session=self.cloud('worker_poll');self.instance=self.session['instance']
@@ -78,13 +79,21 @@ class Worker:
         from datetime import datetime
         active=bool(self.session.get('expires_at')) and datetime.fromisoformat(self.session['expires_at'].replace('Z','+00:00')).timestamp()>time.time()
         if not active and not self.session.get('verified_at'):return
-        rows=self.instances()
-        if not rows:raise ValueError('instance_not_prepared')
+        try:rows=self.instances()
+        except HTTPError as error:
+            if error.code not in (401,404):raise
+            rows=[]
+        if not rows:
+            if not active or not self.global_key:raise ValueError('instance_not_prepared')
+            hook={'enabled':False,'url':'http://orbe-qr-worker:8090/events','headers':{'Authorization':'Bearer '+self.webhook_key},'byEvents':False,'base64':False,'events':['MESSAGES_UPSERT','CONNECTION_UPDATE']}
+            self.evo('/instance/create',{'instanceName':self.instance,'integration':'WHATSAPP-BAILEYS','token':self.instance_key,'qrcode':False,'groupsIgnore':True,'alwaysOnline':False,'readMessages':False,'readStatus':False,'syncFullHistory':False,'rejectCall':False,'webhook':hook},global_key=True)
+            self.webhook(False)
+            rows=self.instances()
         if len(rows)!=1 or rows[0].get('name')!=self.instance:raise ValueError('instance_binding')
         state=self.evo('/instance/connectionState/'+self.instance).get('instance',{}).get('state')
         if state=='open':
             number=str(rows[0].get('ownerJid','')).split('@')[0].split(':')[0]
-            if number!=self.session['destination']:
+            if self.session.get('verified_at') and number!=self.session['destination']:
                 self.webhook(False)
                 if self.session['status']=='requested':
                     self.evo('/instance/logout/'+self.instance,method='DELETE')
@@ -126,20 +135,50 @@ class Worker:
                 print('ORBE_QR_RETRY',flush=True)
             time.sleep(5)
 
+class Broker:
+    def __init__(self,config):
+        self.config=config;self.workers={}
+        self.global_key=Path('/private/evolution-key').read_text().strip()
+    def run(self):
+        while True:
+            try:
+                jobs=call('https://studio.agenciaorbe.co/api/whatsapp-qr',self.config['token'],{'action':'worker_list'})['jobs']
+                for job in jobs:
+                    cid=job['id']
+                    import re
+                    if not re.fullmatch(r'[0-9a-f-]{36}',cid) or not re.fullmatch(r'orbe-qr-[a-z0-9-]+',job['instance']):continue
+                    if cid not in self.workers:
+                        token=self.config.get('legacy_tokens',{}).get(cid) or hmac.new(self.config['token'].encode(),cid.encode(),hashlib.sha256).hexdigest()
+                        self.workers[cid]=Worker({'token':token,'cloud_token':self.config['token'],'connection_id':cid},self.global_key,'/data/'+cid+'.sqlite3')
+                        self.workers[cid].instance=job['instance']
+                    worker=self.workers[cid]
+                    try:worker.tick()
+                    except Exception:
+                        try:
+                            if worker.session and worker.session.get('request_id'):worker.state('error')
+                        except Exception:pass
+            except Exception:print('ORBE_QR_BROKER_RETRY',flush=True)
+            time.sleep(5)
+    def receive(self,value,auth):
+        if not isinstance(value,dict):return False
+        worker=next((w for w in self.workers.values() if w.instance==value.get('instance')),None)
+        if not worker or not hmac.compare_digest(auth,'Bearer '+worker.webhook_key):return False
+        worker.receive(value);return True
+
 def main():
     os.umask(0o077)
-    config=json.loads(Path('/private/qr-lk.json').read_text())
-    worker=Worker(config,'','/data/outbox.sqlite3')
+    config=json.loads(Path('/private/qr-config.json').read_text())
+    broker=Broker(config)
     class Handler(BaseHTTPRequestHandler):
         def log_message(self,*args):pass
         def do_POST(self):
             try:
-                if self.path!='/events' or not hmac.compare_digest(self.headers.get('Authorization',''),'Bearer '+worker.webhook_key):self.send_error(403);return
                 size=int(self.headers.get('Content-Length','0'))
-                if not 0<size<=524288:self.send_error(413);return
-                value=json.loads(self.rfile.read(size));worker.receive(value)
+                if self.path!='/events' or not 0<size<=524288:self.send_error(413);return
+                value=json.loads(self.rfile.read(size))
+                if not broker.receive(value,self.headers.get('Authorization','')):self.send_error(403);return
                 self.send_response(200);self.end_headers();self.wfile.write(b'{"ok":true}')
             except Exception:self.send_error(503)
-    threading.Thread(target=worker.run,daemon=True).start()
+    threading.Thread(target=broker.run,daemon=True).start()
     ThreadingHTTPServer(('0.0.0.0',8090),Handler).serve_forever()
 if __name__=='__main__':main()
