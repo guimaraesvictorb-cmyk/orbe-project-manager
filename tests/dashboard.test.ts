@@ -13,3 +13,12 @@ test('channels group Linktree with Instagram and campaign labels never fabricate
  assert.equal(campaignName({utm_campaign:'123'}),'Nome da campanha não disponível')
  assert.equal(campaignName({utm_campaign:'123',campaign_name:'Pesquisa Ibes'}),'Pesquisa Ibes')
 })
+test('Google campaign names resolve for Rayafit only and retain raw campaign evidence',()=>{
+ const connection='1fd22072-6932-4122-941f-cb31c55efd66'
+ const payload={utm_source:'google',utm_campaign:'21948614114'}
+ assert.equal(campaignName(payload,connection),'[LM]-[V4]-[ONGOING]-[SEARCH]-[LEADS]-[INSTITUCIONAL]')
+ assert.equal(campaignName({utm_source:'google',utm_campaign:'23438636831'},connection),'[LM]-[V4]-[VISITA-P-MAX]')
+ assert.equal(campaignName(payload,'other-client'),'Nome da campanha não disponível')
+ assert.equal(campaignName({...payload,utm_source:'meta'},connection),'Nome da campanha não disponível')
+ assert.equal(payload.utm_campaign,'21948614114')
+})

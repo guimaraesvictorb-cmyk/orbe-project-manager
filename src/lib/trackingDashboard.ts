@@ -6,8 +6,17 @@ export function trackingChannel(p:TrackingRecord['payload']) {
  if(/meta|facebook/.test(source)||p.fbclid)return 'Meta'
  return source||'Origem não identificada'
 }
-export function campaignName(p:TrackingRecord['payload']) {
+// Names observed in Rayafit's Google Ads table on 2026-10-30.
+// Scope by connection: campaign IDs from other clients must never inherit these labels.
+const rayafitGoogleCampaigns:Record<string,string>={
+ '23438636831':'[LM]-[V4]-[VISITA-P-MAX]',
+ '21948614114':'[LM]-[V4]-[ONGOING]-[SEARCH]-[LEADS]-[INSTITUCIONAL]',
+ '22600869996':'[SEARCH]-[ONGOING]-[LEADS]-[DOR-NECESSIDADE]',
+}
+export function campaignName(p:TrackingRecord['payload'],connectionId?:string) {
  const name=String(p.campaign_name||p.utm_campaign_name||p.utm_campaign||'').trim()
+ const mapped=connectionId==='1fd22072-6932-4122-941f-cb31c55efd66'&&trackingChannel(p)==='Google'?rayafitGoogleCampaigns[name]:undefined
+ if(mapped)return mapped
  return !name?'Campanha não informada':/^\d+$/.test(name)?'Nome da campanha não disponível':name
 }
 export function firstContacts(records:TrackingRecord[],start:string|null,end:string|null,source='') {
