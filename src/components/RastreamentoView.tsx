@@ -42,7 +42,10 @@ function ClientLogo({id,name}:{id:string;name:string}) {
 }
 
 export function RastreamentoView() {
-  const {clients}=useClients()
+  const {clients:allClients}=useClients()
+  // Excluded from tracking at the owner's request; client records stay intact.
+  const hiddenTrackingClients=new Set(['c719c21c-e530-440b-8526-e6dd2688e2e1','5058a2a7-68e3-4d40-a84e-78dcc8b23758','338243c3-8443-4dd4-bce1-b4011feeb52c'])
+  const clients=allClients.filter(client=>!hiddenTrackingClients.has(client.id))
   const [mode,setMode]=useState<'clients'|'utm'>('clients')
   const [selected,setSelected]=useState<string|null>(null)
   const [search,setSearch]=useState('')
