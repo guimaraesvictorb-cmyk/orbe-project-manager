@@ -8,7 +8,7 @@ export async function evoEnrollmentPreview(secret:EvoSecret,start:string,end:str
  // EVO documents a maximum page size of 25. Never assume a requested 1000
  // is honored, and never mix the special VIP/aggregator/transfer filters here.
  for(let page=0;page<10;page++){
-  const rows=await evoGet(secret,'v3/membermembership',{registerDateStart:start+'T03:00:00Z',registerDateEnd:new Date(Date.parse(end+'T03:00:00Z')+86400000-1).toISOString(),showTransfers:'false',showAggregators:'false',showVips:'false',take:'25',skip:String(page*25)});
+  const rows=await evoGet(secret,'v3/membermembership',{registerDateStart:start+'T03:00:00Z',registerDateEnd:new Date(Date.parse(end+'T03:00:00Z')+86400000-1).toISOString(),showTransfers:'false',showAggregators:'false',showVips:'false',contractType:'1,3,4,5,6,7,8,9,10',take:'25',skip:String(page*25)});
   pages++;
   if(!Array.isArray(rows))throw new EvoReadError('evo_invalid_response','v3/membermembership',200);
   if(rows.length>25)throw new EvoReadError('evo_invalid_response','v3/membermembership',200);
