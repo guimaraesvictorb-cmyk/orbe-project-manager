@@ -1,6 +1,6 @@
 import {test} from 'node:test';import assert from 'node:assert/strict'
 import {registerHooks} from 'node:module'
-registerHooks({resolve(s,c,n){return n(s==='./trackingDashboard'&&c.parentURL?.endsWith('/commercialTracking.ts')?'./trackingDashboard.ts':s,c)}})
+registerHooks({resolve(s,c,n){return n(['./trackingDashboard','./trackingDashboard.js'].includes(s)&&c.parentURL?.endsWith('/commercialTracking.ts')?'./trackingDashboard.ts':s,c)}})
 const {businessMinutes,commercialContacts,saleSignal}=await import('../src/lib/commercialTracking.ts')
 const settings={weekdays:[1,2,3,4,5],opens:480,closes:1080,target_minutes:15,outbound_started_at:'2026-10-30T11:00:00Z',capture_ready_at:'2026-10-30T11:00:00Z'}
 const record={entity:'messages',entity_key:'in',occurred_at:'2026-10-30T12:00:00Z',payload:{contact_id:'a',name:'Lead',utm_source:'google',utm_campaign:'Campanha'}}
