@@ -19,7 +19,7 @@ export default async function handler(req:Request,res:ServerResponse) {
     phase='subscribe_events';
     await ensureKommoWebhook(cfg.account_origin,token,expected,hooks);
     const installed=true;phase='coverage';
-    await db('rest/v1/wa_service_settings?on_conflict=connection_id',{method:'POST',headers:{Prefer:'resolution=ignore-duplicates'},body:JSON.stringify({connection_id:cfg.connection_id})});
+    await db('rest/v1/wa_service_settings?on_conflict=connection_id',{method:'POST',headers:{Prefer:'resolution=ignore-duplicates,return=representation'},body:JSON.stringify({connection_id:cfg.connection_id})});
     await db(`rest/v1/wa_service_settings?connection_id=eq.${cfg.connection_id}&capture_ready_at=is.null`,{method:'PATCH',body:JSON.stringify({capture_ready_at:new Date().toISOString()})});
     phase='read_state';
     const states=await db<{last_received_at:string|null}[]>(`rest/v1/wa_tracking_connections?id=eq.${cfg.connection_id}&select=last_received_at`);
