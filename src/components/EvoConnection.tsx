@@ -1,0 +1,44 @@
+import {useEffect,useState} from 'react'
+import {ChevronDown,ChevronUp,Database,ShieldCheck} from 'lucide-react'
+import {supabase} from '../lib/supabase'
+import {useAuth} from '../hooks/useAuth'
+type Config={slot:string;expires_at:string;updated_at:string;branches:{id:number;name:string}[];checked_scopes:string[];checked_at:string|null}
+const slots=[['ibes','Ibes'],['alecrim','Alecrim'],['itapua','Itapuã'],['multifilial','Chave de administração geral']] as const
+const css='mt-1 block w-full rounded-lg border border-[var(--border)] bg-[var(--bg-surface-2)] px-3 py-2 text-sm'
+const errors:Record<string,string>={financial_admin_required:'Somente administradores com acesso financeiro podem conectar o EVO.',invalid_credentials:'Confira o DNS e o token copiados do EVO. Não cole o endereço do painel.',invalid_expiry:'Informe a data futura de validade da chave.',credentials_missing:'Guarde a chave desta unidade primeiro.',configuration_changed:'O cadastro foi alterado por outra pessoa. Feche e abra esta seção antes de substituir.',evo_access_denied:'O EVO recusou a chave. Confira DNS, token, validade e limite de consumo da API.',evo_permission_denied:'Falta uma das permissões de consulta exigidas no EVO.',evo_rate_limited:'O EVO atingiu o limite de consultas. Aguarde antes de verificar novamente.',evo_expired:'A validade informada desta chave terminou.',evo_invalid_response:'O EVO respondeu em um formato inesperado. A leitura não foi validada.',evo_unavailable:'O EVO não confirmou o acesso agora. Tente novamente mais tarde.'}
+function Secret({label,value,onChange}:{label:string;value:string;onChange:(v:string)=>void}){
+ const [editing,setEditing]=useState(false)
+ return <label className="block text-sm">{label}<input aria-label={label} name={`orbe_evo_${label.toLowerCase()}`} type="password" autoComplete="new-password" data-lpignore="true" data-1p-ignore="true" spellCheck={false} readOnly={!editing} onFocus={()=>setEditing(true)} onBlur={()=>setEditing(false)} value={value} onChange={e=>onChange(e.target.value)} required maxLength={4096} className={css}/></label>
+}
+export function EvoConnection({clientId}:{clientId:string}){
+ const {profile}=useAuth(),[open,setOpen]=useState(false),[slot,setSlot]=useState('ibes'),[configs,setConfigs]=useState<Config[]>([]),[loaded,setLoaded]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[dns,setDns]=useState(''),[token,setToken]=useState(''),[expiry,setExpiry]=useState('')
+ const allowed=profile?.role==='admin'&&profile.can_view_financials
+ async function request(action:'status'|'save'|'verify',signal?:AbortSignal){
+  const {data}=await supabase.auth.getSession();if(!data.session)throw new Error('Sua sessão expirou. Entre novamente.')
+  const r=await fetch('/api/evo-connection',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${data.session.access_token}`},body:JSON.stringify({action,client_id:clientId,slot,...(action==='save'?{dns,token,expires_at:expiry,expected_version:configs.find(c=>c.slot===slot)?.updated_at??null}:{})}),signal})
+  const result=await r.json();if(!r.ok)throw new Error(errors[result.error]||'Não foi possível consultar o EVO. Atualize a página e tente novamente.')
+  return result as {configurations:Config[]}
+ }
+ useEffect(()=>{if(!open||!allowed)return;let active=true;const controller=new AbortController();void request('status',controller.signal).then(r=>{if(active){setConfigs(r.configurations);setLoaded(true)}}).catch(e=>{if(active)setError(e instanceof Error?e.message:'Não foi possível consultar.')});return()=>{active=false;controller.abort()}
+ // This effect fetches metadata only when opening the section or changing clients.
+ // eslint-disable-next-line react-hooks/exhaustive-deps
+ },[open,clientId,allowed])
+ if(!allowed)return null
+ const current=configs.find(c=>c.slot===slot)
+ function clear(){setDns('');setToken('');setExpiry('');setError('');setNotice('')}
+ async function act(action:'save'|'verify'){
+  setBusy(true);setError('');setNotice('');try{const result=await request(action);setConfigs(result.configurations);if(action==='save'){clear();setNotice('Chave guardada com criptografia. Clique em Verificar leitura do EVO para confirmar as permissões e unidades.')}else setNotice('Leitura de alunos, matrículas, vendas e recebimentos validada. O cálculo de CAC e LTV depende da conciliação e da cobertura de todas as unidades.')}catch(e){setError(e instanceof Error?e.message:'Não foi possível concluir.')}finally{setBusy(false)}
+ }
+ return <section aria-label="Conexão EVO" className="rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] p-4">
+  <button type="button" aria-expanded={open} disabled={busy} onClick={()=>{clear();setOpen(!open);setLoaded(false)}} className="flex w-full items-center gap-2 text-sm font-medium text-[var(--accent)]"><Database size={18}/>EVO · matrículas, CAC e LTV<span className="ml-auto">{open?<ChevronUp size={18}/>:<ChevronDown size={18}/>}</span></button>
+  {open&&<div className="mt-4 space-y-4"><p className="text-sm text-[var(--text-secondary)]">Conecte cada unidade com sua própria chave ou use uma chave de administração geral. O nome do cadastro organiza as chaves; a cobertura real é a lista de unidades retornada pelo EVO. CAC e LTV serão calculados após conciliar matrículas e pagamentos com os leads.</p>
+   <div className="grid gap-3 sm:grid-cols-3">{slots.slice(0,3).map(([id,name])=>{const config=configs.find(c=>c.slot===id),verified=config?.checked_at;return <div key={id} className="rounded-lg border border-[var(--border)] p-3"><p className="text-sm font-medium">{name}</p><p className={`mt-1 text-xs ${verified?'text-[var(--success)]':'text-[var(--text-tertiary)]'}`}>{verified?`EVO: ${config.branches.map(b=>b.name).join(', ')}`:config?'Chave salva · verificar leitura':'Sem chave individual'}</p></div>})}</div>
+   {configs.find(c=>c.slot==='multifilial')&&<p className="text-xs text-[var(--text-secondary)]">Administração geral: {configs.find(c=>c.slot==='multifilial')?.branches.map(b=>b.name).join(', ')||'unidades ainda não verificadas'}</p>}
+   {!loaded&&!error?<p role="status" className="text-sm">Consultando conexões…</p>:<>
+    <label className="block max-w-md text-sm">Chave que você vai cadastrar<select aria-label="Unidade da chave EVO" value={slot} disabled={busy} onChange={e=>{clear();setSlot(e.target.value)}} className={css}>{slots.map(([id,name])=><option key={id} value={id}>{name}</option>)}</select></label>
+    {current&&<div className="rounded-lg border border-[var(--border)] p-3 text-sm"><p className="flex items-center gap-2"><ShieldCheck size={16}/>Chave criptografada · validade {new Date(current.expires_at).toLocaleDateString('pt-BR',{timeZone:'UTC'})}</p><p className="mt-1 text-xs text-[var(--text-tertiary)]">{current.checked_at?`Leitura confirmada em ${new Date(current.checked_at).toLocaleString('pt-BR')}. Unidades retornadas: ${current.branches.map(b=>b.name).join(', ')}.`:'Leitura ainda não confirmada.'}</p><button type="button" disabled={busy} onClick={()=>void act('verify')} className="mt-3 rounded-lg border border-[var(--border)] px-4 py-2 text-sm text-[var(--accent)] disabled:opacity-50">{busy?'Verificando…':'Verificar leitura do EVO'}</button></div>}
+    <form autoComplete="off" onSubmit={e=>{e.preventDefault();void act('save')}} className="max-w-2xl"><fieldset disabled={busy||!loaded} className="space-y-4"><Secret label="DNS do EVO" value={dns} onChange={setDns}/><Secret label="Token do EVO" value={token} onChange={setToken}/><label className="block text-sm">Validade da chave<input aria-label="Validade da chave EVO" type="date" required value={expiry} onChange={e=>setExpiry(e.target.value)} className={css}/></label><p className="text-xs text-[var(--text-tertiary)]">Copie DNS e token diretamente do EVO. Eles não serão exibidos novamente no Studio. Use somente permissões de consulta, sem edição, pagamentos ou dados de saúde. A API pode ter cobrança por consumo conforme seu contrato EVO; esta verificação faz cinco consultas e não ativa sincronização automática.</p><button type="submit" disabled={busy||!loaded} className="rounded-lg bg-[var(--accent)] px-4 py-2 text-sm text-white disabled:opacity-50">{busy?'Aguarde…':current?'Substituir chave protegida':'Guardar chave protegida'}</button></fieldset></form>
+   </>}{error&&<p role="alert" className="text-sm text-[var(--danger)]">{error}</p>}{notice&&<p role="status" className="text-sm text-[var(--success)]">{notice}</p>}
+  </div>}
+ </section>
+}
