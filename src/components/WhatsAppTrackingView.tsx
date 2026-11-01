@@ -30,6 +30,7 @@ export function WhatsAppTrackingView({clientId,embedded=false,pilotOnly=false}:{
   const [connections,setConnections]=useState<TrackingConnection[]>([])
   const [connectionId,setConnectionId]=useState('')
   const [tab,setTab]=useState<Tab>('overview')
+  const [biUnit,setBiUnit]=useState('all')
   const [start,setStart]=useState(()=>dayBrt(new Date(Date.now()-29*86400000).toISOString())); const [end,setEnd]=useState(()=>dayBrt(new Date().toISOString())); const [source,setSource]=useState('')
   const [summary,setSummary]=useState<TrackingSummary>(emptySummary)
   const [originEvidence,setOriginEvidence]=useState<TrackingRecord[]>([])
@@ -130,8 +131,8 @@ export function WhatsAppTrackingView({clientId,embedded=false,pilotOnly=false}:{
           {(start||end||source)&&<button className="text-sm text-[var(--accent)] py-2" onClick={()=>{setStart('');setEnd('');setSource('');setPage(0)}}>Limpar filtros</button>}
         </div>}
         {tab==='overview'&&<>
-          <TrackingDashboard clientId={connection?.client_id} key={`${connectionId}:${start}:${end}:${source}`} revision={summary.messages} source={source.trim()} connectionId={connectionId} start={periodBounds(start,end).start} end={periodBounds(start,end).end}/>
-          <CommercialTracking key={`commercial:${connectionId}`} connectionId={connectionId} source={source.trim()} start={periodBounds(start,end).start} end={periodBounds(start,end).end} compact/>
+          <TrackingDashboard clientId={connection?.client_id} key={connectionId} unit={biUnit} onUnitChange={setBiUnit} revision={summary.messages} source={source.trim()} connectionId={connectionId} start={periodBounds(start,end).start} end={periodBounds(start,end).end}/>
+          <CommercialTracking key={`commercial:${connectionId}`} unit={biUnit} connectionId={connectionId} source={source.trim()} start={periodBounds(start,end).start} end={periodBounds(start,end).end} compact/>
 
         </>}
         {tab==='commercial'&&<CommercialTracking key={connectionId} connectionId={connectionId} source={source.trim()} start={periodBounds(start,end).start} end={periodBounds(start,end).end}/>}
