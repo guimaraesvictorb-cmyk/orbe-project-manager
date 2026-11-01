@@ -12,11 +12,11 @@ export const dashboardBinding=(client:string)=>`dashboard:${client}`;
 export function validDashboardToken(value:unknown):value is string{return typeof value==='string'&&/^[A-Za-z0-9_-]{43}$/.test(value)}
 type Db=ReturnType<typeof storage>;
 type Connection={id:string;name:string};
-export type DashboardLink={client_id:string;token_hash:string;token_ciphertext:string;enabled:boolean;include_media:boolean;updated_at:string};
+export type DashboardLink={client_id:string;token_hash:string;token_ciphertext:string;enabled:boolean;include_media:boolean;updated_at:string;public_slug?:string|null;access_code_hash?:string|null;access_code_salt?:string|null};
 export async function dashboardLink(db:Db,token:unknown){
  if(!validDashboardToken(token))throw new Error('link_unavailable');
- const rows=await db<DashboardLink[]>(`rest/v1/wa_dashboard_links?token_hash=eq.${dashboardHash(token)}&enabled=eq.true&select=client_id,token_hash,token_ciphertext,enabled,include_media,updated_at`);
- if(rows.length!==1)throw new Error('link_unavailable');return rows[0];
+ const rows=await db<DashboardLink[]>(`rest/v1/wa_dashboard_links?token_hash=eq.${dashboardHash(token)}&enabled=eq.true&select=client_id,token_hash,token_ciphertext,enabled,include_media,updated_at,public_slug,access_code_hash`);
+ if(rows.length!==1||rows[0].access_code_hash)throw new Error('link_unavailable');return rows[0];
 }
 async function all<T>(db:Db,table:string,connection:string,select:string,order:string,extra=''){
  const out:T[]=[];for(let offset=0;offset<20000;offset+=1000){const rows=await db<T[]>(`rest/v1/${table}?connection_id=eq.${connection}&select=${select}&order=${order}&limit=1000&offset=${offset}${extra}`);out.push(...rows);if(rows.length<1000)return out}throw new Error('report_too_large');
