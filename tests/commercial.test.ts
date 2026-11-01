@@ -34,3 +34,5 @@ test('manual results are attached to one contact and keep original source cohort
 })
 
 test('a new message never charges historical time from before response collection',()=>{const row=evaluate([evt('incoming','2026-10-29T12:00:00Z'),evt('incoming','2026-10-30T12:55:00Z')]);assert.equal(row.minutes,5);assert.equal(row.state,'waiting')});
+
+test('an explicit manual review resolves historical uncertainty and new incoming reopens it',()=>{const manual={contact_id:'a',status:'contacted' as const,updated_by:'user',updated_at:'2026-10-30T12:20:00Z',evidence:'Atendimento conferido'};assert.equal(evaluate([evt('incoming','2026-10-29T12:00:00Z')],[manual]).state,'answered');assert.equal(evaluate([evt('incoming','2026-10-30T12:50:00Z')],[manual]).state,'waiting')});

@@ -38,8 +38,9 @@ export function commercialContacts(records:TrackingRecord[],events:ConversationE
   const uncertain=lastIn&&history.some(e=>e.direction==='outgoing'&&e.author_kind==='unknown'&&e.occurred_at>=lastIn.occurred_at)
   let state:ServiceState='answered',minutes=0
   if(outcome?.status==='won'||outcome?.status==='lost')state=outcome.status
+  else if(replied&&(!lastIn||replied>=lastIn.occurred_at))state='answered'
+  else if(uncertain&&settings.capture_ready_at)state='review'
   else if(!settings.capture_ready_at||!lastIn||lastIn.occurred_at<settings.capture_ready_at)state='partial'
-  else if(uncertain)state='review'
   else if(waiting){minutes=businessMinutes(waiting.occurred_at,now,settings);state=minutes>=settings.target_minutes?'late':'waiting'}
   const identity=[...records].reverse().find(r=>String(r.payload.contact_id||r.payload.sender_id)===id&&r.payload.phone)||first
   return {id,name:String(identity.payload.name||first.payload.name||'Sem nome'),phone:String(identity.payload.phone||''),channel:trackingChannel(first.payload),campaign:campaignName(first.payload,connectionId),firstAt:first.occurred_at,lastIn:lastIn?.occurred_at??first.occurred_at,state,minutes,signal:outcome?.status==='won'||outcome?.status==='lost'?null:saleSignal(history),outcome,history}
