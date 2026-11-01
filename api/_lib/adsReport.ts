@@ -1,6 +1,6 @@
 export type Insight={campaign_id:string;campaign_name:string;date_start:string;spend:number;impressions:number;clicks:number;link_clicks:number}
 export function reportPeriod(start:unknown,end:unknown){
- const valid=(v:unknown)=>typeof v==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(v)&&new Date(v).toISOString().slice(0,10)===v;
+ const valid=(v:unknown)=>typeof v==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(v)&&Number.isFinite(Date.parse(v))&&new Date(v).toISOString().slice(0,10)===v;
  if(!valid(start)||!valid(end)||String(start)>String(end)||(Date.parse(String(end))-Date.parse(String(start)))/86400000>92)throw new Error('invalid_period');
  return {since:String(start),until:String(end)};
 }

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Copy, Check, RefreshCw, MessageSquare, AlertCircle } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
-import { dayBrt } from '../lib/biDashboard'
+import { useTrackingRoute,updateTrackingRoute } from '../lib/trackingRoute'
 import { previousContactOrigin } from '../lib/conversationOrigin'
 import { Ga4TrackingStatus } from './Ga4TrackingStatus'
 import { campaignName } from '../lib/trackingDashboard'
@@ -29,9 +29,13 @@ export function WhatsAppTrackingView({clientId,embedded=false,pilotOnly=false}:{
   const {profile}=useAuth()
   const [connections,setConnections]=useState<TrackingConnection[]>([])
   const [connectionId,setConnectionId]=useState('')
-  const [tab,setTab]=useState<Tab>('overview')
-  const [biUnit,setBiUnit]=useState('all')
-  const [start,setStart]=useState(()=>dayBrt(new Date(Date.now()-29*86400000).toISOString())); const [end,setEnd]=useState(()=>dayBrt(new Date().toISOString())); const [source,setSource]=useState('')
+  const route=useTrackingRoute()
+  const tab=route.tab as Tab,biUnit=route.unit,start=route.start,end=route.end,source=route.source
+  const setTab=(tab:Tab)=>updateTrackingRoute({tab})
+  const setBiUnit=(unit:string)=>updateTrackingRoute({unit})
+  const setStart=(start:string)=>updateTrackingRoute({start})
+  const setEnd=(end:string)=>updateTrackingRoute({end})
+  const setSource=(source:string)=>updateTrackingRoute({source})
   const [summary,setSummary]=useState<TrackingSummary>(emptySummary)
   const [originEvidence,setOriginEvidence]=useState<TrackingRecord[]>([])
   const [records,setRecords]=useState<TrackingRecord[]>([]); const [total,setTotal]=useState(0); const [page,setPage]=useState(0)
@@ -128,7 +132,7 @@ export function WhatsAppTrackingView({clientId,embedded=false,pilotOnly=false}:{
           <label className="text-xs">De<input aria-label="Data inicial" type="date" className={`${inputClass} mt-1`} value={start} onChange={e=>changeFilter(setStart,e.target.value)}/></label>
           <label className="text-xs">Até<input aria-label="Data final" type="date" className={`${inputClass} mt-1`} value={end} onChange={e=>changeFilter(setEnd,e.target.value)}/></label>
           <label className="text-xs">Origem<input aria-label="Filtrar origem" placeholder="Todas as origens" className={`${inputClass} mt-1`} value={source} onChange={e=>changeFilter(setSource,e.target.value)}/></label>
-          {(start||end||source)&&<button className="text-sm text-[var(--accent)] py-2" onClick={()=>{setStart('');setEnd('');setSource('');setPage(0)}}>Limpar filtros</button>}
+          {(start||end||source)&&<button className="text-sm text-[var(--accent)] py-2" onClick={()=>{updateTrackingRoute({start:'',end:'',source:''});setPage(0)}}>Limpar filtros</button>}
         </div>}
         {tab==='overview'&&<>
           <TrackingDashboard clientId={connection?.client_id} key={connectionId} unit={biUnit} onUnitChange={setBiUnit} revision={summary.messages} source={source.trim()} connectionId={connectionId} start={periodBounds(start,end).start} end={periodBounds(start,end).end}/>

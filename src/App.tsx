@@ -44,7 +44,7 @@ const VALID_VIEWS: AppView[] = [
 ];
 
 function viewFromHash(): AppView | null {
-  const h = window.location.hash.replace(/^#\/?/, "");
+  const h = window.location.hash.replace(/^#\/?/, "").split(/[/?]/)[0];
   return VALID_VIEWS.includes(h as AppView) ? (h as AppView) : null;
 }
 
