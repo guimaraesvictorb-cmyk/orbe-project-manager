@@ -4,20 +4,37 @@ export function evoPreviewPeriod(start:unknown,end:unknown){
  return {start,end};
 }
 export async function evoEnrollmentPreview(secret:EvoSecret,start:string,end:string,branchId:number){
- const data:unknown[]=[];let pages=0;
- // Request both documented statuses explicitly: an omitted status may select a
- // provider default. Respect 25 rows/page and a total budget of 10 pages/key.
- for(const status of ['1','2']){
-  let complete=false;
-  for(let page=0;pages<10;page++){
-   const rows=await evoGet(secret,'v3/membermembership',{registerDateStart:start+'T03:00:00Z',registerDateEnd:new Date(Date.parse(end+'T03:00:00Z')+86400000-1).toISOString(),showTransfers:'false',showAggregators:'false',showVips:'false',contractType:'1,3,4,5,6,7,8,9,10',statusMemberMembership:status,take:'25',skip:String(page*25)});
-   pages++;
-   if(!Array.isArray(rows)||rows.length>25)throw new EvoReadError('evo_invalid_response','v3/membermembership',200);
-   data.push(...rows);if(rows.length<25){complete=true;break}
-  }
-  if(!complete)throw new Error('evo_preview_too_large');
+ const data:unknown[]=[];let pages=0,complete=false;
+ // Sales exposes recurring registrations and first-membership identifiers. This
+ // endpoint documents 100 rows/page, unlike MemberMembership's limit of 25.
+ for(let page=0;page<10;page++){
+  const body=await evoGet(secret,'v2/sales',{idBranch:String(branchId),dateSaleStart:start,dateSaleEnd:end,onlyMembership:'true',atLeastMonthly:'true',showReceivables:'false',take:'100',skip:String(page*100)});
+  const rows=Array.isArray(body)?body:body&&typeof body==='object'&&'idSale' in body?[body]:null;
+  pages++;
+  if(!rows||rows.length>100)throw new EvoReadError('evo_invalid_response','v2/sales',200);
+  data.push(...rows);if(rows.length<100){complete=true;break}
  }
- const members=new Set<number>(),contracts=new Set<string>(),plans=new Map<string,{name:string;contracts:number;canceled:number}>();
- for(const value of data){if(!value||typeof value!=='object')throw new Error('evo_invalid_response');const r=value as Record<string,unknown>;if(Number(r.idBranch)!==branchId)throw new Error('evo_overlapping_scope');const id=Number(r.idMember),contract=String(r.idMemberMemberShip??'');if(!Number.isSafeInteger(id)||id<=0||!/^\d+$/.test(contract))throw new Error('evo_invalid_response');if(contracts.has(contract))continue;contracts.add(contract);members.add(id);const name=typeof r.nameMembership==='string'?r.nameMembership.slice(0,160):'Plano não informado',p=plans.get(name)??{name,contracts:0,canceled:0};p.contracts++;if(typeof r.cancelDate==='string'&&Date.parse(r.cancelDate)>0)p.canceled++;plans.set(name,p)}
- return {pages,scope:'regular',contracts:contracts.size,members:members.size,plans:[...plans.values()].sort((a,b)=>b.contracts-a.contracts)};
+ if(!complete)throw new Error('evo_preview_too_large');
+ const members=new Set<number>(),sales=new Set<number>(),contracts=new Set<number>(),plans=new Map<string,{name:string;contracts:number;canceled:number}>();
+ const firstMembers=new Set<number>(),renewals=new Set<number>();let unclassified=0;
+ for(const value of data){
+  if(!value||typeof value!=='object')throw new Error('evo_invalid_response');const r=value as Record<string,unknown>;
+  if(Number(r.idBranch)!==branchId)throw new Error('evo_overlapping_scope');
+  const id=Number(r.idMember),sale=Number(r.idSale);if(!Number.isSafeInteger(id)||id<=0||!Number.isSafeInteger(sale)||sale<=0||!Array.isArray(r.saleItens))throw new Error('evo_invalid_response');
+  if(sales.has(sale))continue;sales.add(sale);members.add(id);
+  const member=r.member&&typeof r.member==='object'?r.member as Record<string,unknown>:{},first=Number(member.idFirstMemberMembership);
+  const renewal=r.registrationKind==='renewal'||member.registrationKind==='renewal'||Number(r.idSaleRecurrency)>0;
+  if(renewal)renewals.add(sale);
+  let classified=false;
+  for(const item of r.saleItens){
+   if(!item||typeof item!=='object')throw new Error('evo_invalid_response');const p=item as Record<string,unknown>,contract=Number(p.idMemberMembership);
+   if(!Number.isSafeInteger(contract)||contract<=0)continue;
+   if(p.additionalType||p.flReceiptOnly)continue;
+   if(!r.removed&&!renewal&&first>0&&contract===first&&!Number(p.idMembershipRenewed)&&!r.idSaleMigration){firstMembers.add(id);classified=true}
+   if(contracts.has(contract))continue;contracts.add(contract);
+   const name=typeof p.item==='string'?p.item.slice(0,160):typeof p.description==='string'?p.description.slice(0,160):'Plano não informado',group=plans.get(name)??{name,contracts:0,canceled:0};group.contracts++;if(r.removed)group.canceled++;plans.set(name,group);
+  }
+  if(!renewal&&!classified&&!r.removed)unclassified++;
+ }
+ return {pages,scope:'monthly_sales',contracts:contracts.size,members:members.size,sales:sales.size,first_memberships:firstMembers.size,renewals:renewals.size,unclassified,plans:[...plans.values()].sort((a,b)=>b.contracts-a.contracts)};
 }
