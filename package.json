@@ -1,14 +1,14 @@
 {
   "name": "orbe-operating-system",
   "private": true,
-  "version": "1.21.4",
+  "version": "1.21.5",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test:tracking": "node --test tests/tracking.test.ts tests/kommo.test.ts tests/rayafit-site.test.ts tests/ga4.test.ts tests/evolution.test.ts tests/qr-access.test.ts tests/commercial.test.ts tests/ads-credentials.test.ts tests/bi-dashboard.test.ts tests/client-dashboard.test.ts tests/dashboard-access.test.ts tests/evo.test.ts"
+    "test:tracking": "node --test tests/tracking.test.ts tests/kommo.test.ts tests/rayafit-site.test.ts tests/ga4.test.ts tests/evolution.test.ts tests/qr-access.test.ts tests/commercial.test.ts tests/ads-credentials.test.ts tests/bi-dashboard.test.ts tests/client-dashboard.test.ts tests/dashboard-access.test.ts tests/evo.test.ts tests/evo-reconciliation.test.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.106.0",

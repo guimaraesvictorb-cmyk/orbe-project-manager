@@ -2,6 +2,7 @@ import type {ServerResponse} from 'node:http';
 import {answer,type Request} from './_lib/trackingServer.js';
 import {qrUser} from './_lib/qrAccess.js';
 import {object,ORBE_ORIGIN,scalar,seal,unseal} from './_lib/kommo.js';
+import {evoPreviewPeriod,evoEnrollmentPreview} from './_lib/evoPreview.js';
 import {EvoReadError,evoBinding,evoCredentials,verifyEvo} from './_lib/evo.js';
 export default async function handler(req:Request,res:ServerResponse){
  if(req.method!=='POST')return answer(res,405,{error:'method_not_allowed'});
@@ -13,6 +14,20 @@ export default async function handler(req:Request,res:ServerResponse){
   const profiles=await db<{role:string;can_view_financials:boolean}[]>(`rest/v1/profiles?id=eq.${user.id}&select=role,can_view_financials`);
   if(profiles[0]?.role!=='admin'||!profiles[0]?.can_view_financials)return answer(res,403,{error:'financial_admin_required'});
   const slot=scalar(input.slot,40)||'principal';if(!/^[a-z0-9_-]{1,40}$/.test(slot))throw new Error('invalid_slot');
+  if(input.action==='preview'){
+   const period=evoPreviewPeriod(input.start,input.end);
+   const configurations=await db<{slot:string;ciphertext:string;expires_at:string;branches:{id:number;name:string}[];checked_at:string|null}[]>(`rest/v1/wa_evo_credentials?client_id=eq.${client}&select=slot,ciphertext,expires_at,branches,checked_at&order=slot`);
+   if(!configurations.length)return answer(res,404,{error:'credentials_missing'});
+   const results=[];const used=new Set<number>();
+   for(const row of configurations){
+    if(!row.checked_at||Date.parse(row.expires_at)<=Date.now())return answer(res,400,{error:'evo_unverified_connection'});
+    if(row.branches.length!==1||used.has(row.branches[0]!.id))return answer(res,400,{error:'evo_overlapping_scope'});
+    used.add(row.branches[0]!.id);
+    const secret=evoCredentials(object(JSON.parse(unseal(row.ciphertext,evoBinding(client,row.slot)))));
+    results.push({slot:row.slot,branch:row.branches[0],...await evoEnrollmentPreview(secret,period.start,period.end,row.branches[0]!.id)});
+   }
+   return answer(res,200,{preview:{period,units:results,checked_at:new Date().toISOString()}});
+  }
   if(input.action==='save'){
    const secret=evoCredentials(input),expiry=scalar(input.expires_at,10);
    if(!/^\d{4}-\d{2}-\d{2}$/.test(expiry)||!Number.isFinite(Date.parse(expiry))||new Date(expiry).toISOString().slice(0,10)!==expiry||Date.parse(expiry+'T23:59:59Z')<=Date.now())throw new Error('invalid_expiry');
@@ -28,5 +43,5 @@ export default async function handler(req:Request,res:ServerResponse){
   }else if(input.action!=='status')return answer(res,400,{error:'invalid_action'});
   const configurations=await db(`rest/v1/wa_evo_credentials?client_id=eq.${client}&select=slot,expires_at,updated_at,branches,checked_scopes,checked_at&order=slot`);
   return answer(res,200,{configurations});
- }catch(e){const code=e instanceof Error?e.message:'';const allowed=['unauthorized','forbidden','invalid_credentials','invalid_slot','invalid_expiry','evo_expired','evo_access_denied','evo_permission_denied','evo_rate_limited','evo_unavailable','evo_invalid_response','evo_response_too_large','evo_member_probe_pending'];return answer(res,['unauthorized','forbidden'].includes(code)?403:code.startsWith('invalid_')?400:503,{error:allowed.includes(code)?code:'evo_save_unavailable',...(e instanceof EvoReadError?{diagnostic:{endpoint:e.endpoint,http_status:e.httpStatus}}:{})});}
+ }catch(e){const code=e instanceof Error?e.message:'';const allowed=['unauthorized','forbidden','invalid_credentials','invalid_slot','invalid_expiry','invalid_period','evo_expired','evo_access_denied','evo_permission_denied','evo_rate_limited','evo_unavailable','evo_invalid_response','evo_response_too_large','evo_member_probe_pending','evo_preview_too_large'];return answer(res,['unauthorized','forbidden'].includes(code)?403:code.startsWith('invalid_')?400:503,{error:allowed.includes(code)?code:'evo_save_unavailable',...(e instanceof EvoReadError?{diagnostic:{endpoint:e.endpoint,http_status:e.httpStatus}}:{})});}
 }

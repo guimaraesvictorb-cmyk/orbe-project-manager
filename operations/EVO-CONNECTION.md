@@ -16,3 +16,11 @@ Cadastro e verificação de leitura são a primeira etapa. Não calculam CAC ou 
 CAC de mídia exige gasto e novos alunos atribuídos com a mesma janela e cobertura. LTV realizado exige horizonte/coorte explícitos e pagamentos conciliados; não substituir por valor de contrato nem misturar com projeção. Falta de dados deve permanecer pendência, nunca zero inventado.
 
 Referências oficiais: https://api.abcevo.com/ e https://evohelp.w12app.com.br/pt-BR/articles/11830973-integracao-evo-api
+
+## Conferência de contratos por unidade
+
+A ação “Consultar contratos por unidade”, na mesma seção EVO, consulta somente os registros de contratos no período (até 31 dias), em uma página de no máximo 1.000 por chave. Ao atingir o limite, a resposta é recusada em vez de apresentar um total parcial. O resultado é agregado por plano e unidade, sem nomes, telefones ou IDs de alunos. O nome oficial do EVO é preservado. Chaves com escopos sobrepostos, multifilial ou pendentes de verificação bloqueiam a consulta para evitar duplicidade. Cada chave deve retornar os contratos da filial verificada. Contagem de contratos e alunos vinculados não equivale a alunos novos de marketing: inclui renovações, transferências e outros contratos.
+
+A rotina pura `evoReconciliation.ts` já contém regras testadas para deduplicação, cronologia, histórico incompleto, receita recebida/estornos e correspondência entre janela/canal de gasto e alunos novos. Ela ainda não é alimentada por uma importação conciliada e não está ligada a números de CAC/LTV no dashboard. O adaptador de dados reais, o acompanhamento da cobertura e a sincronização econômica dentro da cota da API continuam pendentes.
+
+Plano API Plus: documentação consultada em 01/11/2026 indica 100 chamadas/dia e 1.000/mês por filial, compartilhadas com outras integrações. Não ativar polling frequente ou importar um aluno por chamada sem orçamento de consultas/cache. Não contratar PRO nem ampliar gastos automaticamente.

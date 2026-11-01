@@ -1,5 +1,5 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';import {registerHooks} from 'node:module'
-registerHooks({resolve(s,c,n){return n(c.parentURL?.includes('/api/')&&['./_lib/trackingServer.js','./_lib/qrAccess.js','./_lib/kommo.js','./_lib/evo.js','./trackingServer.js'].includes(s)?s.replace(/\.js$/,'.ts'):s,c)}})
+registerHooks({resolve(s,c,n){return n(c.parentURL?.includes('/api/')&&['./_lib/trackingServer.js','./_lib/qrAccess.js','./_lib/kommo.js','./_lib/evo.js','./_lib/evoPreview.js','./evo.js','./trackingServer.js'].includes(s)?s.replace(/\.js$/,'.ts'):s,c)}})
 const {evoCredentials,evoBinding,evoGet,evoBranches,verifyEvo}=await import('../api/_lib/evo.ts')
 const {seal,unseal}=await import('../api/_lib/kommo.ts')
 const {default:handler}=await import('../api/evo-connection.ts')
@@ -38,4 +38,11 @@ test('no membership leaves member verification pending instead of inventing an i
  const original=globalThis.fetch,seen:string[]=[]
  globalThis.fetch=async(url)=>{const path=new URL(String(url)).pathname;seen.push(path);return new Response(JSON.stringify(path.endsWith('/configuration')?[{idBranch:1,name:'Synthetic'}]:[]))}
  try{await assert.rejects(()=>verifyEvo(secret),{message:'evo_member_probe_pending',endpoint:'v3/membermembership',httpStatus:200});assert.equal(seen.some(p=>p.endsWith('/members/basic')),false)}finally{globalThis.fetch=original}
+})
+
+const {evoPreviewPeriod,evoEnrollmentPreview}=await import('../api/_lib/evoPreview.ts')
+test('enrollment preview bounds periods and returns plan aggregates without private student data',async()=>{
+ assert.deepEqual(evoPreviewPeriod('2026-10-28','2026-11-01'),{start:'2026-10-28',end:'2026-11-01'});for(const period of [['2026-10-01','2026-11-02'],['2026-02-31','2026-03-01'],['2026-11-01','2026-10-01']])assert.throws(()=>evoPreviewPeriod(period[0],period[1]))
+ const original=globalThis.fetch;let mode='normal';globalThis.fetch=async(url)=>{const u=new URL(String(url));assert.equal(u.searchParams.get('registerDateStart'),'2026-10-28T03:00:00Z');assert.equal(u.searchParams.get('registerDateEnd'),'2026-11-02T02:59:59.999Z');assert.equal(u.searchParams.get('take'),'1000');const row={idMember:123,idMemberMemberShip:456,idBranch:mode==='wrong'?2:1,name:'PRIVATE_STUDENT',nameMembership:'Plano sintético',saleValue:999,cancelDate:null};return new Response(JSON.stringify(mode==='large'?Array.from({length:1000},()=>row):[row,row]))}
+ try{const result=await evoEnrollmentPreview(secret,'2026-10-28','2026-11-01',1);assert.equal(result.contracts,1);assert.equal(result.members,1);assert.equal(JSON.stringify(result).includes('PRIVATE_STUDENT'),false);assert.equal(JSON.stringify(result).includes('123'),false);mode='wrong';await assert.rejects(()=>evoEnrollmentPreview(secret,'2026-10-28','2026-11-01',1),{message:'evo_overlapping_scope'});mode='large';await assert.rejects(()=>evoEnrollmentPreview(secret,'2026-10-28','2026-11-01',1),{message:'evo_preview_too_large'})}finally{globalThis.fetch=original}
 })
