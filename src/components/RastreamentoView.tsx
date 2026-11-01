@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { ArrowLeft, Link2, MessageSquare, Search } from 'lucide-react'
 import { useClients } from '../hooks/useClients'
+import { AdsCredentials } from './AdsCredentials'
 import { supabase } from '../lib/supabase'
 import type { TrackingConnection } from '../lib/whatsappTracking'
 import { syncIsFresh } from '../lib/whatsappTracking'
@@ -56,7 +57,7 @@ export function RastreamentoView() {
   useEffect(()=>{let active=true;const refresh=()=>Promise.all([supabase.from('wa_tracking_connections').select('*'),supabase.from('wa_tracking_setups').select('*')]).then(([channels,plans])=>{if(active){setConnections(channels.data??[]);setSetups(plans.data??[]);setError(channels.error||plans.error?'Não foi possível consultar as conexões. Atualize a página.':'')}});void refresh();const timer=window.setInterval(refresh,30000);return()=>{active=false;window.clearInterval(timer)}},[selected])
   const isConnected=(id:string)=>!error&&connections.some(c=>c.client_id===id&&c.enabled&&c.connection_state==='open'&&(c.provider==='kommo'?['receiving','waiting_message'].includes(setups.find(s=>s.client_id===id)?.activation_status??''):syncIsFresh(c.last_sync_at)))
   const visible=clients.filter(c=>c.name.toLocaleLowerCase('pt-BR').includes(search.toLocaleLowerCase('pt-BR'))).sort((a,b)=>Number(isConnected(b.id))-Number(isConnected(a.id))||a.name.localeCompare(b.name,'pt-BR'))
-  if(selected!==null) return <div className="min-w-0"><div className="m-6 mb-0 space-y-3"><button onClick={()=>setSelected(null)} className="flex items-center gap-2 text-sm text-[var(--accent)]"><ArrowLeft size={16}/>Todos os clientes</button><p className="text-xl font-semibold">{clients.find(c=>c.id===selected)?.name}</p></div><Suspense fallback={<p className="p-6">Carregando…</p>}><WhatsAppTrackingView key={selected} clientId={selected}/></Suspense></div>
+  if(selected!==null) return <div className="min-w-0"><div className="m-6 mb-0 space-y-3"><button onClick={()=>setSelected(null)} className="flex items-center gap-2 text-sm text-[var(--accent)]"><ArrowLeft size={16}/>Todos os clientes</button><p className="text-xl font-semibold">{clients.find(c=>c.id===selected)?.name}</p><AdsCredentials key={selected} clientId={selected}/></div><Suspense fallback={<p className="p-6">Carregando…</p>}><WhatsAppTrackingView key={selected} clientId={selected}/></Suspense></div>
   return <div className="p-4 md:p-6 space-y-6 min-w-0">
     <div><p className="text-xs uppercase tracking-widest text-[var(--accent)]">Central de rastreamento</p><h1 className="text-2xl font-bold">Rastreamento</h1><p className="text-sm text-[var(--text-tertiary)] mt-2">Escolha um cliente para acompanhar seus WhatsApps, leads e origens.</p></div>
     <div className="flex gap-3 border-b border-[var(--border)]"><button className={`flex gap-2 py-3 border-b-2 ${mode==='clients'?'border-[var(--accent)] text-[var(--accent)]':'border-transparent'}`} onClick={()=>setMode('clients')}><MessageSquare size={18}/>WhatsApp por cliente</button><button className={`flex gap-2 py-3 border-b-2 ${mode==='utm'?'border-[var(--accent)] text-[var(--accent)]':'border-transparent'}`} onClick={()=>setMode('utm')}><Link2 size={18}/>Gerador de UTMs</button></div>
