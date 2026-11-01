@@ -1,6 +1,6 @@
 # EVO — cadastro de leitura
 
-O cadastro fica em Rastreamento → cliente → Painel interno → EVO · matrículas, CAC e LTV.
+O cadastro fica em Rastreamento → cliente → Painel interno → Conexões → EVO · matrículas, CAC e LTV.
 Somente administradores ativos com acesso financeiro e visibilidade do cliente podem salvar, consultar metadados ou verificar as chaves.
 
 Cada cliente tem slots independentes (Ibes, Alecrim, Itapuã, multifilial). O nome do slot é uma organização do cadastro, não prova do escopo: a verificação retorna os nomes e IDs das filiais informadas pelo EVO. Não considerar uma chave individual como cobertura de outras unidades.
