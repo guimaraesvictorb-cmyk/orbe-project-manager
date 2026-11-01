@@ -2,9 +2,10 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Copy, Check, RefreshCw, MessageSquare, AlertCircle } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
+import { dayBrt } from '../lib/biDashboard'
 import { previousContactOrigin } from '../lib/conversationOrigin'
 import { Ga4TrackingStatus } from './Ga4TrackingStatus'
-import { campaignName, trackingChannel } from '../lib/trackingDashboard'
+import { campaignName } from '../lib/trackingDashboard'
 import { TrackingDashboard } from './TrackingDashboard'
 import { Footer } from './Footer'
 import { WhatsAppConnectionSetup } from './WhatsAppConnectionSetup'
@@ -29,7 +30,7 @@ export function WhatsAppTrackingView({clientId,embedded=false,pilotOnly=false}:{
   const [connections,setConnections]=useState<TrackingConnection[]>([])
   const [connectionId,setConnectionId]=useState('')
   const [tab,setTab]=useState<Tab>('overview')
-  const [start,setStart]=useState(''); const [end,setEnd]=useState(''); const [source,setSource]=useState('')
+  const [start,setStart]=useState(()=>dayBrt(new Date(Date.now()-29*86400000).toISOString())); const [end,setEnd]=useState(()=>dayBrt(new Date().toISOString())); const [source,setSource]=useState('')
   const [summary,setSummary]=useState<TrackingSummary>(emptySummary)
   const [originEvidence,setOriginEvidence]=useState<TrackingRecord[]>([])
   const [records,setRecords]=useState<TrackingRecord[]>([]); const [total,setTotal]=useState(0); const [page,setPage]=useState(0)
@@ -109,18 +110,18 @@ export function WhatsAppTrackingView({clientId,embedded=false,pilotOnly=false}:{
   const fresh=syncIsFresh(connection?.last_sync_at??null)
   return <div className="flex flex-col min-h-full min-w-0">
     <div className={`flex-1 w-full min-w-0 space-y-6 ${embedded?'py-4':'max-w-screen-2xl mx-auto px-4 md:px-6 py-8'}`}>
-      <div className="flex items-start justify-between gap-4 flex-wrap">
+      {tab!=='overview'&&<>      <div className="flex items-start justify-between gap-4 flex-wrap">
         <div><p className="text-xs uppercase tracking-widest text-[var(--accent)]">Origens e conversas</p><h1 className="text-xl font-bold text-[var(--text-primary)]">WhatsApp e UTMs</h1><p className={`text-sm mt-1 ${muted}`}>Acompanhe as mensagens recebidas e a campanha que trouxe cada contato.</p></div>
         <button onClick={()=>void refresh()} disabled={loading} className="flex items-center gap-2 text-sm text-[var(--accent)] disabled:opacity-50"><RefreshCw size={16} className={loading?'animate-spin':''}/>Atualizar</button>
-      </div>
+      </div></>}
       {error&&<div role="alert" className="rounded-xl p-4 text-sm bg-[var(--danger-tint)] text-[var(--danger)] flex gap-2"><AlertCircle size={18}/>{error}</div>}
       {notice&&<div role="status" className="text-sm text-[var(--accent)]">{notice}</div>}
       {connections.length===0&&!loading&&!error?<>{clientId?<WhatsAppConnectionSetup clientId={clientId} onConnected={()=>void refresh()}/>:<div className={`${panelClass} p-8 text-center`}><MessageSquare className="mx-auto mb-3 text-[var(--accent)]"/><h2 className="font-semibold">Nenhum WhatsApp conectado</h2></div>}</>:<>
-        <div className={`${panelClass} p-4 flex flex-wrap items-center gap-4`}>
+        {(tab!=='overview'||connections.length>1)&&<>        <div className={`${panelClass} p-4 flex flex-wrap items-center gap-4`}>
           <label className="min-w-0 flex-1 max-w-md text-xs">Conexão<select aria-label="Conexão" className={`${inputClass} mt-1`} value={connectionId} onChange={e=>changeFilter(setConnectionId,e.target.value)}>{connections.map(c=><option key={c.id} value={c.id}>{connectionLabel(c)}</option>)}</select></label>
           <div className="text-sm"><p className={fresh?'text-[var(--accent)]':muted}>{connection?.provider==='kommo'?(connection.last_received_at?'Mensagens recebidas pela Kommo':'Aguardando primeira mensagem da Kommo'):(connection?.provider==='evolution'?(fresh&&connection.enabled&&connection.connection_state==='open'?'WhatsApp conectado':'Aguardando conexão do WhatsApp'):(fresh?'Sincronização ativa':'Aguardando sincronização'))}</p><p className={`text-xs mt-1 ${muted}`}>Última atualização: {date(connection?.last_sync_at)}</p></div>
           {connection?.capture_mode==='pilot'&&<span className="text-xs px-3 py-2 rounded-lg bg-[var(--accent-tint)] text-[var(--accent)]">Piloto · somente remetente autorizado</span>}
-        </div>
+        </div></>}
         <div className="flex gap-1 border-b border-[var(--border)] overflow-x-auto" role="tablist" aria-label="Acompanhamento WhatsApp">{tabs.map(([id,label])=><button key={id} role="tab" aria-selected={tab===id} onClick={()=>{setTab(id);setPage(0);setNotice('')}} className={`whitespace-nowrap px-4 py-3 text-sm border-b-2 ${tab===id?'border-[var(--accent)] text-[var(--accent)]':'border-transparent text-[var(--text-tertiary)]'}`}>{label}</button>)}</div>
         {!['links','connections'].includes(tab)&&<div className="flex flex-wrap gap-3 items-end">
           <label className="text-xs">De<input aria-label="Data inicial" type="date" className={`${inputClass} mt-1`} value={start} onChange={e=>changeFilter(setStart,e.target.value)}/></label>
@@ -131,10 +132,7 @@ export function WhatsAppTrackingView({clientId,embedded=false,pilotOnly=false}:{
         {tab==='overview'&&<>
           <TrackingDashboard clientId={connection?.client_id} key={`${connectionId}:${start}:${end}:${source}`} revision={summary.messages} source={source.trim()} connectionId={connectionId} start={periodBounds(start,end).start} end={periodBounds(start,end).end}/>
           <CommercialTracking key={`commercial:${connectionId}`} connectionId={connectionId} source={source.trim()} start={periodBounds(start,end).start} end={periodBounds(start,end).end} compact/>
-          <h2 className="font-semibold">Atividade de conversas no período</h2>
-          <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">{[['Cliques',summary.clicks],['Contatos que enviaram mensagem',summary.contacts],['Mensagens recebidas',summary.messages],['Mensagens com origem',summary.identified]].map(([label,value])=><div className={`${panelClass} p-5`} key={String(label)}><p className={`text-xs ${muted}`}>{label}</p><p className="text-3xl font-semibold mt-2">{value}</p></div>)}</div>
-          <p className={`text-xs ${muted}`}>{summary.unidentified} mensagem(ns) sem origem identificada no período. Abrir o link registra um clique; o contato aparece após enviar uma mensagem.</p>
-          <div className={`${panelClass} overflow-hidden`}><h2 className="font-semibold p-5 border-b border-[var(--border)]">Mensagens por campanha</h2>{summary.campaigns.length===0?<p className={`p-6 text-sm ${muted}`}>Nenhuma mensagem neste período.</p>:<div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className={`text-left ${muted}`}><th className="p-4">Origem</th><th className="p-4">Campanha</th><th className="p-4">Contatos</th><th className="p-4">Mensagens</th></tr></thead><tbody>{summary.campaigns.map(c=><tr key={`${c.source}\0${c.campaign}`} className="border-t border-[var(--border)]"><td className="p-4">{trackingChannel({utm_source:c.source})}</td><td className="p-4 break-words">{campaignName({utm_campaign:c.campaign,utm_source:c.source},connectionId)}</td><td className="p-4">{c.contacts}</td><td className="p-4">{c.messages}</td></tr>)}</tbody></table></div>}</div>
+
         </>}
         {tab==='commercial'&&<CommercialTracking key={connectionId} connectionId={connectionId} source={source.trim()} start={periodBounds(start,end).start} end={periodBounds(start,end).end}/>}
         {['messages','leads','clicks'].includes(tab)&&<div className={`${panelClass} overflow-hidden`}>
