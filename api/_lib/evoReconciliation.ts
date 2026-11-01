@@ -39,3 +39,11 @@ export function reconcileEvo(input:{leads:ReconciliationLead[];members:Reconcili
  // Explicit aggregates only. No lead/member identities or phone numbers leave here.
  return {cohort:{start:input.start,end:input.end,as_of:input.asOf},new_students:newStudents,channels,existing,unmatched,ambiguous,invalid_phones:invalidPhones,pending_history:pendingHistory,outside_period:outsidePeriod,coverage_complete:complete,cac_media_channels:cacChannels,paid_new_students:paidNewStudents,cac_media_cents:cacReady?Math.round(spend!.cents/paidNewStudents):null,cac_status:cacReady?'ready':newStudents===0&&complete?'no_new_students':'incomplete',realized_revenue_cents:input.coverage.payments?revenueCents:null,realized_revenue_per_student_cents:ltvReady?Math.round(revenueCents/newStudents):null,ltv_status:ltvReady?'realized_cohort_revenue':'incomplete'};
 }
+export function observedMetaCac(input:{scope:string;start:string;coverageStart:string|null;students:number;spendCents:number|null;currency?:string;timezone?:string}){
+ if(input.scope!=='all')return {status:'unit_spend_pending',amount_cents:null};
+ if(!input.coverageStart||input.start<input.coverageStart)return {status:'history_partial',amount_cents:null};
+ if(!Number.isSafeInteger(input.students)||input.students<=0)return {status:'no_confirmed_students',amount_cents:null};
+ if(input.spendCents===null)return {status:'spend_pending',amount_cents:null};
+ if(!Number.isSafeInteger(input.spendCents)||input.spendCents<0||input.currency!=='BRL'||input.timezone!=='America/Sao_Paulo')return {status:'incompatible_spend',amount_cents:null};
+ return {status:'observed',amount_cents:Math.round(input.spendCents/input.students),spend_cents:input.spendCents,students:input.students};
+}

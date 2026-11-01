@@ -1,9 +1,10 @@
+import {evoSaleInstant,type EvoCandidate} from './evoAttribution.js';
 import {evoGet,EvoReadError,type EvoSecret} from './evo.js';
 export function evoPreviewPeriod(start:unknown,end:unknown){
  if(typeof start!=='string'||typeof end!=='string'||![start,end].every(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)&&Number.isFinite(Date.parse(d))&&new Date(d).toISOString().slice(0,10)===d)||start>end||Date.parse(end)-Date.parse(start)>30*86400000)throw new Error('invalid_period');
  return {start,end};
 }
-export async function evoEnrollmentPreview(secret:EvoSecret,start:string,end:string,branchId:number){
+export async function evoEnrollmentPreview(secret:EvoSecret,start:string,end:string,branchId:number,onCandidate?:(c:EvoCandidate)=>void,timeZoneFallback?:string){
  const data:unknown[]=[];let pages=0,complete=false;
  // Sales exposes recurring registrations and first-membership identifiers. This
  // endpoint documents 100 rows/page, unlike MemberMembership's limit of 25.
@@ -30,7 +31,10 @@ export async function evoEnrollmentPreview(secret:EvoSecret,start:string,end:str
    if(!item||typeof item!=='object')throw new Error('evo_invalid_response');const p=item as Record<string,unknown>,contract=Number(p.idMemberMembership);
    if(!Number.isSafeInteger(contract)||contract<=0)continue;
    if(p.additionalType||p.flReceiptOnly)continue;
-   if(!r.removed&&!renewal&&first>0&&contract===first&&!Number(p.idMembershipRenewed)&&!r.idSaleMigration){firstMembers.add(id);classified=true}
+   if(r.removed===false&&!renewal&&first>0&&contract===first&&!Number(p.idMembershipRenewed)&&!r.idSaleMigration){
+    if(!firstMembers.has(id)){const contacts=Array.isArray(member.contacts)?member.contacts:[],phones=contacts.flatMap(c=>{if(!c||typeof c!=='object')return [];const text=(c as Record<string,unknown>).description;return typeof text==='string'&&/^[+()\d\s.-]+$/.test(text)?[text]:[]});onCandidate?.({key:`${branchId}:${id}`,phones,at:evoSaleInstant(r.saleDate,r.timeZone,timeZoneFallback)})}
+    firstMembers.add(id);classified=true
+   }
    if(contracts.has(contract))continue;contracts.add(contract);
    const name=typeof p.item==='string'?p.item.slice(0,160):typeof p.description==='string'?p.description.slice(0,160):'Plano não informado',group=plans.get(name)??{name,contracts:0,canceled:0};group.contracts++;if(r.removed)group.canceled++;plans.set(name,group);
   }

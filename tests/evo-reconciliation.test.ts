@@ -7,3 +7,7 @@ test('unpaid/future money is excluded, refunds reduce revenue and zero students 
 test('conflicting receipt copies and duplicate identities fail rather than inflate totals',()=>{const x=make();x.receipts.push({...x.receipts[0]!,netCents:500});assert.throws(()=>reconcileEvo(x),{message:'conflicting_receipt'});const y=make();y.members.push({...y.members[0]!});assert.throws(()=>reconcileEvo(y),{message:'duplicate_member'})})
 
 test('paid-media CAC excludes organic acquisitions and withholds mismatched spend periods',()=>{const x=make();x.leads[0]!.channel='Instagram';assert.equal(reconcileEvo(x).new_students,1);assert.equal(reconcileEvo(x).paid_new_students,0);assert.equal(reconcileEvo(x).cac_media_cents,null);const y=make();y.spend.start='2026-10-01T03:00:00Z';assert.equal(reconcileEvo(y).cac_media_cents,null)})
+const {observedMetaCac}=await import('../api/_lib/evoReconciliation.ts')
+test('observed CAC requires matching media scope, captured period, BRL timezone and confirmed students',()=>{
+ const x={scope:'all',start:'2026-10-28',coverageStart:'2026-10-28',students:2,spendCents:10000,currency:'BRL',timezone:'America/Sao_Paulo'};assert.equal(observedMetaCac(x).amount_cents,5000);for(const change of [{scope:'ibes'},{start:'2026-10-01'},{students:0},{spendCents:null},{currency:'USD'},{timezone:'UTC'}])assert.equal(observedMetaCac({...x,...change}).amount_cents,null)
+})

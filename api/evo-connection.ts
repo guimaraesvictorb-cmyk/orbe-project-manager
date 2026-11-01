@@ -1,7 +1,13 @@
+import {createHash} from 'node:crypto';
 import type {ServerResponse} from 'node:http';
 import {answer,type Request} from './_lib/trackingServer.js';
 import {qrUser} from './_lib/qrAccess.js';
 import {object,ORBE_ORIGIN,scalar,seal,unseal} from './_lib/kommo.js';
+import {evoMemberRevenue} from './_lib/evoRevenue.js';
+import {metaReport} from './_lib/adsReport.js';
+import {adsBinding} from './_lib/adsCredentials.js';
+import {observedMetaCac} from './_lib/evoReconciliation.js';
+import {attributeEvoCandidates,evoLeadSources,type EvoCandidate} from './_lib/evoAttribution.js';
 import {evoPreviewPeriod,evoEnrollmentPreview} from './_lib/evoPreview.js';
 import {EvoReadError,evoBinding,evoCredentials,verifyEvo} from './_lib/evo.js';
 export default async function handler(req:Request,res:ServerResponse){
@@ -14,19 +20,40 @@ export default async function handler(req:Request,res:ServerResponse){
   const profiles=await db<{role:string;can_view_financials:boolean}[]>(`rest/v1/profiles?id=eq.${user.id}&select=role,can_view_financials`);
   if(profiles[0]?.role!=='admin'||!profiles[0]?.can_view_financials)return answer(res,403,{error:'financial_admin_required'});
   const slot=scalar(input.slot,40)||'principal';if(!/^[a-z0-9_-]{1,40}$/.test(slot))throw new Error('invalid_slot');
-  if(input.action==='preview'){
+  if(input.action==='preview'||input.action==='report'){
    const period=evoPreviewPeriod(input.start,input.end);
-   const configurations=await db<{slot:string;ciphertext:string;expires_at:string;branches:{id:number;name:string}[];checked_at:string|null}[]>(`rest/v1/wa_evo_credentials?client_id=eq.${client}&select=slot,ciphertext,expires_at,branches,checked_at&order=slot`);
-   if(!configurations.length)return answer(res,404,{error:'credentials_missing'});
-   const results=[];const used=new Set<number>();
+   const scope=typeof input.preview_scope==='string'?input.preview_scope:'all';if(!/^[a-z0-9_-]{1,40}$/.test(scope))throw new Error('invalid_slot');
+   const configurations=await db<{slot:string;ciphertext?:string;updated_at:string;expires_at:string;branches:{id:number;name:string}[];checked_at:string|null}[]>(`rest/v1/wa_evo_credentials?client_id=eq.${client}${scope==='all'?'':`&slot=eq.${scope}`}&select=slot,updated_at,${input.action==='preview'?'ciphertext,':''}expires_at,branches,checked_at&order=slot`);
+   if(!configurations.length)return input.action==='report'?answer(res,200,{status:'not_configured'}):answer(res,404,{error:'credentials_missing'});
+   const version=createHash('sha256').update(JSON.stringify(configurations.map(c=>[c.slot,c.updated_at,c.checked_at,c.branches]))).digest('hex');
+   if(input.action==='report'){
+    const snapshots=await db<{report:unknown;credential_version:string}[]>(`rest/v1/wa_evo_snapshots?client_id=eq.${client}&start_date=eq.${period.start}&end_date=eq.${period.end}&scope=eq.${scope}&select=report,credential_version`);
+    if(!snapshots[0])return answer(res,200,{status:'missing'});if(snapshots[0].credential_version!==version)return answer(res,200,{status:'configuration_changed'});
+    return answer(res,200,{status:'ready',preview:snapshots[0].report});
+   }
+   const results=[];const candidates:EvoCandidate[]=[];const used=new Set<number>();
    for(const row of configurations){
     if(!row.checked_at||Date.parse(row.expires_at)<=Date.now())return answer(res,400,{error:'evo_unverified_connection'});
     if(row.branches.length!==1||used.has(row.branches[0]!.id))return answer(res,400,{error:'evo_overlapping_scope'});
     used.add(row.branches[0]!.id);
-    const secret=evoCredentials(object(JSON.parse(unseal(row.ciphertext,evoBinding(client,row.slot)))));
-    results.push({slot:row.slot,branch:row.branches[0],...await evoEnrollmentPreview(secret,period.start,period.end,row.branches[0]!.id)});
+    const secret=evoCredentials(object(JSON.parse(unseal(row.ciphertext!,evoBinding(client,row.slot)))));
+    results.push({slot:row.slot,branch:row.branches[0],...await evoEnrollmentPreview(secret,period.start,period.end,row.branches[0]!.id,c=>candidates.push(c),client==='589481f6-3a15-4c93-b384-5d33373c20e3'?'-03:00':undefined)});
    }
-   return answer(res,200,{preview:{period,units:results,checked_at:new Date().toISOString()}});
+   const matched:EvoCandidate[]=[];const leads=await evoLeadSources(db,client),attribution=attributeEvoCandidates(candidates,leads,(candidate,source)=>{if(['Google','Meta','Site','Instagram'].includes(source))matched.push(candidate)}),coverageStart=leads.length?new Date(Math.min(...leads.map(l=>Date.parse(l.at)))-10800000).toISOString().slice(0,10):null;
+   let cac=observedMetaCac({scope,start:period.start,coverageStart,students:attribution.channels.Meta??0,spendCents:null});
+   if(cac.status==='spend_pending')try{
+    const ads=await db<{account_id:string;ciphertext:string}[]>(`rest/v1/wa_ads_credentials?client_id=eq.${client}&platform=eq.meta&select=account_id,ciphertext`);
+    if(ads[0]){const credentials=object(JSON.parse(unseal(ads[0].ciphertext,adsBinding(client,'meta'))));const media=await metaReport(ads[0].account_id,scalar(credentials.access_token,4096),{since:period.start,until:period.end});cac=observedMetaCac({scope,start:period.start,coverageStart,students:attribution.channels.Meta??0,spendCents:Math.round(media.totals.spend*100),currency:media.currency,timezone:media.timezone})}
+   }catch{/* Enrollment results remain useful when the ads provider is unavailable. */}
+   const checkedAt=new Date().toISOString();let ltv:{status:string;amount_cents:number|null;revenue_cents?:number;students?:number;as_of?:string}={status:!matched.length?'no_attributed_students':matched.length>8?'budget_pending':'financial_reconciliation_pending',amount_cents:null};
+   if(matched.length>0&&matched.length<=8&&client==='589481f6-3a15-4c93-b384-5d33373c20e3')try{
+    let revenue=0;
+    for(const candidate of matched){const [branch,member]=candidate.key.split(':').map(Number),row=configurations.find(c=>c.branches[0]?.id===branch);if(!row||!candidate.at)throw new Error('evo_financial_scope');const credential=evoCredentials(object(JSON.parse(unseal(row.ciphertext!,evoBinding(client,row.slot)))));revenue+=await evoMemberRevenue(credential,branch!,member!,candidate.at,checkedAt)}
+    ltv={status:'realized_observed',amount_cents:Math.round(revenue/matched.length),revenue_cents:revenue,students:matched.length,as_of:checkedAt};
+   }catch{/* Credits, refunds or incomplete receipt data keep LTV explicitly pending. */}
+   const preview={period,units:results,attribution,coverage_start:coverageStart,cac_meta:cac,ltv,checked_at:checkedAt};
+   await db('rest/v1/wa_evo_snapshots?on_conflict=client_id,start_date,end_date,scope',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=representation'},body:JSON.stringify({client_id:client,start_date:period.start,end_date:period.end,scope,credential_version:version,report:preview,updated_at:preview.checked_at,updated_by:user.id})});
+   return answer(res,200,{status:'ready',preview});
   }
   if(input.action==='save'){
    const secret=evoCredentials(input),expiry=scalar(input.expires_at,10);
