@@ -6,13 +6,17 @@ export function evoCredentials(input:Record<string,unknown>):EvoSecret {
  if(!/^[A-Za-z0-9_.-]{2,120}$/.test(dns)||token.length<16||token.length>4096||/[\s<>]/.test(token))throw new Error('invalid_credentials');
  return {dns,token};
 }
+export class EvoReadError extends Error {
+ readonly endpoint:string; readonly httpStatus:number|null;
+ constructor(message:string,endpoint:string,httpStatus:number|null){super(message);this.endpoint=endpoint;this.httpStatus=httpStatus}
+}
 const paths=new Set(['v1/configuration','v1/configuration/api-usage','v1/members/basic','v3/membermembership','v2/sales','v1/receivables']);
 export async function evoGet(secret:EvoSecret,path:string,params:Record<string,string>={}){
  if(!paths.has(path))throw new Error('invalid_endpoint');
  const query=new URLSearchParams(params),url=`https://evo-integracao-api.w12app.com.br/api/${path}${query.size?'?'+query:''}`;
- let r:Response;try{r=await fetch(url,{headers:{Accept:'application/json',Authorization:`Basic ${Buffer.from(`${secret.dns}:${secret.token}`).toString('base64')}`},redirect:'error',signal:AbortSignal.timeout(12000)})}catch{throw new Error('evo_unavailable')}
+ let r:Response;try{r=await fetch(url,{headers:{Accept:'application/json',Authorization:`Basic ${Buffer.from(`${secret.dns}:${secret.token}`).toString('base64')}`},redirect:'error',signal:AbortSignal.timeout(12000)})}catch{throw new EvoReadError('evo_unavailable',path,null)}
  // Never expose provider response bodies: they may echo private fields or secrets.
- if(!r.ok){if(r.status===401)throw new Error('evo_access_denied');if(r.status===403)throw new Error('evo_permission_denied');if(r.status===429)throw new Error('evo_rate_limited');throw new Error('evo_unavailable')}
+ if(!r.ok){const code=r.status===401?'evo_access_denied':r.status===403?'evo_permission_denied':r.status===429?'evo_rate_limited':'evo_unavailable';throw new EvoReadError(code,path,r.status)}
  if(Number(r.headers.get('content-length'))>2_000_000)throw new Error('evo_response_too_large');
  const body=await r.text();if(Buffer.byteLength(body)>2_000_000)throw new Error('evo_response_too_large');
  try{return JSON.parse(body) as unknown}catch{throw new Error('evo_invalid_response')}
@@ -30,9 +34,16 @@ export function evoBranches(data:unknown){
 }
 export async function verifyEvo(secret:EvoSecret){
  const branches=evoBranches(await evoGet(secret,'v1/configuration'));
- // Bounded probes verify each required scope, never importing a full student list here.
+ // Basic member lookup requires an identity filter. Obtain a real ID from one
+ // membership first rather than treating an invalid unfiltered request as an outage.
  const checked:string[]=[];
- for(const [name,path] of [['alunos','v1/members/basic'],['matriculas','v3/membermembership'],['vendas','v2/sales'],['recebimentos','v1/receivables']] as const){
+ const memberships=await evoGet(secret,'v3/membermembership',{take:'1',skip:'0'});
+ if(!Array.isArray(memberships))throw new EvoReadError('evo_invalid_response','v3/membermembership',200);
+ checked.push('matriculas');
+ const id=Number(memberships[0]?.idMember);
+ if(!Number.isSafeInteger(id)||id<=0)throw new EvoReadError('evo_member_probe_pending','v3/membermembership',200);
+ await evoGet(secret,'v1/members/basic',{idMember:String(id),take:'1',skip:'0'});checked.push('alunos');
+ for(const [name,path] of [['vendas','v2/sales'],['recebimentos','v1/receivables']] as const){
   await evoGet(secret,path,{take:'1',skip:'0'});checked.push(name);
  }
  return {branches,checked,checked_at:new Date().toISOString()};

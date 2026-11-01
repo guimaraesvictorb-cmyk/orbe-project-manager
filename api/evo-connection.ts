@@ -2,7 +2,7 @@ import type {ServerResponse} from 'node:http';
 import {answer,type Request} from './_lib/trackingServer.js';
 import {qrUser} from './_lib/qrAccess.js';
 import {object,ORBE_ORIGIN,scalar,seal,unseal} from './_lib/kommo.js';
-import {evoBinding,evoCredentials,verifyEvo} from './_lib/evo.js';
+import {EvoReadError,evoBinding,evoCredentials,verifyEvo} from './_lib/evo.js';
 export default async function handler(req:Request,res:ServerResponse){
  if(req.method!=='POST')return answer(res,405,{error:'method_not_allowed'});
  if(req.headers.origin!==ORBE_ORIGIN)return answer(res,403,{error:'forbidden'});
@@ -28,5 +28,5 @@ export default async function handler(req:Request,res:ServerResponse){
   }else if(input.action!=='status')return answer(res,400,{error:'invalid_action'});
   const configurations=await db(`rest/v1/wa_evo_credentials?client_id=eq.${client}&select=slot,expires_at,updated_at,branches,checked_scopes,checked_at&order=slot`);
   return answer(res,200,{configurations});
- }catch(e){const code=e instanceof Error?e.message:'';const allowed=['unauthorized','forbidden','invalid_credentials','invalid_slot','invalid_expiry','evo_expired','evo_access_denied','evo_permission_denied','evo_rate_limited','evo_unavailable','evo_invalid_response','evo_response_too_large'];return answer(res,['unauthorized','forbidden'].includes(code)?403:code.startsWith('invalid_')?400:503,{error:allowed.includes(code)?code:'evo_save_unavailable'});}
+ }catch(e){const code=e instanceof Error?e.message:'';const allowed=['unauthorized','forbidden','invalid_credentials','invalid_slot','invalid_expiry','evo_expired','evo_access_denied','evo_permission_denied','evo_rate_limited','evo_unavailable','evo_invalid_response','evo_response_too_large','evo_member_probe_pending'];return answer(res,['unauthorized','forbidden'].includes(code)?403:code.startsWith('invalid_')?400:503,{error:allowed.includes(code)?code:'evo_save_unavailable',...(e instanceof EvoReadError?{diagnostic:{endpoint:e.endpoint,http_status:e.httpStatus}}:{})});}
 }
