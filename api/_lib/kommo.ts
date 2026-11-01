@@ -48,10 +48,10 @@ export type KommoWebhook={id:number;destination:string;disabled:boolean;settings
 export type KommoWebhooks={_embedded?:{webhooks?:KommoWebhook[]}};
 export async function ensureKommoWebhook(origin:string,token:string,destination:string,existing:KommoWebhooks|null) {
   const find=(list:KommoWebhooks|null)=>list?._embedded?.webhooks?.find(h=>h.destination===destination);
-  const ready=(h:KommoWebhook|undefined)=>Boolean(h&&!h.disabled&&Array.isArray(h.settings)&&h.settings.includes('add_message'));
+  const ready=(h:KommoWebhook|undefined)=>Boolean(h&&!h.disabled&&Array.isArray(h.settings)&&h.settings.includes('add_message')&&h.settings.includes('add_outgoing_message'));
   let hook=find(existing);
   if(!ready(hook)) {
-    await kommoRequest(origin,token,'/api/v4/webhooks',{method:'POST',body:JSON.stringify({destination,settings:['add_message']})});
+    await kommoRequest(origin,token,'/api/v4/webhooks',{method:'POST',body:JSON.stringify({destination,settings:[...new Set([...(hook?.settings??[]),'add_message','add_outgoing_message'])]})});
     // Confirm the persisted subscription independently of the creation response envelope.
     hook=find(await kommoRequest<KommoWebhooks|null>(origin,token,'/api/v4/webhooks'));
   }
@@ -59,7 +59,7 @@ export async function ensureKommoWebhook(origin:string,token:string,destination:
   decimal(hook!.id);
   return hook!;
 }
-export type KommoMessage={id:string;contact_id:string;chat_id:string;talk_id:string;lead_id:string;text:string;created_at:string;type:string;origin:string;reference:string};
+export type KommoMessage={id:string;contact_id:string;chat_id:string;talk_id:string;lead_id:string;text:string;created_at:string;type:string;origin:string;reference:string;direction:'incoming'|'outgoing';author_kind:'external'|'human'|'automatic'|'unknown';author_name:string};
 // Whitelist-only form parsing. No generic bracket expansion / prototype assignment.
 export function parseWebhook(body: unknown) {
   let entries: [string,string][];
@@ -76,7 +76,7 @@ export function parseWebhook(body: unknown) {
       if(!value||typeof value!=='object')throw new Error('invalid_field');
       for(const [k,v] of Object.entries(value)){if(!/^[A-Za-z0-9_]+$/.test(k))throw new Error('invalid_field');flatten(`${key}[${k}]`,v,depth+1);}
     };
-    for(const [k,v] of Object.entries(root)){if(['account','message','add'].includes(k))flatten(k,v,0);else if(k.startsWith('account[')||k.startsWith('message[')||k.startsWith('add['))entries.push([k,scalar(v,32768)]);}
+    for(const [k,v] of Object.entries(root)){if(['account','message','add','outgoing_message'].includes(k))flatten(k,v,0);else if(k.startsWith('account[')||k.startsWith('message[')||k.startsWith('add[')||k.startsWith('outgoing_message['))entries.push([k,scalar(v,32768)]);}
   }
   if(entries.length>1500)throw new Error('too_many_fields');
   const fields=new Map<string,string>();
@@ -84,15 +84,17 @@ export function parseWebhook(body: unknown) {
   const account=decimal(fields.get('account[id]'));
   const subdomain=scalar(fields.get('account[subdomain]'),64);
   if(!/^[a-z0-9][a-z0-9-]*$/.test(subdomain))throw new Error('invalid_account');
-  const indexes=new Set<string>();
-  for(const key of fields.keys()) {const m=/^(?:message\[add\]|add)\[(\d{1,2})\]\[id\]$/.exec(key);if(m)indexes.add(m[1]);}
-  if(indexes.size>30)throw new Error('too_many_messages');
+  const prefixes=new Set<string>();
+  for(const key of fields.keys()) {const m=/^((?:message\[add\]|outgoing_message\[add\]|add)\[\d{1,2}\])\[id\]$/.exec(key);if(m)prefixes.add(m[1]);}
+  if(prefixes.size>30)throw new Error('too_many_messages');
   const messages:KommoMessage[]=[];
-  for(const index of indexes){
+  for(const prefix of prefixes){
+    const index=/\[(\d+)\]$/.exec(prefix)![1];
     if(fields.has(`message[add][${index}][id]`)&&fields.has(`add[${index}][id]`))throw new Error('ambiguous_message');
-    const prefix=fields.has(`message[add][${index}][id]`)?`message[add][${index}]`:`add[${index}]`;
     const field=(k:string)=>fields.get(`${prefix}[${k}]`)??'';
-    if(field('type')!=='incoming'||(field('author][type') && field('author][type')!=='external'))continue;
+    const direction=field('type');
+    if(!['incoming','outgoing'].includes(direction))continue;
+    if(direction==='incoming'&&field('author][type')&&field('author][type')!=='external')continue;
     const origin=scalar(field('origin'),128);
     // Unknown channels are deliberately ignored, never relabelled WhatsApp.
     if(!['whatsapp','waba','whatsapp_business','whatsapp_cloud_api','com.amocrm.waba','com.amocrm.whatsapp_cloud_api','com.amocrm.amocrmwa'].includes(origin))continue;
@@ -100,7 +102,7 @@ export function parseWebhook(body: unknown) {
     const stamp=Number(field('created_at'));
     if(!Number.isSafeInteger(stamp)||stamp<1577836800||stamp*1000>Date.now()+300000)throw new Error('invalid_date');
     const text=scalar(field('text'),16000), refs=references(text);
-    messages.push({id,contact_id:decimal(field('contact_id')),chat_id:scalar(field('chat_id'),160),talk_id:field('talk_id')?decimal(field('talk_id')):'',lead_id:field('entity_type')==='lead'||field('element_type')==='2'?decimal(field('entity_id')||field('element_id')):'',text:visibleText(text),created_at:new Date(stamp*1000).toISOString(),type:scalar(field('message_type')||'text',64),origin,reference:refs.length===1?refs[0]:''});
+    messages.push({id,direction:direction as 'incoming'|'outgoing',author_kind:direction==='incoming'?'external':['bot','salesbot'].includes(field('author][type'))?'automatic':field('author][type')==='internal'&&/^[1-9][0-9]*$/.test(field('author][user_id'))?'human':'unknown',author_name:scalar(field('author][name'),160),contact_id:decimal(field('contact_id')),chat_id:scalar(field('chat_id'),160),talk_id:field('talk_id')?decimal(field('talk_id')):'',lead_id:field('entity_type')==='lead'||field('element_type')==='2'?decimal(field('entity_id')||field('element_id')):'',text:visibleText(text),created_at:new Date(stamp*1000).toISOString(),type:scalar(field('message_type')||'text',64),origin,reference:refs.length===1?refs[0]:''});
   }
   return {account,subdomain,messages};
 }

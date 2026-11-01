@@ -29,7 +29,7 @@ def sanitized_event(value, instance):
     """Strip global API key, URL, profile and irrelevant data before persisting."""
     if not isinstance(value,dict) or value.get('instance')!=instance or value.get('event')!='messages.upsert': return None
     data=value.get('data',{});key=data.get('key',{})
-    if key.get('fromMe') is not False or key.get('participant') or key.get('participantAlt'): return None
+    if not isinstance(key.get('fromMe'),bool) or key.get('participant') or key.get('participantAlt'): return None
     if data.get('isHistory') or data.get('isHistorySync') or data.get('type') in ('append','history','set'): return None
     jid=key.get('remoteJid','')
     if jid.endswith('@lid'): jid=key.get('remoteJidAlt','')
@@ -50,7 +50,7 @@ def sanitized_event(value, instance):
             if isinstance(content.get(kind+'Message'),dict):clean[kind+'Message']={'caption':str(content[kind+'Message'].get('caption',''))[:16000]};break
     if any(k in content for k in ('protocolMessage','reactionMessage','pollUpdateMessage','editedMessage')):return None
     if not clean:return None
-    return {'instance':instance,'event':'messages.upsert','data':{'key':{'fromMe':False,'remoteJid':jid,'id':str(key.get('id',''))[:200]},'messageTimestamp':stamp,'pushName':str(data.get('pushName',''))[:160],'message':clean}}
+    return {'instance':instance,'event':'messages.upsert','data':{'key':{'fromMe':key['fromMe'],'remoteJid':jid,'id':str(key.get('id',''))[:200]},'messageTimestamp':stamp,'pushName':str(data.get('pushName',''))[:160],'message':clean}}
 
 class Worker:
     def __init__(self, config, global_key, db_path):

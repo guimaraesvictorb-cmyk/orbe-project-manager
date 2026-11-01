@@ -8,6 +8,7 @@ import { campaignName, trackingChannel } from '../lib/trackingDashboard'
 import { TrackingDashboard } from './TrackingDashboard'
 import { Footer } from './Footer'
 import { WhatsAppConnectionSetup } from './WhatsAppConnectionSetup'
+import { CommercialTracking } from './CommercialTracking'
 import { QRActivation } from './QRActivation'
 import { KommoConnectionStatus } from './KommoConnectionStatus'
 import { emptySummary, periodBounds, syncIsFresh, trackingUrl, utmFields } from '../lib/whatsappTracking'
@@ -16,7 +17,7 @@ import type { TrackingConnection, TrackingLink, TrackingRecord, TrackingSummary 
 const inputClass='w-full rounded-lg border px-3 py-2 text-sm bg-[var(--bg-surface-2)] border-[var(--border)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)]'
 const panelClass='rounded-xl border border-[var(--border)] bg-[var(--bg-surface)]'
 const muted='text-[var(--text-tertiary)]'
-const tabs=[['overview','Dashboard'],['messages','Mensagens'],['leads','Contatos'],['clicks','Cliques'],['links','Criar links'],['connections','Conexão']] as const
+const tabs=[['overview','Dashboard'],['commercial','Atendimento e vendas'],['messages','Mensagens'],['leads','Contatos'],['clicks','Cliques'],['links','Criar links'],['connections','Conexão']] as const
 type Tab=typeof tabs[number][0]
 const date=(value:unknown)=>value ? new Date(String(value)).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}) : '—'
 const phone=(value:unknown)=>String(value ?? '').replace(/^55(\d{2})(\d{5})(\d{4})$/,'($1) $2-$3')
@@ -129,11 +130,13 @@ export function WhatsAppTrackingView({clientId,embedded=false,pilotOnly=false}:{
         </div>}
         {tab==='overview'&&<>
           <TrackingDashboard clientId={connection?.client_id} key={`${connectionId}:${start}:${end}:${source}`} revision={summary.messages} source={source.trim()} connectionId={connectionId} start={periodBounds(start,end).start} end={periodBounds(start,end).end}/>
+          <CommercialTracking key={`commercial:${connectionId}`} connectionId={connectionId} source={source.trim()} start={periodBounds(start,end).start} end={periodBounds(start,end).end} compact/>
           <h2 className="font-semibold">Atividade de conversas no período</h2>
           <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">{[['Cliques',summary.clicks],['Contatos que enviaram mensagem',summary.contacts],['Mensagens recebidas',summary.messages],['Mensagens com origem',summary.identified]].map(([label,value])=><div className={`${panelClass} p-5`} key={String(label)}><p className={`text-xs ${muted}`}>{label}</p><p className="text-3xl font-semibold mt-2">{value}</p></div>)}</div>
           <p className={`text-xs ${muted}`}>{summary.unidentified} mensagem(ns) sem origem identificada no período. Abrir o link registra um clique; o contato aparece após enviar uma mensagem.</p>
           <div className={`${panelClass} overflow-hidden`}><h2 className="font-semibold p-5 border-b border-[var(--border)]">Mensagens por campanha</h2>{summary.campaigns.length===0?<p className={`p-6 text-sm ${muted}`}>Nenhuma mensagem neste período.</p>:<div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className={`text-left ${muted}`}><th className="p-4">Origem</th><th className="p-4">Campanha</th><th className="p-4">Contatos</th><th className="p-4">Mensagens</th></tr></thead><tbody>{summary.campaigns.map(c=><tr key={`${c.source}\0${c.campaign}`} className="border-t border-[var(--border)]"><td className="p-4">{trackingChannel({utm_source:c.source})}</td><td className="p-4 break-words">{campaignName({utm_campaign:c.campaign,utm_source:c.source},connectionId)}</td><td className="p-4">{c.contacts}</td><td className="p-4">{c.messages}</td></tr>)}</tbody></table></div>}</div>
         </>}
+        {tab==='commercial'&&<CommercialTracking key={connectionId} connectionId={connectionId} source={source.trim()} start={periodBounds(start,end).start} end={periodBounds(start,end).end}/>}
         {['messages','leads','clicks'].includes(tab)&&<div className={`${panelClass} overflow-hidden`}>
           <div className="p-4 flex justify-between text-sm"><span>{total} {tab==='messages'?'mensagens':tab==='leads'?'contatos':'cliques'}</span>{loading&&<span className={muted}>Atualizando…</span>}</div>
           {tab==='messages'&&<p className={`px-4 pb-4 text-xs ${muted}`}>Quando uma mensagem não traz origem, mostramos o histórico já comprovado do contato, se houver. Esse histórico não é contado como um novo clique ou uma nova conversão da campanha. O filtro de origem considera apenas a origem confirmada da própria mensagem.</p>}

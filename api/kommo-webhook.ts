@@ -13,7 +13,8 @@ export default async function handler(req:Request,res:ServerResponse) {
   let batch;
   try {batch=parseWebhook(req.body);}catch{return answer(res,400,{error:'invalid_event'});}
   try {
-    const result=await storage()<{accepted:number;connection_id:string;contact_ids:string[]}>('rest/v1/rpc/wa_kommo_receive',{method:'POST',body:JSON.stringify({p_hash:digest(keys[0]),p_account:batch.account,p_origin:`https://${batch.subdomain}.kommo.com`,p_messages:batch.messages})});
+    const result=await storage()<{accepted:number;connection_id:string;contact_ids:string[]}>('rest/v1/rpc/wa_kommo_receive',{method:'POST',body:JSON.stringify({p_hash:digest(keys[0]),p_account:batch.account,p_origin:`https://${batch.subdomain}.kommo.com`,p_messages:batch.messages.filter(m=>m.direction==='incoming')})});
+    await storage()('rest/v1/rpc/wa_conversation_ingest',{method:'POST',body:JSON.stringify({p_connection:result.connection_id,p_messages:batch.messages.filter(m=>m.direction==='outgoing')})});
     waitUntil(deliverAnalytics(result.connection_id).catch(()=>{}));
     if(result.contact_ids.length)waitUntil(enrich(result.connection_id,result.contact_ids).catch(()=>{}));
     return answer(res,200,{ok:true,accepted:result.accepted});

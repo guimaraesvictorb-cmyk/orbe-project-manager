@@ -42,13 +42,16 @@ export default async function handler(req:Request,res:ServerResponse){
    const sessions=await db<Session[]>(`rest/v1/wa_qr_sessions?connection_id=eq.${conn.id}`),session=sessions[0];
    if(!session||broker&&session.worker_id!==broker.id)return answer(res,409,{error:'not_prepared'});
    if(action==='worker_poll'){
+    await db('rest/v1/wa_service_settings?on_conflict=connection_id',{method:'POST',headers:{Prefer:'resolution=ignore-duplicates'},body:JSON.stringify({connection_id:conn.id})});
+    await db(`rest/v1/wa_service_settings?connection_id=eq.${conn.id}&capture_ready_at=is.null`,{method:'PATCH',body:JSON.stringify({capture_ready_at:new Date().toISOString()})});
     await db(`rest/v1/wa_qr_sessions?connection_id=eq.${conn.id}`,{method:'PATCH',body:JSON.stringify({worker_seen_at:new Date().toISOString()})});
     return answer(res,200,{ok:true,connection_id:conn.id,instance:conn.instance,destination:conn.destination,request_id:session.request_id,expires_at:session.expires_at,status:session.status,verified_at:session.verified_at,capture_mode:conn.capture_mode,allowed_senders:conn.allowed_senders});
    }
    if(action==='worker_messages'){
     if(!Array.isArray(input.events)||input.events.length>30)return answer(res,400,{error:'invalid_batch'});
     const messages=input.events.map(raw=>{try{return evolutionMessage(raw,conn.instance)}catch{return null}}).filter(Boolean);
-    const accepted=await db<number>('rest/v1/rpc/wa_qr_receive',{method:'POST',body:JSON.stringify({p_connection:conn.id,p_messages:messages})});
+    const accepted=await db<number>('rest/v1/rpc/wa_qr_receive',{method:'POST',body:JSON.stringify({p_connection:conn.id,p_messages:messages.filter(m=>m?.direction==='incoming')})});
+    await db('rest/v1/rpc/wa_conversation_ingest',{method:'POST',body:JSON.stringify({p_connection:conn.id,p_messages:messages.filter(m=>m?.direction==='outgoing')})});
     return answer(res,200,{ok:true,accepted});
    }
    if(action!=='worker_state')return answer(res,400,{error:'invalid_action'});

@@ -9,6 +9,9 @@ class QRWorkerTest(unittest.TestCase):
   self.assertIsNone(module.sanitized_event(self.event(),'other'))
   value=self.event();value['data']['isHistory']=True;self.assertIsNone(module.sanitized_event(value,'orbe-qr-lk-lucas'))
   value=self.event();value['data']['key']['remoteJid']='123456789012345@lid';self.assertIsNone(module.sanitized_event(value,'orbe-qr-lk-lucas'))
+ def test_outgoing_envelope_keeps_direction_without_private_media(self):
+  value=self.event();value['data']['key']['fromMe']=True
+  clean=module.sanitized_event(value,'orbe-qr-lk-lucas');self.assertTrue(clean['data']['key']['fromMe']);self.assertNotIn('secret',json.dumps(clean))
  def test_failed_delivery_retains_outbox_and_ack_removes_it(self):
   with tempfile.TemporaryDirectory() as tmp:
    worker=module.Worker({'token':'test-token'},'',str(Path(tmp)/'outbox.sqlite3'))
