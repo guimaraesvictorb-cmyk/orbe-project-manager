@@ -12,13 +12,15 @@ import { WhatsAppConnectionSetup } from './WhatsAppConnectionSetup'
 import { CommercialTracking } from './CommercialTracking'
 import { QRActivation } from './QRActivation'
 import { KommoConnectionStatus } from './KommoConnectionStatus'
+import { AdsCredentials } from './AdsCredentials'
+import { EvoConnection } from './EvoConnection'
 import { emptySummary, periodBounds, syncIsFresh, trackingUrl, utmFields } from '../lib/whatsappTracking'
 import type { TrackingConnection, TrackingLink, TrackingRecord, TrackingSummary } from '../lib/whatsappTracking'
 
 const inputClass='w-full rounded-lg border px-3 py-2 text-sm bg-[var(--bg-surface-2)] border-[var(--border)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)]'
 const panelClass='rounded-xl border border-[var(--border)] bg-[var(--bg-surface)]'
 const muted='text-[var(--text-tertiary)]'
-const tabs=[['overview','Dashboard'],['commercial','Atendimento e vendas'],['messages','Mensagens'],['leads','Contatos'],['clicks','Cliques'],['links','Criar links'],['connections','Conexão']] as const
+const tabs=[['overview','Dashboard'],['commercial','Atendimento e vendas'],['messages','Mensagens'],['leads','Contatos'],['clicks','Cliques'],['links','Criar links'],['connections','Conexões']] as const
 type Tab=typeof tabs[number][0]
 const date=(value:unknown)=>value ? new Date(String(value)).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}) : '—'
 const phone=(value:unknown)=>String(value ?? '').replace(/^55(\d{2})(\d{5})(\d{4})$/,'($1) $2-$3')
@@ -116,18 +118,19 @@ export function WhatsAppTrackingView({clientId,embedded=false,pilotOnly=false}:{
   return <div className="flex flex-col min-h-full min-w-0">
     <div className={`flex-1 w-full min-w-0 space-y-6 ${embedded?'py-4':'max-w-screen-2xl mx-auto px-4 md:px-6 py-8'}`}>
       {tab!=='overview'&&<>      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div><p className="text-xs uppercase tracking-widest text-[var(--accent)]">Origens e conversas</p><h1 className="text-xl font-bold text-[var(--text-primary)]">WhatsApp e UTMs</h1><p className={`text-sm mt-1 ${muted}`}>Acompanhe as mensagens recebidas e a campanha que trouxe cada contato.</p></div>
+        <div><p className="text-xs uppercase tracking-widest text-[var(--accent)]">{tab==='connections'?'Central de conexões':'Origens e conversas'}</p><h1 className="text-xl font-bold text-[var(--text-primary)]">{tab==='connections'?'Conexões e configurações':'WhatsApp e UTMs'}</h1><p className={`text-sm mt-1 ${muted}`}>{tab==='connections'?'Configure os canais e acompanhe o estado das integrações.':'Acompanhe as mensagens recebidas e a campanha que trouxe cada contato.'}</p></div>
         <button onClick={()=>void refresh()} disabled={loading} className="flex items-center gap-2 text-sm text-[var(--accent)] disabled:opacity-50"><RefreshCw size={16} className={loading?'animate-spin':''}/>Atualizar</button>
       </div></>}
       {error&&<div role="alert" className="rounded-xl p-4 text-sm bg-[var(--danger-tint)] text-[var(--danger)] flex gap-2"><AlertCircle size={18}/>{error}</div>}
       {notice&&<div role="status" className="text-sm text-[var(--accent)]">{notice}</div>}
-      {connections.length===0&&!loading&&!error?<>{clientId?<WhatsAppConnectionSetup clientId={clientId} onConnected={()=>void refresh()}/>:<div className={`${panelClass} p-8 text-center`}><MessageSquare className="mx-auto mb-3 text-[var(--accent)]"/><h2 className="font-semibold">Nenhum WhatsApp conectado</h2></div>}</>:<>
+        <div className="flex gap-1 border-b border-[var(--border)] overflow-x-auto" role="tablist" aria-label="Acompanhamento WhatsApp">{tabs.map(([id,label])=><button key={id} role="tab" aria-selected={tab===id} onClick={()=>{setTab(id);setPage(0);setNotice('')}} className={`whitespace-nowrap px-4 py-3 text-sm border-b-2 ${tab===id?'border-[var(--accent)] text-[var(--accent)]':'border-transparent text-[var(--text-tertiary)]'}`}>{label}</button>)}</div>
+      {tab==='connections'&&clientId&&<section aria-label="Conexões do cliente" className="space-y-4"><div><h2 className="text-lg font-semibold">Conexões do cliente</h2><p className={`mt-1 text-sm ${muted}`}>Gerencie WhatsApp, anúncios e EVO deste cliente em um só lugar.</p></div><AdsCredentials clientId={clientId}/><EvoConnection clientId={clientId}/></section>}
+      {connections.length===0&&!loading&&!error?<>{clientId&&tab==='connections'?<WhatsAppConnectionSetup clientId={clientId} onConnected={()=>void refresh()}/>:<div className={`${panelClass} p-8 text-center`}><MessageSquare className="mx-auto mb-3 text-[var(--accent)]"/><h2 className="font-semibold">Nenhum WhatsApp conectado</h2>{clientId&&<button type="button" onClick={()=>setTab('connections')} className="mt-3 text-sm text-[var(--accent)]">Abrir Conexões</button>}</div>}</>:<>
         {(tab!=='overview'||connections.length>1)&&<>        <div className={`${panelClass} p-4 flex flex-wrap items-center gap-4`}>
           <label className="min-w-0 flex-1 max-w-md text-xs">Conexão<select aria-label="Conexão" className={`${inputClass} mt-1`} value={connectionId} onChange={e=>changeFilter(setConnectionId,e.target.value)}>{connections.map(c=><option key={c.id} value={c.id}>{connectionLabel(c)}</option>)}</select></label>
           <div className="text-sm"><p className={fresh?'text-[var(--accent)]':muted}>{connection?.provider==='kommo'?(connection.last_received_at?'Mensagens recebidas pela Kommo':'Aguardando primeira mensagem da Kommo'):(connection?.provider==='evolution'?(fresh&&connection.enabled&&connection.connection_state==='open'?'WhatsApp conectado':'Aguardando conexão do WhatsApp'):(fresh?'Sincronização ativa':'Aguardando sincronização'))}</p><p className={`text-xs mt-1 ${muted}`}>Última atualização: {date(connection?.last_sync_at)}</p></div>
           {connection?.capture_mode==='pilot'&&<span className="text-xs px-3 py-2 rounded-lg bg-[var(--accent-tint)] text-[var(--accent)]">Piloto · somente remetente autorizado</span>}
         </div></>}
-        <div className="flex gap-1 border-b border-[var(--border)] overflow-x-auto" role="tablist" aria-label="Acompanhamento WhatsApp">{tabs.map(([id,label])=><button key={id} role="tab" aria-selected={tab===id} onClick={()=>{setTab(id);setPage(0);setNotice('')}} className={`whitespace-nowrap px-4 py-3 text-sm border-b-2 ${tab===id?'border-[var(--accent)] text-[var(--accent)]':'border-transparent text-[var(--text-tertiary)]'}`}>{label}</button>)}</div>
         {!['links','connections'].includes(tab)&&<div className="flex flex-wrap gap-3 items-end">
           <label className="text-xs">De<input aria-label="Data inicial" type="date" className={`${inputClass} mt-1`} value={start} onChange={e=>changeFilter(setStart,e.target.value)}/></label>
           <label className="text-xs">Até<input aria-label="Data final" type="date" className={`${inputClass} mt-1`} value={end} onChange={e=>changeFilter(setEnd,e.target.value)}/></label>
