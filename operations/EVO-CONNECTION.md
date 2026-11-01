@@ -7,7 +7,7 @@ Cada cliente tem slots independentes (Ibes, Alecrim, Itapuã, multifilial). O no
 
 DNS e token são enviados ao próprio servidor do Studio, cifrados com AES-GCM e vínculo `evo:<client>:<slot>`. Não voltam ao navegador. A tabela e a função de gravação são exclusivas do service_role; há auditoria do responsável, sem segredos. Substituição exige versão esperada e invalida a verificação anterior. Não armazenar chaves no repositório, chat, notas ou em arquivos locais permanentes.
 
-Verificar leitura executa cinco GETs no host fixo oficial `evo-integracao-api.w12app.com.br`: configuração de filiais, dados básicos de um aluno, uma matrícula, uma venda e um recebível. As amostras pessoais são descartadas e somente metadados de cobertura são retornados. Não há POST/PUT/DELETE no EVO. Não há sincronização automática, alteração de plano ou aumento do limite de consumo. A consulta pode contar no contrato de consumo da API EVO.
+Verificar leitura executa cinco GETs no host fixo oficial `evo-integracao-api.w12app.com.br`: configuração de filiais, uma matrícula, dados básicos do aluno dessa matrícula, uma venda e um recebível. O endpoint de dados básicos exige `idMember`, telefone, email ou documento; a verificação usa somente o ID real retornado pela matrícula. Ausência de matrícula deixa essa leitura pendente. As amostras pessoais são descartadas e somente metadados de cobertura são retornados. Não há POST/PUT/DELETE no EVO. Não há sincronização automática, alteração de plano ou aumento do limite de consumo. A consulta pode contar no contrato de consumo da API EVO.
 
 ## Limites atuais
 

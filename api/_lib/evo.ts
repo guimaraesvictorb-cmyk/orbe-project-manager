@@ -44,7 +44,8 @@ export async function verifyEvo(secret:EvoSecret){
  if(!Number.isSafeInteger(id)||id<=0)throw new EvoReadError('evo_member_probe_pending','v3/membermembership',200);
  await evoGet(secret,'v1/members/basic',{idMember:String(id),take:'1',skip:'0'});checked.push('alunos');
  for(const [name,path] of [['vendas','v2/sales'],['recebimentos','v1/receivables']] as const){
-  await evoGet(secret,path,{take:'1',skip:'0'});checked.push(name);
+  const end=new Date().toISOString().slice(0,10),start=new Date(Date.now()-7*86400000).toISOString().slice(0,10);
+  await evoGet(secret,path,{take:'1',skip:'0',...(name==='recebimentos'?{receivingDateStart:start,receivingDateEnd:end}:{})});checked.push(name);
  }
  return {branches,checked,checked_at:new Date().toISOString()};
 }
