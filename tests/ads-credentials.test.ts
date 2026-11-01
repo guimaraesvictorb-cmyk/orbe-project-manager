@@ -41,3 +41,11 @@ test('API restricts administration, rejects other origins, encrypts writes and r
   assert.ok(paths.filter(p=>p.includes('/wa_ads_credentials?')&&!p.includes('select=updated_at')).every(p=>!p.includes('ciphertext')&&!p.includes('select=*')))
  }finally{globalThis.fetch=before.fetch;for(const [key,v] of Object.entries({VITE_SUPABASE_URL:before.url,SUPABASE_SERVICE_ROLE_KEY:before.key,KOMMO_ENCRYPTION_KEY:before.crypto})){if(v===undefined)delete process.env[key];else process.env[key]=v}}
 })
+test('Meta validation binds account, reads campaigns and never leaks raw provider errors',async()=>{
+ const {verifyMetaAccess}=await import('../api/_lib/adsCredentials.ts');const before=globalThis.fetch;const paths:string[]=[];let mode='ok';
+ globalThis.fetch=async(url,init)=>{const path=String(url);paths.push(path);assert.equal(path.includes(meta.access_token),false);assert.equal(new Headers(init?.headers).get('Authorization'),`Bearer ${meta.access_token}`);assert.equal(init?.redirect,'error');
+ if(mode==='invalid')return new Response(JSON.stringify({error:{code:190,message:meta.access_token}}),{status:400});
+ if(path.includes('/campaigns'))return new Response(JSON.stringify({data:[]}));
+ return new Response(JSON.stringify({account_id:mode==='mismatch'?'other':'2988254138081501',name:'Synthetic account'}));};
+ try{assert.equal((await verifyMetaAccess('2988254138081501',meta.access_token)).status,'access_verified');assert.equal(paths.length,2);mode='mismatch';await assert.rejects(()=>verifyMetaAccess('2988254138081501',meta.access_token),{message:'meta_account_mismatch'});mode='invalid';await assert.rejects(()=>verifyMetaAccess('2988254138081501',meta.access_token),{message:'meta_token_invalid'});await assert.rejects(()=>verifyMetaAccess('../other',meta.access_token),{message:'invalid_credentials'});}finally{globalThis.fetch=before}
+})
