@@ -1,3 +1,4 @@
+import {useTrackingRoute,updateTrackingRoute} from '../lib/trackingRoute'
 import {useEffect,useState} from 'react'
 import {Target,ArrowUpRight} from 'lucide-react'
 import {supabase} from '../lib/supabase'
@@ -7,8 +8,9 @@ import {dayBrt,unitOf} from '../lib/biDashboard'
 import {biPanel,BiLineChart} from './BiCharts'
 type Goal={unit:string;target:number}
 const names:Record<string,string>={all:'Todas as unidades',alecrim:'Alecrim',ibes:'Ibes',itapua:'Itapuã'}
-export function BiGoals({connectionId,records,month:initialMonth,rayafit}:{connectionId:string;records:TrackingRecord[];month:string;rayafit:boolean}){
- const [month,setMonth]=useState(initialMonth)
+export function BiGoals({connectionId,records,rayafit}:{connectionId:string;records:TrackingRecord[];rayafit:boolean}){
+ const month=useTrackingRoute().goalMonth
+ const setMonth=(goalMonth:string)=>updateTrackingRoute({goalMonth})
  const {profile}=useAuth(),[snapshot,setSnapshot]=useState<{key:string;goals:Goal[]}>(),[editing,setEditing]=useState(false),[error,setError]=useState(''),[busy,setBusy]=useState(false),[revision,setRevision]=useState(0)
  const key=connectionId+month;const goals=snapshot?.key===key?snapshot.goals:[]
  useEffect(()=>{let active=true;void supabase.from('wa_bi_goals').select('unit,target').eq('connection_id',connectionId).eq('month',month+'-01').then(r=>{if(active){if(r.error)setError('Não foi possível consultar as metas.');else{setSnapshot({key,goals:r.data});setError('')}}});return()=>{active=false}},[connectionId,month,key,revision])

@@ -1,3 +1,4 @@
+import {useTrackingRoute,updateTrackingRoute} from '../lib/trackingRoute'
 import {useEffect,useState} from 'react'
 import {RefreshCw} from 'lucide-react'
 import {supabase} from '../lib/supabase'
@@ -8,7 +9,9 @@ type Report={status:string;account_name:string;currency:string;timezone:string;c
 const number=(v:number)=>v.toLocaleString('pt-BR',{maximumFractionDigits:2})
 const errors:Record<string,string>={invalid_period:'Escolha um período de até 93 dias.',meta_token_invalid:'A credencial da Meta expirou ou foi revogada. Atualize o cadastro protegido.',meta_permission_denied:'A Meta não autorizou a leitura das métricas desta conta.',financial_access_required:'Seu perfil não tem permissão para consultar investimento e métricas de anúncios.',report_too_large:'O relatório excedeu o limite. Selecione um período menor.'}
 export function ChannelPerformance({platform,clientId,start,end,leads,coverageStart}:{platform:'meta'|'google';clientId:string;start:string;end:string;leads:number;coverageStart:string|null}){
- const {profile}=useAuth(),[result,setResult]=useState<{key:string;data?:Report;error?:string}>(),[revision,setRevision]=useState(0),[table,setTable]=useState<'campaigns'|'ads'>('campaigns')
+ const {profile}=useAuth(),[result,setResult]=useState<{key:string;data?:Report;error?:string}>(),[revision,setRevision]=useState(0)
+ const table=useTrackingRoute().mediaTable
+ const setTable=(mediaTable:'campaigns'|'ads')=>updateTrackingRoute({mediaTable})
  const key=[platform,clientId,start,end,revision].join(':');const current=result?.key===key?result:undefined
  useEffect(()=>{if(!profile?.can_view_financials)return;let active=true;const controller=new AbortController();void(async()=>{try{const {data}=await supabase.auth.getSession();const response=await fetch('/api/ads-report',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${data.session?.access_token}`},body:JSON.stringify({client_id:clientId,platform,start,end}),signal:controller.signal});const value=await response.json();if(!response.ok)throw new Error(errors[value.error]||'Não foi possível consultar a plataforma. Tente novamente.');if(active)setResult({key,data:value})}catch(e){if(active)setResult({key,error:e instanceof Error?e.message:'Falha na consulta.'})}})();return()=>{active=false;controller.abort()}},[key,platform,clientId,start,end,profile?.can_view_financials])
  const r=current?.data

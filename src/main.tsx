@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import { SharedDashboardPage } from './components/SharedDashboardPage.tsx'
+import {ThemeProvider} from './contexts/ThemeContext'
 import {ClientDashboardPage} from './components/ClientDashboardPage.tsx'
 import { AuthProvider } from './contexts/AuthContext.tsx'
 
@@ -11,7 +12,7 @@ const shareToken = new URLSearchParams(window.location.search).get('share')
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    {clientDashboardToken?<ClientDashboardPage token={clientDashboardToken}/>:<AuthProvider>
+    {clientDashboardToken?<ThemeProvider><ClientDashboardPage token={clientDashboardToken}/></ThemeProvider>:<AuthProvider>
       {shareToken ? <SharedDashboardPage token={shareToken} /> : <App />}
     </AuthProvider>}
   </StrictMode>,
