@@ -6,6 +6,46 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Names (file or folder) that mean "do not index, this is access data, raw
+// personal data, or a credential dump" — checked before any content is read.
+// Matching a folder name stops the walk from descending into it at all, so
+// nothing inside an excluded folder is even listed.
+const RESTRICTED_NAME_PATTERNS: RegExp[] = [
+  /acesso/i,                 // "Planilha de Acessos"
+  /senha/i, /password/i,
+  /credencial/i, /credential/i,
+  /\btoken\b/i, /\bsecret\b/i, /\bchave\b/i, /\blogin\b/i,
+  /base de clientes/i,       // bulk customer records
+  /\blead(s)?\b/i,           // raw lead sheets
+  /p[úu]blico/i, /audi[êe]ncia/i, /audience/i, // raw audience/CSV exports
+  /whatsapp/i,               // chat exports (personal conversations)
+];
+
+function isRestrictedName(name: string): boolean {
+  return RESTRICTED_NAME_PATTERNS.some((p) => p.test(name));
+}
+
+// Content-level check for files that pass the name filter but may still
+// carry an embedded secret (e.g. a key pasted into a notes doc) or bulk
+// personal data (phone/e-mail lists). Only a boolean/generic reason is ever
+// produced — the matched text itself is never stored, logged or returned.
+const SECRET_PATTERNS: RegExp[] = [
+  /-----BEGIN [A-Z ]*PRIVATE KEY-----/,
+  /\bAKIA[0-9A-Z]{16}\b/,
+  /eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/,
+  /(senha|password|token|api[_ -]?key|secret|chave)\s*[:=]\s*\S{6,}/i,
+];
+
+function looksLikeSecret(content: string): boolean {
+  return SECRET_PATTERNS.some((p) => p.test(content));
+}
+
+function looksLikeBulkPersonalData(content: string): boolean {
+  const phoneMatches = content.match(/\b(\+?\d{2}[\s.-]?)?\(?\d{2}\)?[\s.-]?\d{4,5}[\s.-]?\d{4}\b/g) ?? [];
+  const emailMatches = content.match(/[\w.+-]+@[\w-]+\.[\w.-]+/g) ?? [];
+  return phoneMatches.length > 15 || emailMatches.length > 15;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
@@ -29,12 +69,16 @@ serve(async (req) => {
       if (!assignment) return json({ error: "Sem acesso a este cliente" }, 403);
     }
 
-    const serviceAccountJson = Deno.env.get("GOOGLE_DRIVE_SERVICE_ACCOUNT_JSON");
-    if (!serviceAccountJson) return json({ error: "Integração do Drive ainda não configurada no servidor." }, 503);
-    const serviceAccount = JSON.parse(serviceAccountJson);
-    const accessToken = await getDriveToken(serviceAccount);
+    // Prefer the correctly-named secret; fall back to a legacy one only if
+    // its shape is a real Google service account AND it can actually mint a
+    // drive.readonly token — this never reads/exposes either secret's value,
+    // it only proves (or disproves) capability server-side.
+    const resolved = await resolveServiceAccount(Deno.env.get("GOOGLE_DRIVE_SERVICE_ACCOUNT_JSON"), Deno.env.get("GOOGLE_SERVICE_ACCOUNT_KEY"));
+    if (!resolved) return json({ error: "Integração do Drive ainda não configurada no servidor (nenhuma credencial de serviço válida encontrada)." }, 503);
+    const accessToken = resolved.token;
     const folderId = driveConfig.folder_id;
     const files: DriveFile[] = [];
+    const restrictedFolders: string[] = [];
     const visitedFolders = new Set<string>();
     async function walkFolder(parentId: string, path: string, depth: number): Promise<void> {
       if (depth > 8) throw new Error("A estrutura do Drive ultrapassa 8 níveis de pastas.");
@@ -54,6 +98,10 @@ serve(async (req) => {
         const listed = await driveFetch(`https://www.googleapis.com/drive/v3/files?${query}`, accessToken);
         for (const file of (listed.files ?? []) as DriveFile[]) {
           const nextPath = path ? `${path}/${file.name}` : file.name;
+          if (isRestrictedName(file.name)) {
+            if (file.mimeType === "application/vnd.google-apps.folder") restrictedFolders.push(nextPath);
+            continue; // never list, read or descend into restricted names
+          }
           if (file.mimeType === "application/vnd.google-apps.folder") await walkFolder(file.id, nextPath, depth + 1);
           else files.push({ ...file, relativePath: nextPath });
           if (files.length > 500) throw new Error("A pasta tem mais de 500 arquivos. Divida o material em subpastas por assunto.");
@@ -67,16 +115,37 @@ serve(async (req) => {
 
     const records = [];
     const skipped: Array<{ file: string; reason: string }> = [];
+    // File ids whose content just turned out to be a secret or bulk personal
+    // data — any content indexed from an earlier, cleaner version of the
+    // same file must be purged now, not kept around just because the file
+    // id is still present in the folder (the generic "stale" check below
+    // only catches files that disappeared or moved, not files that got
+    // worse in place).
+    const flaggedRefs = new Set<string>();
     let skippedCount = 0;
     for (let offset = 0; offset < files.length; offset += 8) {
       const chunk = await Promise.all(files.slice(offset, offset + 8).map(async (file) => ({ file, result: await readDriveFile(file, accessToken) })));
       for (const { file, result } of chunk) {
-        if (result.skipReason) {
+        if (!result.content) {
           skippedCount++;
-          if (skipped.length < 20) skipped.push({ file: file.relativePath ?? file.name, reason: result.skipReason });
+          if (skipped.length < 20) skipped.push({ file: file.relativePath ?? file.name, reason: result.skipReason ?? "Motivo não informado." });
           continue;
         }
         const content = result.content;
+        // Content-level check runs even for files whose name looked fine —
+        // never store a snippet, never name the matched pattern.
+        if (looksLikeSecret(content)) {
+          skippedCount++;
+          flaggedRefs.add(file.id);
+          if (skipped.length < 20) skipped.push({ file: file.relativePath ?? file.name, reason: "Restrito: conteúdo contém padrão de credencial/segredo — não indexado." });
+          continue;
+        }
+        if (looksLikeBulkPersonalData(content)) {
+          skippedCount++;
+          flaggedRefs.add(file.id);
+          if (skipped.length < 20) skipped.push({ file: file.relativePath ?? file.name, reason: "Restrito: parece conter dado pessoal em massa (telefones/e-mails) — não indexado." });
+          continue;
+        }
         records.push({
           client_id: clientId,
           title: file.relativePath ?? file.name,
@@ -90,20 +159,27 @@ serve(async (req) => {
         });
       }
     }
+    for (const folderPath of restrictedFolders) {
+      skippedCount++;
+      if (skipped.length < 20) skipped.push({ file: `${folderPath}/*`, reason: "Restrito: pasta inteira excluída por nome (acesso/credencial/dado pessoal) — nenhum arquivo dentro foi lido." });
+    }
     if (records.length) {
       const { error } = await supabase.from("client_knowledge").upsert(records, { onConflict: "client_id,source_ref" });
       if (error) throw new Error(`Falha ao salvar documentos sincronizados: ${error.message}`);
     }
-    // Keep old indexed content if a file is temporarily unreadable or not supported yet.
+    // Keep old indexed content if a file is temporarily unreadable or not
+    // supported yet — but never for a file that just got flagged as a
+    // secret or bulk personal data; that content comes out regardless of
+    // what was indexed before.
     const currentRefs = new Set(files.map((file) => file.id));
     const { data: existingDriveEntries, error: existingError } = await supabase.from("client_knowledge").select("id,source_ref,source_folder_id").eq("client_id", clientId).eq("source", "drive");
     if (existingError) throw new Error(`Falha ao reconciliar documentos removidos: ${existingError.message}`);
-    const staleIds = (existingDriveEntries ?? []).filter((entry) => entry.source_folder_id !== folderId || !currentRefs.has(entry.source_ref)).map((entry) => entry.id);
+    const staleIds = (existingDriveEntries ?? []).filter((entry) => entry.source_folder_id !== folderId || !currentRefs.has(entry.source_ref) || flaggedRefs.has(entry.source_ref)).map((entry) => entry.id);
     for (let offset = 0; offset < staleIds.length; offset += 100) {
       const { error } = await supabase.from("client_knowledge").delete().in("id", staleIds.slice(offset, offset + 100));
       if (error) throw new Error(`Falha ao remover documentos antigos da base: ${error.message}`);
     }
-    return json({ synced: records.length, skipped, skipped_count: skippedCount }, 200);
+    return json({ synced: records.length, skipped, skipped_count: skippedCount, restricted_folders: restrictedFolders.length, used_legacy_credential: resolved.usedLegacy }, 200);
   } catch (error) {
     return json({ error: String(error) }, 500);
   }
@@ -142,7 +218,34 @@ async function driveFetch(url: string, token: string) {
   return result;
 }
 
-async function getDriveToken(account: { client_email: string; private_key: string }) {
+type ServiceAccount = { client_email: string; private_key: string };
+
+// Tries the correctly-named secret first; only tries the legacy name if the
+// first is absent/invalid, and only ever as proof-of-capability (mint a
+// drive.readonly token) — never by reading or logging either value.
+async function resolveServiceAccount(primaryRaw: string | undefined, legacyRaw: string | undefined): Promise<{ token: string; usedLegacy: boolean } | null> {
+  const primary = await tryServiceAccount(primaryRaw);
+  if (primary) return { token: primary, usedLegacy: false };
+  const legacy = await tryServiceAccount(legacyRaw);
+  if (legacy) return { token: legacy, usedLegacy: true };
+  return null;
+}
+
+async function tryServiceAccount(raw: string | undefined): Promise<string | null> {
+  if (!raw) return null;
+  let parsed: unknown;
+  try { parsed = JSON.parse(raw); } catch { return null; }
+  const sa = parsed as Partial<ServiceAccount>;
+  if (typeof sa.client_email !== "string" || !/@[\w.-]+\.iam\.gserviceaccount\.com$/.test(sa.client_email)) return null;
+  if (typeof sa.private_key !== "string" || !sa.private_key.includes("PRIVATE KEY")) return null;
+  try {
+    return await getDriveToken(sa as ServiceAccount);
+  } catch {
+    return null;
+  }
+}
+
+async function getDriveToken(account: ServiceAccount) {
   const now = Math.floor(Date.now() / 1000);
   const header = base64url(JSON.stringify({ alg: "RS256", typ: "JWT" }));
   const payload = base64url(JSON.stringify({
