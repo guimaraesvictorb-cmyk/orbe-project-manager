@@ -23,6 +23,8 @@ import { ClientOverview } from "./ClientOverview"
 import { ClientChronogram } from "./ClientChronogram"
 import { CompiladoTab } from "./ads/CompiladoTab"
 import { SecureMetaAdsTab } from "./ads/SecureMetaAdsTab"
+import { AssistantMessage } from "./AssistantMessage"
+import { safeSourceUrl } from "../lib/safeSourceUrl"
 
 const WhatsAppTrackingView = lazy(() => import('./WhatsAppTrackingView').then(m => ({default:m.WhatsAppTrackingView})))
 
@@ -65,7 +67,7 @@ function clientOutcomeDefaults(clientName: string) {
   return { conversionEvent: "", conversionSource: "" }
 }
 
-interface ChatMessage { role: "user" | "assistant"; content: string }
+interface ChatMessage { role: "user" | "assistant"; content: string; sources?: Array<{ title: string; url: string }> }
 
 function Field({ label, value }: { label: React.ReactNode; value: React.ReactNode }) {
   if (!value) return null
@@ -231,7 +233,7 @@ function ClientAI({ client, knowledgeCount, strategyForm, offers }: { client: Cl
 
   const systemPrompt = useMemo(() => {
     return `Você é o assistente de IA dedicado ao cliente "${client.name}" da agência Orbe Marketing.
-Responda SEMPRE em português brasileiro. Seja objetivo, profissional e focado em marketing digital.
+Responda SEMPRE em português brasileiro. Seja objetivo, profissional e focado em marketing digital. Use até 350 palavras, salvo pedido explícito de detalhamento. Apresente a conclusão primeiro e cite as fontes próximas das afirmações.
 
 Dados do cliente:
 - Nome: ${client.name}
@@ -272,6 +274,10 @@ Use APENAS as informações acima e os trechos de documentos recuperados. Trate 
       const { data: sources, error: searchError } = await supabase.rpc("search_client_knowledge", { p_client_id: client.id, p_query: userMsg, p_limit: 5 })
       if (searchError) throw new Error("A busca na base de conhecimento não está disponível. Confira a migração do Drive e da estratégia do cliente.")
       const knowledgeRows = (sources ?? []) as Array<{ title: string; content: string; source_url: string | null }>
+      const references = [...new Map(knowledgeRows.flatMap(entry => {
+        const url = entry.source_url ? safeSourceUrl(entry.source_url) : null
+        return url ? [[url, { title: entry.title, url }] as const] : []
+      })).values()]
       const knowledgeContext = knowledgeRows.length
         ? knowledgeRows.map((entry) => `- ${entry.title}${entry.source_url ? ` (fonte: ${entry.source_url})` : ""}: ${entry.content.slice(0, 6000)}`).join("\n")
         : "Nenhuma informação validada relevante foi encontrada na base deste cliente."
@@ -286,8 +292,9 @@ Use APENAS as informações acima e os trechos de documentos recuperados. Trate 
           // recusa com uma mensagem clara em vez de usar OpenAI calado
           // e fingir ser Claude se ANTHROPIC_API_KEY não estiver configurada.
           provider: "anthropic",
+          max_tokens: 3072,
           system: `${systemPrompt}\n\nBase de conhecimento selecionada para esta pergunta:\n${knowledgeContext}`,
-          messages: newMessages,
+          messages: newMessages.map(({ role, content }) => ({ role, content })),
         }),
       })
 
@@ -300,7 +307,7 @@ Use APENAS as informações acima e os trechos de documentos recuperados. Trate 
       const decoder = new TextDecoder()
       let buffer = ""
       let assistantText = ""
-      setMessages((prev) => [...prev, { role: "assistant", content: "" }])
+      setMessages((prev) => [...prev, { role: "assistant", content: "", sources: references }])
 
       while (true) {
         const { value, done } = await reader.read()
@@ -312,12 +319,14 @@ Use APENAS as informações acima e os trechos de documentos recuperados. Trate 
           const data = line.replace(/^data: /, "").trim()
           if (!data || data === "[DONE]") continue
           try {
-            const delta = JSON.parse(data).choices?.[0]?.delta?.content ?? ""
+            const choice = JSON.parse(data).choices?.[0]
+            if (choice?.finish_reason === "length") setError("A resposta atingiu o limite de tamanho. Peça para continuar ou divida a pergunta.")
+            const delta = choice?.delta?.content ?? ""
             if (delta) {
               assistantText += delta
               setMessages((prev) => {
                 const copy = [...prev]
-                copy[copy.length - 1] = { role: "assistant", content: assistantText }
+                copy[copy.length - 1] = { ...copy[copy.length - 1], role: "assistant", content: assistantText }
                 return copy
               })
             }
@@ -357,14 +366,14 @@ Use APENAS as informações acima e os trechos de documentos recuperados. Trate 
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
             <div
-              className="rounded-2xl px-4 py-3 text-sm max-w-[85%] leading-relaxed whitespace-pre-wrap"
+              className="min-w-0 rounded-2xl px-4 py-3 text-sm max-w-[85%] leading-relaxed whitespace-pre-wrap"
               style={
                 msg.role === "user"
                   ? { backgroundColor: "var(--accent-tint)", color: "var(--text-primary)", borderBottomRightRadius: 4 }
                   : { backgroundColor: "var(--bg-surface-2)", color: "var(--text-secondary)", borderBottomLeftRadius: 4 }
               }
             >
-              {msg.content || (streaming && i === messages.length - 1
+              {msg.content ? msg.role === "assistant" ? <AssistantMessage text={msg.content} /> : msg.content : (streaming && i === messages.length - 1
                 ? <span className="inline-flex gap-1 items-center">
                     <span className="w-1 h-1 rounded-full bg-current animate-bounce" style={{ animationDelay: "0ms" }} />
                     <span className="w-1 h-1 rounded-full bg-current animate-bounce" style={{ animationDelay: "150ms" }} />
@@ -372,6 +381,7 @@ Use APENAS as informações acima e os trechos de documentos recuperados. Trate 
                   </span>
                 : null
               )}
+              {!!msg.sources?.length && <div className="mt-3 space-y-2 border-t border-[var(--border)] pt-3 text-[11px]"><p className="font-semibold text-[var(--text-tertiary)]">Documentos consultados</p>{msg.sources.map(source => <a key={source.url} href={source.url} target="_blank" rel="noopener noreferrer" className="block break-words text-[var(--accent)] underline underline-offset-2">{source.title}</a>)}</div>}
             </div>
           </div>
         ))}

@@ -1,15 +1,16 @@
 {
   "name": "orbe-operating-system",
   "private": true,
-  "version": "1.31.0",
+  "version": "1.32.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test:tracking": "node --test tests/tracking.test.ts tests/kommo.test.ts tests/rayafit-site.test.ts tests/ga4.test.ts tests/evolution.test.ts tests/qr-access.test.ts tests/commercial.test.ts tests/ads-credentials.test.ts tests/bi-dashboard.test.ts tests/client-dashboard.test.ts tests/dashboard-access.test.ts tests/evo.test.ts tests/evo-reconciliation.test.ts tests/drive-content-filters.test.ts tests/client-workspace.test.ts tests/google-report.test.ts",
-    "test:drive": "npx -y deno@2.9.6 test --config supabase/functions/orbe-drive-sync/deno.json --allow-read supabase/functions/orbe-drive-sync/document-text.test.ts supabase/functions/orbe-drive-sync/sync-engine.test.ts"
+    "test:tracking": "node --test tests/tracking.test.ts tests/kommo.test.ts tests/rayafit-site.test.ts tests/ga4.test.ts tests/evolution.test.ts tests/qr-access.test.ts tests/commercial.test.ts tests/ads-credentials.test.ts tests/bi-dashboard.test.ts tests/client-dashboard.test.ts tests/dashboard-access.test.ts tests/evo.test.ts tests/evo-reconciliation.test.ts tests/drive-content-filters.test.ts tests/client-workspace.test.ts tests/google-report.test.ts tests/source-links.test.ts",
+    "test:drive": "npx -y deno@2.9.6 test --config supabase/functions/orbe-drive-sync/deno.json --allow-read supabase/functions/orbe-drive-sync/document-text.test.ts supabase/functions/orbe-drive-sync/sync-engine.test.ts",
+    "test:ai": "npx -y deno@2.9.6 test supabase/functions/orbe-ai-chat/anthropic-stream.test.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.106.0",

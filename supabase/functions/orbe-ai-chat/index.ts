@@ -1,3 +1,4 @@
+import { normalizeAnthropicStream } from "./anthropic-stream.ts";
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -42,6 +43,9 @@ serve(async (req) => {
     const { data: { user }, error: userErr } = await supabaseAdmin.auth.getUser(jwt);
     if (userErr || !user) return json({ error: "Token inválido" }, 401);
 
+    const {data:profile,error:profileError}=await supabaseAdmin.from("profiles").select("is_active").eq("id",user.id).maybeSingle();
+    if(profileError||!profile?.is_active)return json({error:"Seu acesso à IA não está ativo."},403);
+
     const body = await req.json();
     const { system, messages, tools, tool_choice, max_tokens, temperature } = body;
     if (!Array.isArray(messages)) return json({ error: "Campo obrigatório: messages" }, 400);
@@ -75,7 +79,7 @@ serve(async (req) => {
           }),
         });
         const result = await response.json();
-        if (!response.ok) return json({ error: `OpenAI ${response.status}: ${JSON.stringify(result)}` }, 502);
+        if (!response.ok) return providerError("OpenAI",response.status);
         return json(normalizeOpenAIToolResponse(result));
       }
       if (!anthropicKey) return json({ error: "A integração do agente com ferramentas ainda não está configurada." }, 503);
@@ -97,7 +101,7 @@ serve(async (req) => {
         }),
       });
       const resultJson = await anthropicRes.json();
-      if (!anthropicRes.ok) return json({ error: `Anthropic ${anthropicRes.status}: ${JSON.stringify(resultJson)}` }, 502);
+      if (!anthropicRes.ok) return providerError("Anthropic",anthropicRes.status);
       return json(resultJson);
     }
 
@@ -132,11 +136,11 @@ serve(async (req) => {
       });
       if (!streamRequested) {
         const result = await openaiRes.json();
-        if (!openaiRes.ok) return json({ error: `OpenAI ${openaiRes.status}: ${JSON.stringify(result)}` }, 502);
+        if (!openaiRes.ok) return providerError("OpenAI",openaiRes.status);
         return json({ choices: [{ message: { content: result.output_text ?? extractOutputText(result.output) }, finish_reason: "stop" }] });
       }
       if (!openaiRes.ok || !openaiRes.body) {
-        return json({ error: `OpenAI ${openaiRes.status}: ${await openaiRes.text()}` }, 502);
+        return providerError("OpenAI",openaiRes.status);
       }
       return normalizeOpenAIStream(openaiRes.body);
     }
@@ -163,7 +167,7 @@ serve(async (req) => {
 
     if (!streamRequested) {
       const resultJson = await anthropicRes.json();
-      if (!anthropicRes.ok) return json({ error: `Anthropic ${anthropicRes.status}: ${JSON.stringify(resultJson)}` }, 502);
+      if (!anthropicRes.ok) return providerError("Anthropic",anthropicRes.status);
       const text = (resultJson.content ?? [])
         .filter((b: { type: string }) => b.type === "text")
         .map((b: { text: string }) => b.text)
@@ -172,50 +176,11 @@ serve(async (req) => {
     }
 
     if (!anthropicRes.ok || !anthropicRes.body) {
-      const errText = await anthropicRes.text();
-      return json({ error: `Anthropic ${anthropicRes.status}: ${errText}` }, 502);
+      return providerError("Anthropic",anthropicRes.status);
     }
 
-    const encoder = new TextEncoder();
-    const decoder = new TextDecoder();
-    const anthropicReader = anthropicRes.body.getReader();
+    return normalizeAnthropicStream(anthropicRes.body,corsHeaders);
 
-    const stream = new ReadableStream({
-      async start(controller) {
-        let buffer = "";
-        try {
-          while (true) {
-            const { done, value } = await anthropicReader.read();
-            if (done) break;
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split("\n");
-            buffer = lines.pop() ?? "";
-
-            for (const line of lines) {
-              if (!line.startsWith("data: ")) continue;
-              const data = line.slice(6).trim();
-              if (!data) continue;
-              try {
-                const evt = JSON.parse(data);
-                if (evt.type === "content_block_delta" && evt.delta?.type === "text_delta") {
-                  const chunk = { choices: [{ delta: { content: evt.delta.text } }] };
-                  controller.enqueue(encoder.encode(`data: ${JSON.stringify(chunk)}\n\n`));
-                }
-              } catch {
-                // ignore malformed SSE lines
-              }
-            }
-          }
-        } finally {
-          controller.enqueue(encoder.encode("data: [DONE]\n\n"));
-          controller.close();
-        }
-      },
-    });
-
-    return new Response(stream, {
-      headers: { ...corsHeaders, "content-type": "text/event-stream", "cache-control": "no-cache" },
-    });
   } catch (err) {
     return json({ error: String(err) }, 500);
   }
@@ -305,4 +270,9 @@ function normalizeOpenAIStream(body: ReadableStream<Uint8Array>) {
     },
   });
   return new Response(stream, { headers: { ...corsHeaders, "content-type": "text/event-stream", "cache-control": "no-cache" } });
+}
+
+function providerError(provider:string,status:number) {
+  const reason=[401,403].includes(status)?'A autorização precisa ser conferida nas configurações.':status===429?'O limite de uso ou saldo precisa ser conferido.':'Não foi possível concluir a consulta agora. Tente novamente.';
+  return json({error:`${provider}: ${reason}`},502);
 }
