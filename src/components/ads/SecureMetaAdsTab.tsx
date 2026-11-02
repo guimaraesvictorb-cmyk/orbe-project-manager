@@ -12,7 +12,7 @@ const before = (days: number) => { const date = new Date(); date.setDate(date.ge
 const money = (value: number, currency = "BRL") => value.toLocaleString("pt-BR", { style: "currency", currency: currency || "BRL", minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const integer = (value: number) => Math.round(value).toLocaleString("pt-BR")
 
-export function SecureMetaAdsTab({ clientId, onOpenConnections }: { clientId: string; onOpenConnections: () => void }) {
+export function SecureMetaAdsTab({ clientId, onOpenConnections, onVerified }: { clientId: string; onOpenConnections: () => void; onVerified?: () => void }) {
   const [start, setStart] = useState(before(29))
   const [end, setEnd] = useState(today())
   const [report, setReport] = useState<Report | null>(null)
@@ -32,6 +32,7 @@ export function SecureMetaAdsTab({ clientId, onOpenConnections }: { clientId: st
         body: JSON.stringify({ client_id: clientId, platform: "meta", start, end }),
       })
       const data = await response.json()
+      if (signal?.aborted) return
       if (!response.ok) {
         if (data.error === "financial_access_required") throw new Error("Seu perfil ainda não tem permissão para consultar métricas de investimento.")
         if (data.error === "meta_token_invalid") throw new Error("A credencial da Meta expirou ou foi revogada. Atualize-a em Conexões do cliente.")
@@ -40,10 +41,11 @@ export function SecureMetaAdsTab({ clientId, onOpenConnections }: { clientId: st
       }
       if (data.status === "not_configured") { setReport(null); setStatus("not_configured"); return }
       setReport(data as Report)
+      onVerified?.()
     } catch (error) {
       if ((error as Error).name !== "AbortError") { setReport(null); setStatus((error as Error).message || "Falha ao consultar os anúncios.") }
-    } finally { setLoading(false) }
-  }, [clientId, start, end])
+    } finally { if (!signal?.aborted) setLoading(false) }
+  }, [clientId, start, end, onVerified])
 
   useEffect(() => {
     const controller = new AbortController()
