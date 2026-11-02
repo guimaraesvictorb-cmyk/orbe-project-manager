@@ -861,7 +861,7 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
           <ArrowLeft size={16} />
         </button>
         <div className="flex items-center gap-3 flex-1 min-w-[220px]">
-          <ClientAvatar key={client.id} id={client.id} name={client.name} className="h-11 w-16" />
+          <ClientAvatar key={client.id} id={client.id} name={client.name} className="h-11 w-16" editable />
           <div className="min-w-0">
             <h1 className="text-[var(--text-primary)] font-semibold text-base leading-tight truncate">{client.name}</h1>
             {client.segment && <p className="text-xs truncate" style={{ color: "var(--text-tertiary)" }}>{client.segment}</p>}

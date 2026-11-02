@@ -46,6 +46,7 @@ export function ClientMonthlyResults({ clientId, source, observations, onConnect
           if (requests.size > 32) requests.delete(requests.keys().next().value!)
         }
         const data = await entry.promise
+        if (data.status === 'error') requests.delete(key)
         if (active) setReply(data)
       } catch { if (active) setReply({ status: 'error' }); requests.delete(key) }
       finally { if (active) setLoading(false) }
