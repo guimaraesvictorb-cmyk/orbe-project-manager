@@ -20,7 +20,7 @@ export default async function handler(req:Request,res:ServerResponse){
   const input=object(req.body),client=scalar(input.client_id,36),{db,user}=await qrUser(req,client);
   const profiles=await db<{role:string;can_view_financials:boolean}[]>(`rest/v1/profiles?id=eq.${user.id}&select=role,can_view_financials`);
   if(profiles[0]?.role!=='admin'||!profiles[0]?.can_view_financials)return answer(res,403,{error:'financial_admin_required'});
-  const slot=scalar(input.slot,40)||'principal';if(!/^[a-z0-9_-]{1,40}$/.test(slot))throw new Error('invalid_slot');
+  const slot=scalar(input.slot??'principal',40)||'principal';if(!/^[a-z0-9_-]{1,40}$/.test(slot))throw new Error('invalid_slot');
   if(input.action==='preview'||input.action==='report'){
    const period=evoPreviewPeriod(input.start,input.end);
    const scope=typeof input.preview_scope==='string'?input.preview_scope:'all';if(!/^[a-z0-9_-]{1,40}$/.test(scope))throw new Error('invalid_slot');
