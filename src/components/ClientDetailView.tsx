@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useMemo, useCallback, lazy, Suspense } fro
 import {
   ArrowLeft, Globe, User, Phone, Mail, DollarSign, Tag,
   Plus, Check, Trash2, Brain, Send, Loader2, Sparkles,
-  BookOpen, X, ListChecks, Calendar, Share2, Copy, Link,
+  BookOpen, X, Calendar, Share2, Copy, Link,
   Pencil, Save, Hash, Users,
 } from "lucide-react"
 import type { Client, Profile } from "../lib/database.types"
@@ -14,7 +14,11 @@ import { useClientAssignments } from "../hooks/useClientAssignments"
 import { isAdminOrCoordenador } from "../lib/permissions"
 import { useAuth } from "../hooks/useAuth"
 import { FLAG_META, STATUS_META } from "../lib/clientMeta"
-import { updateTrackingRoute } from "../lib/trackingRoute"
+import { openClientWorkspace, parseClientWorkspace, type ClientArea } from "../lib/clientWorkspace"
+import { useClients } from "../hooks/useClients"
+import { ClientAvatar } from "./ClientAvatar"
+import { ClientOverview } from "./ClientOverview"
+import { ClientChronogram } from "./ClientChronogram"
 import { AdsMetricsTab } from "./ads/AdsMetricsTab"
 import { CompiladoTab } from "./ads/CompiladoTab"
 import { SecureMetaAdsTab } from "./ads/SecureMetaAdsTab"
@@ -30,7 +34,7 @@ const SOURCE_META = {
   drive:        { label: "Google Drive", color: "#34A853", bg: "rgba(52,168,83,.12)" },
 }
 
-type Tab = "overview" | "checklist" | "meta" | "google" | "compilado" | "tracking" | "knowledge" | "strategy" | "ai"
+type Tab = ClientArea
 type ClientTab = { id: Tab; label: string; group: string }
 type MarketingStrategy = { icp: string | null; average_ticket_cents: number | null; target_cac_cents: number | null; target_ltv_cents: number | null; conversion_event: string | null; conversion_source: string | null; funnel_top: string | null; funnel_middle: string | null; funnel_bottom: string | null; primary_channels: string[]; verified_notes: string | null }
 type OfferStatus = "planned" | "approved" | "live" | "completed" | "paused"
@@ -429,19 +433,21 @@ const OVERVIEW_FIELDS: Array<{ key: keyof Client; label: string; type: string; p
 
 export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientDetailViewProps) {
   const { profile } = useAuth()
-  const [tab, setTab] = useState<Tab>("overview")
+  const [tab, setTabState] = useState<Tab>(() => parseClientWorkspace(window.location.hash).area)
+  const { clients } = useClients()
+  const setTab = (area: Tab) => { setTabState(area); openClientWorkspace(client.id, client.name, area) }
+  useEffect(() => {
+    const sync = () => setTabState(parseClientWorkspace(window.location.hash).area)
+    window.addEventListener('hashchange', sync)
+    return () => window.removeEventListener('hashchange', sync)
+  }, [])
   const [editingOverview, setEditingOverview] = useState(false)
   const [overviewForm, setOverviewForm] = useState<Partial<Client>>({})
   const [savingOverview, setSavingOverview] = useState(false)
   const [showAddModal, setShowAddModal] = useState(false)
-  const [showAddChecklist, setShowAddChecklist] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
-  const [newItemTitle, setNewItemTitle] = useState("")
-  const [newItemCategory, setNewItemCategory] = useState("")
-  const [newItemDueDate, setNewItemDueDate] = useState("")
-  const [newItemAssignee, setNewItemAssignee] = useState("")
   const [suggesting, setSuggesting] = useState(false)
   const [suggestError, setSuggestError] = useState("")
   const [copiedToken, setCopiedToken] = useState<string | null>(null)
@@ -467,7 +473,7 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
   const [savingKpi, setSavingKpi] = useState(false)
   const { assignments, assign, unassign } = useClientAssignments(client.id)
   const { validated, pending, addEntry, validateEntry, deleteEntry, refetch: refetchKnowledge } = useClientKnowledge(client.id)
-  const { items, done, toggleItem, addItem, deleteItem } = useClientChecklist(client.id)
+  const { items, toggleItem, updateItem } = useClientChecklist(client.id)
   const { tokens, createToken, deleteToken } = useShareTokens(client.id)
 
   useEffect(() => {
@@ -767,35 +773,26 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
     }
   }
 
-  async function handleAddChecklistItem(e: React.FormEvent) {
-    e.preventDefault()
-    if (!newItemTitle.trim() || !profile) return
-    await addItem(newItemTitle.trim(), newItemCategory || null, profile.id, newItemDueDate || null, newItemAssignee || null)
-    setNewItemTitle("")
-    setNewItemCategory("")
-    setNewItemDueDate("")
-    setNewItemAssignee("")
-    setShowAddChecklist(false)
-  }
-
   const tabs: ClientTab[] = [
     { id: "overview",   label: "Visão geral", group: "Cliente" },
-    { id: "checklist",  label: `Cronograma${items.length ? ` · ${done.length}/${items.length}` : ""}`, group: "Execução" },
+    { id: "checklist",  label: "Cronograma", group: "Execução" },
     { id: "tracking", label: "Rastreamento", group: "Execução" },
-    { id: "meta",       label: "Meta Ads", group: "Resultados" },
-    { id: "google",     label: "Google Ads", group: "Resultados" },
-    { id: "compilado",  label: "Compilado", group: "Resultados" },
+    { id: "meta",       label: "Meta Ads", group: "Tráfego pago" },
+    { id: "google",     label: "Google Ads", group: "Tráfego pago" },
+    { id: "compilado",  label: "Compilado", group: "Tráfego pago" },
+    { id: "analytics", label: "Orgânico e Analytics", group: "Resultados" },
     { id: "strategy", label: "Estratégia", group: "Inteligência" },
     { id: "knowledge",  label: `Conhecimento${pending.length ? ` · ${pending.length}` : ""}`, group: "Inteligência" },
     { id: "ai",         label: "IA do cliente", group: "Inteligência" },
+    { id: "connections", label: "Conexões", group: "Configuração" },
   ]
   const tabListId = `client-tabs-${client.id}`
   const tabPanelId = `client-panel-${client.id}`
 
   function handleTabKeyDown(event: React.KeyboardEvent<HTMLButtonElement>, index: number) {
     let nextIndex: number
-    if (event.key === "ArrowRight") nextIndex = (index + 1) % tabs.length
-    else if (event.key === "ArrowLeft") nextIndex = (index - 1 + tabs.length) % tabs.length
+    if (event.key === "ArrowRight" || event.key === "ArrowDown") nextIndex = (index + 1) % tabs.length
+    else if (event.key === "ArrowLeft" || event.key === "ArrowUp") nextIndex = (index - 1 + tabs.length) % tabs.length
     else if (event.key === "Home") nextIndex = 0
     else if (event.key === "End") nextIndex = tabs.length - 1
     else return
@@ -857,12 +854,7 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
           <ArrowLeft size={16} />
         </button>
         <div className="flex items-center gap-3 flex-1 min-w-[220px]">
-          <div
-            className="w-9 h-9 rounded-lg flex items-center justify-center text-[var(--text-primary)] text-sm font-bold flex-shrink-0"
-            style={{ backgroundColor: "var(--accent-a22)", border: "1px solid var(--accent-a33)" }}
-          >
-            {client.name.charAt(0).toUpperCase()}
-          </div>
+          <ClientAvatar key={client.id} id={client.id} name={client.name} className="h-11 w-16" />
           <div className="min-w-0">
             <h1 className="text-[var(--text-primary)] font-semibold text-base leading-tight truncate">{client.name}</h1>
             {client.segment && <p className="text-xs truncate" style={{ color: "var(--text-tertiary)" }}>{client.segment}</p>}
@@ -879,6 +871,9 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
             </span>
           </div>
         </div>
+        <label className="min-w-40 text-[10px] font-semibold text-[var(--text-tertiary)]">Cliente
+          <select aria-label="Selecionar cliente" value={client.id} onChange={event => { const next = clients.find(item => item.id === event.target.value); if (next) openClientWorkspace(next.id, next.name, tab) }} className="mt-1 block w-full rounded-lg border border-[var(--border)] bg-[var(--bg-input)] px-3 py-2 text-xs text-[var(--text-primary)]">{clients.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select>
+        </label>
         <div className="ml-auto flex flex-wrap items-center gap-2">
           <button onClick={() => setShowShareModal(true)} className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg border transition-colors"
             style={{ borderColor: "var(--border-strong)", color: "var(--text-tertiary)" }}
@@ -923,11 +918,12 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
         </div>
       )}
 
-      <div className="overflow-x-auto px-2 sm:px-6" style={{ borderBottom: "1px solid var(--bg-surface-2)" }}>
-        <div id={tabListId} className="flex w-max min-w-full items-center gap-1" role="tablist" aria-label={`${client.name}: áreas do cliente`}>
+      <div className="flex min-h-0 flex-1 flex-col md:flex-row">
+      <div className="shrink-0 overflow-x-auto border-b border-[var(--border)] bg-[var(--bg-surface)] px-3 py-3 md:w-52 md:overflow-y-auto md:border-b-0 md:border-r">
+        <div id={tabListId} className="flex w-max min-w-full gap-1 md:w-full md:flex-col" role="tablist" aria-orientation="vertical" aria-label={`${client.name}: áreas do cliente`}>
           {tabs.map((t, index) => (
             <span key={`wrap-${t.id}`} role="presentation" className="contents">
-            {index === 0 || tabs[index - 1].group !== t.group ? <span role="presentation" aria-hidden="true" className={`${index ? "ml-3 border-l pl-3" : ""} self-stretch flex items-center text-[9px] font-bold uppercase tracking-wider`} style={{ color: "var(--text-quaternary)", borderColor: "var(--border)" }}>{t.group}</span> : null}
+            {index === 0 || tabs[index - 1].group !== t.group ? <span role="presentation" aria-hidden="true" className={`${index ? "md:mt-4" : ""} hidden px-3 py-1 text-[9px] font-bold uppercase tracking-widest md:block`} style={{ color: "var(--text-quaternary)", borderColor: "var(--border)" }}>{t.group}</span> : null}
             <button
               key={t.id}
               id={`${tabListId}-${t.id}`}
@@ -938,8 +934,8 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
               tabIndex={tab === t.id ? 0 : -1}
               onClick={() => setTab(t.id)}
               onKeyDown={(event) => handleTabKeyDown(event, index)}
-              className="min-h-11 shrink-0 whitespace-nowrap px-3 sm:px-4 text-xs font-medium transition-colors relative focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--accent)]"
-              style={{ color: tab === t.id ? "var(--text-primary)" : "var(--text-tertiary)" }}
+              className="relative min-h-10 shrink-0 whitespace-nowrap rounded-lg px-3 text-left text-xs font-medium transition-colors hover:bg-[var(--bg-surface-2)] focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
+              style={{ color: tab === t.id ? "var(--accent)" : "var(--text-secondary)", backgroundColor: tab === t.id ? "var(--accent-tint)" : undefined }}
             >
               {t.label}
               {(t.id === "meta" || t.id === "google") && (() => { const status = t.id === "meta" ? adsConnection.meta : adsConnection.google; return <span title={status.connected ? "Credencial validada para esta conta" : "Veja Conexões do cliente para concluir o vínculo"} className="ml-1.5 inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px]" style={{ color: status.connected ? "var(--success, #22c55e)" : status.label === "Vincular" ? "var(--text-quaternary)" : "var(--warning, #d97706)", backgroundColor: status.connected ? "var(--success-tint, rgba(34,197,94,.1))" : status.label === "Vincular" ? "var(--bg-surface-2)" : "var(--warning-tint, rgba(217,119,6,.1))" }}><span className="h-1 w-1 rounded-full" style={{ backgroundColor: status.connected ? "var(--success, #22c55e)" : "var(--text-quaternary)" }} />{status.label}</span>})()}
@@ -952,10 +948,11 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
         </div>
       </div>
 
-      <div id={tabPanelId} role="tabpanel" aria-labelledby={`${tabListId}-${tab}`} tabIndex={0} className="flex-1 overflow-y-auto px-4 py-5 sm:px-8 sm:py-6 focus:outline-none" style={{ minHeight: 0 }}>
+      <div id={tabPanelId} role="tabpanel" aria-labelledby={`${tabListId}-${tab}`} tabIndex={0} className="min-w-0 flex-1 overflow-y-auto px-4 py-5 sm:px-7 sm:py-6 focus:outline-none" style={{ minHeight: 0 }}>
 
         {tab === "overview" && (
-          <div className="max-w-2xl">
+          <div className="space-y-6">
+            <ClientOverview clientId={client.id} strategy={strategyForm} offers={offers} knowledgeCount={validated.length} checklist={items} driveLinked={!!driveFolderId} ads={adsConnection} onNavigate={setTab} />
             {canEdit && (
               <div className="rounded-xl border p-4 mb-5" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
                 <div className="flex items-center gap-1.5 mb-2.5">
@@ -1093,122 +1090,13 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
           </div>
         )}
 
-        {tab === "checklist" && (
-          <div className="max-w-4xl space-y-5">
-            <div className="flex flex-wrap items-end justify-between gap-3 rounded-2xl border p-5" style={{ background: "linear-gradient(135deg, var(--bg-surface), var(--bg-surface-2))", borderColor: "var(--border)" }}>
-              <div><p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--accent)" }}>Plano de trabalho</p><h2 className="mt-1 text-lg font-semibold text-[var(--text-primary)]">Cronograma</h2><p className="mt-1 text-xs" style={{ color: "var(--text-tertiary)" }}>Acompanhe as etapas e atividades da operação deste cliente.</p></div>
-              <div className="min-w-40"><div className="mb-1 flex justify-between text-[11px]" style={{ color: "var(--text-tertiary)" }}><span>{done.length} de {items.length} concluídas</span><strong style={{ color: "var(--text-primary)" }}>{items.length ? Math.round(done.length / items.length * 100) : 0}%</strong></div><div className="h-2 overflow-hidden rounded-full" style={{ backgroundColor: "var(--border)" }}><div className="h-full rounded-full transition-all" style={{ width: `${items.length ? done.length / items.length * 100 : 0}%`, backgroundColor: "var(--accent)" }} /></div></div>
-            </div>
-
-            {/* Add item form */}
-            {canEdit && !showAddChecklist && (
-              <button
-                onClick={() => setShowAddChecklist(true)}
-                className="flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-lg"
-                style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}
-              >
-                <Plus size={13} />
-                Adicionar item
-              </button>
-            )}
-
-            {showAddChecklist && (
-              <form onSubmit={handleAddChecklistItem} className="flex gap-2 items-end">
-                <div className="flex-1 space-y-2">
-                  <input
-                    value={newItemTitle}
-                    onChange={(e) => setNewItemTitle(e.target.value)}
-                    placeholder="Título do item..."
-                    required
-                    autoFocus
-                    className="w-full rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent-a44)] transition-colors"
-                    style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" }}
-                  />
-                  <input
-                    value={newItemCategory}
-                    onChange={(e) => setNewItemCategory(e.target.value)}
-                    placeholder="Etapa (opcional)"
-                    className="w-full rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] placeholder-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent-a44)] transition-colors"
-                    style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" }}
-                  />
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    <label className="text-[10px]" style={{ color: "var(--text-tertiary)" }}>Prazo · opcional<input type="date" value={newItemDueDate} onChange={(e) => setNewItemDueDate(e.target.value)} className="mt-1 w-full rounded-lg px-3 py-2 text-xs text-[var(--text-primary)]" style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" }} /></label>
-                    <label className="text-[10px]" style={{ color: "var(--text-tertiary)" }}>Responsável · opcional<select value={newItemAssignee} onChange={(e) => setNewItemAssignee(e.target.value)} className="mt-1 w-full rounded-lg px-3 py-2 text-xs text-[var(--text-primary)]" style={{ backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" }}><option value="">Sem responsável</option>{teamMembers.map((member) => <option key={member.id} value={member.id}>{member.display_name}</option>)}</select></label>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <button type="submit" className="px-3 py-2 rounded-lg text-xs font-semibold" style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}>
-                    Salvar
-                  </button>
-                  <button type="button" onClick={() => setShowAddChecklist(false)} className="px-3 py-2 rounded-lg text-xs border" style={{ borderColor: "var(--border-strong)", color: "var(--text-tertiary)" }}>
-                    Cancelar
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {/* Items list */}
-            {items.length === 0 ? (
-              <div className="rounded-xl border border-[var(--border)] py-16 text-center" style={{ backgroundColor: "var(--bg-surface)" }}>
-                <ListChecks size={28} className="mx-auto mb-3" style={{ color: "#222" }} />
-                <p className="text-sm font-semibold text-[var(--text-primary)] mb-1">Cronograma ainda sem etapas</p>
-                <p className="text-xs" style={{ color: "var(--text-quaternary)" }}>Adicione a primeira atividade e agrupe por etapa para organizar a execução.</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {Array.from(items.reduce((groups, item) => { const name = item.category?.trim() || "Sem etapa"; groups.set(name, [...(groups.get(name) ?? []), item]); return groups }, new Map<string, typeof items>()).entries()).map(([stage, stageItems], stageIndex) => {
-                  const stageDone = stageItems.filter((item) => item.completed).length
-                  return <section key={stage} className="overflow-hidden rounded-2xl border" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
-                    <div className="flex items-center justify-between gap-3 border-b px-4 py-3" style={{ backgroundColor: "var(--bg-surface-2)", borderColor: "var(--border)" }}><div className="flex items-center gap-2"><span className="flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold" style={{ backgroundColor: stageDone === stageItems.length ? "var(--accent)" : "var(--bg-input)", color: stageDone === stageItems.length ? "var(--bg-page)" : "var(--text-tertiary)" }}>{stageIndex + 1}</span><h3 className="text-xs font-semibold text-[var(--text-primary)]">{stage}</h3></div><span className="text-[10px]" style={{ color: "var(--text-tertiary)" }}>{stageDone}/{stageItems.length} atividades</span></div>
-                    <div className="divide-y" style={{ borderColor: "var(--border)" }}>{stageItems.map((item) => (
-                  <div key={item.id} className="flex items-center gap-3 px-4 py-3 group" style={{ backgroundColor: item.completed ? "var(--bg-input)" : "transparent" }}>
-                    <button
-                      onClick={() => profile && toggleItem(item.id, profile.id)}
-                      aria-label={`${item.completed ? "Reabrir" : "Concluir"} atividade: ${item.title}`}
-                      className="w-5 h-5 rounded-md border flex-shrink-0 flex items-center justify-center transition-all"
-                      style={{
-                        backgroundColor: item.completed ? "var(--accent)" : "transparent",
-                        borderColor: item.completed ? "var(--accent)" : "var(--border-subtle)",
-                      }}
-                    >
-                      {item.completed && <Check size={11} color="var(--bg-page)" />}
-                    </button>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm" style={{ color: item.completed ? "var(--text-quaternary)" : "var(--text-primary)", textDecoration: item.completed ? "line-through" : "none" }}>
-                        {item.title}
-                      </p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        {item.due_date && <span className="text-[10px] flex items-center gap-1" style={{ color: !item.completed && item.due_date < new Date().toLocaleDateString("en-CA") ? "var(--danger)" : "var(--text-quaternary)" }}><Calendar size={9} />Prazo {new Date(`${item.due_date}T12:00:00`).toLocaleDateString("pt-BR")}</span>}
-                        {item.assignee_id && <span className="text-[10px]" style={{ color: "var(--text-quaternary)" }}>Responsável: {teamMembers.find((member) => member.id === item.assignee_id)?.display_name ?? "Pessoa atribuída"}</span>}
-                        {item.completed_at && (
-                          <span className="text-[10px] flex items-center gap-1" style={{ color: "var(--text-quaternary)" }}>
-                            <Calendar size={9} />
-                            {new Date(item.completed_at).toLocaleDateString("pt-BR")}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    {canEdit && (
-                      <button
-                        onClick={() => deleteItem(item.id)}
-                        aria-label={`Excluir atividade: ${item.title}`}
-                        className="p-2 rounded-lg transition-colors hover:text-red-500 sm:opacity-0 sm:group-hover:opacity-100"
-                        style={{ color: "var(--text-quaternary)" }}
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    )}
-                  </div>
-                ))}</div></section>})}
-              </div>
-            )}
-          </div>
-        )}
-
-        {tab === "meta"      && <SecureMetaAdsTab clientId={client.id} onVerified={refreshAdsConnection} onOpenConnections={() => { updateTrackingRoute({ tab: "connections" }); setTab("tracking") }} />}
+        {tab === "checklist" && <ClientChronogram clientId={client.id} items={items} members={teamMembers} canEdit={canEdit} onToggle={id => profile ? toggleItem(id, profile.id) : Promise.resolve(undefined)} onUpdate={updateItem} />}
+        {tab === "connections" && <Suspense fallback={<p>Carregando conexões…</p>}><WhatsAppTrackingView clientId={client.id} embedded evoEnabled={/evo/i.test(strategyForm.conversionSource)} /></Suspense>}
+        {tab === "analytics" && <section className="rounded-2xl border border-[var(--border)] bg-[var(--bg-surface)] p-6"><h2 className="text-lg font-semibold text-[var(--text-primary)]">Orgânico e Analytics</h2><p className="mt-2 text-sm text-[var(--text-tertiary)]">{client.ga4_property_id ? `Propriedade GA4 cadastrada: ${client.ga4_property_id}. A coleta de relatórios ainda precisa ser validada.` : 'Nenhuma propriedade GA4 vinculada a este cliente.'}</p><p className="mt-3 text-sm text-[var(--text-tertiary)]">Perfis orgânicos ainda sem integração de métricas validada.</p><button onClick={() => setTab('connections')} className="mt-5 text-sm font-semibold text-[var(--accent)]">Conferir conexões →</button></section>}
+        {tab === "meta"      && <SecureMetaAdsTab clientId={client.id} onVerified={refreshAdsConnection} onOpenConnections={() => setTab("connections")} />}
         {tab === "google"    && <AdsMetricsTab clientId={client.id} platform="google" />}
         {tab === "compilado" && <CompiladoTab clientId={client.id} />}
-        {tab === "tracking" && <Suspense fallback={<p>Carregando rastreamento…</p>}><WhatsAppTrackingView clientId={client.id} embedded/></Suspense>}
+        {tab === "tracking" && <Suspense fallback={<p>Carregando rastreamento…</p>}><WhatsAppTrackingView clientId={client.id} embedded evoEnabled={/evo/i.test(strategyForm.conversionSource)} /></Suspense>}
 
         {tab === "strategy" && (
           <div className="max-w-4xl space-y-6">
@@ -1230,7 +1118,7 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
 
             <section className="rounded-2xl border p-5 space-y-3" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
               <div><h3 className="text-sm font-semibold text-[var(--text-primary)]">Fontes de resultado e integrações</h3><p className="mt-1 text-xs" style={{ color: "var(--text-tertiary)" }}>Acompanhe a etapa de configuração das fontes oficiais deste cliente. Este cadastro não testa nem armazena credenciais.</p></div>
-              <div className="grid gap-3 sm:grid-cols-3">{CLIENT_DATA_SOURCES.map((source) => {
+              <div className="grid gap-3 sm:grid-cols-3">{CLIENT_DATA_SOURCES.filter(source => dataSources.some(row => row.system === source.id && row.state !== "not_configured") || (source.id === "ecommerce" ? /vtex|e.?commerce/i : new RegExp(source.id, "i")).test(strategyForm.conversionSource)).map((source) => {
                 const current = dataSources.find((item) => item.system === source.id)
                 const value = current?.state ?? "not_configured"
                 return <div key={source.id} className="rounded-xl border p-3" style={{ backgroundColor: "var(--bg-surface-2)", borderColor: "var(--border)" }}><div className="flex items-start justify-between gap-2"><div><p className="text-xs font-semibold text-[var(--text-primary)]">{source.label}</p><p className="mt-1 text-[10px]" style={{ color: "var(--text-tertiary)" }}>{source.id === "bitrix" ? "Negócios B2B ganhos" : source.id === "ecommerce" ? "Pedidos pagos" : "Matrículas"}</p></div><span className="rounded-full px-2 py-1 text-[9px]" style={{ backgroundColor: value === "verified" ? "var(--success-tint, rgba(34,197,94,.1))" : "var(--bg-input)", color: value === "verified" ? "var(--success, #22c55e)" : "var(--text-tertiary)" }}>{SOURCE_STATES[value]}</span></div>{canEdit && <label className="mt-3 block text-[10px]" style={{ color: "var(--text-tertiary)" }}>Etapa<select value={value} onChange={(event) => void setDataSourceState(source.id, event.target.value as ClientDataSource["state"])} className="mt-1 w-full rounded-lg px-2 py-2 text-[11px] text-[var(--text-primary)]" style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-strong)" }}>{Object.entries(SOURCE_STATES).map(([state, label]) => <option key={state} value={state}>{label}</option>)}</select></label>}</div>
@@ -1367,6 +1255,7 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
         )}
       </div>
 
+      </div>
       {showAddModal && (
         <AddEntryModal onClose={() => setShowAddModal(false)} onSave={handleAddManual} />
       )}

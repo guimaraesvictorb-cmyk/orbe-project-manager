@@ -240,13 +240,13 @@ function App() {
           {view === "home"       && <HomeView profile={profile} onNavigate={navigate} />}
           {view === "dashboard"  && <DashboardView />}
           {view === "tarefas"    && <TarefasView initialTaskId={pendingTaskId} onConsumeInitial={() => setPendingTaskId(undefined)} />}
-          {view === "clientes"   && <ClientesView key={pendingClientId ?? "list"} initialClientId={pendingClientId} onConsumeInitial={() => setPendingClientId(undefined)} />}
+          {view === "clientes"   && <ClientesView initialClientId={pendingClientId} onConsumeInitial={() => setPendingClientId(undefined)} />}
           {view === "financeiro" && <FinanceiroView />}
           {view === "roi-day"    && <RoiDayView />}
           {view === "pipeline"   && <PipelineView />}
           {view === "processos"     && <PlaybookView />}
           {view === "central"       && <CentralView />}
-          {view === "rastreamento"  && <RastreamentoView />}
+          {view === "rastreamento"  && (new URLSearchParams(window.location.hash.split('?')[1]).get('visao') === 'cliente' || new URLSearchParams(window.location.hash.split('?')[1]).get('modo') === 'utm' ? <RastreamentoView /> : <ClientesView />)}
           {view === "super-agente" && <SuperAgenteView />}
           {view === "copy-ia"      && <CopyIAView />}
           {view === "relatorios"   && <RelatoriosView />}

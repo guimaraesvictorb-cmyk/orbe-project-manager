@@ -59,8 +59,15 @@ export function useClientChecklist(clientId: string) {
     return {}
   }
 
+  async function updateItem(id: string, patch: Pick<Partial<ClientChecklist>, 'due_date' | 'assignee_id'>) {
+    const { data, error } = await supabase.from('client_checklist').update(patch).eq('id', id).eq('client_id', clientId).select().single()
+    if (error) return { error: error.message }
+    setItems(previous => previous.map(item => item.id === id ? data : item))
+    return { data }
+  }
+
   const done = items.filter((i) => i.completed)
   const pending = items.filter((i) => !i.completed)
 
-  return { items, done, pending, loading, refetch, addItem, toggleItem, deleteItem }
+  return { items, done, pending, loading, refetch, addItem, toggleItem, deleteItem, updateItem }
 }

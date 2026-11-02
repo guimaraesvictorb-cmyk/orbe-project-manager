@@ -27,7 +27,7 @@ const phone=(value:unknown)=>String(value ?? '').replace(/^55(\d{2})(\d{5})(\d{4
 
 const connectionLabel=(c:TrackingConnection)=>c.provider==='evolution'&&c.client_id?(c.enabled?c.name:'WhatsApp aguardando conexão'):c.name
 
-export function WhatsAppTrackingView({clientId,embedded=false,pilotOnly=false}:{clientId?:string;embedded?:boolean;pilotOnly?:boolean}) {
+export function WhatsAppTrackingView({clientId,embedded=false,pilotOnly=false,evoEnabled=false}:{clientId?:string;embedded?:boolean;pilotOnly?:boolean;evoEnabled?:boolean}) {
   const {profile}=useAuth()
   const [connections,setConnections]=useState<TrackingConnection[]>([])
   const [connectionId,setConnectionId]=useState('')
@@ -124,7 +124,7 @@ export function WhatsAppTrackingView({clientId,embedded=false,pilotOnly=false}:{
       {error&&<div role="alert" className="rounded-xl p-4 text-sm bg-[var(--danger-tint)] text-[var(--danger)] flex gap-2"><AlertCircle size={18}/>{error}</div>}
       {notice&&<div role="status" className="text-sm text-[var(--accent)]">{notice}</div>}
         <div className="flex gap-1 border-b border-[var(--border)] overflow-x-auto" role="tablist" aria-label="Acompanhamento WhatsApp">{tabs.map(([id,label])=><button key={id} role="tab" aria-selected={tab===id} onClick={()=>{setTab(id);setPage(0);setNotice('')}} className={`whitespace-nowrap px-4 py-3 text-sm border-b-2 ${tab===id?'border-[var(--accent)] text-[var(--accent)]':'border-transparent text-[var(--text-tertiary)]'}`}>{label}</button>)}</div>
-      {tab==='connections'&&clientId&&<section aria-label="Conexões do cliente" className="space-y-4"><div><h2 className="text-lg font-semibold">Conexões do cliente</h2><p className={`mt-1 text-sm ${muted}`}>Gerencie WhatsApp, anúncios e EVO deste cliente em um só lugar.</p></div><AdsCredentials clientId={clientId}/><EvoConnection clientId={clientId}/></section>}
+      {tab==='connections'&&clientId&&<section aria-label="Conexões do cliente" className="space-y-4"><div><h2 className="text-lg font-semibold">Conexões do cliente</h2><p className={`mt-1 text-sm ${muted}`}>Gerencie os canais e fontes oficiais desta conta.</p></div><AdsCredentials clientId={clientId}/>{evoEnabled&&<EvoConnection clientId={clientId}/>}</section>}
       {connections.length===0&&!loading&&!error?<>{clientId&&tab==='connections'?<WhatsAppConnectionSetup clientId={clientId} onConnected={()=>void refresh()}/>:<div className={`${panelClass} p-8 text-center`}><MessageSquare className="mx-auto mb-3 text-[var(--accent)]"/><h2 className="font-semibold">Nenhum WhatsApp conectado</h2>{clientId&&<button type="button" onClick={()=>setTab('connections')} className="mt-3 text-sm text-[var(--accent)]">Abrir Conexões</button>}</div>}</>:<>
         {(tab!=='overview'||connections.length>1)&&<>        <div className={`${panelClass} p-4 flex flex-wrap items-center gap-4`}>
           <label className="min-w-0 flex-1 max-w-md text-xs">Conexão<select aria-label="Conexão" className={`${inputClass} mt-1`} value={connectionId} onChange={e=>changeFilter(setConnectionId,e.target.value)}>{connections.map(c=><option key={c.id} value={c.id}>{connectionLabel(c)}</option>)}</select></label>

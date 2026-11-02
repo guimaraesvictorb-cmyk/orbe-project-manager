@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { ExternalLink, Plus, Search, Loader2, X, Check, TrendingDown, ChevronDown, ChevronUp, Download } from "lucide-react";
+import { ClientAvatar } from "./ClientAvatar";
 import { useClients } from "../hooks/useClients";
 import { useAuth } from "../hooks/useAuth";
 import { isAdminOrCoordenador } from "../lib/permissions";
@@ -17,16 +18,6 @@ function loadDismissedSuggestions(): Record<string, string> {
   } catch {
     return {};
   }
-}
-
-function initials(name: string) {
-  return name.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
-}
-
-const AVATAR_COLORS = ["#7C3AED","#2563EB","#059669","#D97706","#DC2626","#0891B2","#B45309","#16A34A"];
-function avatarColor(id: string) {
-  const n = id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
-  return AVATAR_COLORS[n % AVATAR_COLORS.length];
 }
 
 function ClientCard({ client, suggestion, onHealthChange, onStatusChange, onSelect, onDismissSuggestion }: {
@@ -51,12 +42,7 @@ function ClientCard({ client, suggestion, onHealthChange, onStatusChange, onSele
     >
       {/* Top row */}
       <div className="flex items-start gap-3">
-        <div
-          className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 text-[var(--text-primary)] text-xs font-bold"
-          style={{ backgroundColor: avatarColor(client.id) }}
-        >
-          {initials(client.name)}
-        </div>
+        <ClientAvatar id={client.id} name={client.name} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
             <p className="text-[var(--text-primary)] font-semibold text-sm leading-snug truncate" title={client.name}>{client.name}</p>

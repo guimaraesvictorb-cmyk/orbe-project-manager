@@ -1,7 +1,7 @@
 import {
   Sparkles, LayoutDashboard, CheckSquare, Users, DollarSign,
   TrendingUp, BookOpen, Building2, UserCircle, LogOut, ShieldCheck,
-  ChevronRight, Settings, Link2, PenTool, FileText, Bot, MessageSquare, UserPlus, Trophy,
+  ChevronRight, Settings, PenTool, FileText, Bot, MessageSquare, UserPlus, Trophy,
 } from "lucide-react";
 import type { Profile } from "../lib/database.types";
 import { getAllowedSections, isAdminOrCoordenador } from "../lib/permissions";
@@ -33,9 +33,7 @@ const NAV: NavGroup[] = [
     label: "Operação",
     items: [
       { view: "tarefas",  label: "Tarefas",  icon: <CheckSquare size={15} /> },
-      { view: "clientes", label: "Clientes", icon: <Users size={15} />, children: [
-        { view: "rastreamento", label: "Central de rastreamento", icon: <Link2 size={13} /> },
-      ] },
+      { view: "clientes", label: "Clientes", icon: <Users size={15} /> },
       { view: "roi-day",  label: "ROI Day",  icon: <Trophy size={15} /> },
     ],
   },
@@ -60,7 +58,7 @@ const NAV: NavGroup[] = [
   {
     label: "Comunicação",
     items: [
-      { view: "whatsapp",    label: "WhatsApp",    icon: <MessageSquare size={15} /> },
+      { view: "whatsapp",    label: "Comunicações Orbe",    icon: <MessageSquare size={15} /> },
     ],
   },
   {
