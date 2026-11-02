@@ -7,7 +7,9 @@ type Report = { status: "ready"; account_name: string; currency: string; period:
 
 const today = () => new Date().toLocaleDateString("en-CA")
 const before = (days: number) => { const date = new Date(); date.setDate(date.getDate() - days); return date.toLocaleDateString("en-CA") }
-const money = (value: number, currency = "BRL") => value.toLocaleString("pt-BR", { style: "currency", currency: currency || "BRL", maximumFractionDigits: 0 })
+// Always 2 decimals — CPC and small per-click costs round to R$0 at 0
+// decimals, which is wrong for analysis, not just cosmetically rounded.
+const money = (value: number, currency = "BRL") => value.toLocaleString("pt-BR", { style: "currency", currency: currency || "BRL", minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const integer = (value: number) => Math.round(value).toLocaleString("pt-BR")
 
 export function SecureMetaAdsTab({ clientId, onOpenConnections }: { clientId: string; onOpenConnections: () => void }) {
