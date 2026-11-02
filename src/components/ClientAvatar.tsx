@@ -1,10 +1,15 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
+const defaultLogos: Record<string,string> = {
+  'c719c21c-e530-440b-8526-e6dd2688e2e1': '/client-logos/slr-design-build.png',
+  '5058a2a7-68e3-4d40-a84e-78dcc8b23758': '/client-logos/slr-engenharia.png',
+  '338243c3-8443-4dd4-bce1-b4011feeb52c': '/client-logos/slr-properties.png',
+}
 export function ClientAvatar({ id, name, className = 'h-12 w-16', editable = false }: { id: string; name: string; className?: string; editable?: boolean }) {
   const { profile } = useAuth()
-  const [image, setImage] = useState({ id, url: '' })
-  const url = image.id === id ? image.url : ''
+  const [image, setImage] = useState({ id, url: defaultLogos[id] ?? '' })
+  const url = image.id === id ? image.url : defaultLogos[id] ?? ''
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   useEffect(() => {
