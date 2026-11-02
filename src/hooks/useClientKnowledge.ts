@@ -9,6 +9,7 @@ export interface KnowledgeEntry {
   source: 'manual' | 'ai_suggested' | 'web' | 'drive'
   source_ref?: string | null
   source_url?: string | null
+  financial_restricted?: boolean
   validated: boolean
   created_by: string | null
   created_at: string
@@ -24,7 +25,7 @@ export function useClientKnowledge(clientId: string) {
     setEntries([])
     const [pendingResult, validatedResult] = await Promise.all([
       supabase.from('client_knowledge').select('*').eq('client_id', clientId).eq('validated', false).order('created_at', { ascending: false }),
-      supabase.from('client_knowledge').select('id,client_id,title,source,source_ref,source_url,validated,created_by,created_at,updated_at').eq('client_id', clientId).eq('validated', true).order('created_at', { ascending: false }),
+      supabase.from('client_knowledge').select('id,client_id,title,source,source_ref,source_url,financial_restricted,validated,created_by,created_at,updated_at').eq('client_id', clientId).eq('validated', true).order('created_at', { ascending: false }),
     ])
     if (pendingResult.error) console.error('Failed to fetch pending client_knowledge:', pendingResult.error.message)
     if (validatedResult.error) console.error('Failed to fetch validated client_knowledge:', validatedResult.error.message)

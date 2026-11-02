@@ -5,6 +5,7 @@ import {qrUser} from './_lib/qrAccess.js';
 import {object,ORBE_ORIGIN,scalar,seal,unseal} from './_lib/kommo.js';
 import {evoMemberRevenue} from './_lib/evoRevenue.js';
 import {metaReport} from './_lib/adsReport.js';
+import {googleAdsReport} from './_lib/googleAdsReport.js';
 import {adsBinding} from './_lib/adsCredentials.js';
 import {observedMetaCac} from './_lib/evoReconciliation.js';
 import {attributeEvoCandidates,evoLeadSources,type EvoCandidate} from './_lib/evoAttribution.js';
@@ -31,27 +32,38 @@ export default async function handler(req:Request,res:ServerResponse){
     if(!snapshots[0])return answer(res,200,{status:'missing'});if(snapshots[0].credential_version!==version)return answer(res,200,{status:'configuration_changed'});
     return answer(res,200,{status:'ready',preview:snapshots[0].report});
    }
-   const results=[];const candidates:EvoCandidate[]=[];const used=new Set<number>();
+   const candidates:EvoCandidate[]=[];const used=new Set<number>();
    for(const row of configurations){
     if(!row.checked_at||Date.parse(row.expires_at)<=Date.now())return answer(res,400,{error:'evo_unverified_connection'});
     if(row.branches.length!==1||used.has(row.branches[0]!.id))return answer(res,400,{error:'evo_overlapping_scope'});
     used.add(row.branches[0]!.id);
-    const secret=evoCredentials(object(JSON.parse(unseal(row.ciphertext!,evoBinding(client,row.slot)))));
-    results.push({slot:row.slot,branch:row.branches[0],...await evoEnrollmentPreview(secret,period.start,period.end,row.branches[0]!.id,c=>candidates.push(c),client==='589481f6-3a15-4c93-b384-5d33373c20e3'?'-03:00':undefined)});
    }
-   const matched:EvoCandidate[]=[];const leads=await evoLeadSources(db,client),attribution=attributeEvoCandidates(candidates,leads,(candidate,source)=>{if(['Google','Meta','Site','Instagram'].includes(source))matched.push(candidate)}),coverageStart=leads.length?new Date(Math.min(...leads.map(l=>Date.parse(l.at)))-10800000).toISOString().slice(0,10):null;
+   const results=await Promise.all(configurations.map(async row=>{
+    const secret=evoCredentials(object(JSON.parse(unseal(row.ciphertext!,evoBinding(client,row.slot)))));
+    return {slot:row.slot,branch:row.branches[0],...await evoEnrollmentPreview(secret,period.start,period.end,row.branches[0]!.id,c=>candidates.push(c),client==='589481f6-3a15-4c93-b384-5d33373c20e3'?'-03:00':undefined)};
+   }));
+   const matched:EvoCandidate[]=[];const origins=new Map<string,string>();const leads=await evoLeadSources(db,client),attribution=attributeEvoCandidates(candidates,leads,(candidate,source)=>{if(['Google','Meta','Site','Instagram'].includes(source)){matched.push(candidate);origins.set(candidate.key,source)}}),coverageStart=leads.length?new Date(Math.min(...leads.map(l=>Date.parse(l.at)))-10800000).toISOString().slice(0,10):null;
    let cac=observedMetaCac({scope,start:period.start,coverageStart,students:attribution.channels.Meta??0,spendCents:null});
    if(cac.status==='spend_pending')try{
     const ads=await db<{account_id:string;ciphertext:string}[]>(`rest/v1/wa_ads_credentials?client_id=eq.${client}&platform=eq.meta&select=account_id,ciphertext`);
     if(ads[0]){const credentials=object(JSON.parse(unseal(ads[0].ciphertext,adsBinding(client,'meta'))));const media=await metaReport(ads[0].account_id,scalar(credentials.access_token,4096),{since:period.start,until:period.end});cac=observedMetaCac({scope,start:period.start,coverageStart,students:attribution.channels.Meta??0,spendCents:Math.round(media.totals.spend*100),currency:media.currency,timezone:media.timezone})}
    }catch{/* Enrollment results remain useful when the ads provider is unavailable. */}
+   let googleCac=observedMetaCac({scope,start:period.start,coverageStart,students:attribution.channels.Google??0,spendCents:null});
+   if(googleCac.status==='spend_pending')try{
+    const ads=await db<{account_id:string;ciphertext:string}[]>(`rest/v1/wa_ads_credentials?client_id=eq.${client}&platform=eq.google&select=account_id,ciphertext`);
+    if(ads[0]){const media=await googleAdsReport(ads[0].account_id,object(JSON.parse(unseal(ads[0].ciphertext,adsBinding(client,'google')))),{since:period.start,until:period.end});if(media.status==='ready')googleCac=observedMetaCac({scope,start:period.start,coverageStart,students:attribution.channels.Google??0,spendCents:Math.round(media.totals.spend*100),currency:media.currency,timezone:media.timezone})}
+   }catch{/* Missing Google authorization never becomes zero spend. */}
+   const allBranchesCovered=client!=='589481f6-3a15-4c93-b384-5d33373c20e3'||['ibes','alecrim','itapua'].every(slot=>configurations.some(row=>row.slot===slot));
+   if(!allBranchesCovered){cac={status:'unit_spend_pending',amount_cents:null};googleCac={status:'unit_spend_pending',amount_cents:null}}
    const checkedAt=new Date().toISOString();let ltv:{status:string;amount_cents:number|null;revenue_cents?:number;students?:number;as_of?:string}={status:!matched.length?'no_attributed_students':matched.length>8?'budget_pending':'financial_reconciliation_pending',amount_cents:null};
+   const ltvChannels:Record<string,{status:string;amount_cents:number|null;students?:number}>={};
    if(matched.length>0&&matched.length<=8&&client==='589481f6-3a15-4c93-b384-5d33373c20e3')try{
-    let revenue=0;
-    for(const candidate of matched){const [branch,member]=candidate.key.split(':').map(Number),row=configurations.find(c=>c.branches[0]?.id===branch);if(!row||!candidate.at)throw new Error('evo_financial_scope');const credential=evoCredentials(object(JSON.parse(unseal(row.ciphertext!,evoBinding(client,row.slot)))));revenue+=await evoMemberRevenue(credential,branch!,member!,candidate.at,checkedAt)}
+    let revenue=0;const channelRevenue=new Map<string,{cents:number;students:number}>();
+    for(const candidate of matched){const [branch,member]=candidate.key.split(':').map(Number),row=configurations.find(c=>c.branches[0]?.id===branch);if(!row||!candidate.at)throw new Error('evo_financial_scope');const credential=evoCredentials(object(JSON.parse(unseal(row.ciphertext!,evoBinding(client,row.slot)))));const cents=await evoMemberRevenue(credential,branch!,member!,candidate.at,checkedAt);revenue+=cents;const source=origins.get(candidate.key)!;const group=channelRevenue.get(source)??{cents:0,students:0};group.cents+=cents;group.students++;channelRevenue.set(source,group)}
     ltv={status:'realized_observed',amount_cents:Math.round(revenue/matched.length),revenue_cents:revenue,students:matched.length,as_of:checkedAt};
+    for(const [source,group] of channelRevenue)ltvChannels[source]={status:'realized_observed',amount_cents:Math.round(group.cents/group.students),students:group.students};
    }catch{/* Credits, refunds or incomplete receipt data keep LTV explicitly pending. */}
-   const preview={period,units:results,attribution,coverage_start:coverageStart,cac_meta:cac,ltv,checked_at:checkedAt};
+   const preview={period,units:results,attribution,coverage_start:coverageStart,cac_meta:cac,cac_google:googleCac,ltv,ltv_channels:ltvChannels,checked_at:checkedAt};
    await db('rest/v1/wa_evo_snapshots?on_conflict=client_id,start_date,end_date,scope',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=representation'},body:JSON.stringify({client_id:client,start_date:period.start,end_date:period.end,scope,credential_version:version,report:preview,updated_at:preview.checked_at,updated_by:user.id})});
    return answer(res,200,{status:'ready',preview});
   }

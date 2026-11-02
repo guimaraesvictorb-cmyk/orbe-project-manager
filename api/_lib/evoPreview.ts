@@ -5,17 +5,25 @@ export function evoPreviewPeriod(start:unknown,end:unknown){
  return {start,end};
 }
 export async function evoEnrollmentPreview(secret:EvoSecret,start:string,end:string,branchId:number,onCandidate?:(c:EvoCandidate)=>void,timeZoneFallback?:string){
- const data:unknown[]=[];let pages=0,complete=false;
- // Sales exposes recurring registrations and first-membership identifiers. This
- // endpoint documents 100 rows/page, unlike MemberMembership's limit of 25.
- for(let page=0;page<10;page++){
-  const body=await evoGet(secret,'v2/sales',{idBranch:String(branchId),dateSaleStart:start,dateSaleEnd:end,onlyMembership:'true',atLeastMonthly:'true',showReceivables:'false',take:'100',skip:String(page*100)});
-  const rows=Array.isArray(body)?body:body&&typeof body==='object'&&'idSale' in body?[body]:null;
-  pages++;
-  if(!rows||rows.length>100)throw new EvoReadError('evo_invalid_response','v2/sales',200);
-  data.push(...rows);if(rows.length<100){complete=true;break}
+ const data:unknown[]=[];let pages=0;
+ const dayAfter=(value:string,days:number)=>new Date(Date.parse(value+'T12:00:00Z')+days*86400000).toISOString().slice(0,10);
+ async function readRange(since:string,until:string):Promise<unknown[]> {
+  const found:unknown[]=[];
+  for(let page=0;page<10;page++){
+   if(++pages>120)throw new Error('evo_preview_too_large');
+   const body=await evoGet(secret,'v2/sales',{idBranch:String(branchId),dateSaleStart:since,dateSaleEnd:until,onlyMembership:'true',atLeastMonthly:'true',showReceivables:'false',take:'100',skip:String(page*100)});
+   const rows=Array.isArray(body)?body:body&&typeof body==='object'&&'idSale' in body?[body]:null;
+   if(!rows||rows.length>100)throw new EvoReadError('evo_invalid_response','v2/sales',200);
+   found.push(...rows);if(rows.length<100)return found;
+  }
+  if(since===until)throw new Error('evo_preview_too_large');
+  const days=Math.round((Date.parse(until)-Date.parse(since))/86400000);
+  const middle=dayAfter(since,Math.floor(days/2));
+  // Discard the incomplete page set. Smaller complete ranges are deduplicated
+  // by sale/contract IDs below, so interval boundaries cannot inflate totals.
+  return [...await readRange(since,middle),...await readRange(dayAfter(middle,1),until)];
  }
- if(!complete)throw new Error('evo_preview_too_large');
+ for(let since=start;since<=end;){const until=dayAfter(since,6)<end?dayAfter(since,6):end;data.push(...await readRange(since,until));since=dayAfter(until,1)}
  const members=new Set<number>(),sales=new Set<number>(),contracts=new Set<number>(),plans=new Map<string,{name:string;contracts:number;canceled:number}>();
  const firstMembers=new Set<number>(),renewals=new Set<number>();let unclassified=0;
  for(const value of data){

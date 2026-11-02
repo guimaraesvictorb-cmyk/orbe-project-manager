@@ -5,6 +5,8 @@
 @tailwind utilities;
 
 :root {
+  --logo-dark-bg: #111827;
+  --logo-light-bg: #ffffff;
   --bg-page: #000000;
   --bg-surface: #0a0a0a;
   --bg-surface-2: #0d0d0d;

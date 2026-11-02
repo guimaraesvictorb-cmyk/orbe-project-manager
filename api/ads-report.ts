@@ -4,6 +4,7 @@ import {qrUser} from './_lib/qrAccess.js';
 import {ORBE_ORIGIN,object,scalar,unseal} from './_lib/kommo.js';
 import {adsBinding} from './_lib/adsCredentials.js';
 import {reportPeriod,metaReport} from './_lib/adsReport.js';
+import {googleAdsReport} from './_lib/googleAdsReport.js';
 export default async function handler(req:Request,res:ServerResponse){
  if(req.method!=='POST')return answer(res,405,{error:'method_not_allowed'});
  if(req.headers.origin!==ORBE_ORIGIN)return answer(res,403,{error:'forbidden'});
@@ -16,9 +17,9 @@ export default async function handler(req:Request,res:ServerResponse){
  const platform=input.platform as 'meta'|'google';
  const rows=await db<{account_id:string;ciphertext:string;updated_at:string;status:string}[]>(`rest/v1/wa_ads_credentials?client_id=eq.${client}&platform=eq.${platform}&select=account_id,ciphertext,updated_at,status`);
  if(!rows[0])return answer(res,200,{status:'not_configured'});
- if(platform==='google')return answer(res,200,{status:'oauth_pending'});
  const row=rows[0],secrets=object(JSON.parse(unseal(row.ciphertext,adsBinding(client,platform))));
- const report=await metaReport(row.account_id,scalar(secrets.access_token,4096),period);
+ const report=platform==='google'?await googleAdsReport(row.account_id,secrets,period):await metaReport(row.account_id,scalar(secrets.access_token,4096),period);
+ if(report.status!=='ready')return answer(res,200,report);
  const latest=await db<{updated_at:string}[]>(`rest/v1/wa_ads_credentials?client_id=eq.${client}&platform=eq.${platform}&select=updated_at`);
  if(latest[0]?.updated_at!==row.updated_at)return answer(res,409,{error:'configuration_changed'});
  // The report call itself is proof the credential works — reflect that in
@@ -29,5 +30,5 @@ export default async function handler(req:Request,res:ServerResponse){
   await db(`rest/v1/wa_ads_credentials?client_id=eq.${client}&platform=eq.${platform}&updated_at=eq.${encodeURIComponent(row.updated_at)}`,{method:'PATCH',body:JSON.stringify({status:'access_verified'})}).catch(()=>{});
  }
  return answer(res,200,report);
- }catch(e){const code=e instanceof Error?e.message:'';return answer(res,['unauthorized','forbidden'].includes(code)?403:code==='invalid_period'?400:503,{error:['invalid_period','meta_token_invalid','meta_permission_denied','report_too_large','meta_account_mismatch'].includes(code)?code:'report_unavailable'});}
+ }catch(e){const code=e instanceof Error?e.message:'';return answer(res,['unauthorized','forbidden'].includes(code)?403:code==='invalid_period'?400:503,{error:['invalid_period','meta_token_invalid','meta_permission_denied','report_too_large','meta_account_mismatch','google_oauth_invalid','google_developer_token_denied','google_permission_denied','google_account_mismatch'].includes(code)?code:'report_unavailable'});}
 }

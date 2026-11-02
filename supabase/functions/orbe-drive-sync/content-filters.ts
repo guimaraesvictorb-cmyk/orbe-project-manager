@@ -13,9 +13,13 @@ export const RESTRICTED_NAME_PATTERNS: RegExp[] = [
   /credencial/i, /credential/i,
   /\btoken\b/i, /\bsecret\b/i, /\bchave\b/i, /\blogin\b/i,
   /base de clientes/i,       // bulk customer records
-  /\blead(s)?\b/i,           // raw lead sheets
-  /p[úu]blico/i, /audi[êe]ncia/i, /audience/i, // raw audience/CSV exports
-  /whatsapp/i,               // chat exports (personal conversations)
+  /^(?:\d+[. _-]*)?leads?(?:[\s_.-]|$)/i,
+  /(base|lista|planilha|export).*leads?|leads?.*\.csv$/i,
+  /(?:p[úu]blico|audi[êe]ncia|audience).*\.csv$/i,
+  /custom[_ -]?audience|p[úu]blico[_ -]*(personalizad|export|clientes)/i,
+  /^(?:\d+[. _-]*)?(?:p[úu]blicos?|audi[êe]ncias?|audiences?|whatsapp)$/i,
+  /whatsapp.*(export|hist[óo]rico|conversa|chat|\.txt|\.zip|\.csv)|(export|hist[óo]rico|conversa|chat).*whatsapp/i,
+  /^_?chat\.txt$/i,           // raw conversation exports, not strategy docs
 ];
 
 export function isRestrictedName(name: string): boolean {

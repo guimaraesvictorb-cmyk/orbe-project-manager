@@ -64,6 +64,9 @@ test('restricted names: folders and files', () => {
   assert.equal(isRestrictedName('Conversa do WhatsApp com +55 11 99999-9999.txt'), true)
   assert.equal(isRestrictedName('Relatório mensal de performance'), false)
   assert.equal(isRestrictedName('Briefing campanha Black Friday'), false)
+  assert.equal(isRestrictedName('rayafit_custom_audience_prioridade_A.csv'), true)
+  assert.equal(isRestrictedName('Definição de público ideal e mensagens'), false)
+  assert.equal(isRestrictedName('Estratégia de WhatsApp e conversão'), false)
 })
 
 test('bulk personal data: many phone/e-mail rows trip the threshold, a couple of examples in a doc do not', () => {

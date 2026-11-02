@@ -45,7 +45,7 @@ function ClientCard({ client, suggestion, onHealthChange, onStatusChange, onSele
         <ClientAvatar id={client.id} name={client.name} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-[var(--text-primary)] font-semibold text-sm leading-snug truncate" title={client.name}>{client.name}</p>
+            <button type="button" aria-label={`Abrir cliente ${client.name}`} onClick={event => { event.stopPropagation(); onSelect(client) }} className="text-left text-[var(--text-primary)] font-semibold text-sm leading-snug truncate" title={client.name}>{client.name}</button>
             {/* Health flag — clicável */}
             <div className="relative">
               <button

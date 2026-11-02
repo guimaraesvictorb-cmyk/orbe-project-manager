@@ -1,3 +1,4 @@
 {
-  "rewrites": [{ "source": "/((?!api/).*)", "destination": "/" }]
+  "rewrites": [{ "source": "/((?!api/).*)", "destination": "/" }],
+  "functions": { "api/evo-connection.ts": { "maxDuration": 60 } }
 }

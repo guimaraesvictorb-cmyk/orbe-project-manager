@@ -16,10 +16,11 @@ import { useAuth } from "../hooks/useAuth"
 import { FLAG_META, STATUS_META } from "../lib/clientMeta"
 import { openClientWorkspace, parseClientWorkspace, type ClientArea } from "../lib/clientWorkspace"
 import { useClients } from "../hooks/useClients"
+import { previousMonth } from "../lib/clientTimeline"
 import { ClientAvatar } from "./ClientAvatar"
+import { ClientMonthlyResults } from "./ClientMonthlyResults"
 import { ClientOverview } from "./ClientOverview"
 import { ClientChronogram } from "./ClientChronogram"
-import { AdsMetricsTab } from "./ads/AdsMetricsTab"
 import { CompiladoTab } from "./ads/CompiladoTab"
 import { SecureMetaAdsTab } from "./ads/SecureMetaAdsTab"
 
@@ -108,6 +109,7 @@ function KnowledgeCard({ entry, onValidate, onDelete }: {
             >
               {src.label}
             </span>
+            {entry.financial_restricted && <span className="text-[9px] text-[var(--warning)]">Restrito a perfis financeiros</span>}
           </div>
           {content ? <p className="whitespace-pre-wrap text-xs leading-relaxed" style={{ color: "var(--text-tertiary)" }}>{content}</p> : <div className="flex items-center gap-2"><button type="button" onClick={loadContent} disabled={loadingContent} className="text-xs font-medium disabled:opacity-60" style={{ color: "var(--accent)" }}>{loadingContent ? "Carregando conteúdo…" : "Ver conteúdo"}</button>{contentError && <span role="alert" className="text-[10px]" style={{ color: "var(--danger)" }}>{contentError}</span>}</div>}
         </div>
@@ -271,7 +273,7 @@ Use APENAS as informações acima e os trechos de documentos recuperados. Trate 
       if (searchError) throw new Error("A busca na base de conhecimento não está disponível. Confira a migração do Drive e da estratégia do cliente.")
       const knowledgeRows = (sources ?? []) as Array<{ title: string; content: string; source_url: string | null }>
       const knowledgeContext = knowledgeRows.length
-        ? knowledgeRows.map((entry) => `- ${entry.title}${entry.source_url ? ` (fonte: ${entry.source_url})` : ""}: ${entry.content.slice(0, 2500)}`).join("\n")
+        ? knowledgeRows.map((entry) => `- ${entry.title}${entry.source_url ? ` (fonte: ${entry.source_url})` : ""}: ${entry.content.slice(0, 6000)}`).join("\n")
         : "Nenhuma informação validada relevante foi encontrada na base deste cliente."
       const { data: { session } } = await supabase.auth.getSession()
       const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/orbe-ai-chat`, {
@@ -445,6 +447,7 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
   const [overviewForm, setOverviewForm] = useState<Partial<Client>>({})
   const [savingOverview, setSavingOverview] = useState(false)
   const [showAddModal, setShowAddModal] = useState(false)
+  const [knowledgeSearch, setKnowledgeSearch] = useState('')
   const [showShareModal, setShowShareModal] = useState(false)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -461,6 +464,8 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
   const [savingDriveFolder, setSavingDriveFolder] = useState(false)
   const [syncingDrive, setSyncingDrive] = useState(false)
   const [driveMessage, setDriveMessage] = useState("")
+  const [driveLastSync, setDriveLastSync] = useState<string | null>(null)
+  const [driveSummary, setDriveSummary] = useState<{ synced?: number; chunks?: number; skipped_count?: number; skipped?: Array<{ file: string; reason: string }>; skipped_formats?: Record<string,number> } | null>(null)
   const [strategyForm, setStrategyForm] = useState({ icp: "", averageTicket: "", targetCac: "", targetLtv: "", conversionEvent: "", conversionSource: "", top: "", middle: "", bottom: "", channels: "", verifiedNotes: "" })
   const [offers, setOffers] = useState<ClientOffer[]>([])
   const [showAddOffer, setShowAddOffer] = useState(false)
@@ -469,10 +474,11 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
   const [offerForm, setOfferForm] = useState({ name: "", channel: "", audience: "", starts_on: "", ends_on: "", price: "", spend: "", conversions: "", notes: "" })
   const [observations, setObservations] = useState<KpiObservation[]>([])
   const [dataSources, setDataSources] = useState<ClientDataSource[]>([])
-  const [kpiForm, setKpiForm] = useState({ month: new Date().toLocaleDateString("en-CA").slice(0, 7), channel: "Todos os canais", spend: "", outcomes: "", customers: "", revenue: "", notes: "" })
+  const [kpiForm, setKpiForm] = useState({ month: previousMonth().month, channel: "Todos os canais", spend: "", outcomes: "", customers: "", revenue: "", notes: "" })
   const [savingKpi, setSavingKpi] = useState(false)
   const { assignments, assign, unassign } = useClientAssignments(client.id)
   const { validated, pending, addEntry, validateEntry, deleteEntry, refetch: refetchKnowledge } = useClientKnowledge(client.id)
+  const knowledgeDocumentCount = new Set(validated.map(entry => entry.source === 'drive' && entry.source_ref ? entry.source_ref.split(':chunk:')[0] : entry.id)).size
   const { items, toggleItem, updateItem } = useClientChecklist(client.id)
   const { tokens, createToken, deleteToken } = useShareTokens(client.id)
 
@@ -516,12 +522,14 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
 
   useEffect(() => {
     let active = true
-    supabase.from("client_drive_config").select("folder_id").eq("client_id", client.id).maybeSingle().then(({ data, error }) => {
+    supabase.from("client_drive_config").select("folder_id,last_synced_at,sync_summary").eq("client_id", client.id).maybeSingle().then(({ data, error }) => {
       if (!active) return
       if (error) {
         setDriveMessage("Não foi possível consultar o vínculo do Drive. Confira a configuração do banco.")
         return
       }
+      setDriveLastSync(data?.last_synced_at ?? null)
+      setDriveSummary(data?.sync_summary ?? null)
       const folderId = data?.folder_id ?? ""
       setDriveFolderState({ clientId: client.id, value: folderId })
       setDriveFolderInputState({ clientId: client.id, value: folderId })
@@ -673,13 +681,12 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
         headers: { "content-type": "application/json", authorization: `Bearer ${session?.access_token ?? ""}` },
         body: JSON.stringify({ client_id: client.id }),
       })
-      const result = await response.json() as { synced: number; error?: string; skipped_count?: number; skipped?: Array<{ file: string; reason: string }> }
+      const result = await response.json() as { synced: number; chunks?: number; error?: string; skipped_count?: number; skipped?: Array<{ file: string; reason: string }>; skipped_formats?: Record<string,number> }
       if (!response.ok) throw new Error(result.error ?? `Erro ${response.status}`)
       await refetchKnowledge()
-      const skippedCount = result.skipped_count ?? 0
-      const skippedDetails = (result.skipped ?? []).slice(0, 3).map(({ file, reason }) => `${file}: ${reason}`).join(" · ")
-      const skippedSummary = skippedCount ? ` · ${skippedCount} não importado(s)${skippedDetails ? ` — ${skippedDetails}` : ""}${skippedCount > 3 ? ` · e mais ${skippedCount - 3}` : ""}` : ""
-      setDriveMessage(`${result.synced} arquivo(s) atualizado(s) da pasta${skippedSummary}.`)
+      setDriveSummary(result)
+      setDriveLastSync(new Date().toISOString())
+      setDriveMessage(`${result.synced} documento(s) sincronizado(s) em ${result.chunks ?? result.synced} trecho(s).${result.skipped_count ? ` ${result.skipped_count} item(ns) não indexado(s); veja o inventário.` : ''}`)
     } catch (error) {
       setDriveMessage((error as Error).message || "Não foi possível sincronizar o Drive.")
     } finally { setSyncingDrive(false) }
@@ -952,7 +959,8 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
 
         {tab === "overview" && (
           <div className="space-y-6">
-            <ClientOverview clientId={client.id} strategy={strategyForm} offers={offers} knowledgeCount={validated.length} checklist={items} driveLinked={!!driveFolderId} ads={adsConnection} onNavigate={setTab} />
+            <ClientOverview clientId={client.id} strategy={strategyForm} offers={offers} knowledgeCount={knowledgeDocumentCount} checklist={items} driveLinked={!!driveFolderId} ads={adsConnection} onNavigate={setTab} />
+            <ClientMonthlyResults clientId={client.id} source={strategyForm.conversionSource} observations={observations} onConnections={() => setTab("connections")} />
             {canEdit && (
               <div className="rounded-xl border p-4 mb-5" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
                 <div className="flex items-center gap-1.5 mb-2.5">
@@ -1094,8 +1102,8 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
         {tab === "connections" && <Suspense fallback={<p>Carregando conexões…</p>}><WhatsAppTrackingView clientId={client.id} embedded evoEnabled={/evo/i.test(strategyForm.conversionSource)} /></Suspense>}
         {tab === "analytics" && <section className="rounded-2xl border border-[var(--border)] bg-[var(--bg-surface)] p-6"><h2 className="text-lg font-semibold text-[var(--text-primary)]">Orgânico e Analytics</h2><p className="mt-2 text-sm text-[var(--text-tertiary)]">{client.ga4_property_id ? `Propriedade GA4 cadastrada: ${client.ga4_property_id}. A coleta de relatórios ainda precisa ser validada.` : 'Nenhuma propriedade GA4 vinculada a este cliente.'}</p><p className="mt-3 text-sm text-[var(--text-tertiary)]">Perfis orgânicos ainda sem integração de métricas validada.</p><button onClick={() => setTab('connections')} className="mt-5 text-sm font-semibold text-[var(--accent)]">Conferir conexões →</button></section>}
         {tab === "meta"      && <SecureMetaAdsTab clientId={client.id} onVerified={refreshAdsConnection} onOpenConnections={() => setTab("connections")} />}
-        {tab === "google"    && <AdsMetricsTab clientId={client.id} platform="google" />}
-        {tab === "compilado" && <CompiladoTab clientId={client.id} />}
+        {tab === "google"    && <SecureMetaAdsTab clientId={client.id} platform="google" onVerified={refreshAdsConnection} onOpenConnections={() => setTab("connections")} />}
+        {tab === "compilado" && <CompiladoTab clientId={client.id} onVerified={refreshAdsConnection} onOpenConnections={() => setTab("connections")} />}
         {tab === "tracking" && <Suspense fallback={<p>Carregando rastreamento…</p>}><WhatsAppTrackingView clientId={client.id} embedded evoEnabled={/evo/i.test(strategyForm.conversionSource)} /></Suspense>}
 
         {tab === "strategy" && (
@@ -1119,6 +1127,7 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
             <section className="rounded-2xl border p-5 space-y-3" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
               <div><h3 className="text-sm font-semibold text-[var(--text-primary)]">Fontes de resultado e integrações</h3><p className="mt-1 text-xs" style={{ color: "var(--text-tertiary)" }}>Acompanhe a etapa de configuração das fontes oficiais deste cliente. Este cadastro não testa nem armazena credenciais.</p></div>
               <div className="grid gap-3 sm:grid-cols-3">{CLIENT_DATA_SOURCES.filter(source => dataSources.some(row => row.system === source.id && row.state !== "not_configured") || (source.id === "ecommerce" ? /vtex|e.?commerce/i : new RegExp(source.id, "i")).test(strategyForm.conversionSource)).map((source) => {
+                if (source.id === 'evo') return <div key={source.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-surface-2)] p-4"><h4 className="text-xs font-semibold text-[var(--text-primary)]">EVO · Matrículas</h4><p className="mt-2 text-[10px] text-[var(--text-tertiary)]">A cobertura por unidade e a validação de leitura ficam no painel da integração.</p><button onClick={() => setTab('connections')} className="mt-3 text-xs font-semibold text-[var(--accent)]">Ver unidades e conexão →</button></div>
                 const current = dataSources.find((item) => item.system === source.id)
                 const value = current?.state ?? "not_configured"
                 return <div key={source.id} className="rounded-xl border p-3" style={{ backgroundColor: "var(--bg-surface-2)", borderColor: "var(--border)" }}><div className="flex items-start justify-between gap-2"><div><p className="text-xs font-semibold text-[var(--text-primary)]">{source.label}</p><p className="mt-1 text-[10px]" style={{ color: "var(--text-tertiary)" }}>{source.id === "bitrix" ? "Negócios B2B ganhos" : source.id === "ecommerce" ? "Pedidos pagos" : "Matrículas"}</p></div><span className="rounded-full px-2 py-1 text-[9px]" style={{ backgroundColor: value === "verified" ? "var(--success-tint, rgba(34,197,94,.1))" : "var(--bg-input)", color: value === "verified" ? "var(--success, #22c55e)" : "var(--text-tertiary)" }}>{SOURCE_STATES[value]}</span></div>{canEdit && <label className="mt-3 block text-[10px]" style={{ color: "var(--text-tertiary)" }}>Etapa<select value={value} onChange={(event) => void setDataSourceState(source.id, event.target.value as ClientDataSource["state"])} className="mt-1 w-full rounded-lg px-2 py-2 text-[11px] text-[var(--text-primary)]" style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-strong)" }}>{Object.entries(SOURCE_STATES).map(([state, label]) => <option key={state} value={state}>{label}</option>)}</select></label>}</div>
@@ -1214,13 +1223,16 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
             )}
 
             <div>
+              {driveLastSync && <p className="mb-3 text-[10px] text-[var(--text-tertiary)]">Última sincronização concluída: {new Date(driveLastSync).toLocaleString('pt-BR')}</p>}
+              {driveSummary && <details className="mb-5 rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] p-4"><summary className="cursor-pointer text-xs font-semibold text-[var(--text-secondary)]">Inventário da última sincronização · {driveSummary.synced ?? 0} documento(s) · {driveSummary.skipped_count ?? 0} item(ns) não indexado(s)</summary><ul className="mt-3 space-y-2">{driveSummary.skipped?.map((item,index) => <li key={index} className="text-[10px] text-[var(--text-tertiary)]"><strong>{item.file}</strong> · {item.reason}</li>)}</ul>{Object.entries(driveSummary.skipped_formats ?? {}).map(([format,count]) => <p key={format} className="mt-2 text-[10px] text-[var(--text-tertiary)]">{count} arquivo(s) {format} sem extração de texto</p>)}</details>}
               {validated.length > 0 && (
                 <>
                   <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "var(--accent)" }}>
-                    Validado ({validated.length})
+                    {knowledgeDocumentCount} documento(s) validado(s) · {validated.length} trecho(s)
                   </p>
+                  <input aria-label="Buscar documento na base" value={knowledgeSearch} onChange={event => setKnowledgeSearch(event.target.value)} placeholder="Buscar pelo nome ou pasta do documento…" className="mb-4 w-full rounded-lg border border-[var(--border)] bg-[var(--bg-input)] px-3 py-2 text-sm text-[var(--text-primary)]" />
                   <div className="space-y-3">
-                    {validated.map((entry) => (
+                    {validated.filter(entry => entry.title.toLocaleLowerCase('pt-BR').includes(knowledgeSearch.toLocaleLowerCase('pt-BR'))).map((entry) => (
                       <KnowledgeCard key={entry.id} entry={entry} onDelete={() => deleteEntry(entry.id)} />
                     ))}
                   </div>
@@ -1250,7 +1262,7 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
 
         {tab === "ai" && (
           <div className="max-w-2xl flex flex-col" style={{ height: "calc(100vh - 220px)" }}>
-            <ClientAI client={client} knowledgeCount={validated.length} strategyForm={strategyForm} offers={offers} />
+            <ClientAI client={client} knowledgeCount={knowledgeDocumentCount} strategyForm={strategyForm} offers={offers} />
           </div>
         )}
       </div>
