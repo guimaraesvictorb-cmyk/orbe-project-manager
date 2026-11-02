@@ -271,12 +271,20 @@ Use APENAS as informações acima. Não invente dados. Se não souber algo sobre
         signal: abortRef.current.signal,
         headers: { "content-type": "application/json", authorization: `Bearer ${session?.access_token ?? ""}` },
         body: JSON.stringify({
+          // A IA do cliente usa Anthropic especificamente (decisão mais
+          // recente), não o OpenAI usado pelo resto do app — o servidor
+          // recusa com uma mensagem clara em vez de usar OpenAI calado
+          // e fingir ser Claude se ANTHROPIC_API_KEY não estiver configurada.
+          provider: "anthropic",
           system: `${systemPrompt}\n\nBase de conhecimento selecionada para esta pergunta:\n${knowledgeContext}`,
           messages: newMessages,
         }),
       })
 
-      if (!res.ok || !res.body) throw new Error(`Erro ${res.status}`)
+      if (!res.ok || !res.body) {
+        const errBody = await res.json().catch(() => null)
+        throw new Error(errBody?.error ?? `Erro ${res.status}`)
+      }
 
       const reader = res.body.getReader()
       const decoder = new TextDecoder()

@@ -309,7 +309,7 @@ export function HomeView({ profile, onNavigate }: HomeViewProps) {
             Orbe AI
           </span>
           <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{ backgroundColor: "var(--accent-tint)", color: "var(--text-tertiary)", border: "1px solid var(--border)" }}>
-            claude sonnet 5
+            openai
           </span>
         </div>
 

@@ -6,7 +6,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const ANTHROPIC_MODEL = Deno.env.get("ANTHROPIC_MODEL") ?? "claude-sonnet-5";
+// claude-sonnet-5 is a real Anthropic model id but is now legacy;
+// claude-sonnet-5-5 is the current Sonnet. Confirmed against Anthropic's
+// own model docs (platform.claude.com/docs/models/sonnet-5/overview),
+// not assumed. Override via the ANTHROPIC_MODEL secret if needed.
+const ANTHROPIC_MODEL = Deno.env.get("ANTHROPIC_MODEL") ?? "claude-sonnet-5-5";
 
 // Shared server-side AI proxy for app features (Orbe AI, Copy IA,
 // Relatórios, Super Agente and client-detail assistant). OpenAI handles
@@ -43,10 +47,18 @@ serve(async (req) => {
     if (!Array.isArray(messages)) return json({ error: "Campo obrigatório: messages" }, 400);
     const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY");
     const openaiKey = Deno.env.get("OPENAI_API_KEY");
+    // The client-detail AI chat explicitly asks for Anthropic (most recent
+    // product decision) — honor that even when OPENAI_API_KEY is set, and
+    // fail honestly instead of silently answering with OpenAI under a
+    // Claude label when ANTHROPIC_API_KEY isn't configured.
+    const wantsAnthropic = body.provider === "anthropic";
+    if (wantsAnthropic && !anthropicKey) {
+      return json({ error: "ANTHROPIC_API_KEY não configurada no servidor — a IA do cliente usa Anthropic especificamente e não usa outro provedor no lugar. Configure o secret em Supabase → Edge Functions → Secrets." }, 503);
+    }
 
     // Native tool-calling passthrough for Super Agente.
     if (Array.isArray(tools) && tools.length > 0) {
-      if (openaiKey) {
+      if (openaiKey && !wantsAnthropic) {
         const input = toResponsesInput(messages);
         const response = await fetch("https://api.openai.com/v1/responses", {
           method: "POST",
@@ -100,9 +112,10 @@ serve(async (req) => {
     }
     const streamRequested = body.stream !== false;
 
-    // OpenAI Responses API for standard chats when the server-side secret is configured.
+    // OpenAI Responses API for standard chats when the server-side secret is
+    // configured — unless this call specifically asked for Anthropic.
     // API credentials never leave this Edge Function.
-    if (openaiKey) {
+    if (openaiKey && !wantsAnthropic) {
       const openaiBody = {
         model: Deno.env.get("OPENAI_MODEL") ?? "gpt-4.1-mini",
         instructions: systemPrompt,
