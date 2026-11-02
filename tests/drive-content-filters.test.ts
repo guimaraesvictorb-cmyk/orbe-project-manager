@@ -67,6 +67,13 @@ test('restricted names: folders and files', () => {
   assert.equal(isRestrictedName('rayafit_custom_audience_prioridade_A.csv'), true)
   assert.equal(isRestrictedName('Definição de público ideal e mensagens'), false)
   assert.equal(isRestrictedName('Estratégia de WhatsApp e conversão'), false)
+  assert.equal(isRestrictedName('Backup Diretoria - Takeout 2026-10-12'), true)
+  assert.equal(isRestrictedName('Histórico de ofertas 2025'), false)
+})
+
+test('unlabelled API-shaped secrets do not enter a knowledge document', () => {
+  assert.equal(looksLikeSecret('sk-ant-SYNTHETIC_NOT_A_REAL_KEY_FOR_TEST_ONLY'), true)
+  assert.equal(looksLikeSecret('sk-proj-SYNTHETIC_NOT_A_REAL_KEY_FOR_TEST_ONLY'), true)
 })
 
 test('bulk personal data: many phone/e-mail rows trip the threshold, a couple of examples in a doc do not', () => {

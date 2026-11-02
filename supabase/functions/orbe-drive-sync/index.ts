@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { isRestrictedName, looksLikeSecret, looksLikeBulkPersonalData } from "./content-filters.ts";
+import { advanceSync, newSyncState, staleKnowledgeIds, syncProgress, type DriveFile, type SyncState } from "./sync-engine.ts";
 import { documentText, officeTypes, textTypes } from "./document-text.ts";
 
 const corsHeaders = {
@@ -17,8 +17,9 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser(jwt);
     if (authError || !user) return json({ error: "Sessão inválida" }, 401);
 
-    const { client_id: clientId } = await req.json();
-    if (typeof clientId !== "string") return json({ error: "Cliente inválido" }, 400);
+    if (req.method !== "POST") return json({ error: "Método inválido" }, 405);
+    const { client_id: clientId, batch, action } = await req.json();
+    if (typeof clientId !== "string" || !/^[0-9a-f-]{36}$/.test(clientId)) return json({ error: "Cliente inválido" }, 400);
     const [{ data: profile }, { data: client }, { data: driveConfig }] = await Promise.all([
       supabase.from("profiles").select("role,is_active").eq("id", user.id).maybeSingle(),
       supabase.from("clients").select("id,name,deleted_at").eq("id", clientId).maybeSingle(),
@@ -31,165 +32,77 @@ serve(async (req) => {
       if (!assignment) return json({ error: "Sem acesso a este cliente" }, 403);
     }
 
-    // Prefer the correctly-named secret; fall back to a legacy one only if
-    // its shape is a real Google service account AND it can actually mint a
-    // drive.readonly token — this never reads/exposes either secret's value,
-    // it only proves (or disproves) capability server-side.
-    const resolved = await resolveServiceAccount(Deno.env.get("GOOGLE_DRIVE_SERVICE_ACCOUNT_JSON"), Deno.env.get("GOOGLE_SERVICE_ACCOUNT_KEY"));
-    if (!resolved) return json({ error: "Integração do Drive ainda não configurada no servidor (nenhuma credencial de serviço válida encontrada)." }, 503);
-    const accessToken = resolved.token;
+    type Job = { client_id: string; job_id: string; folder_id: string; revision: number; lease_until: string; state: SyncState };
+    const { data: existingJob, error: jobReadError } = await supabase.from('client_drive_sync_jobs').select('*').eq('client_id',clientId).maybeSingle();
+    if (jobReadError) return json({ error: 'O controle da sincronização ainda não está disponível.' },503);
+    if (action === 'status') return json(existingJob?.folder_id === driveConfig.folder_id ? syncProgress(existingJob.state) : { complete: false, phase: 'not_started', synced: 0 });
+    if (batch !== true) return json({ error: 'Atualize a página do Studio para usar a sincronização com retomada.' },409);
     const folderId = driveConfig.folder_id;
-    // Drive files.list returns an empty list even for an inaccessible parent.
-    // Confirm the folder itself before reporting an empty successful sync.
+    const resolved = await resolveServiceAccount(Deno.env.get('GOOGLE_DRIVE_SERVICE_ACCOUNT_JSON'),Deno.env.get('GOOGLE_SERVICE_ACCOUNT_KEY'));
+    if (!resolved) return json({ error: 'Integração do Drive sem credencial de serviço válida no servidor.' },503);
+    const accessToken = resolved.token;
     const folderResponse = await fetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(folderId)}?fields=id,name,mimeType&supportsAllDrives=true`, { headers: { authorization: `Bearer ${accessToken}` }, signal: AbortSignal.timeout(15000) });
-    if (folderResponse.status === 403 || folderResponse.status === 404) return json({ error: `O Studio ainda não tem acesso à pasta. Compartilhe esta pasta como leitor com ${resolved.email}.`, service_account_email: resolved.email, folder_id: folderId }, 403);
-    if (!folderResponse.ok) return json({ error: 'Não foi possível confirmar o acesso à pasta no Google Drive.' }, 503);
-    const folderMetadata = await folderResponse.json();
-    if (folderMetadata.mimeType !== 'application/vnd.google-apps.folder') return json({ error: 'O vínculo precisa apontar para uma pasta do Google Drive.' }, 400);
-    const files: DriveFile[] = [];
-    const allFileRefs = new Set<string>();
-    const skipped: Array<{ file: string; reason: string }> = [];
-    let skippedCount = 0;
-    const indexedFiles = new Set<string>();
-    const skippedFormats: Record<string, number> = {};
-    const restrictedFolders: string[] = [];
-    const visitedFolders = new Set<string>();
-    async function walkFolder(parentId: string, path: string, depth: number): Promise<void> {
-      if (depth > 8) throw new Error("A estrutura do Drive ultrapassa 8 níveis de pastas.");
-      if (visitedFolders.has(parentId)) return;
-      visitedFolders.add(parentId);
-      let pageToken: string | undefined;
-      for (let page = 0; page < 50; page++) {
-        const query = new URLSearchParams({
-          q: `'${parentId.replace(/'/g, "\\'")}' in parents and trashed = false`,
-          fields: "nextPageToken,files(id,name,mimeType,webViewLink,modifiedTime,size)",
-          pageSize: "100",
-          orderBy: "name",
-          supportsAllDrives: "true",
-          includeItemsFromAllDrives: "true",
-        });
-        if (pageToken) query.set("pageToken", pageToken);
-        const listed = await driveFetch(`https://www.googleapis.com/drive/v3/files?${query}`, accessToken);
-        for (const file of (listed.files ?? []) as DriveFile[]) {
-          const nextPath = path ? `${path}/${file.name}` : file.name;
-          if (isRestrictedName(file.name)) {
-            if (file.mimeType === "application/vnd.google-apps.folder") restrictedFolders.push(nextPath);
-            continue; // never list, read or descend into restricted names
-          }
-          if (file.mimeType === "application/vnd.google-apps.folder") await walkFolder(file.id, nextPath, depth + 1);
-          else {
-            allFileRefs.add(file.id);
-            if (!canReadFile(file)) {
-              skippedCount++;
-              skippedFormats[file.mimeType] = (skippedFormats[file.mimeType] ?? 0) + 1;
-              if (!/^(image|video|audio)\//.test(file.mimeType) && skipped.length < 20) skipped.push({ file: nextPath, reason: `Formato sem extração de texto (${file.mimeType}).` });
-              continue;
-            }
-            files.push({ ...file, relativePath: nextPath });
-          }
-          if (files.length > 500) throw new Error("A pasta tem mais de 500 arquivos. Divida o material em subpastas por assunto.");
+    if ([403,404].includes(folderResponse.status)) return json({ error: `O Studio ainda não tem acesso à pasta. Compartilhe como leitor com ${resolved.email}.` },403);
+    if (!folderResponse.ok) return json({ error: 'Não foi possível confirmar o acesso à pasta no Drive.' },503);
+    if ((await folderResponse.json()).mimeType !== 'application/vnd.google-apps.folder') return json({ error: 'O vínculo precisa apontar para uma pasta do Drive.' },400);
+    let job = existingJob as Job | null;
+    if (!job) {
+      const { error } = await supabase.from('client_drive_sync_jobs').upsert({ client_id: clientId,folder_id: folderId,state: newSyncState(folderId) },{onConflict:'client_id',ignoreDuplicates:true});
+      if (error) throw new Error('Não foi possível iniciar o progresso da sincronização.');
+      const loaded = await supabase.from('client_drive_sync_jobs').select('*').eq('client_id',clientId).single();
+      if (loaded.error) throw new Error('Não foi possível consultar o progresso da sincronização.');
+      job = loaded.data as Job;
+    }
+    if (Date.parse(job.lease_until) > Date.now()) return json({ ...syncProgress(job.state), complete: false, busy: true },202);
+    const state = job.folder_id !== folderId || job.state.phase === 'complete' ? newSyncState(folderId) : job.state;
+    const revision = job.revision + 1;
+    const claimed = await supabase.from('client_drive_sync_jobs').update({ revision,folder_id: folderId,state,lease_until:new Date(Date.now()+90000).toISOString(),updated_at:new Date().toISOString() }).eq('client_id',clientId).eq('revision',job.revision).lte('lease_until',new Date().toISOString()).select('client_id').maybeSingle();
+    if (claimed.error) throw new Error('Não foi possível reservar o lote de leitura.');
+    if (!claimed.data) return json({ ...syncProgress(state),complete:false,busy:true },202);
+    try {
+      await advanceSync(state,{
+        accepts: canReadFile,
+        list: async folder => {
+          const query = new URLSearchParams({ q: `'${folder.id.replace(/'/g,"\\'")}' in parents and trashed = false`,fields:'nextPageToken,files(id,name,mimeType,webViewLink,modifiedTime,size,capabilities(canListChildren))',pageSize:'100',orderBy:'name',supportsAllDrives:'true',includeItemsFromAllDrives:'true' });
+          if (folder.pageToken) query.set('pageToken',folder.pageToken);
+          return await driveFetch(`https://www.googleapis.com/drive/v3/files?${query}`,accessToken);
+        },
+        read: file => readDriveFile(file,accessToken),
+        save: async records => { const { error } = await supabase.from('client_knowledge').upsert(records,{onConflict:'client_id,source_ref'}); if(error) throw new Error('Falha ao salvar um documento na base.'); },
+        purge: async fileId => { const { error } = await supabase.from('client_knowledge').delete().eq('client_id',clientId).eq('source','drive').or(`source_ref.eq.${fileId},source_ref.like.${fileId}:chunk:*`); if(error) throw new Error('Falha ao remover um documento restrito da base.'); },
+      },clientId,user.id);
+      if (state.phase === 'reconciling') {
+        const entries: Array<{id:string;source_ref:string;source_folder_id:string}> = [];
+        for(let page=0;page<200;page++) {
+          const { data,error } = await supabase.from('client_knowledge').select('id,source_ref,source_folder_id').eq('client_id',clientId).eq('source','drive').order('id').range(page*1000,page*1000+999);
+          if(error) throw new Error('Falha ao conferir os documentos anteriores.');
+          entries.push(...data??[]); if(!data||data.length<1000) break;
+          if(page===199) throw new Error('A base ultrapassa o limite de reconciliação.');
         }
-        pageToken = listed.nextPageToken;
-        if (!pageToken) break;
+        const stale=staleKnowledgeIds(state,entries);
+        for(let offset=0;offset<stale.length;offset+=100) { const {error}=await supabase.from('client_knowledge').delete().in('id',stale.slice(offset,offset+100));if(error)throw new Error('Falha ao reconciliar documentos removidos do Drive.'); }
+        state.phase='complete';
       }
-      if (pageToken) throw new Error("Uma pasta ultrapassa o limite de 5.000 itens para esta sincronização.");
+      const progress=syncProgress(state);
+      const {error:checkpointError}=await supabase.from('client_drive_sync_jobs').update({state,lease_until:'1970-01-01T00:00:00Z',updated_at:new Date().toISOString()}).eq('client_id',clientId).eq('revision',revision);
+      if(checkpointError)throw new Error('Não foi possível guardar o progresso para retomada.');
+      const {error:summaryError}=await supabase.from('client_drive_config').update({sync_summary:progress,...(progress.complete?{last_synced_at:new Date().toISOString()}:{})}).eq('client_id',clientId).eq('folder_id',folderId);
+      if(summaryError)throw new Error('Não foi possível atualizar o inventário da base.');
+      return json(progress,progress.complete?200:202);
+    } catch(error) {
+      await supabase.from('client_drive_sync_jobs').update({state,lease_until:'1970-01-01T00:00:00Z',updated_at:new Date().toISOString()}).eq('client_id',clientId).eq('revision',revision);
+      throw error;
     }
-    await walkFolder(folderId, "", 0);
-
-    const records: Record<string, unknown>[] = [];
-    // File ids whose content just turned out to be a secret or bulk personal
-    // data — any content indexed from an earlier, cleaner version of the
-    // same file must be purged now, not kept around just because the file
-    // id is still present in the folder (the generic "stale" check below
-    // only catches files that disappeared or moved, not files that got
-    // worse in place).
-    const flaggedRefs = new Set<string>();
-    for (let offset = 0; offset < files.length; offset += 2) {
-      const chunk = await Promise.all(files.slice(offset, offset + 2).map(async (file) => ({ file, result: await readDriveFile(file, accessToken) })));
-      for (const { file, result } of chunk) {
-        if (!result.content) {
-          skippedCount++;
-          if (skipped.length < 20) skipped.push({ file: file.relativePath ?? file.name, reason: result.skipReason ?? "Motivo não informado." });
-          continue;
-        }
-        const content = result.content;
-        // Content-level check runs even for files whose name looked fine —
-        // never store a snippet, never name the matched pattern.
-        if (looksLikeSecret(content)) {
-          skippedCount++;
-          flaggedRefs.add(file.id);
-          if (skipped.length < 20) skipped.push({ file: file.relativePath ?? file.name, reason: "Restrito: conteúdo contém padrão de credencial/segredo — não indexado." });
-          continue;
-        }
-        if (looksLikeBulkPersonalData(content)) {
-          skippedCount++;
-          flaggedRefs.add(file.id);
-          if (skipped.length < 20) skipped.push({ file: file.relativePath ?? file.name, reason: "Restrito: parece conter dado pessoal em massa (telefones/e-mails) — não indexado." });
-          continue;
-        }
-        if (content.length > 500000) {
-          skippedCount++;
-          if (skipped.length < 20) skipped.push({ file: file.relativePath ?? file.name, reason: 'Documento acima de 500 mil caracteres; precisa ser dividido para indexação.' });
-          continue;
-        }
-        const financial = /(R\s*[$]|\b(BRL|USD|EUR)\b|honor[áa]rio|retainer|financeir|contrat|mensalidade da ag[êe]ncia)/i.test(`${file.relativePath} ${content}`);
-        const chunks = Array.from({ length: Math.ceil(content.length / 16000) }, (_, index) => content.slice(index * 16000, (index + 1) * 16000));
-        indexedFiles.add(file.id);
-        for (let index = 0; index < chunks.length; index++) records.push({
-          client_id: clientId,
-          title: `${file.relativePath ?? file.name}${chunks.length > 1 ? ` · parte ${index + 1}/${chunks.length}` : ''}`,
-          content: `Documento original: ${file.relativePath ?? file.name}\nAtualizado no Drive: ${file.modifiedTime ?? 'data não informada'}\n\n${chunks[index]}`,
-          source: 'drive', validated: true, financial_restricted: financial, created_by: user.id,
-          source_ref: index ? `${file.id}:chunk:${index}` : file.id,
-          source_url: file.webViewLink ?? `https://drive.google.com/open?id=${encodeURIComponent(file.id)}`,
-          source_folder_id: folderId,
-        });
-        if (records.length > 1000) throw new Error('A pasta ultrapassa o limite de 1.000 trechos para uma sincronização. Selecione uma pasta de documentos menor.');
-      }
-    }
-    for (const folderPath of restrictedFolders) {
-      skippedCount++;
-      if (skipped.length < 20) skipped.push({ file: `${folderPath}/*`, reason: "Restrito: pasta inteira excluída por nome (acesso/credencial/dado pessoal) — nenhum arquivo dentro foi lido." });
-    }
-    for (let offset = 0; offset < records.length; offset += 100) {
-      const { error } = await supabase.from("client_knowledge").upsert(records.slice(offset, offset + 100), { onConflict: "client_id,source_ref" });
-      if (error) throw new Error(`Falha ao salvar documentos sincronizados: ${error.message}`);
-    }
-    // Keep old indexed content if a file is temporarily unreadable or not
-    // supported yet — but never for a file that just got flagged as a
-    // secret or bulk personal data; that content comes out regardless of
-    // what was indexed before.
-    const existingDriveEntries: Array<{ id: string; source_ref: string; source_folder_id: string }> = [];
-    for (let page = 0; page < 20; page++) {
-      const { data, error } = await supabase.from('client_knowledge').select('id,source_ref,source_folder_id').eq('client_id', clientId).eq('source', 'drive').order('id').range(page * 1000, page * 1000 + 999);
-      if (error) throw new Error('Falha ao reconciliar os documentos anteriores da base.');
-      existingDriveEntries.push(...data ?? []);
-      if (!data || data.length < 1000) break;
-      if (page === 19) throw new Error('A base ultrapassa o limite de reconciliação desta sincronização.');
-    }
-    const indexedRefs = new Set(records.map(record => String(record.source_ref)));
-    const staleIds = existingDriveEntries.filter(entry => {
-      const base = entry.source_ref?.split(':chunk:')[0];
-      return entry.source_folder_id !== folderId || !allFileRefs.has(base) || flaggedRefs.has(base) || (indexedFiles.has(base) && !indexedRefs.has(entry.source_ref));
-    }).map(entry => entry.id);
-    for (let offset = 0; offset < staleIds.length; offset += 100) {
-      const { error } = await supabase.from("client_knowledge").delete().in("id", staleIds.slice(offset, offset + 100));
-      if (error) throw new Error(`Falha ao remover documentos antigos da base: ${error.message}`);
-    }
-    const summary = { synced: indexedFiles.size, chunks: records.length, skipped, skipped_count: skippedCount, skipped_formats: skippedFormats, restricted_folders: restrictedFolders.length };
-    await supabase.from('client_drive_config').update({ last_synced_at: new Date().toISOString(), sync_summary: summary }).eq('client_id', clientId);
-    return json({ ...summary, used_legacy_credential: resolved.usedLegacy }, 200);
   } catch (error) {
     return json({ error: String(error) }, 500);
   }
 });
 
-type DriveFile = { id: string; name: string; mimeType: string; webViewLink?: string; modifiedTime?: string; size?: string; relativePath?: string };
 function canReadFile(file: DriveFile) {
   return ['application/vnd.google-apps.document','application/vnd.google-apps.spreadsheet','application/vnd.google-apps.presentation','application/pdf',...textTypes,...officeTypes].includes(file.mimeType) || /\.(md|txt|csv|html?)$/i.test(file.name);
 }
 
-async function readDriveFile(file: DriveFile, token: string): Promise<{ content: string; skipReason?: never } | { content: null; skipReason: string }> {
+async function readDriveFile(file: DriveFile, token: string): Promise<{ content: string; skipReason?: never } | { content: null; skipReason: string; purge?: boolean }> {
   const exports: Record<string, string> = {
     'application/vnd.google-apps.document': 'text/plain',
     'application/vnd.google-apps.spreadsheet': officeTypes[1],
@@ -205,7 +118,7 @@ async function readDriveFile(file: DriveFile, token: string): Promise<{ content:
   const url = exportMime ? `${base}/export?mimeType=${encodeURIComponent(exportMime)}` : `${base}?alt=media`;
   try {
     const response = await fetch(url, { headers: { authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(20000) });
-    if (!response.ok) return { content: null, skipReason: `O Drive retornou HTTP ${response.status} ao ler o arquivo.` };
+    if (!response.ok) return { content: null, skipReason: `O Drive retornou HTTP ${response.status} ao ler o arquivo.`, purge: [403,404].includes(response.status) };
     if (!response.body) return { content: null, skipReason: 'Arquivo sem conteúdo retornado pelo Drive.' };
     const reader = response.body.getReader(), parts: Uint8Array[] = [];
     let size = 0;
@@ -227,9 +140,9 @@ async function readDriveFile(file: DriveFile, token: string): Promise<{ content:
 }
 
 async function driveFetch(url: string, token: string) {
-  const response = await fetch(url, { headers: { authorization: `Bearer ${token}` } });
+  const response = await fetch(url, { headers: { authorization: `Bearer ${token}` },signal:AbortSignal.timeout(15000) });
   const result = await response.json();
-  if (!response.ok) throw new Error(`Google Drive ${response.status}: ${JSON.stringify(result)}`);
+  if (!response.ok) throw new Error(`O Drive não confirmou a listagem de uma pasta (HTTP ${response.status}). O progresso foi preservado.`);
   return result;
 }
 

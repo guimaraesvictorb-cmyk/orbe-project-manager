@@ -465,7 +465,9 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
   const [syncingDrive, setSyncingDrive] = useState(false)
   const [driveMessage, setDriveMessage] = useState("")
   const [driveLastSync, setDriveLastSync] = useState<string | null>(null)
-  const [driveSummary, setDriveSummary] = useState<{ synced?: number; chunks?: number; skipped_count?: number; skipped?: Array<{ file: string; reason: string }>; skipped_formats?: Record<string,number> } | null>(null)
+  const driveSyncAbort = useRef<AbortController | null>(null)
+  useEffect(() => () => { driveSyncAbort.current?.abort(); driveSyncAbort.current = null }, [client.id])
+  const [driveSummary, setDriveSummary] = useState<{ complete?: boolean; phase?: string; processed?: number; total?: number; folders?: number; synced?: number; chunks?: number; skipped_count?: number; skipped?: Array<{ file: string; reason: string }>; skipped_formats?: Record<string,number> } | null>(null)
   const [strategyForm, setStrategyForm] = useState({ icp: "", averageTicket: "", targetCac: "", targetLtv: "", conversionEvent: "", conversionSource: "", top: "", middle: "", bottom: "", channels: "", verifiedNotes: "" })
   const [offers, setOffers] = useState<ClientOffer[]>([])
   const [showAddOffer, setShowAddOffer] = useState(false)
@@ -672,24 +674,46 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
 
   async function syncDriveFolder() {
     if (!driveFolderId || syncingDrive) return
+    const controller = new AbortController()
+    driveSyncAbort.current = controller
     setSyncingDrive(true)
-    setDriveMessage("")
+    setDriveMessage('Iniciando ou retomando a leitura da pasta…')
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/orbe-drive-sync`, {
-        method: "POST",
-        headers: { "content-type": "application/json", authorization: `Bearer ${session?.access_token ?? ""}` },
-        body: JSON.stringify({ client_id: client.id }),
-      })
-      const result = await response.json() as { synced: number; chunks?: number; error?: string; skipped_count?: number; skipped?: Array<{ file: string; reason: string }>; skipped_formats?: Record<string,number> }
-      if (!response.ok) throw new Error(result.error ?? `Erro ${response.status}`)
-      await refetchKnowledge()
-      setDriveSummary(result)
-      setDriveLastSync(new Date().toISOString())
-      setDriveMessage(`${result.synced} documento(s) sincronizado(s) em ${result.chunks ?? result.synced} trecho(s).${result.skipped_count ? ` ${result.skipped_count} item(ns) não indexado(s); veja o inventário.` : ''}`)
+      let steps = 0
+      while (!controller.signal.aborted) {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) throw new Error('Entre novamente para sincronizar o Drive.')
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/orbe-drive-sync`, {
+          method: 'POST', signal: controller.signal,
+          headers: { 'content-type': 'application/json', authorization: `Bearer ${session.access_token}` },
+          body: JSON.stringify({ client_id: client.id, batch: true }),
+        })
+        const result = await response.json() as { complete: boolean; busy?: boolean; phase?: string; folders?: number; total?: number; processed?: number; synced: number; chunks?: number; error?: string; skipped_count?: number; skipped?: Array<{file:string;reason:string}>; skipped_formats?: Record<string,number> }
+        if (!response.ok) throw new Error(result.error ?? 'Não foi possível continuar a sincronização.')
+        if (controller.signal.aborted) break
+        setDriveSummary(result)
+        if (result.complete) {
+          await refetchKnowledge()
+          if (controller.signal.aborted) break
+          setDriveLastSync(new Date().toISOString())
+          setDriveMessage(`${result.synced} documento(s) sincronizado(s) em ${result.chunks ?? result.synced} trecho(s).${result.skipped_count ? ` ${result.skipped_count} item(ns) não indexado(s); veja o inventário.` : ''}`)
+          break
+        }
+        setDriveMessage(result.busy ? 'Um lote está em andamento. Aguardando para continuar…' : result.phase === 'listing' ? `Mapeando a pasta: ${result.folders ?? 0} subpasta(s), ${result.total ?? 0} documento(s) compatíveis encontrados.` : `Lendo documentos: ${result.processed ?? 0} de ${result.total ?? 0}. ${result.synced} já indexado(s). Você pode pausar e retomar depois.`)
+        if (++steps % 10 === 0) await refetchKnowledge()
+        if (result.busy) await new Promise<void>(resolve => { const timer = window.setTimeout(resolve, 1200); controller.signal.addEventListener('abort', () => {window.clearTimeout(timer);resolve()}, {once:true}) })
+      }
     } catch (error) {
-      setDriveMessage((error as Error).message || "Não foi possível sincronizar o Drive.")
-    } finally { setSyncingDrive(false) }
+      if (!controller.signal.aborted) setDriveMessage((error as Error).message || 'Não foi possível continuar. O progresso salvo será retomado na próxima tentativa.')
+    } finally {
+      if (driveSyncAbort.current === controller) { driveSyncAbort.current = null; setSyncingDrive(false) }
+    }
+  }
+  function pauseDriveSync() {
+    driveSyncAbort.current?.abort()
+    driveSyncAbort.current = null
+    setSyncingDrive(false)
+    setDriveMessage('Leitura pausada. Clique em Sincronizar para retomar o progresso salvo.')
   }
 
   function copyShareLink(token: string) {
@@ -1174,8 +1198,8 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
               </div>
               {canEdit && <div className="mt-4 flex flex-col gap-2 sm:flex-row">
                 <input value={driveFolderInput} onChange={(event) => setDriveFolderInputState({ clientId: client.id, value: event.target.value })} placeholder="Link ou ID da pasta do Google Drive" aria-label="Pasta do Google Drive deste cliente" className="min-w-0 flex-1 rounded-lg px-3 py-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-quaternary)] focus:outline-none" style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border-strong)" }} />
-                <button onClick={saveDriveFolder} disabled={savingDriveFolder} className="rounded-lg px-3 py-2.5 text-xs font-semibold disabled:opacity-50" style={{ backgroundColor: "var(--bg-surface-2)", color: "var(--text-primary)" }}>{savingDriveFolder ? "Salvando…" : "Salvar pasta"}</button>
-                <button onClick={syncDriveFolder} disabled={!driveFolderId || syncingDrive} className="flex items-center justify-center gap-1.5 rounded-lg px-3 py-2.5 text-xs font-semibold disabled:opacity-40" style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}>{syncingDrive ? <Loader2 size={13} className="animate-spin" /> : <Globe size={13} />}{syncingDrive ? "Sincronizando…" : "Sincronizar"}</button>
+                <button onClick={saveDriveFolder} disabled={savingDriveFolder || syncingDrive} className="rounded-lg px-3 py-2.5 text-xs font-semibold disabled:opacity-50" style={{ backgroundColor: "var(--bg-surface-2)", color: "var(--text-primary)" }}>{savingDriveFolder ? "Salvando…" : "Salvar pasta"}</button>
+                <button onClick={syncDriveFolder} disabled={!driveFolderId || syncingDrive} className="flex items-center justify-center gap-1.5 rounded-lg px-3 py-2.5 text-xs font-semibold disabled:opacity-40" style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}>{syncingDrive ? <Loader2 size={13} className="animate-spin" /> : <Globe size={13} />}{syncingDrive ? "Sincronizando…" : "Sincronizar"}</button>{syncingDrive && <button type="button" onClick={pauseDriveSync} className="rounded-lg border border-[var(--border)] px-3 py-2 text-xs text-[var(--text-secondary)]">Pausar leitura</button>}
               </div>}
               {!canEdit && <p className="mt-3 text-xs" style={{ color: "var(--text-tertiary)" }}>{driveFolderId ? "A pasta deste cliente está vinculada." : "Nenhuma pasta do Drive foi vinculada ainda."}</p>}
               {driveMessage && <p role="status" className="mt-3 text-xs" style={{ color: driveMessage.includes("Não foi") || driveMessage.startsWith("Cole") ? "var(--danger)" : "var(--text-tertiary)" }}>{driveMessage}</p>}
@@ -1224,7 +1248,7 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
 
             <div>
               {driveLastSync && <p className="mb-3 text-[10px] text-[var(--text-tertiary)]">Última sincronização concluída: {new Date(driveLastSync).toLocaleString('pt-BR')}</p>}
-              {driveSummary && <details className="mb-5 rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] p-4"><summary className="cursor-pointer text-xs font-semibold text-[var(--text-secondary)]">Inventário da última sincronização · {driveSummary.synced ?? 0} documento(s) · {driveSummary.skipped_count ?? 0} item(ns) não indexado(s)</summary><ul className="mt-3 space-y-2">{driveSummary.skipped?.map((item,index) => <li key={index} className="text-[10px] text-[var(--text-tertiary)]"><strong>{item.file}</strong> · {item.reason}</li>)}</ul>{Object.entries(driveSummary.skipped_formats ?? {}).map(([format,count]) => <p key={format} className="mt-2 text-[10px] text-[var(--text-tertiary)]">{count} arquivo(s) {format} sem extração de texto</p>)}</details>}
+              {driveSummary && <details className="mb-5 rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] p-4"><summary className="cursor-pointer text-xs font-semibold text-[var(--text-secondary)]">Inventário {driveSummary.complete === false ? 'parcial · retome a leitura' : 'da última sincronização'} · {driveSummary.synced ?? 0} documento(s) · {driveSummary.skipped_count ?? 0} item(ns) não indexado(s)</summary><ul className="mt-3 space-y-2">{driveSummary.skipped?.map((item,index) => <li key={index} className="text-[10px] text-[var(--text-tertiary)]"><strong>{item.file}</strong> · {item.reason}</li>)}</ul>{Object.entries(driveSummary.skipped_formats ?? {}).map(([format,count]) => <p key={format} className="mt-2 text-[10px] text-[var(--text-tertiary)]">{count} arquivo(s) {format} sem extração de texto</p>)}</details>}
               {validated.length > 0 && (
                 <>
                   <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "var(--accent)" }}>

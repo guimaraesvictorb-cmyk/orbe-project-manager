@@ -20,6 +20,8 @@ export const RESTRICTED_NAME_PATTERNS: RegExp[] = [
   /^(?:\d+[. _-]*)?(?:p[úu]blicos?|audi[êe]ncias?|audiences?|whatsapp)$/i,
   /whatsapp.*(export|hist[óo]rico|conversa|chat|\.txt|\.zip|\.csv)|(export|hist[óo]rico|conversa|chat).*whatsapp/i,
   /^_?chat\.txt$/i,           // raw conversation exports, not strategy docs
+  /\btakeout\b/i,            // whole-drive exports can contain other clients
+  /folha de pagamento|holerite|recursos humanos|documentos pessoais/i,
 ];
 
 export function isRestrictedName(name: string): boolean {
@@ -32,6 +34,7 @@ export function isRestrictedName(name: string): boolean {
 // produced — the matched text itself is never returned, logged or stored.
 export const SECRET_PATTERNS: RegExp[] = [
   /-----BEGIN [A-Z ]*PRIVATE KEY-----/,
+  /\bsk-(?:ant-|proj-|svcacct-)?[A-Za-z0-9_-]{20,}\b/,
   /\bAKIA[0-9A-Z]{16}\b/,
   /eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/,
   // Covers "Token: xyz", "token=xyz" AND "Token xyz" (space, no
