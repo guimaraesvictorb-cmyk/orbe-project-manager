@@ -84,6 +84,8 @@ export interface ClientChecklist {
   completed: boolean
   category: string | null
   sort_order: number
+  due_date: string | null
+  assignee_id: string | null
   completed_by: string | null
   completed_at: string | null
   created_by: string

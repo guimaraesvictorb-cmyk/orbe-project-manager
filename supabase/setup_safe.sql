@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   created_at   timestamptz NOT NULL DEFAULT now(),
   updated_at   timestamptz NOT NULL DEFAULT now()
 );
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS can_view_financials boolean NOT NULL DEFAULT false;
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "profiles: self read" ON profiles;
 DROP POLICY IF EXISTS "profiles: self update" ON profiles;
@@ -172,12 +173,16 @@ CREATE TABLE IF NOT EXISTS client_knowledge (
   client_id  uuid NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
   title      text NOT NULL,
   content    text NOT NULL,
-  source     text NOT NULL CHECK (source IN ('manual','ai_suggested','web')) DEFAULT 'manual',
+  source     text NOT NULL CHECK (source IN ('manual','ai_suggested','web','drive')) DEFAULT 'manual',
+  source_ref text,
+  source_url text,
+  source_folder_id text,
   validated  boolean NOT NULL DEFAULT false,
   created_by uuid REFERENCES profiles(id) ON DELETE SET NULL,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+CREATE UNIQUE INDEX IF NOT EXISTS client_knowledge_source_unique ON client_knowledge(client_id, source_ref);
 ALTER TABLE client_knowledge ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "knowledge: admin/coord all" ON client_knowledge;
 CREATE POLICY "knowledge: admin/coord all" ON client_knowledge FOR ALL USING (EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role IN ('admin','coordenador')));

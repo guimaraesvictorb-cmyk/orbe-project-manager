@@ -1,4 +1,4 @@
-import { RITUAIS } from "../data/m5os";
+import { RITUAIS } from "../data/orbeOperations";
 
 export function RitualSection() {
   return (

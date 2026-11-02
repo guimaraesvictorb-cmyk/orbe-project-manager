@@ -1,7 +1,7 @@
 import {
   Sparkles, LayoutDashboard, CheckSquare, Users, DollarSign,
   TrendingUp, BookOpen, Building2, UserCircle, LogOut, ShieldCheck,
-  ChevronRight, Settings, Link2, PenTool, FileText, Bot, MessageSquare, Plug, UserPlus, Trophy,
+  ChevronRight, Settings, Link2, PenTool, FileText, Bot, MessageSquare, UserPlus, Trophy,
 } from "lucide-react";
 import type { Profile } from "../lib/database.types";
 import { getAllowedSections, isAdminOrCoordenador } from "../lib/permissions";
@@ -15,11 +15,11 @@ export type AppView =
   | "processos" | "central"
   | "rastreamento"
   | "super-agente" | "copy-ia" | "relatorios"
-  | "whatsapp" | "integracoes"
+  | "whatsapp"
   | "leads-capturados"
   | "profile" | "settings";
 
-interface NavItem { view: AppView; label: string; icon: React.ReactNode }
+interface NavItem { view: AppView; label: string; icon: React.ReactNode; children?: NavItem[] }
 interface NavGroup { label?: string; items: NavItem[] }
 
 const NAV: NavGroup[] = [
@@ -33,7 +33,9 @@ const NAV: NavGroup[] = [
     label: "Operação",
     items: [
       { view: "tarefas",  label: "Tarefas",  icon: <CheckSquare size={15} /> },
-      { view: "clientes", label: "Clientes", icon: <Users size={15} /> },
+      { view: "clientes", label: "Clientes", icon: <Users size={15} />, children: [
+        { view: "rastreamento", label: "Central de rastreamento", icon: <Link2 size={13} /> },
+      ] },
       { view: "roi-day",  label: "ROI Day",  icon: <Trophy size={15} /> },
     ],
   },
@@ -53,14 +55,12 @@ const NAV: NavGroup[] = [
     items: [
       { view: "processos",    label: "Processos",    icon: <BookOpen size={15} /> },
       { view: "central",      label: "Central",      icon: <Building2 size={15} /> },
-      { view: "rastreamento", label: "Rastreamento", icon: <Link2 size={15} /> },
     ],
   },
   {
     label: "Comunicação",
     items: [
       { view: "whatsapp",    label: "WhatsApp",    icon: <MessageSquare size={15} /> },
-      { view: "integracoes", label: "Integrações", icon: <Plug size={15} /> },
     ],
   },
   {
@@ -89,7 +89,15 @@ interface AppNavProps {
 export function AppNav({ active, onChange, profile, onLogout, isOpen, onClose }: AppNavProps) {
   const allowed = getAllowedSections(profile);
   const visibleNav = NAV
-    .map((group) => ({ ...group, items: group.items.filter((i) => i.view === "home" || allowed.includes(i.view)) }))
+    .map((group) => ({
+      ...group,
+      items: group.items
+        .map((item) => ({
+          ...item,
+          children: item.children?.filter((child) => allowed.includes(child.view)),
+        }))
+        .filter((item) => item.view === "home" || allowed.includes(item.view) || Boolean(item.children?.length)),
+    }))
     .filter((group) => group.items.length > 0);
 
   function handleChange(v: AppView) {
@@ -139,39 +147,63 @@ export function AppNav({ active, onChange, profile, onLogout, isOpen, onClose }:
               </p>
             )}
             <div className="space-y-0.5">
-              {group.items.map(({ view, label, icon }) => {
+              {group.items.map(({ view, label, icon, children }) => {
                 const isActive = active === view;
                 return (
-                  <button
-                    key={view}
-                    onClick={() => handleChange(view)}
-                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-xs font-medium transition-all duration-150 focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
-                    style={{
-                      background: isActive ? "linear-gradient(135deg, var(--accent-tint), transparent)" : "transparent",
-                      boxShadow: isActive ? "0 0 0 1px var(--accent-a33), 0 4px 16px -6px var(--glow-strong)" : "none",
-                      color: isActive ? "var(--text-primary)" : "var(--text-tertiary)",
-                      transform: isActive ? "translateX(1px)" : "none",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isActive) {
-                        (e.currentTarget as HTMLButtonElement).style.backgroundColor = "var(--bg-surface-2)";
-                        (e.currentTarget as HTMLButtonElement).style.color = "var(--text-secondary)";
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isActive) {
-                        (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
-                        (e.currentTarget as HTMLButtonElement).style.color = "var(--text-tertiary)";
-                      }
-                    }}
-                    aria-current={isActive ? "page" : undefined}
-                  >
-                    <span style={{ color: isActive ? "var(--accent)" : "inherit", filter: isActive ? "drop-shadow(0 0 6px var(--accent-a44))" : "none" }}>{icon}</span>
-                    {label}
-                    {isActive && (
-                      <ChevronRight size={11} className="ml-auto flex-shrink-0" style={{ color: "var(--accent)" }} />
-                    )}
-                  </button>
+                  <div key={view}>
+                    <button
+                      onClick={() => handleChange(view)}
+                      className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-xs font-medium transition-all duration-150 focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
+                      style={{
+                        background: isActive ? "linear-gradient(135deg, var(--accent-tint), transparent)" : "transparent",
+                        boxShadow: isActive ? "0 0 0 1px var(--accent-a33), 0 4px 16px -6px var(--glow-strong)" : "none",
+                        color: isActive ? "var(--text-primary)" : "var(--text-tertiary)",
+                        transform: isActive ? "translateX(1px)" : "none",
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isActive) {
+                          (e.currentTarget as HTMLButtonElement).style.backgroundColor = "var(--bg-surface-2)";
+                          (e.currentTarget as HTMLButtonElement).style.color = "var(--text-secondary)";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isActive) {
+                          (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
+                          (e.currentTarget as HTMLButtonElement).style.color = "var(--text-tertiary)";
+                        }
+                      }}
+                      aria-current={isActive ? "page" : undefined}
+                    >
+                      <span style={{ color: isActive ? "var(--accent)" : "inherit", filter: isActive ? "drop-shadow(0 0 6px var(--accent-a44))" : "none" }}>{icon}</span>
+                      {label}
+                      {isActive && (
+                        <ChevronRight size={11} className="ml-auto flex-shrink-0" style={{ color: "var(--accent)" }} />
+                      )}
+                    </button>
+                    {children?.length ? (
+                      <div className="ml-5 mt-0.5 border-l border-[var(--border)] pl-2 space-y-0.5">
+                        {children.map((child) => {
+                          const childActive = active === child.view;
+                          return (
+                            <button
+                              key={child.view}
+                              onClick={() => handleChange(child.view)}
+                              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-left text-[11px] font-medium transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
+                              style={{
+                                backgroundColor: childActive ? "var(--accent-tint)" : "transparent",
+                                color: childActive ? "var(--accent)" : "var(--text-quaternary)",
+                              }}
+                              aria-current={childActive ? "page" : undefined}
+                            >
+                              {child.icon}
+                              {child.label}
+                              {childActive && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : null}
+                  </div>
                 );
               })}
             </div>

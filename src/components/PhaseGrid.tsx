@@ -1,4 +1,4 @@
-import type { Phase } from "../data/m5os";
+import type { Phase } from "../data/orbeOperations";
 import { PhaseCard } from "./PhaseCard";
 
 interface PhaseGridProps {

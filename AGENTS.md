@@ -10,13 +10,15 @@ to Vercel on every push to `main`.
 ## Stack
 
 - React 19 + TypeScript + Vite + Tailwind CSS, hash-based routing (`#dashboard`, `#financeiro`, ...)
-- Supabase: Postgres + Auth + Row Level Security + Edge Functions (no local migration files —
-  schema changes are applied directly via the Supabase Management API, not tracked in `supabase/migrations`)
-- AI: **Claude (Anthropic), not Groq** — every AI feature (Orbe AI chat, Copy IA, Relatórios,
-  per-client AI chat, Super Agente) calls a server-side proxy at
-  `supabase/functions/orbe-ai-chat/index.ts`, which re-shapes Anthropic's SSE into an
-  OpenAI-delta-compatible stream so the frontend's SSE parsing code didn't need to change.
-  Super Agente uses Anthropic's native tool-calling protocol directly (not OpenAI-style).
+- Supabase: Postgres + Auth + Row Level Security + Edge Functions. SQL changes are tracked
+  under `supabase/migrations` as reviewable deployment scripts. A local migration file does
+  not mean it has been applied to Supabase; verify the remote schema before changing or
+  deploying it.
+- AI: OpenAI is preferred when `OPENAI_API_KEY` is set in Supabase Edge Function Secrets;
+  Anthropic remains a server-side fallback. Every AI feature calls
+  `supabase/functions/orbe-ai-chat/index.ts`, which normalizes provider output for the existing
+  frontend. Super Agente tool calls are translated between the app's Anthropic-shaped messages
+  and OpenAI Responses function calls. Provider keys must never be placed in `VITE_` variables.
 - Deploy: `git push origin main` → Vercel builds and publishes automatically. No manual deploy step.
 
 ## Security model (read before touching anything financial)
@@ -91,9 +93,8 @@ Full brand manual lives outside the repo (PDF Victor supplied); the platform imp
 - Views using the shared `<Footer/>` need `min-h-full` on their root + `flex-1` on the content
   region above the footer, or the footer floats up under short content instead of sticking to
   the bottom of the viewport.
-- No local Supabase migration files — DB schema changes are applied ad hoc via the Management
-  API. If you add tables, there's no `supabase/migrations/*.sql` history to check; ask what
-  exists via the Supabase dashboard or Management API instead of assuming.
+- `supabase/schema.sql` is a bootstrap snapshot, not proof of the live schema. Review
+  `supabase/migrations` against the production database before any application.
 - `package.json`'s `version` field is bumped on every shippable change (1.0 → 1.1 → 1.2 ... → 2.0)
   and shown live in the footer (`v{X.Y} · Atualizado em <build date/time>`), via
   `__APP_VERSION__`/`__BUILD_TIME__` constants injected by `vite.config.ts`. Bump it as part of

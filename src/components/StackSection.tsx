@@ -1,4 +1,4 @@
-import { AI_STACK } from "../data/m5os";
+import { AI_STACK } from "../data/orbeOperations";
 import { Sparkles } from "lucide-react";
 
 export function StackSection() {

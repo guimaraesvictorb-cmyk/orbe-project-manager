@@ -1,4 +1,4 @@
-import type { Phase } from "../data/m5os";
+import type { Phase } from "../data/orbeOperations";
 
 interface PhaseDetailProps {
   phase: Phase;

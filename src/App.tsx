@@ -32,7 +32,6 @@ const SuperAgenteView = lazy(() => import("./components/SuperAgenteView").then((
 const CopyIAView = lazy(() => import("./components/CopyIAView").then((m) => ({ default: m.CopyIAView })));
 const RelatoriosView = lazy(() => import("./components/RelatoriosView").then((m) => ({ default: m.RelatoriosView })));
 const WhatsAppView = lazy(() => import("./components/WhatsAppView").then((m) => ({ default: m.WhatsAppView })));
-const IntegracoesView = lazy(() => import("./components/IntegracoesView").then((m) => ({ default: m.IntegracoesView })));
 const LeadsCapturadosView = lazy(() => import("./components/LeadsCapturadosView").then((m) => ({ default: m.LeadsCapturadosView })));
 
 const VIEW_KEY = "orbe_view";
@@ -40,11 +39,22 @@ const VIEW_KEY = "orbe_view";
 const VALID_VIEWS: AppView[] = [
   "home","dashboard","tarefas","clientes","financeiro","roi-day","pipeline","processos",
   "central","rastreamento","super-agente","copy-ia","relatorios","whatsapp",
-  "integracoes","leads-capturados","profile","settings",
+  "leads-capturados","profile","settings",
 ];
 
+// Removed views keep resolving to somewhere sensible instead of silently
+// rendering Home with a stale #integracoes still sitting in the address bar.
+// Meta/Google Ads connections now live per client, inside Clientes → Conexões.
+const LEGACY_VIEW_REDIRECTS: Record<string, { to: AppView; message: string }> = {
+  integracoes: { to: "clientes", message: "A tela Integrações saiu do ar. Conecte Meta Ads e Google Ads dentro de cada cliente, na aba Conexões." },
+};
+
+function rawHashSegment(): string {
+  return window.location.hash.replace(/^#\/?/, "").split(/[/?]/)[0];
+}
+
 function viewFromHash(): AppView | null {
-  const h = window.location.hash.replace(/^#\/?/, "").split(/[/?]/)[0];
+  const h = rawHashSegment();
   return VALID_VIEWS.includes(h as AppView) ? (h as AppView) : null;
 }
 
@@ -71,9 +81,14 @@ function App() {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [pendingClientId, setPendingClientId] = useState<string | undefined>();
   const [pendingTaskId, setPendingTaskId] = useState<string | undefined>();
+  const [legacyRedirectNotice, setLegacyRedirectNotice] = useState<string | null>(
+    () => LEGACY_VIEW_REDIRECTS[rawHashSegment()]?.message ?? null
+  );
   const [view, setView] = useState<AppView>(() => {
     const fromHash = viewFromHash();
     if (fromHash) return fromHash;
+    const legacy = LEGACY_VIEW_REDIRECTS[rawHashSegment()];
+    if (legacy) return legacy.to;
     const saved = localStorage.getItem(VIEW_KEY) as AppView | null;
     return saved && VALID_VIEWS.includes(saved) ? saved : "home";
   });
@@ -92,29 +107,38 @@ function App() {
   useEffect(() => {
     if (!window.location.hash) {
       window.history.replaceState(null, "", `#${view}`);
+    } else {
+      // A removed view (e.g. the old #integracoes) must not keep sitting in
+      // the address bar pointing at content that no longer renders there.
+      const legacy = LEGACY_VIEW_REDIRECTS[rawHashSegment()];
+      if (legacy) window.history.replaceState(null, "", `#${legacy.to}`);
     }
     function onHashChange() {
       const v = viewFromHash();
-      if (v) setView(v);
+      if (v) { setView(v); setLegacyRedirectNotice(null); return; }
+      const legacy = LEGACY_VIEW_REDIRECTS[rawHashSegment()];
+      if (legacy) { navigate(legacy.to); setLegacyRedirectNotice(legacy.message); }
     }
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [view]);
 
+  // Re-checks on every view change too, not just login — otherwise typing a
+  // hash directly (e.g. #roi-day) bypasses the guard entirely, since the
+  // sidebar only hides disallowed links rather than blocking them. The actual
+  // redirect runs in a queued callback (not synchronously in the effect body)
+  // so it reacts to the permission check like an event rather than forcing an
+  // extra synchronous render pass inside the effect itself; the end state —
+  // `view`, the URL hash and localStorage all landing on "home" — is identical.
   useEffect(() => {
     if (!profile) return;
     if (view === "settings" && !isAdminOrCoordenador(profile)) {
-      navigate("home");
+      queueMicrotask(() => navigate("home"));
       return;
     }
     if (!canAccessSection(profile, view)) {
-      navigate("home");
+      queueMicrotask(() => navigate("home"));
     }
-    // Re-checks on every view change too, not just login — otherwise typing
-    // a hash directly (e.g. #roi-day) bypasses the guard entirely, since
-    // the sidebar only hides disallowed links rather than blocking them.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile, view]);
 
   useEffect(() => {
@@ -202,6 +226,12 @@ function App() {
           </div>
 
           <main ref={mainRef} className="orbe-ambient flex-1 overflow-y-auto min-h-0 min-w-0">
+          {legacyRedirectNotice && (
+            <div role="status" className="flex items-start justify-between gap-3 m-4 mb-0 rounded-xl px-4 py-3 text-xs" style={{ backgroundColor: "var(--accent-tint)", color: "var(--text-secondary)", border: "1px solid var(--accent-a22, var(--border))" }}>
+              <span>{legacyRedirectNotice}</span>
+              <button onClick={() => setLegacyRedirectNotice(null)} aria-label="Fechar aviso" className="flex-shrink-0 font-semibold" style={{ color: "var(--accent)" }}>Fechar</button>
+            </div>
+          )}
           <Suspense fallback={
             <div className="flex items-center justify-center h-full">
               <OrbeMark size={36} animated glow />
@@ -210,7 +240,7 @@ function App() {
           {view === "home"       && <HomeView profile={profile} onNavigate={navigate} />}
           {view === "dashboard"  && <DashboardView />}
           {view === "tarefas"    && <TarefasView initialTaskId={pendingTaskId} onConsumeInitial={() => setPendingTaskId(undefined)} />}
-          {view === "clientes"   && <ClientesView initialClientId={pendingClientId} onConsumeInitial={() => setPendingClientId(undefined)} />}
+          {view === "clientes"   && <ClientesView key={pendingClientId ?? "list"} initialClientId={pendingClientId} onConsumeInitial={() => setPendingClientId(undefined)} />}
           {view === "financeiro" && <FinanceiroView />}
           {view === "roi-day"    && <RoiDayView />}
           {view === "pipeline"   && <PipelineView />}
@@ -221,7 +251,6 @@ function App() {
           {view === "copy-ia"      && <CopyIAView />}
           {view === "relatorios"   && <RelatoriosView />}
           {view === "whatsapp"     && <WhatsAppView />}
-          {view === "integracoes"      && <IntegracoesView />}
           {view === "leads-capturados" && <LeadsCapturadosView />}
           {view === "profile"    && <ProfileView profile={profile} userEmail={user?.email ?? ""} />}
           {view === "settings"   && <SettingsView profile={profile} />}

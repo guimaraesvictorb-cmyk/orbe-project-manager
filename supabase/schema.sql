@@ -30,6 +30,7 @@ create table profiles (
   display_name text not null,
   avatar_url text,
   role user_role not null default 'gt',
+  can_view_financials boolean not null default false,
   is_active boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -84,7 +85,6 @@ create table clients (
   updated_at timestamptz not null default now(),
   deleted_at timestamptz
 );
-
 create index clients_status_idx on clients(status) where deleted_at is null;
 create index clients_slug_idx on clients(slug);
 
@@ -448,12 +448,16 @@ create table if not exists client_knowledge (
   client_id   uuid not null references clients(id) on delete cascade,
   title       text not null,
   content     text not null,
-  source      text not null check (source in ('manual', 'ai_suggested', 'web')) default 'manual',
+  source      text not null check (source in ('manual', 'ai_suggested', 'web', 'drive')) default 'manual',
+  source_ref  text,
+  source_url  text,
+  source_folder_id text,
   validated   boolean not null default false,
   created_by  uuid references profiles(id) on delete set null,
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );
+create unique index if not exists client_knowledge_source_unique on client_knowledge(client_id, source_ref);
 
 alter table client_knowledge enable row level security;
 
@@ -471,3 +475,133 @@ create policy "knowledge: gt/gp read validated" on client_knowledge for select
   );
 
 create trigger set_updated_at before update on client_knowledge for each row execute function set_updated_at();
+
+-- Google Drive folder links are stored separately so they do not add a field to the
+-- public client view used to mask private financial columns.
+create table if not exists client_drive_config (
+  client_id uuid primary key references clients(id) on delete cascade,
+  folder_id text not null check (length(folder_id) between 10 and 256),
+  updated_by uuid references profiles(id) on delete set null,
+  updated_at timestamptz not null default now()
+);
+alter table client_drive_config enable row level security;
+drop policy if exists "client drive config read assigned" on client_drive_config;
+create policy "client drive config read assigned" on client_drive_config for select to authenticated using (
+  exists (select 1 from profiles p where p.id = auth.uid() and p.role in ('admin','coordenador'))
+  or exists (select 1 from client_assignments a where a.client_id = client_drive_config.client_id and a.user_id = auth.uid() and a.is_active = true)
+);
+drop policy if exists "client drive config manage admin coordinator" on client_drive_config;
+create policy "client drive config manage admin coordinator" on client_drive_config for all to authenticated
+using (exists (select 1 from profiles p where p.id = auth.uid() and p.role in ('admin','coordenador')))
+with check (exists (select 1 from profiles p where p.id = auth.uid() and p.role in ('admin','coordenador')));
+
+-- Confirmed client outcomes and normalized external-source readiness.
+create table if not exists client_kpi_observations (
+  id uuid primary key default gen_random_uuid(),
+  client_id uuid not null references clients(id) on delete cascade,
+  period_start date not null,
+  period_end date not null,
+  channel text not null default 'Todos os canais',
+  conversion_event text not null,
+  conversion_source text not null,
+  confirmed_outcomes integer not null default 0 check (confirmed_outcomes >= 0),
+  attributed_spend_cents bigint check (attributed_spend_cents is null or attributed_spend_cents >= 0),
+  cohort_customers integer check (cohort_customers is null or cohort_customers >= 0),
+  realized_revenue_cents bigint check (realized_revenue_cents is null or realized_revenue_cents >= 0),
+  notes text,
+  created_by uuid references profiles(id) on delete set null,
+  created_at timestamptz not null default now(),
+  check (period_end >= period_start),
+  unique (client_id, period_start, period_end, channel, conversion_event, conversion_source)
+);
+create index if not exists client_kpi_observations_period_idx on client_kpi_observations(client_id, period_end desc);
+alter table client_kpi_observations enable row level security;
+drop policy if exists "client kpi read financial assigned" on client_kpi_observations;
+create policy "client kpi read financial assigned" on client_kpi_observations for select to authenticated using (
+  exists (select 1 from profiles p where p.id = auth.uid() and p.can_view_financials = true)
+  and (
+    exists (select 1 from profiles p where p.id = auth.uid() and p.role in ('admin','coordenador'))
+    or exists (select 1 from client_assignments a where a.client_id = client_kpi_observations.client_id and a.user_id = auth.uid() and a.is_active = true)
+  )
+);
+drop policy if exists "client kpi manage financial admin coordinator" on client_kpi_observations;
+create policy "client kpi manage financial admin coordinator" on client_kpi_observations for all to authenticated
+using (exists (select 1 from profiles p where p.id = auth.uid() and p.can_view_financials = true and p.role in ('admin','coordenador')))
+with check (exists (select 1 from profiles p where p.id = auth.uid() and p.can_view_financials = true and p.role in ('admin','coordenador')));
+
+create table if not exists client_data_source_status (
+  id uuid primary key default gen_random_uuid(),
+  client_id uuid not null references clients(id) on delete cascade,
+  system text not null check (system in ('bitrix','ecommerce','evo','meta_ads','google_ads')),
+  state text not null default 'not_configured' check (state in ('not_configured','awaiting_credentials','needs_validation','verified')),
+  account_reference text,
+  notes text,
+  updated_by uuid references profiles(id) on delete set null,
+  updated_at timestamptz not null default now(),
+  unique (client_id, system)
+);
+alter table client_data_source_status enable row level security;
+drop policy if exists "client data sources read assigned" on client_data_source_status;
+create policy "client data sources read assigned" on client_data_source_status for select to authenticated using (
+  exists (select 1 from profiles p where p.id = auth.uid() and p.role in ('admin','coordenador'))
+  or exists (select 1 from client_assignments a where a.client_id = client_data_source_status.client_id and a.user_id = auth.uid() and a.is_active = true)
+);
+drop policy if exists "client data sources manage admin coordinator" on client_data_source_status;
+create policy "client data sources manage admin coordinator" on client_data_source_status for all to authenticated
+using (exists (select 1 from profiles p where p.id = auth.uid() and p.role in ('admin','coordenador')))
+with check (exists (select 1 from profiles p where p.id = auth.uid() and p.role in ('admin','coordenador')));
+
+-- Client strategy and historical offers
+create table if not exists client_marketing_strategy (
+  client_id uuid primary key references clients(id) on delete cascade,
+  icp text,
+  average_ticket_cents bigint check (average_ticket_cents is null or average_ticket_cents >= 0),
+  target_cac_cents bigint check (target_cac_cents is null or target_cac_cents >= 0),
+  target_ltv_cents bigint check (target_ltv_cents is null or target_ltv_cents >= 0),
+  conversion_event text,
+  conversion_source text,
+  funnel_top text,
+  funnel_middle text,
+  funnel_bottom text,
+  primary_channels text[] not null default '{}',
+  updated_by uuid references profiles(id),
+  updated_at timestamptz not null default now()
+);
+create table if not exists client_offer_history (
+  id uuid primary key default uuid_generate_v4(),
+  client_id uuid not null references clients(id) on delete cascade,
+  name text not null,
+  channel text,
+  audience text,
+  starts_on date,
+  ends_on date,
+  price_cents bigint check (price_cents is null or price_cents >= 0),
+  spend_cents bigint check (spend_cents is null or spend_cents >= 0),
+  conversions integer check (conversions is null or conversions >= 0),
+  notes text,
+  created_by uuid references profiles(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  check (ends_on is null or starts_on is null or ends_on >= starts_on)
+);
+create index if not exists client_offer_history_client_dates_idx on client_offer_history(client_id, starts_on desc, created_at desc);
+alter table client_marketing_strategy enable row level security;
+alter table client_offer_history enable row level security;
+drop policy if exists "strategy read assigned clients" on client_marketing_strategy;
+create policy "strategy read assigned clients" on client_marketing_strategy for select to authenticated using (
+  exists (select 1 from profiles p where p.id = auth.uid() and p.role in ('admin','coordenador'))
+  or exists (select 1 from client_assignments a where a.client_id = client_marketing_strategy.client_id and a.user_id = auth.uid() and a.is_active = true)
+);
+drop policy if exists "strategy manage admin coordinator" on client_marketing_strategy;
+create policy "strategy manage admin coordinator" on client_marketing_strategy for all to authenticated
+using (exists (select 1 from profiles p where p.id = auth.uid() and p.role in ('admin','coordenador')))
+with check (exists (select 1 from profiles p where p.id = auth.uid() and p.role in ('admin','coordenador')));
+drop policy if exists "offer history read assigned clients" on client_offer_history;
+create policy "offer history read assigned clients" on client_offer_history for select to authenticated using (
+  exists (select 1 from profiles p where p.id = auth.uid() and p.role in ('admin','coordenador'))
+  or exists (select 1 from client_assignments a where a.client_id = client_offer_history.client_id and a.user_id = auth.uid() and a.is_active = true)
+);
+drop policy if exists "offer history manage admin coordinator" on client_offer_history;
+create policy "offer history manage admin coordinator" on client_offer_history for all to authenticated
+using (exists (select 1 from profiles p where p.id = auth.uid() and p.role in ('admin','coordenador')))
+with check (exists (select 1 from profiles p where p.id = auth.uid() and p.role in ('admin','coordenador')));

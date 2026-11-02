@@ -1,4 +1,4 @@
-import { NEXT_ACTIONS } from "../data/m5os";
+import { NEXT_ACTIONS } from "../data/orbeOperations";
 import { ArrowRight } from "lucide-react";
 
 export function ActionsSection() {

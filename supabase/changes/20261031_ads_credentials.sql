@@ -3,7 +3,7 @@ CREATE TABLE public.wa_ads_credentials(
  client_id uuid NOT NULL REFERENCES private.clients(id),platform text NOT NULL CHECK(platform IN ('meta','google')),
  account_id text NOT NULL CHECK(account_id ~ '^[1-9][0-9]{5,24}$'),
  ciphertext text NOT NULL CHECK(length(ciphertext) BETWEEN 1 AND 32768),
- status text NOT NULL CHECK(status IN ('saved_unverified','oauth_pending')),
+ status text NOT NULL CHECK(status IN ('saved_unverified','oauth_pending','access_verified')),
  has_refresh_token boolean NOT NULL DEFAULT false,expires_at timestamptz,
  updated_by uuid NOT NULL REFERENCES public.profiles(id),updated_at timestamptz NOT NULL DEFAULT clock_timestamp(),
  PRIMARY KEY(client_id,platform)

@@ -20,13 +20,13 @@ export function useClientChecklist(clientId: string) {
     setLoading(false)
   }, [clientId])
 
-  useEffect(() => { refetch() }, [refetch])
+  useEffect(() => { void Promise.resolve().then(refetch) }, [refetch])
 
-  async function addItem(title: string, category: string | null, createdBy: string) {
+  async function addItem(title: string, category: string | null, createdBy: string, dueDate: string | null = null, assigneeId: string | null = null) {
     const sortOrder = items.length
     const { data, error } = await supabase
       .from('client_checklist')
-      .insert({ client_id: clientId, title, category, sort_order: sortOrder, completed: false, created_by: createdBy })
+      .insert({ client_id: clientId, title, category, due_date: dueDate || null, assignee_id: assigneeId || null, sort_order: sortOrder, completed: false, created_by: createdBy })
       .select()
       .single()
     if (error) return { error: error.message }

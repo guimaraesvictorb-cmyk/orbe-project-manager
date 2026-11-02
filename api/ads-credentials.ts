@@ -11,17 +11,22 @@ export default async function handler(req:Request,res:ServerResponse){
   if(Buffer.byteLength(JSON.stringify(req.body)??'')>32768)return answer(res,413,{error:'too_large'});
   const input=object(req.body),client=scalar(input.client_id,36),{db,user}=await qrUser(req,client);
   const profiles=await db<{role:string}[]>(`rest/v1/profiles?id=eq.${user.id}&select=role`);
+  if(input.action==='status'){
+   const configurations=await db<{platform:string;account_id:string;status:string;has_refresh_token:boolean;expires_at:string|null;updated_at:string}[]>(`rest/v1/wa_ads_credentials?client_id=eq.${client}&select=platform,account_id,status,has_refresh_token,expires_at,updated_at&order=platform`);
+   return answer(res,200,{configurations});
+  }
   if(profiles[0]?.role!=='admin')return answer(res,403,{error:'admin_required'});
   if(input.action==='verify'){
    if(!['meta','google'].includes(String(input.platform)))return answer(res,400,{error:'invalid_platform'});
    const platform=input.platform as 'meta'|'google';
-   const rows=await db<{account_id:string;ciphertext:string;updated_at:string;has_refresh_token:boolean}[]>(`rest/v1/wa_ads_credentials?client_id=eq.${client}&platform=eq.${platform}&select=account_id,ciphertext,updated_at,has_refresh_token`);
+   const rows=await db<{account_id:string;ciphertext:string;updated_at:string;has_refresh_token:boolean;expires_at:string|null}[]>(`rest/v1/wa_ads_credentials?client_id=eq.${client}&platform=eq.${platform}&select=account_id,ciphertext,updated_at,has_refresh_token,expires_at`);
    const row=rows[0];if(!row)return answer(res,404,{error:'credentials_missing'});
    if(platform==='google')return answer(res,200,{verification:{status:row.has_refresh_token?'google_validation_pending':'oauth_pending',account_id:row.account_id}});
    const secrets=object(JSON.parse(unseal(row.ciphertext,adsBinding(client,platform))));
    const verification=await verifyMetaAccess(row.account_id,scalar(secrets.access_token,4096));
    const latest=await db<{updated_at:string}[]>(`rest/v1/wa_ads_credentials?client_id=eq.${client}&platform=eq.${platform}&select=updated_at`);
    if(latest[0]?.updated_at!==row.updated_at)return answer(res,409,{error:'configuration_changed'});
+   await db('rest/v1/rpc/wa_ads_save',{method:'POST',body:JSON.stringify({p_client:client,p_platform:platform,p_account:row.account_id,p_ciphertext:row.ciphertext,p_status:'access_verified',p_refresh:row.has_refresh_token,p_expiry:row.expires_at,p_actor:user.id,p_expected:row.updated_at})});
    return answer(res,200,{verification});
   }
   if(input.action==='save'){

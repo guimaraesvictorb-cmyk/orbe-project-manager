@@ -3,6 +3,7 @@ import { USERS } from "./users";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
+// Keep this legacy derivation value so existing password hashes continue to work.
 const SALT = "M5OS_INTERNAL_SALT_V1";
 const SESSION_KEY = "orbe_session";
 const RATE_KEY_PREFIX = "orbe_rl_";

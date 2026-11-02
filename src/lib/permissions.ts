@@ -1,10 +1,10 @@
 import type { Profile } from "./database.types"
 
 export const SECTION_ACCESS: Record<string, string[]> = {
-  admin:      ["dashboard","tarefas","clientes","financeiro","roi-day","pipeline","processos","central","rastreamento","super-agente","copy-ia","relatorios","whatsapp","integracoes","leads-capturados"],
-  coordenador:["dashboard","tarefas","clientes","financeiro","roi-day","pipeline","processos","central","rastreamento","super-agente","copy-ia","relatorios","whatsapp","integracoes","leads-capturados"],
+  admin:      ["dashboard","tarefas","clientes","financeiro","roi-day","pipeline","processos","central","rastreamento","super-agente","copy-ia","relatorios","whatsapp","leads-capturados"],
+  coordenador:["dashboard","tarefas","clientes","financeiro","roi-day","pipeline","processos","central","rastreamento","super-agente","copy-ia","relatorios","whatsapp","leads-capturados"],
   gp:         ["dashboard","tarefas","clientes","pipeline","processos","central","super-agente","copy-ia","relatorios"],
-  gt:         ["dashboard","tarefas","clientes","roi-day","pipeline","processos","central","super-agente","copy-ia","relatorios","integracoes"],
+  gt:         ["dashboard","tarefas","clientes","roi-day","pipeline","processos","central","super-agente","copy-ia","relatorios"],
 }
 
 export const SECTION_LABELS: Record<string, string> = {
@@ -12,7 +12,7 @@ export const SECTION_LABELS: Record<string, string> = {
   financeiro: "Financeiro", "roi-day": "ROI Day", pipeline: "Oportunidades", processos: "Processos",
   central: "Central", rastreamento: "Rastreamento", "super-agente": "Super Agente",
   "copy-ia": "Copy IA", relatorios: "Relatórios", whatsapp: "WhatsApp",
-  integracoes: "Integrações", "leads-capturados": "Leads Capturados",
+  "leads-capturados": "Leads Capturados",
 }
 
 // Sections that need can_view_financials regardless of role or custom overrides.

@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { ChevronRight, CheckCircle2, TrendingDown } from "lucide-react";
-import { OPERATIONAL_PHASES } from "../data/m5os";
-import type { Phase } from "../data/m5os";
+import { OPERATIONAL_PHASES } from "../data/orbeOperations";
+import type { Phase } from "../data/orbeOperations";
 import { TasksView } from "./tasks/TasksView";
 import { ClientesSection } from "./ClientesSection";
 import { Footer } from "./Footer";

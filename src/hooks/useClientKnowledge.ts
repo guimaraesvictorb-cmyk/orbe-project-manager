@@ -5,8 +5,10 @@ export interface KnowledgeEntry {
   id: string
   client_id: string
   title: string
-  content: string
-  source: 'manual' | 'ai_suggested' | 'web'
+  content?: string
+  source: 'manual' | 'ai_suggested' | 'web' | 'drive'
+  source_ref?: string | null
+  source_url?: string | null
   validated: boolean
   created_by: string | null
   created_at: string
@@ -20,17 +22,17 @@ export function useClientKnowledge(clientId: string) {
   const refetch = useCallback(async () => {
     setLoading(true)
     setEntries([])
-    const { data, error } = await supabase
-      .from('client_knowledge')
-      .select('*')
-      .eq('client_id', clientId)
-      .order('created_at', { ascending: false })
-    if (error) console.error('Failed to fetch client_knowledge:', error.message)
-    setEntries(data ?? [])
+    const [pendingResult, validatedResult] = await Promise.all([
+      supabase.from('client_knowledge').select('*').eq('client_id', clientId).eq('validated', false).order('created_at', { ascending: false }),
+      supabase.from('client_knowledge').select('id,client_id,title,source,source_ref,source_url,validated,created_by,created_at,updated_at').eq('client_id', clientId).eq('validated', true).order('created_at', { ascending: false }),
+    ])
+    if (pendingResult.error) console.error('Failed to fetch pending client_knowledge:', pendingResult.error.message)
+    if (validatedResult.error) console.error('Failed to fetch validated client_knowledge:', validatedResult.error.message)
+    setEntries([...(pendingResult.data ?? []), ...(validatedResult.data ?? [])].sort((a, b) => b.created_at.localeCompare(a.created_at)))
     setLoading(false)
   }, [clientId])
 
-  useEffect(() => { refetch() }, [refetch])
+  useEffect(() => { void Promise.resolve().then(refetch) }, [refetch])
 
   async function addEntry(entry: Omit<KnowledgeEntry, 'id' | 'created_at' | 'updated_at'>) {
     const { data, error } = await supabase.from('client_knowledge').insert(entry).select().single()
