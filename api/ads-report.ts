@@ -1,8 +1,8 @@
 import type {ServerResponse} from 'node:http';
 import {answer,type Request} from './_lib/trackingServer.js';
 import {qrUser} from './_lib/qrAccess.js';
-import {ORBE_ORIGIN,object,scalar,unseal} from './_lib/kommo.js';
-import {adsBinding} from './_lib/adsCredentials.js';
+import {ORBE_ORIGIN,object,scalar} from './_lib/kommo.js';
+import {metaCredential,markMetaVerified} from './_lib/metaAgency.js';
 import {reportPeriod,metaReport} from './_lib/adsReport.js';
 import {googleCredential,markGoogleVerified} from './_lib/googleMcc.js';
 import {googleAdsReport} from './_lib/googleAdsReport.js';
@@ -21,20 +21,11 @@ export default async function handler(req:Request,res:ServerResponse){
   const report=await googleAdsReport(credential.account_id,credential.secrets,period);if(report.status!=='ready')return answer(res,200,report);
   await markGoogleVerified(db,client,credential.version);return answer(res,200,report);
  }
- const rows=await db<{account_id:string;ciphertext:string;updated_at:string;status:string}[]>(`rest/v1/wa_ads_credentials?client_id=eq.${client}&platform=eq.${platform}&select=account_id,ciphertext,updated_at,status`);
- if(!rows[0])return answer(res,200,{status:'not_configured'});
- const row=rows[0],secrets=object(JSON.parse(unseal(row.ciphertext,adsBinding(client,platform))));
- const report=await metaReport(row.account_id,scalar(secrets.access_token,4096),period);
+ const credential=await metaCredential(db,client);
+ if(credential.status!=='credentials')return answer(res,200,{status:credential.status});
+ const report=await metaReport(credential.account_id,credential.token,period);
  if(report.status!=='ready')return answer(res,200,report);
- const latest=await db<{updated_at:string}[]>(`rest/v1/wa_ads_credentials?client_id=eq.${client}&platform=eq.${platform}&select=updated_at`);
- if(latest[0]?.updated_at!==row.updated_at)return answer(res,409,{error:'configuration_changed'});
- // The report call itself is proof the credential works — reflect that in
- // the badge instead of requiring a separate trip through Conexões. A
- // direct update (not the admin-only wa_ads_save RPC) because this report
- // endpoint is reachable by any financially-authorized user, not just admins.
- if(row.status!=='access_verified'){
-  await db(`rest/v1/wa_ads_credentials?client_id=eq.${client}&platform=eq.${platform}&updated_at=eq.${encodeURIComponent(row.updated_at)}`,{method:'PATCH',body:JSON.stringify({status:'access_verified'})}).catch(()=>{});
- }
+ await markMetaVerified(db,client,credential);
  return answer(res,200,report);
  }catch(e){const code=e instanceof Error?e.message:'';return answer(res,['unauthorized','forbidden'].includes(code)?403:code==='invalid_period'?400:503,{error:['invalid_period','meta_token_invalid','meta_permission_denied','report_too_large','meta_account_mismatch','google_oauth_invalid','google_developer_token_denied','google_cloud_access_required','google_cloud_api_disabled','google_permission_denied','google_account_mismatch'].includes(code)?code:'report_unavailable'});}
 }

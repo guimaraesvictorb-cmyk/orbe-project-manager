@@ -1,3 +1,4 @@
+import {metaAgencyAdmin,metaAgencyConfig,metaCredential,metaMetadata,markMetaVerified} from './_lib/metaAgency.js';
 import {googleMccAdmin,googleMetadata,googleCredential,markGoogleVerified,isMccCredentialSource} from './_lib/googleMcc.js';
 import googleAdsOAuth from './_lib/googleAdsOAuth.js';
 import type {ServerResponse} from 'node:http';
@@ -14,14 +15,17 @@ export default async function handler(req:Request,res:ServerResponse){
  if(!req.headers['content-type']?.startsWith('application/json'))return answer(res,415,{error:'json_required'});
  try{
   if(Buffer.byteLength(JSON.stringify(req.body)??'')>32768)return answer(res,413,{error:'too_large'});
-  const input=object(req.body);if(typeof input.action==='string'&&input.action.startsWith('mcc_'))return googleMccAdmin(req,res);
+  const input=object(req.body);if(typeof input.action==='string'&&input.action.startsWith('meta_agency_'))return metaAgencyAdmin(req,res);if(typeof input.action==='string'&&input.action.startsWith('mcc_'))return googleMccAdmin(req,res);
   const client=scalar(input.client_id,36),{db,user}=await qrUser(req,client);
   const profiles=await db<{role:string;can_view_financials:boolean}[]>(`rest/v1/profiles?id=eq.${user.id}&select=role,can_view_financials`);
   if(input.action==='status'){
    const configurations=await db<{platform:string;account_id:string;status:string;has_refresh_token:boolean;expires_at:string|null;updated_at:string}[]>(`rest/v1/wa_ads_credentials?client_id=eq.${client}&select=platform,account_id,status,has_refresh_token,expires_at,updated_at&order=platform`);
-   const managed=await googleMetadata(db,client);return answer(res,200,{configurations:managed?[...configurations.filter(c=>c.platform!=='google'),managed]:configurations});
+   const [managed,meta,agency]=await Promise.all([googleMetadata(db,client),metaMetadata(db,client),metaAgencyConfig(db)]);
+   const combined=managed?[...configurations.filter(c=>c.platform!=='google'),managed]:configurations;
+   return answer(res,200,{configurations:meta?[...combined.filter(c=>c.platform!=='meta'),meta]:combined,meta_agency_available:!!agency?.enabled});
   }
   if(profiles[0]?.role!=='admin')return answer(res,403,{error:'admin_required'});
+  if(input.action==='save'&&input.platform==='meta'&&!profiles[0]?.can_view_financials&&(await metaAgencyConfig(db))?.source_client_id===client)return answer(res,403,{error:'financial_admin_required'});
   if(['save','save_google_developer'].includes(String(input.action))&&(input.platform==='google'||input.action==='save_google_developer')&&!profiles[0]?.can_view_financials&&await isMccCredentialSource(db,client))return answer(res,403,{error:'financial_admin_required'});
   if(input.action==='save_google_developer'){
    const developer=scalar(input.developer_token,4096);
@@ -48,13 +52,10 @@ export default async function handler(req:Request,res:ServerResponse){
     else await db('rest/v1/rpc/wa_ads_save',{method:'POST',body:JSON.stringify({p_client:client,p_platform:'google',p_account:credential.account_id,p_ciphertext:(await db<{ciphertext:string}[]>(`rest/v1/wa_ads_credentials?client_id=eq.${client}&platform=eq.google&select=ciphertext`))[0].ciphertext,p_status:'access_verified',p_refresh:credential.has_refresh_token,p_expiry:credential.expires_at,p_actor:user.id,p_expected:credential.updated_at})});
     return answer(res,200,{verification:{status:'access_verified',account_id:credential.account_id,account_name:report.account_name,checked_at:report.checked_at}});
    }
-   const rows=await db<{account_id:string;ciphertext:string;updated_at:string;has_refresh_token:boolean;expires_at:string|null}[]>(`rest/v1/wa_ads_credentials?client_id=eq.${client}&platform=eq.${platform}&select=account_id,ciphertext,updated_at,has_refresh_token,expires_at`);
-   const row=rows[0];if(!row)return answer(res,404,{error:'credentials_missing'});
-   const secrets=object(JSON.parse(unseal(row.ciphertext,adsBinding(client,platform))));
-   const verification=await verifyMetaAccess(row.account_id,scalar(secrets.access_token,4096));
-   const latest=await db<{updated_at:string}[]>(`rest/v1/wa_ads_credentials?client_id=eq.${client}&platform=eq.${platform}&select=updated_at`);
-   if(latest[0]?.updated_at!==row.updated_at)return answer(res,409,{error:'configuration_changed'});
-   await db('rest/v1/rpc/wa_ads_save',{method:'POST',body:JSON.stringify({p_client:client,p_platform:platform,p_account:row.account_id,p_ciphertext:row.ciphertext,p_status:'access_verified',p_refresh:row.has_refresh_token,p_expiry:row.expires_at,p_actor:user.id,p_expected:row.updated_at})});
+   const credential=await metaCredential(db,client);
+   if(credential.status!=='credentials')return answer(res,404,{error:'credentials_missing'});
+   const verification=await verifyMetaAccess(credential.account_id,credential.token);
+   await markMetaVerified(db,client,credential);
    return answer(res,200,{verification});
   }
   if(input.action==='save'){

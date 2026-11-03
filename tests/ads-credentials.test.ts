@@ -1,5 +1,5 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';import {registerHooks} from 'node:module'
-registerHooks({resolve(s,c,n){const allowed=['./_lib/googleMcc.js','./googleMcc.js','./googleMccInventory.js','./googleAdsReport.js','./_lib/trackingServer.js','./_lib/qrAccess.js','./_lib/kommo.js','./_lib/adsCredentials.js','./_lib/googleAdsReport.js','./_lib/googleAdsOAuth.js','./trackingServer.js','./qrAccess.js','./kommo.js','./adsCredentials.js'];return n(allowed.includes(s)&&c.parentURL?.includes('/api/')?s.replace(/\.js$/,'.ts'):s,c)}})
+registerHooks({resolve(s,c,n){const allowed=['./_lib/metaAgency.js','./metaAgency.js','./_lib/googleMcc.js','./googleMcc.js','./googleMccInventory.js','./googleAdsReport.js','./_lib/trackingServer.js','./_lib/qrAccess.js','./_lib/kommo.js','./_lib/adsCredentials.js','./_lib/googleAdsReport.js','./_lib/googleAdsOAuth.js','./trackingServer.js','./qrAccess.js','./kommo.js','./adsCredentials.js'];return n(allowed.includes(s)&&c.parentURL?.includes('/api/')?s.replace(/\.js$/,'.ts'):s,c)}})
 const {normalizeAdsCredentials,adsBinding}=await import('../api/_lib/adsCredentials.ts')
 const {seal,unseal}=await import('../api/_lib/kommo.ts')
 const {default:handler}=await import('../api/ads-credentials.ts')
@@ -22,7 +22,7 @@ test('API restricts administration, rejects other origins, encrypts writes and r
  const before={url:process.env.VITE_SUPABASE_URL,key:process.env.SUPABASE_SERVICE_ROLE_KEY,crypto:process.env.KOMMO_ENCRYPTION_KEY,fetch:globalThis.fetch}
  process.env.VITE_SUPABASE_URL='https://synthetic.invalid';process.env.SUPABASE_SERVICE_ROLE_KEY='test';process.env.KOMMO_ENCRYPTION_KEY='a'.repeat(64)
  let role='admin',stored=false,seenCipher='',forged=false;const paths:string[]=[]
- globalThis.fetch=async(url,init)=>{const path=String(url);paths.push(path);let value:unknown
+ globalThis.fetch=async(url,init)=>{const path=String(url);if(path.includes('/orbe_meta_agency?')||path.includes('/orbe_meta_accounts?'))return new Response('[]',{status:200});paths.push(path);let value:unknown
   if(path.endsWith('/auth/v1/user'))value={id:'user'}
   else if(path.includes('/profiles?'))value=[{id:'user',role,is_active:true}]
   else if(path.includes('/clients?'))value=[{id:client}]
@@ -44,7 +44,7 @@ test('API restricts administration, rejects other origins, encrypts writes and r
 })
 test('Meta validation binds account, reads campaigns and never leaks raw provider errors',async()=>{
  const {verifyMetaAccess}=await import('../api/_lib/adsCredentials.ts');const before=globalThis.fetch;const paths:string[]=[];let mode='ok';
- globalThis.fetch=async(url,init)=>{const path=String(url);paths.push(path);assert.equal(path.includes(meta.access_token),false);assert.equal(new Headers(init?.headers).get('Authorization'),`Bearer ${meta.access_token}`);assert.equal(init?.redirect,'error');
+ globalThis.fetch=async(url,init)=>{const path=String(url);if(path.includes('/orbe_meta_agency?')||path.includes('/orbe_meta_accounts?'))return new Response('[]',{status:200});paths.push(path);assert.equal(path.includes(meta.access_token),false);assert.equal(new Headers(init?.headers).get('Authorization'),`Bearer ${meta.access_token}`);assert.equal(init?.redirect,'error');
  if(mode==='invalid')return new Response(JSON.stringify({error:{code:190,message:meta.access_token}}),{status:400});
  if(path.includes('/campaigns'))return new Response(JSON.stringify({data:[]}));
  return new Response(JSON.stringify({account_id:mode==='mismatch'?'other':'2988254138081501',name:'Synthetic account'}));};

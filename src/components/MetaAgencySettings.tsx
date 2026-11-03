@@ -1,0 +1,42 @@
+import {useCallback,useEffect,useState} from 'react';
+import {Building2,Link2} from 'lucide-react';
+import {supabase} from '../lib/supabase';
+import {useClients} from '../hooks/useClients';
+type Config={source_client_id:string;enabled:boolean;updated_at:string};
+type Registry={configuration:Config|null;sources:{client_id:string;account_id:string;status:string}[];accounts:{client_id:string;account_id:string;account_name:string}[]};
+const field='mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--bg-surface-2)] px-3 py-2 text-sm';
+const button='rounded-lg border border-[var(--border)] px-4 py-2 text-sm text-[var(--accent)] disabled:opacity-50';
+const errors:Record<string,string>={account_already_linked:'Esta conta já está vinculada a outro cliente. Confira o ID antes de continuar.',owner_required:'Somente administradores com acesso financeiro podem gerenciar a conexão da agência.',configuration_changed:'A configuração mudou. Atualize a página e confira antes de salvar.',credentials_missing:'Selecione uma autorização Meta já protegida no Studio.',invalid_client:'Selecione um cliente ativo.',invalid_account:'Confira o ID numérico da conta Meta.',meta_token_invalid:'A autorização Meta expirou ou foi revogada. Atualize o cadastro protegido de origem.',meta_permission_denied:'A autorização da Orbe não tem acesso a esta conta. Conceda leitura à Orbe na Meta antes de vincular.',meta_account_mismatch:'A Meta retornou outra conta. O vínculo não foi salvo.',meta_unavailable:'A Meta não confirmou o acesso agora. O vínculo anterior foi preservado.'};
+export function MetaAgencySettings(){
+ const {clients}=useClients();
+ const [registry,setRegistry]=useState<Registry|null>(null),[source,setSource]=useState(''),[client,setClient]=useState(''),[account,setAccount]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState('');
+ const cfg=registry?.configuration;
+ const apply=useCallback((value:Registry)=>{setRegistry(value);setSource(value.configuration?.source_client_id??value.sources[0]?.client_id??'');},[]);
+ async function call(action:string,input:Record<string,unknown>={},signal?:AbortSignal){
+  const {data}=await supabase.auth.getSession();if(!data.session)throw Error('Entre novamente no Studio.');
+  const response=await fetch('/api/ads-credentials',{method:'POST',headers:{'content-type':'application/json',authorization:`Bearer ${data.session.access_token}`},body:JSON.stringify({action,...input}),signal});
+  const value=await response.json();if(!response.ok)throw Error(errors[value.error]??'Não foi possível concluir a conexão Meta.');return value as Registry;
+ }
+ useEffect(()=>{const controller=new AbortController();void call('meta_agency_status',{},controller.signal).then(apply).catch(cause=>{if(!controller.signal.aborted)setError(cause instanceof Error?cause.message:'Falha na consulta.');});return()=>controller.abort();},[apply]);
+ async function run(action:string,input:Record<string,unknown>,message:string){
+  setBusy(true);setError('');setNotice('');
+  try{apply(await call(action,{...input,expected_version:cfg?.updated_at??null}));setNotice(message);window.dispatchEvent(new Event('orbe-ads-updated'));}catch(cause){setError(cause instanceof Error?cause.message:'Falha na conexão.');}finally{setBusy(false);}
+ }
+ function selectClient(id:string){setClient(id);setAccount(registry?.accounts.find(item=>item.client_id===id)?.account_id??clients.find(item=>item.id===id)?.meta_ads_account_id??'');}
+ return <section aria-label="Integração Meta Ads da Orbe" className="space-y-5">
+  <header><div className="mb-2 flex items-center gap-2 text-[var(--accent)]"><Building2 size={22}/><h2 className="text-lg font-semibold">Meta Ads · conexão da Orbe</h2></div><p className="text-sm text-[var(--text-secondary)]">Uma autorização protegida da agência. Em cada cliente, basta vincular o ID da conta de anúncios.</p></header>
+  {error&&<p role="alert" className="rounded-lg border border-[var(--border)] p-3 text-sm text-[var(--danger)]">{error}</p>}
+  {notice&&<p role="status" className="rounded-lg bg-[var(--accent-tint)] p-3 text-sm">{notice}</p>}
+  {!registry?<p>Consultando conexão Meta…</p>:<>
+   <form onSubmit={e=>{e.preventDefault();void run('meta_agency_configure',{source_client_id:source},'Conexão central da Orbe validada. Vincule as contas dos clientes abaixo.');}} className="rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] p-5">
+    <fieldset disabled={busy} className="space-y-3"><label className="block text-sm">Autorização Meta já protegida<select aria-label="Autorização Meta da Orbe" required value={source} onChange={e=>setSource(e.target.value)} className={field}><option value="">Selecione a autorização existente</option>{registry.sources.map(item=><option key={item.client_id} value={item.client_id}>{clients.find(c=>c.id===item.client_id)?.name??'Cadastro protegido'} · {item.account_id}</option>)}</select></label>
+     <p className="text-xs text-[var(--text-tertiary)]">O Studio reutiliza a credencial no servidor. Você não precisa copiar o token para os outros clientes. A conta precisa já estar acessível pela autorização da Orbe na Meta.</p>
+     <button type="submit" disabled={!source} className={button}>{busy?'Validando…':cfg?.enabled?'Validar conexão central':'Ativar conexão central'}</button>
+     {cfg?.enabled&&<p className="text-sm text-[var(--success)]">Conexão central ativa</p>}
+    </fieldset>
+   </form>
+   {cfg?.enabled&&<form onSubmit={e=>{e.preventDefault();void run('meta_agency_bind',{client_id:client,account_id:account},'Conta validada na Meta e vinculada ao cliente.');}} className="rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] p-5"><fieldset disabled={busy} className="space-y-3"><h3 className="font-medium">Vincular uma conta ao cliente</h3><label className="block text-sm">Cliente<select aria-label="Cliente da conta Meta" value={client} onChange={e=>selectClient(e.target.value)} required className={field}><option value="">Selecione o cliente</option>{clients.map(item=><option key={item.id} value={item.id}>{item.name}</option>)}</select></label><label className="block text-sm">ID da conta Meta<input aria-label="ID Meta para vincular" value={account} onChange={e=>setAccount(e.target.value)} required maxLength={30} placeholder="Ex.: act_123456789" className={field}/></label><p className="text-xs text-[var(--text-tertiary)]">Antes de salvar, o Studio confirma na Meta a conta e a permissão de leitura. Os relatórios permanecem separados por cliente.</p><button disabled={!client||!account} className={`${button} inline-flex items-center gap-2`}><Link2 size={15}/>{busy?'Validando…':'Validar e vincular conta'}</button></fieldset></form>}
+   {registry.accounts.length>0&&<div className="overflow-x-auto rounded-xl border border-[var(--border)]"><table className="w-full text-left text-sm"><caption className="p-3 text-left font-medium">Contas vinculadas à conexão da Orbe</caption><thead><tr className="border-t border-[var(--border)]"><th className="p-3">Cliente</th><th className="p-3">Conta Meta</th></tr></thead><tbody>{registry.accounts.map(item=><tr key={item.client_id} className="border-t border-[var(--border)]"><td className="p-3">{clients.find(c=>c.id===item.client_id)?.name??'Cliente cadastrado'}</td><td className="p-3">{item.account_name}<span className="mt-1 block font-mono text-xs text-[var(--text-tertiary)]">{item.account_id}</span></td></tr>)}</tbody></table></div>}
+  </>}
+ </section>;
+}

@@ -9,6 +9,7 @@ import { useTheme } from "../contexts/ThemeContext";
 import { useClients } from "../hooks/useClients";
 import { useTasks } from "../hooks/useTasks";
 import { GoogleMccSettings } from "./GoogleMccSettings";
+import { MetaAgencySettings } from "./MetaAgencySettings";
 
 type Section = "geral" | "seguranca" | "lixeira" | "integracoes";
 
@@ -383,7 +384,7 @@ export function SettingsView({ profile }: SettingsViewProps) {
           {section === "geral"     && <GeralSection profile={profile} />}
           {section === "seguranca" && <SegurancaSection />}
           {section === "lixeira"   && <LixeiraSection />}
-          {section === "integracoes" && (canManageIntegrations?<GoogleMccSettings/>:<p>Esta integração é gerenciada por administradores com acesso financeiro.</p>)}
+          {section === "integracoes" && (canManageIntegrations?<div className="space-y-12"><MetaAgencySettings/><GoogleMccSettings/></div>:<p>Esta integração é gerenciada por administradores com acesso financeiro.</p>)}
         </div>
       </div>
     </div>
