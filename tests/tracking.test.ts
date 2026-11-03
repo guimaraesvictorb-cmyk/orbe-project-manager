@@ -18,3 +18,9 @@ test('saved URL preserves custom greeting, accents and five UTMs',()=>{const for
 test('rejects a greeting with a pasted tracking marker',()=>assert.throws(()=>trackingUrl({redirect_url:'https://go.example.com/r'},{greeting:'Olá\uFE0C',utm_source:'g',utm_medium:'cpc',utm_campaign:'',utm_content:'',utm_term:''})))
 test('old sync cannot appear healthy',()=>{assert.equal(syncIsFresh('2026-10-28T12:00:00Z',Date.parse('2026-10-28T12:04:00Z')),false);assert.equal(syncIsFresh(null),false)})
 test('inclusive final day and reversed range',()=>{const b=periodBounds('2026-10-28','2026-10-28');assert.equal(Date.parse(b.end!)-Date.parse(b.start!),86400000);assert.throws(()=>periodBounds('2026-10-29','2026-10-28'))})
+test('message period follows Brasilia midnight independently of device timezone',()=>{
+ const original=process.env.TZ
+ try{for(const timezone of ['UTC','America/Sao_Paulo','Pacific/Honolulu']){process.env.TZ=timezone;assert.deepEqual(periodBounds('2026-11-03','2026-11-03'),{start:'2026-11-03T03:00:00.000Z',end:'2026-11-04T03:00:00.000Z'})}
+ assert.deepEqual(periodBounds('',''),{start:null,end:null});assert.throws(()=>periodBounds('2026-02-30','2026-03-01'))
+ }finally{if(original===undefined)delete process.env.TZ;else process.env.TZ=original}
+})

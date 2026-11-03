@@ -9,6 +9,7 @@ import { campaignName } from '../lib/trackingDashboard'
 import { TrackingDashboard } from './TrackingDashboard'
 import { Footer } from './Footer'
 import { ReportPeriodPicker } from './ReportPeriodPicker'
+import { todayBrt } from '../lib/reportPeriod'
 import { WhatsAppConnectionSetup } from './WhatsAppConnectionSetup'
 import { CommercialTracking } from './CommercialTracking'
 import { QRActivation } from './QRActivation'
@@ -23,7 +24,7 @@ const panelClass='rounded-xl border border-[var(--border)] bg-[var(--bg-surface)
 const muted='text-[var(--text-tertiary)]'
 const tabs=[['overview','Dashboard'],['commercial','Atendimento e vendas'],['messages','Mensagens'],['leads','Contatos'],['clicks','Cliques'],['links','Criar links'],['connections','Conexões']] as const
 type Tab=typeof tabs[number][0]
-const date=(value:unknown)=>value ? new Date(String(value)).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}) : '—'
+const date=(value:unknown)=>value ? new Date(String(value)).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short',timeZone:'America/Sao_Paulo'}) : '—'
 const phone=(value:unknown)=>String(value ?? '').replace(/^55(\d{2})(\d{5})(\d{4})$/,'($1) $2-$3')
 
 const connectionLabel=(c:TrackingConnection)=>c.provider==='evolution'&&c.client_id?(c.enabled?c.name:'WhatsApp aguardando conexão'):c.name
@@ -49,6 +50,7 @@ export function WhatsAppTrackingView({clientId,embedded=false,pilotOnly=false,ev
 
   const refresh=useCallback(async()=>{
     const request=++sequence.current
+    setLoading(true)
     try {
       const bounds=periodBounds(start,end)
       let cq=supabase.from('wa_tracking_connections').select('*').order('created_at')
@@ -114,6 +116,7 @@ export function WhatsAppTrackingView({clientId,embedded=false,pilotOnly=false,ev
     } catch(e){setError(e instanceof Error?e.message:'Não foi possível salvar.')}finally{setSaving(false)}
   }
   const fresh=syncIsFresh(connection?.last_sync_at??null)
+  const lastMessageDay=connection?.last_received_at&&Number.isFinite(Date.parse(connection.last_received_at))?todayBrt(new Date(connection.last_received_at)):''
   return <div className="flex flex-col min-h-full min-w-0">
     <div className={`flex-1 w-full min-w-0 space-y-6 ${embedded?'py-4':'max-w-screen-2xl mx-auto px-4 md:px-6 py-8'}`}>
       {tab!=='overview'&&<>      <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -145,7 +148,7 @@ export function WhatsAppTrackingView({clientId,embedded=false,pilotOnly=false,ev
           <div className="p-4 flex justify-between text-sm"><span>{total} {tab==='messages'?'mensagens':tab==='leads'?'contatos':'cliques'}</span>{loading&&<span className={muted}>Atualizando…</span>}</div>
           {tab==='messages'&&<p className={`px-4 pb-4 text-xs ${muted}`}>Quando uma mensagem não traz origem, mostramos o histórico já comprovado do contato, se houver. Esse histórico não é contado como um novo clique ou uma nova conversão da campanha. O filtro de origem considera apenas a origem confirmada da própria mensagem.</p>}
           {tab==='leads'&&<p className={`px-4 pb-4 text-xs ${muted}`}>O período filtra a primeira interação. As UTMs do contato representam sua primeira origem identificada; cada mensagem mantém a própria origem.</p>}
-          {records.length===0?<p className={`p-6 text-sm ${muted}`}>Nenhum registro para os filtros selecionados.</p>:<div className="overflow-x-auto"><table className="w-full text-sm min-w-[850px]"><thead className={`text-left ${muted}`}><tr><th className="p-4">{tab==='clicks'?'Data do clique':'Contato'}</th><th className="p-4">{tab==='leads'?'Última mensagem':tab==='clicks'?'Mensagem recebida':'Mensagem'}</th><th className="p-4">Origem / campanha</th><th className="p-4">UTMs e IDs de clique</th></tr></thead><tbody>{records.map(row=>{const p=row.payload;const prior=previousContactOrigin(row,originEvidence);return <tr key={row.entity_key} className="border-t border-[var(--border)] align-top"><td className="p-4"><p className="font-medium">{tab==='clicks'?date(row.occurred_at):String(p.name||'Sem nome')}</p>{tab!=='clicks'&&<><p className={`text-xs ${muted}`}>{p.phone?phone(p.phone):'Telefone não confirmado'}</p><p className={`text-xs mt-1 ${muted}`}>{date(row.occurred_at)}</p></>}</td><td className="p-4 max-w-sm"><p className="whitespace-pre-wrap break-words">{tab==='clicks'?(p.linked_sender_id?'Sim':'Ainda não'):String(tab==='leads'?p.last_message:p.text)}</p>
+          {records.length===0?<div className={`p-6 text-sm ${muted}`} role="status"><p>{loading?'Carregando registros…':tab==='messages'?'Nenhuma mensagem recebida para o período e a origem selecionados.':'Nenhum registro para os filtros selecionados.'}</p>{tab==='messages'&&!loading&&!error&&lastMessageDay&&<><p className="mt-2">Última mensagem recebida: {date(connection?.last_received_at)} · horário de Brasília.</p><button type="button" className="mt-3 rounded-lg border border-[var(--border-strong)] px-3 py-2 font-medium text-[var(--accent)] hover:bg-[var(--accent-tint)]" onClick={()=>{updateTrackingRoute({start:lastMessageDay,end:lastMessageDay,source:''});setPage(0)}}>Ver mensagens desse dia · todas as origens</button></>}</div>:<div className="overflow-x-auto"><table className="w-full text-sm min-w-[850px]"><thead className={`text-left ${muted}`}><tr><th className="p-4">{tab==='clicks'?'Data do clique':'Contato'}</th><th className="p-4">{tab==='leads'?'Última mensagem':tab==='clicks'?'Mensagem recebida':'Mensagem'}</th><th className="p-4">Origem / campanha</th><th className="p-4">UTMs e IDs de clique</th></tr></thead><tbody>{records.map(row=>{const p=row.payload;const prior=previousContactOrigin(row,originEvidence);return <tr key={row.entity_key} className="border-t border-[var(--border)] align-top"><td className="p-4"><p className="font-medium">{tab==='clicks'?date(row.occurred_at):String(p.name||'Sem nome')}</p>{tab!=='clicks'&&<><p className={`text-xs ${muted}`}>{p.phone?phone(p.phone):'Telefone não confirmado'}</p><p className={`text-xs mt-1 ${muted}`}>{date(row.occurred_at)}</p></>}</td><td className="p-4 max-w-sm"><p className="whitespace-pre-wrap break-words">{tab==='clicks'?(p.linked_sender_id?'Sim':'Ainda não'):String(tab==='leads'?p.last_message:p.text)}</p>
           {tab==='leads'&&<p className={`text-xs mt-2 ${muted}`}>{p.message_count} mensagem(ns) · última em {date(p.last_interaction)}</p>}</td><td className="p-4"><p className="font-medium">{String(p.utm_source||(p.gclid?'Google · clique':p.fbclid?'Meta · clique':'Sem origem'))}</p><p className={`text-xs mt-1 ${muted}`}>{campaignName(p,connectionId)}</p>{tab!=='clicks'&&<p className={`text-xs mt-2 ${p.source_status==='Identificada'?'text-[var(--accent)]':muted}`}>{p.attribution_reason==='campaign_marker'?'Identificada · marcador da mensagem do anúncio (sem ID de clique)':p.attribution_reason==='kommo_lead_first_touch'?'Identificada · origem do lead na Kommo':String(p.source_status)}</p>}{prior&&<div className="mt-3 border-t border-[var(--border)] pt-3 text-xs"><p className="font-medium">Origem anterior do contato: {String(prior.payload.utm_source||'Clique identificado')}</p><p className={muted}>{campaignName(prior.payload,connectionId)} · {date(prior.occurred_at)}</p>{prior.payload.utm_content&&<p className={`mt-1 ${muted}`}>{String(prior.payload.utm_content)}</p>}<p className={`mt-1 ${muted}`}>Histórico comprovado; a origem desta nova mensagem não foi confirmada.</p></div>}</td><td className="p-4"><dl className="text-xs space-y-1">{[...utmFields,'gclid','fbclid'].map(k=><div key={k} className="flex gap-2"><dt className={`${muted} w-16 shrink-0`}>{k.replace('utm_','')}</dt><dd className="break-all">{String(p[k]||'—')}</dd></div>)}</dl></td></tr>})}</tbody></table></div>}
           <div className="p-4 flex justify-end items-center gap-4 border-t border-[var(--border)] text-sm"><button disabled={page===0||loading} className="disabled:opacity-30" onClick={()=>setPage(p=>p-1)}>Anterior</button><span>Página {page+1}</span><button disabled={(page+1)*50>=total||loading} className="disabled:opacity-30" onClick={()=>setPage(p=>p+1)}>Próxima</button></div>
         </div>}

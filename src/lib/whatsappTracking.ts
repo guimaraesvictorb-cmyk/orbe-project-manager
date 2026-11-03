@@ -1,3 +1,4 @@
+import { isReportDate } from './reportPeriod.ts'
 export const utmFields = ['utm_source','utm_medium','utm_campaign','utm_content','utm_term'] as const
 export type TrackingConnection = {
   id: string; client_id: string | null; name: string; provider: 'evolution'|'kommo'|'meta_cloud';
@@ -25,9 +26,10 @@ export function syncIsFresh(lastSync: string|null, now=Date.now()) {
   return !!lastSync && Number.isFinite(Date.parse(lastSync)) && now-Date.parse(lastSync)<180000
 }
 export function periodBounds(start:string,end:string) {
+  if ((start&&!isReportDate(start))||(end&&!isReportDate(end))) throw new Error('Preencha datas válidas.')
   if (start && end && start>end) throw new Error('A data inicial deve vir antes da data final.')
-  const startAt=start ? new Date(`${start}T00:00:00`) : null
-  const endAt=end ? new Date(`${end}T00:00:00`) : null
-  if (endAt) endAt.setDate(endAt.getDate()+1)
+  // The presets, dashboard and business calendar use Brasilia; filtering must use the same day even on another device timezone.
+  const startAt=start ? new Date(`${start}T00:00:00-03:00`) : null
+  const endAt=end ? new Date(Date.parse(`${end}T00:00:00-03:00`)+86400000) : null
   return {start:startAt?.toISOString() ?? null,end:endAt?.toISOString() ?? null}
 }
