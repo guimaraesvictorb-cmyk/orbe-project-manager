@@ -14,6 +14,7 @@ import { CommandPalette } from "./components/CommandPalette";
 import { NotificationBell } from "./components/NotificationBell";
 import { Menu, Search, Sun, Moon } from "lucide-react";
 import { OrbeMark } from "./components/OrbeMark";
+import { ViewErrorBoundary } from "./components/ViewErrorBoundary";
 import { useMouseGlow } from "./hooks/useMouseGlow";
 
 // Every view below is loaded on demand — only the one you're actually looking
@@ -250,6 +251,7 @@ function App() {
               <OrbeMark size={36} animated glow />
             </div>
           }>
+          <ViewErrorBoundary key={view}>
           {view === "home"       && <HomeView profile={profile} onNavigate={navigate} />}
           {view === "dashboard"  && <DashboardView />}
           {view === "tarefas"    && <TarefasView initialTaskId={pendingTaskId} onConsumeInitial={() => setPendingTaskId(undefined)} />}
@@ -270,6 +272,7 @@ function App() {
           {view === "leads-capturados" && <LeadsCapturadosView />}
           {view === "profile"    && <ProfileView profile={profile} userEmail={user?.email ?? ""} />}
           {view === "settings"   && <SettingsView profile={profile} />}
+          </ViewErrorBoundary>
           </Suspense>
           </main>
         </div>

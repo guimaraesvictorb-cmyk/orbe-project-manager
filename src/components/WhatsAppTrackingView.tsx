@@ -8,6 +8,7 @@ import { Ga4TrackingStatus } from './Ga4TrackingStatus'
 import { campaignName } from '../lib/trackingDashboard'
 import { TrackingDashboard } from './TrackingDashboard'
 import { Footer } from './Footer'
+import { ReportPeriodPicker } from './ReportPeriodPicker'
 import { WhatsAppConnectionSetup } from './WhatsAppConnectionSetup'
 import { CommercialTracking } from './CommercialTracking'
 import { QRActivation } from './QRActivation'
@@ -35,8 +36,6 @@ export function WhatsAppTrackingView({clientId,embedded=false,pilotOnly=false,ev
   const tab=route.tab as Tab,biUnit=route.unit,start=route.start,end=route.end,source=route.source
   const setTab=(tab:Tab)=>updateTrackingRoute({tab})
   const setBiUnit=(unit:string)=>updateTrackingRoute({unit})
-  const setStart=(start:string)=>updateTrackingRoute({start})
-  const setEnd=(end:string)=>updateTrackingRoute({end})
   const setSource=(source:string)=>updateTrackingRoute({source})
   const [summary,setSummary]=useState<TrackingSummary>(emptySummary)
   const [originEvidence,setOriginEvidence]=useState<TrackingRecord[]>([])
@@ -132,8 +131,7 @@ export function WhatsAppTrackingView({clientId,embedded=false,pilotOnly=false,ev
           {connection?.capture_mode==='pilot'&&<span className="text-xs px-3 py-2 rounded-lg bg-[var(--accent-tint)] text-[var(--accent)]">Piloto · somente remetente autorizado</span>}
         </div></>}
         {!['links','connections'].includes(tab)&&<div className="flex flex-wrap gap-3 items-end">
-          <label className="text-xs">De<input aria-label="Data inicial" type="date" className={`${inputClass} mt-1`} value={start} onChange={e=>changeFilter(setStart,e.target.value)}/></label>
-          <label className="text-xs">Até<input aria-label="Data final" type="date" className={`${inputClass} mt-1`} value={end} onChange={e=>changeFilter(setEnd,e.target.value)}/></label>
+          <ReportPeriodPicker start={start} end={end} onChange={period=>{updateTrackingRoute(period);setPage(0)}}/>
           <label className="text-xs">Origem<input aria-label="Filtrar origem" placeholder="Todas as origens" className={`${inputClass} mt-1`} value={source} onChange={e=>changeFilter(setSource,e.target.value)}/></label>
           {(start||end||source)&&<button className="text-sm text-[var(--accent)] py-2" onClick={()=>{updateTrackingRoute({start:'',end:'',source:''});setPage(0)}}>Limpar filtros</button>}
         </div>}

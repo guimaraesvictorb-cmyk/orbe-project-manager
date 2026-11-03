@@ -1,3 +1,4 @@
+import { ReportPeriodPicker } from '../ReportPeriodPicker'
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { BarChart3, Loader2, RefreshCw } from "lucide-react"
 import { useAdsPeriod } from "../../hooks/useAdsPeriod"
@@ -13,8 +14,7 @@ const integer = (value: number) => Math.round(value).toLocaleString("pt-BR")
 
 export function SecureMetaAdsTab({ clientId, onOpenConnections, onVerified, platform = "meta" }: { clientId: string; onOpenConnections: () => void; onVerified?: () => void; platform?: "meta" | "google" }) {
   const label = platform === "google" ? "Google Ads" : "Meta Ads"
-  const shortLabel = platform === "google" ? "Google" : "Meta"
-  const {start,end,setStart,setEnd}=useAdsPeriod()
+  const {start,end,setRange}=useAdsPeriod()
   const [report, setReport] = useState<Report | null>(null)
   const [status, setStatus] = useState<string>("")
   const [loading, setLoading] = useState(false)
@@ -78,7 +78,7 @@ export function SecureMetaAdsTab({ clientId, onOpenConnections, onVerified, plat
   return <section className="space-y-4" aria-label={`Relatório ${label}`}>
     <div className="flex flex-wrap items-end justify-between gap-3 rounded-xl border p-4" style={border}>
       <div><p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#1877F2" }}>Conta segura · somente leitura</p><h3 className="mt-1 text-sm font-semibold text-[var(--text-primary)]">{report?.account_name || label}</h3><p className="mt-1 text-xs" style={{ color: "var(--text-tertiary)" }}>Período máximo de 92 dias · dados obtidos diretamente de {label}.</p></div>
-      <div className="flex flex-wrap items-end gap-2"><label className="text-[10px]" style={{ color: "var(--text-tertiary)" }}>De<input aria-label={`Data inicial do relatório ${shortLabel}`} type="date" value={start} onChange={(event) => setStart(event.target.value)} className="mt-1 block rounded-lg border px-2 py-1.5 text-xs text-[var(--text-primary)]" style={{ borderColor: "var(--border-strong)", backgroundColor: "var(--bg-input)" }}/></label><label className="text-[10px]" style={{ color: "var(--text-tertiary)" }}>Até<input aria-label={`Data final do relatório ${shortLabel}`} type="date" value={end} onChange={(event) => setEnd(event.target.value)} className="mt-1 block rounded-lg border px-2 py-1.5 text-xs text-[var(--text-primary)]" style={{ borderColor: "var(--border-strong)", backgroundColor: "var(--bg-input)" }}/></label><button aria-label={`Atualizar relatório ${label}`} onClick={() => setRequestId((value) => value + 1)} disabled={loading} className="rounded-lg border p-2 disabled:opacity-50" style={{ borderColor: "var(--border-strong)", color: "var(--accent)" }}>{loading ? <Loader2 size={14} className="animate-spin"/> : <RefreshCw size={14}/>}</button></div>
+      <div className="flex flex-wrap items-end gap-2"><ReportPeriodPicker start={start} end={end} onChange={setRange} maxDays={93}/><button aria-label={`Atualizar relatório ${label}`} onClick={() => setRequestId((value) => value + 1)} disabled={loading} className="rounded-lg border p-2 disabled:opacity-50" style={{ borderColor: "var(--border-strong)", color: "var(--accent)" }}>{loading ? <Loader2 size={14} className="animate-spin"/> : <RefreshCw size={14}/>}</button></div>
     </div>
     {status && status !== "not_configured" && <div role="alert" className="rounded-xl border p-4 text-xs" style={{ borderColor: "var(--border)", color: "var(--text-secondary)", backgroundColor: "var(--bg-surface)" }}>{status}{status.includes("credencial") || status.includes("permissão") ? <button onClick={onOpenConnections} className="ml-2 font-semibold" style={{ color: "var(--accent)" }}>Abrir conexões</button> : null}</div>}
     {report && <>

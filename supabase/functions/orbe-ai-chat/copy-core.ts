@@ -139,10 +139,74 @@ export function unsupportedAmounts(text: string, reference: string): boolean {
     });
   // Meeting transcripts often say "plano de 137" without repeating the currency.
   // This checks literal numeric grounding, not whether a price is approved/current (the operator confirms that).
-  const numericReference = [...reference.matchAll(/(?<!\d)\d+(?:[.,]\d+)*/g)]
-    .map(m => m[0].includes(',') ? Number(m[0].replace(/\./g, '').replace(',', '.')).toString() : Number(m[0]).toString());
+  const numericReference = [
+    ...reference.matchAll(/(?<!\d)\d+(?:[.,]\d+)*/g),
+  ].map((m) =>
+    m[0].includes(",")
+      ? Number(m[0].replace(/\./g, "").replace(",", ".")).toString()
+      : Number(m[0]).toString(),
+  );
   const allowed = new Set([...amounts(reference), ...numericReference]);
   return amounts(text).some((n) => !allowed.has(n));
+}
+
+export function groundedPeriod(
+  period: string,
+  evidence: unknown,
+  documents: string[],
+): boolean {
+  const norm = (s: string) =>
+    s
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .trim();
+  if (
+    typeof evidence !== "string" ||
+    evidence.trim().length < 12 ||
+    evidence.length > 1800
+  )
+    return false;
+  const quote = norm(evidence);
+  if (!documents.some((d) => norm(d).includes(quote))) return false;
+  return copyDatesSupported(period, quote);
+}
+export function copyDatesSupported(period: string, reference: string): boolean {
+  const norm = (s: string) => normalize(s).replace(/\s+/g, " ").trim();
+  const quote = norm(reference);
+  const text = norm(period),
+    months = [
+      "janeiro",
+      "fevereiro",
+      "marco",
+      "abril",
+      "maio",
+      "junho",
+      "julho",
+      "agosto",
+      "setembro",
+      "outubro",
+      "novembro",
+      "dezembro",
+    ];
+  const dates: Array<[number, number]> = [];
+  for (const m of text.matchAll(/\b\d{4}-(\d{2})-(\d{2})\b/g))
+    dates.push([Number(m[2]), Number(m[1])]);
+  for (const m of text.matchAll(/\b(\d{1,2})\/(\d{1,2})(?:\/\d{2,4})?\b/g))
+    dates.push([Number(m[1]), Number(m[2])]);
+  for (const m of text.matchAll(
+    new RegExp(`\\b(\\d{1,2}) de (${months.join("|")})\\b`, "g"),
+  ))
+    dates.push([Number(m[1]), months.indexOf(m[2]) + 1]);
+  return dates.every(([day, month]) => {
+    if (day < 1 || day > 31 || month < 1 || month > 12) return false;
+    const d = String(day).padStart(2, "0"),
+      mo = String(month).padStart(2, "0");
+    return new RegExp(
+      `(?:^|[^0-9])(?:0?${day}[/.-]0?${month}|\\d{4}-${mo}-${d}|0?${day} de ${months[month - 1]})(?![0-9])`,
+    ).test(quote);
+  });
 }
 export function readCopy(
   value: unknown,
@@ -188,8 +252,57 @@ Revise fatos e condições antes de responder. Entregue JSON apenas, sem markdow
 
 export function copyProviderRequest(model: string, prompt: string) {
   return {
-    model, instructions: NEURO_COPYWRITER, max_output_tokens: 8000,
-    store: false, stream: false, text: { format: { type: 'json_object' } },
-    input: [{ role: 'user', content: prompt }],
+    model,
+    instructions: NEURO_COPYWRITER,
+    max_output_tokens: 8000,
+    store: false,
+    stream: false,
+    text: { format: { type: "json_object" } },
+    input: [
+      {
+        role: "user",
+        content: `${prompt}\nResponda em JSON válido, sem texto fora do objeto.`,
+      },
+    ],
   };
+}
+
+export function copyProviderFailure(status: number, body: unknown): string {
+  const error =
+    body && typeof body === "object"
+      ? (body as { error?: { code?: unknown; param?: unknown } }).error
+      : null;
+  const knownCodes = [
+    "invalid_api_key",
+    "insufficient_quota",
+    "billing_hard_limit_reached",
+    "model_not_found",
+    "context_length_exceeded",
+    "unsupported_parameter",
+    "unsupported_value",
+    "invalid_value",
+  ];
+  const code =
+    typeof error?.code === "string" && knownCodes.includes(error.code)
+      ? error.code
+      : "";
+  const param =
+    typeof error?.param === "string" &&
+    [
+      "model",
+      "text.format",
+      "text.format.type",
+      "max_output_tokens",
+      "input",
+      "temperature",
+    ].includes(error.param)
+      ? error.param
+      : "";
+  if (status === 401 || code === "invalid_api_key")
+    return "A OpenAI recusou a chave salva no servidor. Confira a chave OpenAI nas configurações.";
+  if (code === "insufficient_quota" || code === "billing_hard_limit_reached")
+    return "A OpenAI informou que a conta está sem saldo ou atingiu o limite de gastos. Confira o faturamento da API.";
+  if (status === 429)
+    return "A OpenAI atingiu o limite de uso. Aguarde um momento e tente novamente.";
+  return `A OpenAI recusou a geração (${status}${code ? ` · ${code}` : ""}${param ? ` · ${param}` : ""}). A configuração da integração precisa ser conferida.`;
 }

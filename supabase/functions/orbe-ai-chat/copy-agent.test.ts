@@ -1,5 +1,8 @@
 import {
   copyProviderRequest,
+  copyProviderFailure,
+  groundedPeriod,
+  copyDatesSupported,
   buildCatalog,
   campaignPath,
   parseObject,
@@ -13,14 +16,66 @@ function assert(value: unknown): asserts value {
   if (!value) throw new Error("assertion failed");
 }
 Deno.test(
+  "campaign period requires a real source quote and cannot invent the last day of November",
+  () => {
+    const quote =
+      "A campanha inicia em 3 de novembro de 2026. O término ainda precisa ser confirmado.";
+    assert(
+      groundedPeriod("Início 2026-11-03; término a confirmar", quote, [quote]),
+    );
+    assert(!groundedPeriod("2026-11-03 a 2026-11-30", quote, [quote]));
+    assert(
+      !groundedPeriod("2026-11-03", "Citação inventada de 3 de novembro", [
+        quote,
+      ]),
+    );
+    assert(!groundedPeriod("2026-11-30", undefined, [quote]));
+    assert(!copyDatesSupported("Oferta até 30/11", "Término a confirmar"));
+    assert(
+      !copyDatesSupported("Oferta até 30 de novembro", "Início 03/11/2026"),
+    );
+    assert(
+      copyDatesSupported(
+        "Início em 3 de novembro",
+        "Início 2026-11-03; fim a confirmar",
+      ),
+    );
+  },
+);
+Deno.test(
+  "provider failures explain key/quota/parameter errors without exposing provider messages or unknown values",
+  () => {
+    assert(
+      copyProviderFailure(429, {
+        error: { code: "insufficient_quota" },
+      }).includes("saldo"),
+    );
+    assert(
+      copyProviderFailure(401, {
+        error: { code: "invalid_api_key", message: "SYNTHETIC_PRIVATE_KEY" },
+      }).includes("chave"),
+    );
+    const failure = copyProviderFailure(400, {
+      error: {
+        code: "SYNTHETIC_PRIVATE_KEY",
+        param: "SYNTHETIC_PRIVATE_KEY",
+        message: "SYNTHETIC_PRIVATE_KEY",
+      },
+    });
+    assert(!failure.includes("SYNTHETIC_PRIVATE_KEY"));
+  },
+);
+Deno.test(
   "OpenAI request uses Responses with server instructions and storage disabled",
   () => {
     const body = copyProviderRequest("gpt-4.1-mini", "Test");
     assert(!("temperature" in body));
     assert(!("top_p" in body));
     assert(!("top_k" in body));
-    assert(body.store === false);assert(body.instructions.includes("Neuro Copywriter"));
+    assert(body.store === false);
+    assert(body.instructions.includes("Neuro Copywriter"));
     assert(body.input[0].role === "user");
+    assert(body.input[0].content.includes("JSON"));
     const catalog = buildCatalog([
       {
         id: "x",
@@ -136,7 +191,9 @@ Deno.test(
   () => {
     assert(!unsupportedAmounts("R$ 7,00 e R$ 1.299,90", "R$ 7 e R$ 1.299,90"));
     assert(unsupportedAmounts("R$ 27", "R$ 7 na primeira parcela"));
-    assert(!unsupportedAmounts('R$ 137,00', 'O plano é 137, as demais de 99,90.'));
+    assert(
+      !unsupportedAmounts("R$ 137,00", "O plano é 137, as demais de 99,90."),
+    );
   },
 );
 type Recorded = { table: string; operation: string; args: unknown[] };
@@ -183,7 +240,7 @@ function mockDb(inaccessible = false, failKnowledge = false) {
   return { db, calls };
 }
 Deno.test(
-  "client authorization fails closed before reading campaign documents or contacting Anthropic",
+  "client authorization fails closed before reading campaign documents or contacting a provider",
   async () => {
     const { db, calls } = mockDb(true);
     let denied = false;
