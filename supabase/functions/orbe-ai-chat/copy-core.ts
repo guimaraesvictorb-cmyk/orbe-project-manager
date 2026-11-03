@@ -33,7 +33,7 @@ export function campaignPath(title: string): string | null {
       /campanhas marketing|campanhas pontuais|^\d*[.\s]*eventos/.test(
         lower[next],
       ) &&
-      next < parts.length - 2
+      next < parts.length - 1
     )
       next++;
     // Legacy folders contain COPY / META ADS / year / campaign. Skip structural levels only.
@@ -80,7 +80,7 @@ export function buildCatalog(rows: Knowledge[]): CopyCampaign[] {
     existing.docs.add(
       row.source_ref?.split(":chunk:")[0] ?? documentPath(row.title),
     );
-    const year = path.match(/\b20\d{2}\b/)?.[0];
+    const year = path.match(/(?<!\d)20\d{2}(?!\d)/)?.[0];
     const leaf = (
       /reunio/.test(normalize(path))
         ? path.split("/").slice(1).join("/")
@@ -137,7 +137,11 @@ export function unsupportedAmounts(text: string, reference: string): boolean {
         : m[1];
       return Number(n).toString();
     });
-  const allowed = new Set(amounts(reference));
+  // Meeting transcripts often say "plano de 137" without repeating the currency.
+  // This checks literal numeric grounding, not whether a price is approved/current (the operator confirms that).
+  const numericReference = [...reference.matchAll(/(?<!\d)\d+(?:[.,]\d+)*/g)]
+    .map(m => m[0].includes(',') ? Number(m[0].replace(/\./g, '').replace(',', '.')).toString() : Number(m[0]).toString());
+  const allowed = new Set([...amounts(reference), ...numericReference]);
   return amounts(text).some((n) => !allowed.has(n));
 }
 export function readCopy(
@@ -181,3 +185,19 @@ Instagram: legenda e stories adequados ao contexto, sem obrigação de emojis ou
 WhatsApp: identifique marca/contexto, seja breve e respeitoso, sem fingir conversa anterior ou enviar mensagens.
 Google: três headlines únicas de até 30 caracteres e duas descrições únicas de até 90; sem cortar condições essenciais.
 Revise fatos e condições antes de responder. Entregue JSON apenas, sem markdown nem rótulos de frameworks na copy.`;
+
+export function copyProviderRequest(model: string, prompt: string) {
+  // Sonnet 5.5 rejects temperature/top_p/top_k and disabled thinking (official migration guide, 2026-11-03).
+  return {
+    model,
+    system: NEURO_COPYWRITER,
+    max_tokens: 8000,
+    ...(model === "claude-sonnet-5-5"
+      ? {
+          thinking: { type: "between_tools" },
+          output_config: { effort: "medium" },
+        }
+      : {}),
+    messages: [{ role: "user", content: prompt }],
+  };
+}

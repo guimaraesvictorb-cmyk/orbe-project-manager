@@ -1,4 +1,5 @@
 import {
+  copyProviderRequest,
   buildCatalog,
   campaignPath,
   parseObject,
@@ -11,6 +12,34 @@ import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 function assert(value: unknown): asserts value {
   if (!value) throw new Error("assertion failed");
 }
+Deno.test(
+  "current Sonnet request excludes retired sampling and disabled thinking parameters",
+  () => {
+    const body = copyProviderRequest("claude-sonnet-5-5", "Test");
+    assert(!("temperature" in body));
+    assert(!("top_p" in body));
+    assert(!("top_k" in body));
+    assert(body.thinking?.type === "between_tools");
+    assert(body.messages[0].role === "user");
+    const catalog = buildCatalog([
+      {
+        id: "x",
+        title: "campanha_setembro_2026.html",
+        source_ref: "x",
+        source_url: null,
+      },
+    ]);
+    assert(
+      catalog[0].label.includes("2026") &&
+        !catalog[0].label.includes("confirmar"),
+    );
+    assert(
+      campaignPath(
+        "04. Campanhas/00. Eventos - Campanhas pontuais/Reativação.pdf",
+      ) === "04. Campanhas/00. Eventos - Campanhas pontuais/Reativação.pdf",
+    );
+  },
+);
 function rejects(fn: () => unknown) {
   let failed = false;
   try {
@@ -107,6 +136,7 @@ Deno.test(
   () => {
     assert(!unsupportedAmounts("R$ 7,00 e R$ 1.299,90", "R$ 7 e R$ 1.299,90"));
     assert(unsupportedAmounts("R$ 27", "R$ 7 na primeira parcela"));
+    assert(!unsupportedAmounts('R$ 137,00', 'O plano é 137, as demais de 99,90.'));
   },
 );
 type Recorded = { table: string; operation: string; args: unknown[] };
