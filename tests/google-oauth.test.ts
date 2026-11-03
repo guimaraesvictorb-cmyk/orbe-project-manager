@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {createHash} from 'node:crypto'
 import {registerHooks} from 'node:module'
-registerHooks({resolve(specifier,context,next){return next(context.parentURL?.includes('/api/')&&['./trackingServer.js','./qrAccess.js','./kommo.js','./adsCredentials.js'].includes(specifier)?specifier.replace(/\.js$/,'.ts'):specifier,context)}})
+registerHooks({resolve(specifier,context,next){return next(context.parentURL?.includes('/api/')&&['./trackingServer.js','./qrAccess.js','./kommo.js','./adsCredentials.js','./googleMcc.js','./googleMccInventory.js'].includes(specifier)?specifier.replace(/\.js$/,'.ts'):specifier,context)}})
 const {default:handler}=await import('../api/_lib/googleAdsOAuth.ts')
 import {seal,unseal} from '../api/_lib/kommo.ts'
 import {adsBinding} from '../api/_lib/adsCredentials.ts'
@@ -27,6 +27,7 @@ test('Google OAuth binds browser, admin, client and credential version; tokens s
   assert.equal(target.origin,'https://synthetic.invalid')
   if(target.pathname.endsWith('/auth/v1/user'))value={id:'actor'}
   else if(target.pathname.endsWith('/profiles'))value=[{role,is_active:active}]
+  else if(target.pathname.endsWith('/orbe_google_mcc'))value=[]
   else if(target.pathname.endsWith('/clients'))value=visible?[{id:client}]:[]
   else if(target.pathname.endsWith('/client_assignments'))value=[]
   else if(target.pathname.endsWith('/wa_ads_credentials'))value=[{account_id:'1234567890',ciphertext,updated_at:version}]

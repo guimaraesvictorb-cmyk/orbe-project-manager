@@ -5,6 +5,7 @@ import {qrUser} from './_lib/qrAccess.js';
 import {object,ORBE_ORIGIN,scalar,seal,unseal} from './_lib/kommo.js';
 import {evoMemberRevenue} from './_lib/evoRevenue.js';
 import {metaReport} from './_lib/adsReport.js';
+import {googleCredential} from './_lib/googleMcc.js';
 import {googleAdsReport} from './_lib/googleAdsReport.js';
 import {adsBinding} from './_lib/adsCredentials.js';
 import {observedMetaCac} from './_lib/evoReconciliation.js';
@@ -50,8 +51,8 @@ export default async function handler(req:Request,res:ServerResponse){
    }catch{/* Enrollment results remain useful when the ads provider is unavailable. */}
    let googleCac=observedMetaCac({scope,start:period.start,coverageStart,students:attribution.channels.Google??0,spendCents:null});
    if(googleCac.status==='spend_pending')try{
-    const ads=await db<{account_id:string;ciphertext:string}[]>(`rest/v1/wa_ads_credentials?client_id=eq.${client}&platform=eq.google&select=account_id,ciphertext`);
-    if(ads[0]){const media=await googleAdsReport(ads[0].account_id,object(JSON.parse(unseal(ads[0].ciphertext,adsBinding(client,'google')))),{since:period.start,until:period.end});if(media.status==='ready')googleCac=observedMetaCac({scope,start:period.start,coverageStart,students:attribution.channels.Google??0,spendCents:Math.round(media.totals.spend*100),currency:media.currency,timezone:media.timezone})}
+    const ads=await googleCredential(db,client);
+    if(ads.status==='credentials'){const media=await googleAdsReport(ads.account_id,ads.secrets,{since:period.start,until:period.end});if(media.status==='ready')googleCac=observedMetaCac({scope,start:period.start,coverageStart,students:attribution.channels.Google??0,spendCents:Math.round(media.totals.spend*100),currency:media.currency,timezone:media.timezone})}
    }catch{/* Missing Google authorization never becomes zero spend. */}
    const allBranchesCovered=client!=='589481f6-3a15-4c93-b384-5d33373c20e3'||['ibes','alecrim','itapua'].every(slot=>configurations.some(row=>row.slot===slot));
    if(!allBranchesCovered){cac={status:'unit_spend_pending',amount_cents:null};googleCac={status:'unit_spend_pending',amount_cents:null}}

@@ -1,5 +1,5 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';import {registerHooks} from 'node:module'
-registerHooks({resolve(s,c,n){const allowed=['./_lib/trackingServer.js','./_lib/qrAccess.js','./_lib/kommo.js','./_lib/adsCredentials.js','./_lib/googleAdsReport.js','./_lib/googleAdsOAuth.js','./trackingServer.js','./qrAccess.js','./kommo.js','./adsCredentials.js'];return n(allowed.includes(s)&&c.parentURL?.includes('/api/')?s.replace(/\.js$/,'.ts'):s,c)}})
+registerHooks({resolve(s,c,n){const allowed=['./_lib/googleMcc.js','./googleMcc.js','./googleMccInventory.js','./_lib/trackingServer.js','./_lib/qrAccess.js','./_lib/kommo.js','./_lib/adsCredentials.js','./_lib/googleAdsReport.js','./_lib/googleAdsOAuth.js','./trackingServer.js','./qrAccess.js','./kommo.js','./adsCredentials.js'];return n(allowed.includes(s)&&c.parentURL?.includes('/api/')?s.replace(/\.js$/,'.ts'):s,c)}})
 const {normalizeAdsCredentials,adsBinding}=await import('../api/_lib/adsCredentials.ts')
 const {seal,unseal}=await import('../api/_lib/kommo.ts')
 const {default:handler}=await import('../api/ads-credentials.ts')
@@ -30,6 +30,7 @@ test('API restricts administration, rejects other origins, encrypts writes and r
   else if(path.includes('/rpc/wa_ads_save')){const body=JSON.parse(String(init?.body));seenCipher=body.p_ciphertext;forged=body.p_actor!=='user';stored=true;value=null}
   else if(path.includes('select=updated_at'))value=[]
   else if(path.includes('/wa_ads_credentials?'))value=stored?[{platform:'meta',account_id:'2988254138081501',status:'saved_unverified',updated_at:'2026-10-31T00:00:00Z'}]:[]
+  else if(path.includes('/orbe_google_mcc'))value=[]
   else throw new Error('unexpected_path')
   return new Response(JSON.stringify(value),{status:200})
  }
@@ -67,6 +68,7 @@ test('Google verification performs a live read and persists verified metadata wi
   else if(target.pathname.endsWith('/client_assignments'))value=[]
   else if(target.pathname.endsWith('/wa_ads_credentials'))value=target.searchParams.get('select')?.includes('ciphertext')?[{account_id:'3528081021',ciphertext,has_refresh_token:true,expires_at:null,updated_at:'2026-11-02T00:00:00Z'}]:[{platform:'google',account_id:'3528081021',status:'saved_unverified',has_refresh_token:true,expires_at:null,updated_at:'2026-11-02T00:00:00Z'}]
   else if(target.pathname.endsWith('/rpc/wa_ads_save')){const body=JSON.parse(String(init?.body));lastSave=body;verified=body.p_status==='access_verified';value=[]}
+  else if(target.pathname.includes('/orbe_google_mcc'))value=[]
   else throw new Error('unexpected verification request')
   return new Response(JSON.stringify(value))
  }

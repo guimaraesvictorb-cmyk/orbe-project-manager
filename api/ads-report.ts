@@ -4,6 +4,7 @@ import {qrUser} from './_lib/qrAccess.js';
 import {ORBE_ORIGIN,object,scalar,unseal} from './_lib/kommo.js';
 import {adsBinding} from './_lib/adsCredentials.js';
 import {reportPeriod,metaReport} from './_lib/adsReport.js';
+import {googleCredential,markGoogleVerified} from './_lib/googleMcc.js';
 import {googleAdsReport} from './_lib/googleAdsReport.js';
 export default async function handler(req:Request,res:ServerResponse){
  if(req.method!=='POST')return answer(res,405,{error:'method_not_allowed'});
@@ -15,10 +16,15 @@ export default async function handler(req:Request,res:ServerResponse){
  const period=reportPeriod(input.start,input.end);
  if(!['meta','google'].includes(String(input.platform)))return answer(res,400,{error:'invalid_platform'});
  const platform=input.platform as 'meta'|'google';
+ if(platform==='google'){
+  const credential=await googleCredential(db,client);if(credential.status!=='credentials')return answer(res,200,{status:credential.status});
+  const report=await googleAdsReport(credential.account_id,credential.secrets,period);if(report.status!=='ready')return answer(res,200,report);
+  await markGoogleVerified(db,client,credential.version);return answer(res,200,report);
+ }
  const rows=await db<{account_id:string;ciphertext:string;updated_at:string;status:string}[]>(`rest/v1/wa_ads_credentials?client_id=eq.${client}&platform=eq.${platform}&select=account_id,ciphertext,updated_at,status`);
  if(!rows[0])return answer(res,200,{status:'not_configured'});
  const row=rows[0],secrets=object(JSON.parse(unseal(row.ciphertext,adsBinding(client,platform))));
- const report=platform==='google'?await googleAdsReport(row.account_id,secrets,period):await metaReport(row.account_id,scalar(secrets.access_token,4096),period);
+ const report=await metaReport(row.account_id,scalar(secrets.access_token,4096),period);
  if(report.status!=='ready')return answer(res,200,report);
  const latest=await db<{updated_at:string}[]>(`rest/v1/wa_ads_credentials?client_id=eq.${client}&platform=eq.${platform}&select=updated_at`);
  if(latest[0]?.updated_at!==row.updated_at)return answer(res,409,{error:'configuration_changed'});

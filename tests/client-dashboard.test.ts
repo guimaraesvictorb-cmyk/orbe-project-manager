@@ -20,7 +20,7 @@ test('shared media obeys explicit sharing, separates platform caches and invalid
  const before={fetch:globalThis.fetch,key:process.env.KOMMO_ENCRYPTION_KEY};process.env.KOMMO_ENCRYPTION_KEY='a'.repeat(64)
  const ciphertexts={meta:seal(JSON.stringify({access_token:'SYNTHETIC_META_TOKEN'}),adsBinding(client,'meta')),google:seal(JSON.stringify({client_id:'synthetic.apps.googleusercontent.com',client_secret:'SYNTHETIC_CLIENT_SECRET',refresh_token:'SYNTHETIC_REFRESH_TOKEN',developer_token:'SYNTHETIC_DEVELOPER_TOKEN'}),adsBinding(client,'google'))}
  let version='version-1',reads=0,googleCalls=0
- const db=async(path:string)=>{reads++;return [{account_id:'3528081021',ciphertext:ciphertexts[path.includes('platform=eq.google')?'google':'meta'],updated_at:version}]}
+ const db=async(path:string)=>{reads++;if(path.includes('orbe_google_mcc'))return [];return [{account_id:'3528081021',ciphertext:ciphertexts[path.includes('platform=eq.google')?'google':'meta'],updated_at:version}]}
  globalThis.fetch=async(url,init)=>{
   const target=new URL(String(url))
   if(target.origin==='https://oauth2.googleapis.com')return new Response(JSON.stringify({access_token:'SYNTHETIC_ACCESS_TOKEN'}))

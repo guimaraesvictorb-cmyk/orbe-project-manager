@@ -8,8 +8,9 @@ import {
 import { useTheme } from "../contexts/ThemeContext";
 import { useClients } from "../hooks/useClients";
 import { useTasks } from "../hooks/useTasks";
+import { GoogleMccSettings } from "./GoogleMccSettings";
 
-type Section = "geral" | "seguranca" | "lixeira";
+type Section = "geral" | "seguranca" | "lixeira" | "integracoes";
 
 interface SettingsViewProps { profile: Profile | null }
 
@@ -355,7 +356,10 @@ function LixeiraSection() {
 }
 
 export function SettingsView({ profile }: SettingsViewProps) {
-  const [section, setSection] = useState<Section>("geral");
+  const canManageIntegrations=profile?.role==='admin'&&profile.can_view_financials;
+  const [section, setSection] = useState<Section>(()=>new URLSearchParams(window.location.hash.split('?')[1]).get('aba')==='integracoes'?'integracoes':'geral');
+  useEffect(()=>{const change=()=>setSection(new URLSearchParams(window.location.hash.split('?')[1]).get('aba')==='integracoes'?'integracoes':'geral');window.addEventListener('hashchange',change);return()=>window.removeEventListener('hashchange',change)},[]);
+  function selectSection(value:Section){setSection(value);window.history.replaceState(null,'',`#settings${value==='integracoes'?'?aba=integracoes':''}`)}
 
   return (
     <div className="flex h-full" style={{ backgroundColor: "var(--bg-page)" }}>
@@ -367,17 +371,19 @@ export function SettingsView({ profile }: SettingsViewProps) {
         <p className="text-[9px] font-bold tracking-widest uppercase px-4 mb-3" style={{ color: "var(--text-quaternary)" }}>
           Configurações
         </p>
-        <SectionBtn id="geral"     label="Geral"    active={section} onClick={setSection} />
-        <SectionBtn id="seguranca" label="Segurança" active={section} onClick={setSection} />
-        <SectionBtn id="lixeira"   label="Lixeira"   active={section} onClick={setSection} />
+        <SectionBtn id="geral"     label="Geral"    active={section} onClick={selectSection} />
+        {canManageIntegrations&&<SectionBtn id="integracoes" label="Integrações" active={section} onClick={selectSection} />}
+        <SectionBtn id="seguranca" label="Segurança" active={section} onClick={selectSection} />
+        <SectionBtn id="lixeira"   label="Lixeira"   active={section} onClick={selectSection} />
       </aside>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-2xl px-10 py-8">
+      <div className="min-w-0 flex-1 overflow-y-auto">
+        <div className={`${section==='integracoes'?'max-w-5xl':'max-w-2xl'} px-5 py-8 sm:px-10`}>
           {section === "geral"     && <GeralSection profile={profile} />}
           {section === "seguranca" && <SegurancaSection />}
           {section === "lixeira"   && <LixeiraSection />}
+          {section === "integracoes" && (canManageIntegrations?<GoogleMccSettings/>:<p>Esta integração é gerenciada por administradores com acesso financeiro.</p>)}
         </div>
       </div>
     </div>
