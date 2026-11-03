@@ -634,7 +634,7 @@ export function CopyIAView() {
         <header>
           <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-[var(--accent-tint)] px-3 py-1.5 text-xs font-medium text-[var(--accent)]">
             <Sparkles size={14} />
-            Neuro Copywriter · Anthropic
+            Neuro Copywriter · OpenAI
           </div>
           <h1 className="font-display text-2xl font-semibold">Copy IA</h1>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[var(--text-tertiary)]">

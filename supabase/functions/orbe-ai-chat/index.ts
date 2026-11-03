@@ -56,7 +56,7 @@ serve(async (req) => {
       });
       try {
         if (rawBody.length > 60000) return json({error:'Briefing muito extenso.'},413);
-        return json(await handleCopyAgent(userDb, body, Deno.env.get('ANTHROPIC_API_KEY'), ANTHROPIC_MODEL));
+        return json(await handleCopyAgent(userDb, body, Deno.env.get('OPENAI_API_KEY'), Deno.env.get('OPENAI_MODEL') ?? 'gpt-4.1-mini'));
       } catch (error) {
         return json({error:error instanceof CopyError ? error.message : 'Não foi possível preparar a copy. Tente novamente.'}, error instanceof CopyError ? error.status : 502);
       }

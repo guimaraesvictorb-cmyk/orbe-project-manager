@@ -13,14 +13,14 @@ function assert(value: unknown): asserts value {
   if (!value) throw new Error("assertion failed");
 }
 Deno.test(
-  "current Sonnet request excludes retired sampling and disabled thinking parameters",
+  "OpenAI request uses Responses with server instructions and storage disabled",
   () => {
-    const body = copyProviderRequest("claude-sonnet-5-5", "Test");
+    const body = copyProviderRequest("gpt-4.1-mini", "Test");
     assert(!("temperature" in body));
     assert(!("top_p" in body));
     assert(!("top_k" in body));
-    assert(body.thinking?.type === "between_tools");
-    assert(body.messages[0].role === "user");
+    assert(body.store === false);assert(body.instructions.includes("Neuro Copywriter"));
+    assert(body.input[0].role === "user");
     const catalog = buildCatalog([
       {
         id: "x",

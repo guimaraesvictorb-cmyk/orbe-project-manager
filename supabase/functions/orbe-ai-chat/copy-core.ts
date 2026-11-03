@@ -187,17 +187,9 @@ Google: três headlines únicas de até 30 caracteres e duas descrições única
 Revise fatos e condições antes de responder. Entregue JSON apenas, sem markdown nem rótulos de frameworks na copy.`;
 
 export function copyProviderRequest(model: string, prompt: string) {
-  // Sonnet 5.5 rejects temperature/top_p/top_k and disabled thinking (official migration guide, 2026-11-03).
   return {
-    model,
-    system: NEURO_COPYWRITER,
-    max_tokens: 8000,
-    ...(model === "claude-sonnet-5-5"
-      ? {
-          thinking: { type: "between_tools" },
-          output_config: { effort: "medium" },
-        }
-      : {}),
-    messages: [{ role: "user", content: prompt }],
+    model, instructions: NEURO_COPYWRITER, max_output_tokens: 8000,
+    store: false, stream: false, text: { format: { type: 'json_object' } },
+    input: [{ role: 'user', content: prompt }],
   };
 }

@@ -97,7 +97,7 @@ export async function handleCopyAgent(
     );
   if (!key)
     throw new CopyError(
-      "A chave Anthropic ainda não está configurada no Studio.",
+      "A chave OpenAI ainda não está configurada no Studio.",
       503,
     );
   const candidates = rows.filter(
@@ -303,13 +303,12 @@ function score(title: string) {
       : 0;
 }
 async function ask(key: string, model: string, prompt: string) {
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
+  const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
     signal: AbortSignal.timeout(80000),
     headers: {
       "content-type": "application/json",
-      "x-api-key": key,
-      "anthropic-version": "2023-06-01",
+      authorization: `Bearer ${key}`,
     },
     body: JSON.stringify(copyProviderRequest(model, prompt)),
   });
@@ -317,19 +316,19 @@ async function ask(key: string, model: string, prompt: string) {
     throw new CopyError(
       response.status === 429
         ? "O agente está ocupado. Aguarde um momento e tente novamente."
-        : "A Anthropic não conseguiu responder. Tente novamente em instantes.",
+        : "A OpenAI não conseguiu responder. Tente novamente em instantes.",
       502,
     );
   const data = await response.json();
-  if (data.stop_reason === "max_tokens")
+  if (data.status === "incomplete")
     throw new CopyError(
       "O briefing ficou extenso demais. Tente uma campanha ou oferta mais específica.",
       502,
     );
-  return parseObject(
-    (data.content ?? [])
-      .filter((c: { type: string }) => c.type === "text")
-      .map((c: { text: string }) => c.text)
-      .join(""),
-  );
+  const text = data.output_text ?? (data.output ?? [])
+    .filter((item: { type: string }) => item.type === 'message')
+    .flatMap((item: { content?: Array<{ type: string; text?: string }> }) => item.content ?? [])
+    .filter((block: { type: string }) => block.type === 'output_text')
+    .map((block: { text?: string }) => block.text ?? '').join('');
+  return parseObject(text);
 }
