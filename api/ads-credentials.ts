@@ -3,6 +3,7 @@ import {answer,type Request} from './_lib/trackingServer.js';
 import {qrUser} from './_lib/qrAccess.js';
 import {object,ORBE_ORIGIN,scalar,seal,unseal} from './_lib/kommo.js';
 import {adsBinding,normalizeAdsCredentials,verifyMetaAccess} from './_lib/adsCredentials.js';
+import {googleAdsReport} from './_lib/googleAdsReport.js';
 export default async function handler(req:Request,res:ServerResponse){
  if(req.method!=='POST')return answer(res,405,{error:'method_not_allowed'});
  if(req.headers.origin!==ORBE_ORIGIN)return answer(res,403,{error:'forbidden'});
@@ -16,14 +17,33 @@ export default async function handler(req:Request,res:ServerResponse){
    return answer(res,200,{configurations});
   }
   if(profiles[0]?.role!=='admin')return answer(res,403,{error:'admin_required'});
+  if(input.action==='save_google_developer'){
+   const developer=scalar(input.developer_token,4096);
+   if(developer.length<10||/\s/.test(developer))throw new Error('invalid_credentials');
+   const rows=await db<{account_id:string;ciphertext:string;updated_at:string;has_refresh_token:boolean;expires_at:string|null}[]>(`rest/v1/wa_ads_credentials?client_id=eq.${client}&platform=eq.google&select=account_id,ciphertext,updated_at,has_refresh_token,expires_at`);
+   const row=rows[0];if(!row)return answer(res,404,{error:'credentials_missing'});
+   if(row.updated_at!==input.expected_version)return answer(res,409,{error:'configuration_changed'});
+   const secrets=object(JSON.parse(unseal(row.ciphertext,adsBinding(client,'google'))));
+   const manager=typeof input.manager_id==='string'?input.manager_id.replace(/-/g,''):'';
+   if(manager&&!/^[1-9]\d{9}$/.test(manager))throw new Error('invalid_manager');
+   const ciphertext=seal(JSON.stringify({...secrets,developer_token:developer,...(manager?{manager_id:manager}:{})}),adsBinding(client,'google'));
+   await db('rest/v1/rpc/wa_ads_save',{method:'POST',body:JSON.stringify({p_client:client,p_platform:'google',p_account:row.account_id,p_ciphertext:ciphertext,p_status:row.has_refresh_token?'saved_unverified':'oauth_pending',p_refresh:row.has_refresh_token,p_expiry:row.expires_at,p_actor:user.id,p_expected:row.updated_at})});
+   const configurations=await db(`rest/v1/wa_ads_credentials?client_id=eq.${client}&select=platform,account_id,status,has_refresh_token,expires_at,updated_at&order=platform`);
+   return answer(res,200,{configurations});
+  }
   if(input.action==='verify'){
    if(!['meta','google'].includes(String(input.platform)))return answer(res,400,{error:'invalid_platform'});
    const platform=input.platform as 'meta'|'google';
    const rows=await db<{account_id:string;ciphertext:string;updated_at:string;has_refresh_token:boolean;expires_at:string|null}[]>(`rest/v1/wa_ads_credentials?client_id=eq.${client}&platform=eq.${platform}&select=account_id,ciphertext,updated_at,has_refresh_token,expires_at`);
    const row=rows[0];if(!row)return answer(res,404,{error:'credentials_missing'});
-   if(platform==='google')return answer(res,200,{verification:{status:row.has_refresh_token?'google_validation_pending':'oauth_pending',account_id:row.account_id}});
    const secrets=object(JSON.parse(unseal(row.ciphertext,adsBinding(client,platform))));
-   const verification=await verifyMetaAccess(row.account_id,scalar(secrets.access_token,4096));
+   let verification:{status:string;account_id:string;account_name?:string;checked_at?:string};
+   if(platform==='google'){
+    const day=new Date(Date.now()-86400000).toISOString().slice(0,10);
+    const report=await googleAdsReport(row.account_id,secrets,{since:day,until:day});
+    if(report.status!=='ready')return answer(res,200,{verification:{status:report.status,account_id:row.account_id}});
+    verification={status:'access_verified',account_id:row.account_id,account_name:report.account_name,checked_at:report.checked_at};
+   }else verification=await verifyMetaAccess(row.account_id,scalar(secrets.access_token,4096));
    const latest=await db<{updated_at:string}[]>(`rest/v1/wa_ads_credentials?client_id=eq.${client}&platform=eq.${platform}&select=updated_at`);
    if(latest[0]?.updated_at!==row.updated_at)return answer(res,409,{error:'configuration_changed'});
    await db('rest/v1/rpc/wa_ads_save',{method:'POST',body:JSON.stringify({p_client:client,p_platform:platform,p_account:row.account_id,p_ciphertext:row.ciphertext,p_status:'access_verified',p_refresh:row.has_refresh_token,p_expiry:row.expires_at,p_actor:user.id,p_expected:row.updated_at})});
@@ -38,5 +58,5 @@ export default async function handler(req:Request,res:ServerResponse){
   }else if(input.action!=='status')return answer(res,400,{error:'invalid_action'});
   const configurations=await db(`rest/v1/wa_ads_credentials?client_id=eq.${client}&select=platform,account_id,status,has_refresh_token,expires_at,updated_at&order=platform`);
   return answer(res,200,{configurations});
- }catch(error){const code=error instanceof Error?error.message:'';return answer(res,['unauthorized','forbidden'].includes(code)?403:code.startsWith('invalid_')?400:503,{error:['unauthorized','forbidden','invalid_platform','invalid_account','invalid_credentials','invalid_oauth_client','invalid_manager','invalid_expiry','meta_token_invalid','meta_permission_denied','meta_account_mismatch','meta_unavailable'].includes(code)?code:'save_unavailable'});}
+ }catch(error){const code=error instanceof Error?error.message:'';return answer(res,['unauthorized','forbidden'].includes(code)?403:code.startsWith('invalid_')?400:503,{error:['unauthorized','forbidden','invalid_platform','invalid_account','invalid_credentials','invalid_oauth_client','invalid_manager','invalid_expiry','meta_token_invalid','meta_permission_denied','meta_account_mismatch','meta_unavailable','google_oauth_invalid','google_developer_token_denied','google_permission_denied','google_unavailable','google_account_mismatch'].includes(code)?code:'save_unavailable'});}
 }

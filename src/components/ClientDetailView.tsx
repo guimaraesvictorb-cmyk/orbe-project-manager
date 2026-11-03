@@ -529,7 +529,8 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
     const refresh = () => { if (active) void refreshAdsConnection() }
     void Promise.resolve().then(refresh)
     window.addEventListener("focus", refresh)
-    return () => { active = false; adsStatusRequest.current?.abort(); window.removeEventListener("focus", refresh) }
+    window.addEventListener("orbe-ads-updated", refresh)
+    return () => { active = false; adsStatusRequest.current?.abort(); window.removeEventListener("focus", refresh); window.removeEventListener("orbe-ads-updated", refresh) }
   }, [refreshAdsConnection])
 
   useEffect(() => {
@@ -741,6 +742,9 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
   const flag = FLAG_META[client.health_flag]
   const status = STATUS_META[client.status]
   const canEdit = isAdminOrCoordenador(profile)
+  const googleOAuthResult=new URLSearchParams(window.location.hash.split('?')[1]??'').get('google_oauth')
+  const googleOAuthMessage=googleOAuthResult?({success:'Autorização Google recebida. Confira abaixo a validação da conta e do acesso aos relatórios.',cancelled:'A autorização Google foi cancelada. Você pode tentar novamente em Conexões.',configuration_changed:'O cadastro Google mudou durante a autorização. Confira Conexões e tente novamente.',offline_access_missing:'O Google não forneceu acesso para atualização dos relatórios. Autorize novamente em Conexões.',scope_missing:'O Google não concedeu a permissão de anúncios. Confira a autorização em Conexões.',authorization_failed:'Não foi possível concluir a autorização Google. Confira o cadastro OAuth e tente novamente em Conexões.',invalid_session:'A sessão de autorização expirou. Inicie novamente em Conexões.',access_denied:'Seu perfil não pode concluir esta autorização.'} as Record<string,string>)[googleOAuthResult]:null
+
 
   function startEditOverview() {
     setOverviewForm({ ...client, notes: client.notes ?? "" })
@@ -989,6 +993,7 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
         </div>
       </div>
 
+      {googleOAuthMessage&&<p role="status" className="border-b border-[var(--border)] bg-[var(--accent-tint)] px-5 py-3 text-xs text-[var(--text-secondary)]">{googleOAuthMessage}</p>}
       <div id={tabPanelId} role="tabpanel" aria-labelledby={`${tabListId}-${tab}`} tabIndex={0} className="min-w-0 flex-1 overflow-y-auto px-4 py-5 sm:px-7 sm:py-6 focus:outline-none" style={{ minHeight: 0 }}>
 
         {tab === "overview" && (

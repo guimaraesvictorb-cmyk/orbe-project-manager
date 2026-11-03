@@ -1,5 +1,5 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';import {registerHooks} from 'node:module'
-registerHooks({resolve(s,c,n){const allowed=['./_lib/trackingServer.js','./_lib/qrAccess.js','./_lib/kommo.js','./_lib/adsCredentials.js','./trackingServer.js'];return n(allowed.includes(s)&&c.parentURL?.includes('/api/')?s.replace(/\.js$/,'.ts'):s,c)}})
+registerHooks({resolve(s,c,n){const allowed=['./_lib/trackingServer.js','./_lib/qrAccess.js','./_lib/kommo.js','./_lib/adsCredentials.js','./_lib/googleAdsReport.js','./trackingServer.js'];return n(allowed.includes(s)&&c.parentURL?.includes('/api/')?s.replace(/\.js$/,'.ts'):s,c)}})
 const {normalizeAdsCredentials,adsBinding}=await import('../api/_lib/adsCredentials.ts')
 const {seal,unseal}=await import('../api/_lib/kommo.ts')
 const {default:handler}=await import('../api/ads-credentials.ts')
@@ -22,7 +22,7 @@ test('API restricts administration, rejects other origins, encrypts writes and r
  const before={url:process.env.VITE_SUPABASE_URL,key:process.env.SUPABASE_SERVICE_ROLE_KEY,crypto:process.env.KOMMO_ENCRYPTION_KEY,fetch:globalThis.fetch}
  process.env.VITE_SUPABASE_URL='https://synthetic.invalid';process.env.SUPABASE_SERVICE_ROLE_KEY='test';process.env.KOMMO_ENCRYPTION_KEY='a'.repeat(64)
  let role='admin',stored=false,seenCipher='',forged=false;const paths:string[]=[]
- globalThis.fetch=async(url,init)=>{const path=String(url);paths.push(path);let value:unknown=[]
+ globalThis.fetch=async(url,init)=>{const path=String(url);paths.push(path);let value:unknown
   if(path.endsWith('/auth/v1/user'))value={id:'user'}
   else if(path.includes('/profiles?'))value=[{id:'user',role,is_active:true}]
   else if(path.includes('/clients?'))value=[{id:client}]
@@ -48,4 +48,39 @@ test('Meta validation binds account, reads campaigns and never leaks raw provide
  if(path.includes('/campaigns'))return new Response(JSON.stringify({data:[]}));
  return new Response(JSON.stringify({account_id:mode==='mismatch'?'other':'2988254138081501',name:'Synthetic account'}));};
  try{assert.equal((await verifyMetaAccess('2988254138081501',meta.access_token)).status,'access_verified');assert.equal(paths.length,2);mode='mismatch';await assert.rejects(()=>verifyMetaAccess('2988254138081501',meta.access_token),{message:'meta_account_mismatch'});mode='invalid';await assert.rejects(()=>verifyMetaAccess('2988254138081501',meta.access_token),{message:'meta_token_invalid'});await assert.rejects(()=>verifyMetaAccess('../other',meta.access_token),{message:'invalid_credentials'});}finally{globalThis.fetch=before}
+})
+
+test('Google verification performs a live read and persists verified metadata without returning investments or secrets',async()=>{
+ const before={url:process.env.VITE_SUPABASE_URL,key:process.env.SUPABASE_SERVICE_ROLE_KEY,crypto:process.env.KOMMO_ENCRYPTION_KEY,fetch:globalThis.fetch}
+ process.env.VITE_SUPABASE_URL='https://synthetic.invalid';process.env.SUPABASE_SERVICE_ROLE_KEY='test';process.env.KOMMO_ENCRYPTION_KEY='a'.repeat(64)
+ const secrets={client_id:'synthetic.apps.googleusercontent.com',client_secret:'SYNTHETIC_CLIENT_SECRET',refresh_token:'SYNTHETIC_REFRESH_TOKEN',developer_token:'SYNTHETIC_DEVELOPER_TOKEN'},ciphertext=seal(JSON.stringify(secrets),adsBinding(client,'google'))
+ let verified=false,lastSave:Record<string,unknown>|null=null
+ globalThis.fetch=async(url,init)=>{
+  const target=new URL(String(url));let value:unknown
+  if(target.origin==='https://oauth2.googleapis.com')value={access_token:'SYNTHETIC_ACCESS_TOKEN'}
+  else if(target.origin==='https://googleads.googleapis.com'){
+   const query=JSON.parse(String(init?.body)).query
+   value={results:query.includes('FROM customer')?[{customer:{id:'3528081021',descriptiveName:'Synthetic Google account',currencyCode:'BRL',timeZone:'America/Sao_Paulo'}}]:[{campaign:{id:'1',name:'Synthetic campaign'},segments:{date:'2026-11-01'},metrics:{costMicros:'123450000',clicks:'2',impressions:'10'}}]}
+  }else if(target.pathname.endsWith('/auth/v1/user'))value={id:'actor'}
+  else if(target.pathname.endsWith('/profiles'))value=[{role:'admin',is_active:true,can_view_financials:false}]
+  else if(target.pathname.endsWith('/clients'))value=[{id:client}]
+  else if(target.pathname.endsWith('/client_assignments'))value=[]
+  else if(target.pathname.endsWith('/wa_ads_credentials'))value=target.searchParams.get('select')?.includes('ciphertext')?[{account_id:'3528081021',ciphertext,has_refresh_token:true,expires_at:null,updated_at:'2026-11-02T00:00:00Z'}]:[{platform:'google',account_id:'3528081021',status:'saved_unverified',has_refresh_token:true,expires_at:null,updated_at:'2026-11-02T00:00:00Z'}]
+  else if(target.pathname.endsWith('/rpc/wa_ads_save')){const body=JSON.parse(String(init?.body));lastSave=body;verified=body.p_status==='access_verified';value=[]}
+  else throw new Error('unexpected verification request')
+  return new Response(JSON.stringify(value))
+ }
+ try{
+  const res={statusCode:0,body:'',setHeader(){},end(value:string){this.body=value}}
+  await handler({method:'POST',headers:{origin:'https://studio.agenciaorbe.co','content-type':'application/json',authorization:'Bearer synthetic.jwt.token'},body:{action:'verify',client_id:client,platform:'google'}} as never,res as never)
+  assert.equal(res.statusCode,200);assert.equal(JSON.parse(res.body).verification.status,'access_verified');assert.equal(verified,true)
+  for(const secret of [...Object.values(secrets),ciphertext,'123450000','spend','totals'])assert.equal(res.body.includes(secret),false)
+  const partial={...res,statusCode:0,body:''}
+  await handler({method:'POST',headers:{origin:'https://studio.agenciaorbe.co','content-type':'application/json',authorization:'Bearer synthetic.jwt.token'},body:{action:'save_google_developer',client_id:client,developer_token:'SYNTHETIC_REPLACEMENT_DEVELOPER',expected_version:'2026-11-02T00:00:00Z'}} as never,partial as never)
+  assert.equal(partial.statusCode,200);assert.ok(lastSave)
+  const preserved=JSON.parse(unseal(String((lastSave as Record<string,unknown>).p_ciphertext),adsBinding(client,'google')))
+  assert.equal(preserved.refresh_token,secrets.refresh_token);assert.equal(preserved.client_secret,secrets.client_secret);assert.equal(preserved.developer_token,'SYNTHETIC_REPLACEMENT_DEVELOPER')
+  assert.equal(partial.body.includes(secrets.refresh_token),false);assert.equal(partial.body.includes('SYNTHETIC_REPLACEMENT_DEVELOPER'),false)
+
+ }finally{globalThis.fetch=before.fetch;for(const [key,value]of Object.entries({VITE_SUPABASE_URL:before.url,SUPABASE_SERVICE_ROLE_KEY:before.key,KOMMO_ENCRYPTION_KEY:before.crypto})){if(value===undefined)delete process.env[key];else process.env[key]=value}}
 })

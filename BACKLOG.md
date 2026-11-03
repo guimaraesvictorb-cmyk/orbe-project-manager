@@ -1,5 +1,18 @@
 # Backlog do produto (Orbe OS)
 
+## Menu principal recolhível ao entrar em um cliente
+
+**Pedido de Victor em 02/11/2026 — na fila, ainda não implementado.**
+
+Ao abrir um cliente, recolher o menu principal da plataforma (Dashboard,
+Orbe AI e demais áreas) para dar mais espaço à visão do projeto. Manter
+um botão visível para abrir e fechar esse menu manualmente, sem perder
+o cliente selecionado, a aba ou os filtros. O controle deve funcionar
+também pelo teclado e indicar se o menu está aberto ou recolhido.
+
+O pedido se refere ao menu principal da plataforma; a navegação entre
+as áreas do cliente continua acessível.
+
 Pendências reais, pedidas por Victor, registradas aqui — não implementadas
 ainda, sem prazo nem responsável inventados. Quando o item virar trabalho
 real, mover para uma tarefa de verdade (no To-do Orbe interno, quando esse
