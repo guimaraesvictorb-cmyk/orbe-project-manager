@@ -172,3 +172,32 @@ html, body {
   body, #root { background: #fff !important; color: #000 !important; overflow: visible !important; }
   * { color: #000 !important; background-color: transparent !important; border-color: #ccc !important; }
 }
+
+
+/* The desktop rail reserves only its pinned width. Hover expansion overlays
+   the page so charts and tables do not resize under the pointer. Mobile keeps
+   the existing full-width drawer and backdrop. */
+.app-nav-shell { flex-shrink: 0; width: 0; }
+.app-nav-panel { width: 260px; transition: width 180ms ease, transform 180ms ease; }
+.app-nav-header { height: 96px; }
+.app-nav-toggle { position: absolute; left: 20px; top: 58px; width: calc(100% - 40px); height: 28px; gap: 8px; justify-content: flex-start; padding: 4px 7px; }
+.app-nav-mobile-close { left: auto; right: 12px; top: 20px; width: 32px; height: 32px; }
+.app-nav-compact-more { display: none; }
+
+@media (min-width: 1024px) {
+  .app-nav-shell { position: relative; width: 260px; transition: width 180ms ease; }
+  .app-nav-panel { position: absolute; overflow-x: hidden; }
+  .app-nav-shell[data-collapsed="true"] { width: 72px; }
+  .app-nav-shell[data-expanded="false"] .app-nav-panel { width: 72px; }
+  .app-nav-shell[data-expanded="false"] .app-nav-label { display: none; }
+  .app-nav-shell[data-expanded="false"] nav button,
+  .app-nav-shell[data-expanded="false"] .app-nav-account button { justify-content: center; padding-left: 0; padding-right: 0; }
+  .app-nav-shell[data-expanded="false"] .app-nav-section-heading { height: 14px; }
+  .app-nav-shell[data-expanded="false"] .app-nav-toggle { width: 32px; }
+  .app-nav-shell[data-expanded="false"] .app-nav-compact-more { display: block; }
+  .app-nav-shell[data-expanded="false"] .app-nav-more { display: flex; justify-content: center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-nav-shell, .app-nav-panel { transition: none; }
+}
