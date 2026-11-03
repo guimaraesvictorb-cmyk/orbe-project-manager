@@ -13,3 +13,32 @@ test('public bearer cannot mutate, disabled links return no data, administrator 
  async function call(body:unknown,auth?:string){const res={statusCode:0,body:'',setHeader(){},end(v:string){this.body=v}};await handler({method:'POST',headers:{origin:'https://studio.agenciaorbe.co','content-type':'application/json',...(auth?{authorization:auth}:{})},body} as never,res as never);return res}
  try{const missing=await call({action:'view',token,start:'2026-10-01',end:'2026-10-31',client_id:'FORGED'});assert.equal(missing.statusCode,404);assert.equal(paths.some(p=>p.includes('wa_tracking_records')),false);enabled=true;const bound=await call({action:'view',token,start:'2026-10-01',end:'2026-10-31',client_id:'FORGED'});assert.equal(bound.statusCode,200);assert.equal(paths.some(p=>p.includes('FORGED')),false);assert.ok(paths.some(p=>p.includes(`wa_tracking_connections?client_id=eq.${client}`)));enabled=false;paths.length=0;const mutation=await call({action:'enable',token,client_id:client});assert.equal(mutation.statusCode,403);const denied=await call({action:'enable',client_id:client},'Bearer synthetic.jwt');assert.equal(denied.statusCode,403);assert.equal(JSON.parse(denied.body).error,'owner_required');assert.equal(paths.some(p=>p.includes('token_ciphertext')),false);financial=true;assert.equal((await call({action:'status',client_id:client},'Bearer synthetic.jwt')).statusCode,200);}finally{globalThis.fetch=before.fetch;if(before.url)process.env.VITE_SUPABASE_URL=before.url;else delete process.env.VITE_SUPABASE_URL;if(before.key)process.env.SUPABASE_SERVICE_ROLE_KEY=before.key;else delete process.env.SUPABASE_SERVICE_ROLE_KEY}
 })
+
+test('shared media obeys explicit sharing, separates platform caches and invalidates rotated credentials',async()=>{
+ const {clientDashboardMedia}=await import('../api/_lib/clientDashboard.ts')
+ const {seal}=await import('../api/_lib/kommo.ts'),{adsBinding}=await import('../api/_lib/adsCredentials.ts')
+ const before={fetch:globalThis.fetch,key:process.env.KOMMO_ENCRYPTION_KEY};process.env.KOMMO_ENCRYPTION_KEY='a'.repeat(64)
+ const ciphertexts={meta:seal(JSON.stringify({access_token:'SYNTHETIC_META_TOKEN'}),adsBinding(client,'meta')),google:seal(JSON.stringify({client_id:'synthetic.apps.googleusercontent.com',client_secret:'SYNTHETIC_CLIENT_SECRET',refresh_token:'SYNTHETIC_REFRESH_TOKEN',developer_token:'SYNTHETIC_DEVELOPER_TOKEN'}),adsBinding(client,'google'))}
+ let version='version-1',reads=0,googleCalls=0
+ const db=async(path:string)=>{reads++;return [{account_id:'3528081021',ciphertext:ciphertexts[path.includes('platform=eq.google')?'google':'meta'],updated_at:version}]}
+ globalThis.fetch=async(url,init)=>{
+  const target=new URL(String(url))
+  if(target.origin==='https://oauth2.googleapis.com')return new Response(JSON.stringify({access_token:'SYNTHETIC_ACCESS_TOKEN'}))
+  if(target.origin==='https://googleads.googleapis.com'){
+   googleCalls++;const query=JSON.parse(String(init?.body)).query
+   return new Response(JSON.stringify({results:query.includes('FROM customer')?[{customer:{id:'3528081021',descriptiveName:'Google fixture',currencyCode:'BRL',timeZone:'America/Sao_Paulo'}}]:[]}))
+  }
+  if(target.origin==='https://graph.facebook.com')return new Response(JSON.stringify({data:target.pathname.endsWith('/insights')?[]:[],id:'act_3528081021',name:'Meta fixture',currency:'USD',account_id:'3528081021'}))
+  throw Error('unexpected provider')
+ }
+ const link={client_id:client,token_hash:'media-test-unique',token_ciphertext:'not-used',enabled:true,include_media:true,updated_at:'share-version'}
+ try{
+  assert.equal((await clientDashboardMedia(db as never,{...link,include_media:false},'2026-10-01','2026-10-31','google')).status,'not_shared');assert.equal(reads,0)
+  const google=await clientDashboardMedia(db as never,link,'2026-10-01','2026-10-31','google') as {status:string;currency:string}
+  assert.equal(google.status,'ready');assert.equal(google.currency,'BRL')
+  const calls=googleCalls;await clientDashboardMedia(db as never,link,'2026-10-01','2026-10-31','google');assert.equal(googleCalls,calls)
+  const meta=await clientDashboardMedia(db as never,link,'2026-10-01','2026-10-31','meta') as {currency:string};assert.equal(meta.currency,'USD')
+  version='version-2';await clientDashboardMedia(db as never,link,'2026-10-01','2026-10-31','google');assert.ok(googleCalls>calls)
+  assert.equal(JSON.stringify(google).includes('SYNTHETIC'),false)
+ }finally{globalThis.fetch=before.fetch;if(before.key===undefined)delete process.env.KOMMO_ENCRYPTION_KEY;else process.env.KOMMO_ENCRYPTION_KEY=before.key}
+})

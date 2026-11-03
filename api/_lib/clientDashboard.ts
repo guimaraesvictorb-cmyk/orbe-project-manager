@@ -5,6 +5,7 @@ import {campaignName,firstContacts,trackingChannel} from '../../src/lib/tracking
 import {commercialContacts,type CommercialOutcome,type ConversationEvent,type ServiceSettings} from '../../src/lib/commercialTracking.js';
 import type {TrackingRecord} from '../../src/lib/whatsappTracking.js';
 import {metaReport} from './adsReport.js';
+import {googleAdsReport} from './googleAdsReport.js';
 import {adsBinding} from './adsCredentials.js';
 import {object,unseal} from './kommo.js';
 export const dashboardHash=(token:string)=>createHash('sha256').update(token).digest('hex');
@@ -43,11 +44,13 @@ export async function clientDashboardData(db:Db,client:string,start:string,end:s
 const mediaCache=new Map<string,{expires:number;value:unknown}>();
 export async function clientDashboardMedia(db:Db,link:DashboardLink,start:string,end:string,platform:string){
  if(!link.include_media)return {status:'not_shared'};
- if(platform==='google')return {status:'pending'};
- const key=[link.token_hash,link.updated_at,start,end].join(':');const cached=mediaCache.get(key);if(cached&&cached.expires>Date.now())return cached.value;
- const rows=await db<{account_id:string;ciphertext:string;updated_at:string}[]>(`rest/v1/wa_ads_credentials?client_id=eq.${link.client_id}&platform=eq.meta&select=account_id,ciphertext,updated_at`);if(!rows[0])return {status:'pending'};
- const row=rows[0],secrets=object(JSON.parse(unseal(row.ciphertext,adsBinding(link.client_id,'meta'))));
- const report=await metaReport(row.account_id,String(secrets.access_token??''),{since:start,until:end});
+ if(!['meta','google'].includes(platform))throw new Error('invalid_platform');
+ const selected=platform as 'meta'|'google';
+ const rows=await db<{account_id:string;ciphertext:string;updated_at:string}[]>(`rest/v1/wa_ads_credentials?client_id=eq.${link.client_id}&platform=eq.${selected}&select=account_id,ciphertext,updated_at`);if(!rows[0])return {status:'not_configured'};
+ const row=rows[0],key=[link.token_hash,link.updated_at,selected,row.updated_at,start,end].join(':');
+ const cached=mediaCache.get(key);if(cached&&cached.expires>Date.now())return cached.value;
+ const secrets=object(JSON.parse(unseal(row.ciphertext,adsBinding(link.client_id,selected))));
+ const report=selected==='google'?await googleAdsReport(row.account_id,secrets,{since:start,until:end}):await metaReport(row.account_id,String(secrets.access_token??''),{since:start,until:end});
  // Cache only the explicitly shared media metrics, never credentials or contact records.
  if(mediaCache.size>100)mediaCache.clear();mediaCache.set(key,{expires:Date.now()+120000,value:report});return report;
 }
