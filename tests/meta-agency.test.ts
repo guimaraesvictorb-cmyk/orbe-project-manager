@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {registerHooks} from 'node:module';
 registerHooks({resolve(s,c,n){return n(s.startsWith('.')&&s.endsWith('.js')&&c.parentURL?.includes('/api/')?s.replace(/\.js$/,'.ts'):s,c)}});
 const {metaCredential,metaMetadata,markMetaVerified,metaAgencyAdmin}=await import('../api/_lib/metaAgency.ts');
-const {seal}=await import('../api/_lib/kommo.ts');
+const {seal,unseal}=await import('../api/_lib/kommo.ts');
 const source='589481f6-3a15-4c93-b384-5d33373c20e3',target='14d33095-9db2-4f7f-b667-10110c52c919';
 const sourceVersion='2026-11-03T10:00:00+00:00',configVersion='2026-11-03T11:00:00+00:00',linkVersion='2026-11-03T12:00:00+00:00';
 const token='synthetic-meta-agency-token';
@@ -35,24 +35,24 @@ test('agency mapping requires an active financial admin and a live target-accoun
  const original={fetch:globalThis.fetch,url:process.env.VITE_SUPABASE_URL,key:process.env.SUPABASE_SERVICE_ROLE_KEY,crypto:process.env.KOMMO_ENCRYPTION_KEY};
  process.env.VITE_SUPABASE_URL='https://storage.test';process.env.SUPABASE_SERVICE_ROLE_KEY='synthetic-service';process.env.KOMMO_ENCRYPTION_KEY='b'.repeat(64);
  const cipher=seal(JSON.stringify({access_token:token}),`ads:${source}:meta`);
- let role='gt',financial=true,permission=true;const writes:Record<string,unknown>[]=[];const graph:string[]=[];
+ let role='gt',financial=true,permission=true,acceptedToken=token;const writes:Record<string,unknown>[]=[];const graph:string[]=[];
  globalThis.fetch=async(input,init)=>{
   const url=String(input);let value:unknown;
   if(url.startsWith('https://graph.facebook.com/')){
-   graph.push(url);assert.equal(new Headers(init?.headers).get('authorization'),'Bearer '+token);assert.equal(url.includes(token),false);
+   graph.push(url);assert.equal(new Headers(init?.headers).get('authorization'),'Bearer '+acceptedToken);assert.equal(url.includes(acceptedToken),false);
    if(!permission)return new Response(JSON.stringify({error:{code:200,message:'private provider diagnostic'}}),{status:403});
-   value=url.includes('/campaigns?')?{data:[]}:{account_id:'987654321',name:'Target account'};
+   value=url.includes('/campaigns?')?{data:[]}:{account_id:url.includes('act_987654321')?'987654321':'123456789',name:'Target account'};
   }else if(url.endsWith('/auth/v1/user'))value={id:'actor'};
   else if(url.includes('/profiles?'))value=[{role,is_active:true,can_view_financials:financial}];
   else if(url.includes('/orbe_meta_agency?'))value=[{source_client_id:source,enabled:true,updated_at:configVersion}];
   else if(url.includes('/wa_ads_credentials?'))value=[{client_id:source,account_id:'123456789',ciphertext:cipher,updated_at:sourceVersion}];
   else if(url.includes('/orbe_meta_accounts?'))value=[];
   else if(url.includes('/clients?'))value=[{id:target}];
-  else if(url.includes('/rpc/orbe_meta_map')){writes.push(JSON.parse(String(init?.body)));value=null;}
+  else if((url.includes('/rpc/orbe_meta_map')||url.includes('/rpc/wa_ads_save'))){writes.push(JSON.parse(String(init?.body)));value=null;}
   else throw Error('unexpected path');
   return new Response(JSON.stringify(value),{status:200});
  };
- async function call(){const res={statusCode:0,body:'',setHeader(){},end(value:string){this.body=value;}};await metaAgencyAdmin({headers:{authorization:'Bearer synthetic.jwt'},body:{action:'meta_agency_bind',client_id:target,account_id:'act_987654321',expected_version:configVersion}} as never,res as never);return res;}
+ async function call(extra:Record<string,unknown>={}){const res={statusCode:0,body:'',setHeader(){},end(value:string){this.body=value;}};await metaAgencyAdmin({headers:{authorization:'Bearer synthetic.jwt'},body:{action:'meta_agency_bind',client_id:target,account_id:'act_987654321',expected_version:configVersion,...extra}} as never,res as never);return res;}
  try{
   assert.equal((await call()).statusCode,403);assert.equal(writes.length,0);
   role='admin';financial=false;assert.equal((await call()).statusCode,403);assert.equal(writes.length,0);
@@ -60,5 +60,6 @@ test('agency mapping requires an active financial admin and a live target-accoun
   permission=true;const allowed=await call();assert.equal(allowed.statusCode,200);assert.equal(writes.length,1);
   assert.equal(writes[0].p_client,target);assert.equal(writes[0].p_account,'987654321');assert.equal(writes[0].p_source_version,sourceVersion);assert.equal(writes[0].p_expected,configVersion);assert.equal(writes[0].p_link_expected,null);
   assert.ok(graph.some(url=>url.includes('/act_987654321/campaigns?')));assert.equal(allowed.body.includes(token),false);assert.equal(allowed.body.includes(cipher),false);
+  acceptedToken='replacement-synthetic-token';const renewed=await call({action:'meta_agency_token',access_token:acceptedToken});assert.equal(renewed.statusCode,200);assert.equal(renewed.body.includes(acceptedToken),false);const saved=writes.at(-1)!;assert.equal(saved.p_client,source);assert.equal(JSON.parse(unseal(String(saved.p_ciphertext),`ads:${source}:meta`)).access_token,acceptedToken);
  }finally{globalThis.fetch=original.fetch;for(const [name,value] of Object.entries({VITE_SUPABASE_URL:original.url,SUPABASE_SERVICE_ROLE_KEY:original.key,KOMMO_ENCRYPTION_KEY:original.crypto})){if(value===undefined)delete process.env[name];else process.env[name]=value;}}
 });

@@ -1,6 +1,6 @@
 import type {ServerResponse} from 'node:http';
 import {answer,storage,type Request} from './trackingServer.js';
-import {object,unseal,scalar} from './kommo.js';
+import {object,seal,unseal,scalar} from './kommo.js';
 import {adsBinding,verifyMetaAccess} from './adsCredentials.js';
 type Db=ReturnType<typeof storage>;
 type Config={source_client_id:string;enabled:boolean;updated_at:string};
@@ -54,6 +54,12 @@ export async function metaAgencyAdmin(req:Request,res:ServerResponse){
    const secrets=object(JSON.parse(unseal(row.ciphertext,adsBinding(source,'meta'))));
    await verifyMetaAccess(row.account_id,scalar(secrets.access_token,4096));
    await db('rest/v1/rpc/orbe_meta_configure',{method:'POST',body:JSON.stringify({p_source:source,p_source_version:row.updated_at,p_expected:cfg?.updated_at??null,p_actor:user.id})});
+  }else if(action==='meta_agency_token'){
+   if(!cfg?.enabled)throw Error('credentials_missing');
+   const token=scalar(input.access_token,4096);if(token.length<10||/\s/.test(token))throw Error('invalid_credentials');
+   const row=await stored(db,cfg.source_client_id);if(!row)throw Error('credentials_missing');
+   await verifyMetaAccess(row.account_id,token);
+   await db('rest/v1/rpc/wa_ads_save',{method:'POST',body:JSON.stringify({p_client:cfg.source_client_id,p_platform:'meta',p_account:row.account_id,p_ciphertext:seal(JSON.stringify({access_token:token}),adsBinding(cfg.source_client_id,'meta')),p_status:'access_verified',p_refresh:false,p_expiry:null,p_actor:user.id,p_expected:row.updated_at})});
   }else if(action==='meta_agency_bind'){
    if(!cfg?.enabled)throw Error('credentials_missing');
    const client=scalar(input.client_id,36),account=scalar(input.account_id,30).replace(/^act_/,'');
@@ -68,5 +74,5 @@ export async function metaAgencyAdmin(req:Request,res:ServerResponse){
    if(changed.length!==1)throw Error('configuration_changed');
   }else return answer(res,400,{error:'invalid_action'});
   return answer(res,200,await registry(db));
- }catch(cause){const detail=cause instanceof Error?cause.cause:undefined;const duplicate=detail&&typeof detail==='object'&&'code' in detail&&detail.code==='23505';const code=duplicate?'account_already_linked':cause instanceof Error?cause.message:'',allowed=['account_already_linked','unauthorized','owner_required','invalid_client','invalid_account','credentials_missing','configuration_changed','meta_token_invalid','meta_permission_denied','meta_account_mismatch','meta_unavailable'];return answer(res,['unauthorized','owner_required'].includes(code)?403:code.startsWith('invalid_')?400:503,{error:allowed.includes(code)?code:'meta_agency_unavailable'});}
+ }catch(cause){const detail=cause instanceof Error?cause.cause:undefined;const duplicate=detail&&typeof detail==='object'&&'code' in detail&&detail.code==='23505';const code=duplicate?'account_already_linked':cause instanceof Error?cause.message:'',allowed=['invalid_credentials','account_already_linked','unauthorized','owner_required','invalid_client','invalid_account','credentials_missing','configuration_changed','meta_token_invalid','meta_permission_denied','meta_account_mismatch','meta_unavailable'];return answer(res,['unauthorized','owner_required'].includes(code)?403:code.startsWith('invalid_')?400:503,{error:allowed.includes(code)?code:'meta_agency_unavailable'});}
 }
