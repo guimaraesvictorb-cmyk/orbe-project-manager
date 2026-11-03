@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { BarChart3, Loader2, RefreshCw } from "lucide-react"
+import { useAdsPeriod } from "../../hooks/useAdsPeriod"
 import { supabase } from "../../lib/supabase"
 
 type Insight = { campaign_id: string; campaign_name: string; spend: number; impressions: number; clicks: number; link_clicks: number }
 type Report = { status: "ready"; account_name: string; currency: string; period: { since: string; until: string }; totals: Insight & { reach: number | null; frequency: number | null; conversions?: number }; daily: Insight[]; checked_at: string }
 
-const today = () => new Date().toLocaleDateString("en-CA")
-const before = (days: number) => { const date = new Date(); date.setDate(date.getDate() - days); return date.toLocaleDateString("en-CA") }
 // Always 2 decimals — CPC and small per-click costs round to R$0 at 0
 // decimals, which is wrong for analysis, not just cosmetically rounded.
 const money = (value: number, currency = "BRL") => value.toLocaleString("pt-BR", { style: "currency", currency: currency || "BRL", minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -15,8 +14,7 @@ const integer = (value: number) => Math.round(value).toLocaleString("pt-BR")
 export function SecureMetaAdsTab({ clientId, onOpenConnections, onVerified, platform = "meta" }: { clientId: string; onOpenConnections: () => void; onVerified?: () => void; platform?: "meta" | "google" }) {
   const label = platform === "google" ? "Google Ads" : "Meta Ads"
   const shortLabel = platform === "google" ? "Google" : "Meta"
-  const [start, setStart] = useState(() => new URLSearchParams(window.location.hash.split("?")[1] ?? "").get("de") || before(29))
-  const [end, setEnd] = useState(() => new URLSearchParams(window.location.hash.split("?")[1] ?? "").get("ate") || today())
+  const {start,end,setStart,setEnd}=useAdsPeriod()
   const [report, setReport] = useState<Report | null>(null)
   const [status, setStatus] = useState<string>("")
   const [loading, setLoading] = useState(false)

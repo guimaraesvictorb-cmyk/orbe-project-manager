@@ -894,7 +894,7 @@ export function ClientDetailView({ client, campaignsOnly = false, onBack, onDele
       <div className="flex flex-wrap items-center gap-3 px-4 py-4 sm:px-8 sm:py-5" style={{ borderBottom: "1px solid var(--bg-surface-2)" }}>
         <button
           onClick={onBack}
-          aria-label="Voltar para a carteira de clientes"
+          aria-label={campaignsOnly ? "Voltar para campanhas" : "Voltar para a carteira de clientes"}
           title="Voltar para clientes"
           className="p-2 rounded-lg transition-colors hover:bg-[var(--bg-surface-2)] hover:text-[var(--text-primary)] focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
           style={{ color: "var(--text-tertiary)" }}

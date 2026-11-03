@@ -4,6 +4,7 @@ import { useAuth } from "./hooks/useAuth";
 import { canAccessSection, isAdminOrCoordenador } from "./lib/permissions";
 import { LoginPage } from "./components/LoginPage";
 import { ResetPasswordPage } from "./components/ResetPasswordPage";
+import { parseClientWorkspace } from "./lib/clientWorkspace";
 import { AppNav, type AppView } from "./components/AppNav";
 import { HomeView } from "./components/HomeView";
 import { ThemeProvider, useTheme } from "./contexts/ThemeContext";
@@ -99,9 +100,18 @@ function App() {
   function navigate(v: AppView) {
     localStorage.setItem(VIEW_KEY, v);
     setView(v);
-    if (window.location.hash.replace(/^#\/?/, "") !== v) {
-      window.location.hash = v;
+    const current = parseClientWorkspace(window.location.hash);
+    const contextual = ["campanhas","criativos","segundo-cerebro","whatsapp","relatorios"].includes(v);
+    const params = new URLSearchParams();
+    if (contextual && current.clientId) {
+      params.set("cliente", current.clientId);
+      if (v === "campanhas") {
+        params.set("area", ["meta","google","compilado","analytics"].includes(current.area) ? current.area : "compilado");
+        for (const key of ["de","ate","unidade"]) { const value=current.params.get(key); if(value) params.set(key,value); }
+      }
     }
+    const target = `${v}${params.size ? `?${params}` : ''}`;
+    if (window.location.hash.replace(/^#\/?/, "") !== target) window.location.hash = target;
   }
 
   // Keeps the URL in sync on first load (e.g. view restored from localStorage

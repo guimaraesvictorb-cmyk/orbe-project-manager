@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { advanceSync, newSyncState, staleKnowledgeIds, syncProgress, type DriveFile, type SyncState } from "./sync-engine.ts";
 import { documentText, officeTypes, textTypes } from "./document-text.ts";
 
-import { browseCreativeFolder, DriveBrowseError } from "./creative-browser.ts";
+import { browseCreativeFolder, creativePreview, DriveBrowseError } from "./creative-browser.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,7 +20,7 @@ serve(async (req) => {
     if (authError || !user) return json({ error: "Sessão inválida" }, 401);
 
     if (req.method !== "POST") return json({ error: "Método inválido" }, 405);
-    const { client_id: clientId, batch, action, path, page_token: pageToken } = await req.json();
+    const { client_id: clientId, batch, action, path, page_token: pageToken, file_id: fileId } = await req.json();
     if (typeof clientId !== "string" || !/^[0-9a-f-]{36}$/.test(clientId)) return json({ error: "Cliente inválido" }, 400);
     const [{ data: profile }, { data: client }, { data: driveConfig }] = await Promise.all([
       supabase.from("profiles").select("role,is_active,can_view_financials").eq("id", user.id).maybeSingle(),
@@ -34,10 +34,15 @@ serve(async (req) => {
       if (!assignment) return json({ error: "Sem acesso a este cliente" }, 403);
     }
 
-    if (action === 'browse_creatives') {
+    if (action === 'browse_creatives' || action === 'creative_preview') {
       const resolved = await resolveServiceAccount(Deno.env.get('GOOGLE_DRIVE_SERVICE_ACCOUNT_JSON'),Deno.env.get('GOOGLE_SERVICE_ACCOUNT_KEY'));
       if (!resolved) return json({ error: 'Integração do Drive sem credencial de serviço válida no servidor.' },503);
-      try { return json(await browseCreativeFolder(driveConfig.folder_id,path,pageToken,url=>driveFetch(url,resolved.token),!!profile.can_view_financials)); }
+      try {
+        if(action==='creative_preview') {
+          const preview=await creativePreview(driveConfig.folder_id,path,fileId,url=>driveFetch(url,resolved.token),url=>fetch(url,{headers:{authorization:`Bearer ${resolved.token}`},redirect:'error',signal:AbortSignal.timeout(15000)}),!!profile.can_view_financials);
+          return new Response(preview.bytes,{headers:{...corsHeaders,'Content-Type':preview.type,'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}});
+        }
+        return json(await browseCreativeFolder(driveConfig.folder_id,path,pageToken,url=>driveFetch(url,resolved.token),!!profile.can_view_financials)); }
       catch(error) { return json({ error: error instanceof DriveBrowseError ? error.message : 'Não foi possível abrir esta pasta no Drive. Confira o compartilhamento com o Studio.' },error instanceof DriveBrowseError ? error.status : 503); }
     }
 

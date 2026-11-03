@@ -1,4 +1,4 @@
-import type { TrackingRecord } from './whatsappTracking'
+import type { TrackingRecord } from './whatsappTracking.js'
 export function trackingChannel(p:TrackingRecord['payload']) {
  const source=String(p.utm_source||'').trim().toLowerCase()
  if(/^(site|site_rayafit|website|site_institucional)$/.test(source))return 'Site'

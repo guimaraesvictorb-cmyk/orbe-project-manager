@@ -1,4 +1,4 @@
-import type {TrackingRecord} from './whatsappTracking'
+import type {TrackingRecord} from './whatsappTracking.js'
 export const biChannels=['Google','Meta','Site','Instagram','Origem não identificada'] as const
 export const channelTitle=(v:string)=>v==='Google'?'Google Ads':v==='Meta'?'Meta Ads':v==='Site'?'Site':v==='Origem não identificada'?'Sem origem':v
 export function dayBrt(value:string){return new Date(Date.parse(value)-10800000).toISOString().slice(0,10)}

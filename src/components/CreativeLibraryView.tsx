@@ -3,6 +3,7 @@ import { ArrowLeft, ExternalLink, Folder, Image, Images, Loader2, RefreshCw, Sea
 import { supabase } from '../lib/supabase'
 import { WorkspaceClientPicker } from './WorkspaceClientPicker'
 import { useWorkspaceClient } from '../hooks/useWorkspaceClient'
+import { DriveAssetPreview } from './DriveAssetPreview'
 import { Footer } from './Footer'
 import { openClientWorkspace } from '../lib/clientWorkspace'
 import { safeSourceUrl } from '../lib/safeSourceUrl'
@@ -27,10 +28,19 @@ function CreativeBrowser({ clientId }: { clientId: string }) {
       if (!active) return
       if (error) { setError('Não foi possível consultar a pasta do cliente.'); setLoading(false) }
       else if (!data) { setLoading(false); setRoot(null) }
-      else { setRoot(data.folder_id); setPath([data.folder_id]) }
+      else { setRoot(data.folder_id); const saved = new URLSearchParams(window.location.hash.split('?')[1]).get('pastas')?.split(',') ?? []; setPath(saved[0]===data.folder_id && saved.length<=30 ? saved : [data.folder_id]) }
     })
     return () => { active = false; request.current?.abort() }
   }, [clientId])
+  function navigatePath(ids: string[]) {
+    const [section, query] = window.location.hash.split('?')
+    const params = new URLSearchParams(query); params.set('pastas',ids.join(','))
+    window.location.assign(`${section}?${params}`); setPath(ids)
+  }
+  useEffect(() => {
+    const sync = () => { if (!root) return; const saved=new URLSearchParams(window.location.hash.split('?')[1]).get('pastas')?.split(',')??[]; const ids=saved[0]===root&&saved.length<=30?saved:[root]; setPath(previous=>previous.join(',')===ids.join(',')?previous:ids) }
+    window.addEventListener('hashchange',sync);return()=>window.removeEventListener('hashchange',sync)
+  },[root])
   const load = useCallback(async (ids: string[], pageToken: string | null = null) => {
     request.current?.abort()
     const controller = new AbortController(); request.current = controller
@@ -48,12 +58,12 @@ function CreativeBrowser({ clientId }: { clientId: string }) {
   }, [clientId])
   useEffect(() => { let active = true; void Promise.resolve().then(() => { if (active && path.length) void load(path) }); return () => { active = false; request.current?.abort() } }, [path,retry,load])
   const files = result.files.filter(file => file.name.toLocaleLowerCase('pt-BR').includes(query.toLocaleLowerCase('pt-BR')) && (kind==='all' || file.mimeType===folderMime || file.mimeType.startsWith(`${kind}/`)))
-  function enter(id: string) { setQuery(''); setPath(previous => [...previous,id]) }
+  function enter(id: string) { setQuery(''); navigatePath([...path,id]) }
   if (!loading && !root && !error) return <section className="rounded-2xl border border-dashed border-[var(--border-strong)] p-8"><h2 className="font-semibold">Vincule o Drive deste cliente</h2><p className="mt-2 text-sm text-[var(--text-tertiary)]">A biblioteca usa somente a pasta configurada na base de conhecimento.</p><button className="mt-4 text-sm text-[var(--accent)]" onClick={() => openClientWorkspace(clientId,'cliente','knowledge')}>Configurar pasta →</button></section>
   return <section aria-label="Acervo de criativos" className="space-y-5">
     <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--text-secondary)]" aria-label="Caminho da pasta">
-      {path.length>1 && <button aria-label="Voltar uma pasta" onClick={() => { setQuery(''); setPath(previous=>previous.slice(0,-1)) }} className="rounded-lg border border-[var(--border)] p-2"><ArrowLeft size={14}/></button>}
-      {result.folders.map((folder,index)=><button key={folder.id} onClick={()=>{setQuery('');setPath(previous=>previous.slice(0,index+1))}} className="max-w-56 truncate rounded-lg px-2 py-2 hover:bg-[var(--bg-surface)]" aria-current={index===result.folders.length-1?'location':undefined}>{index?' / ':''}{folder.name}</button>)}
+      {path.length>1 && <button aria-label="Voltar uma pasta" onClick={() => { setQuery(''); navigatePath(path.slice(0,-1)) }} className="rounded-lg border border-[var(--border)] p-2"><ArrowLeft size={14}/></button>}
+      {result.folders.map((folder,index)=><button key={folder.id} onClick={()=>{setQuery('');navigatePath(path.slice(0,index+1))}} className="max-w-56 truncate rounded-lg px-2 py-2 hover:bg-[var(--bg-surface)]" aria-current={index===result.folders.length-1?'location':undefined}>{index?' / ':''}{folder.name}</button>)}
       {root && <a href={`https://drive.google.com/drive/folders/${path.at(-1)??root}`} target="_blank" rel="noopener noreferrer" className="ml-auto inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] px-3 py-2 text-[var(--accent)]">Abrir no Drive<ExternalLink size={12}/></a>}
     </div>
     <div className="flex flex-wrap gap-3"><label className="flex min-w-52 flex-1 items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--bg-input)] px-3"><Search size={15} className="text-[var(--text-tertiary)]"/><input aria-label="Buscar nesta pasta" placeholder="Buscar nome, mês ou campanha nesta pasta" className="w-full bg-transparent py-3 text-sm outline-none" value={query} onChange={event=>setQuery(event.target.value)}/></label><select aria-label="Tipo de criativo" value={kind} onChange={event=>setKind(event.target.value)} className="rounded-xl border border-[var(--border)] bg-[var(--bg-input)] px-3 text-xs"><option value="all">Todos os formatos</option><option value="image">Imagens</option><option value="video">Vídeos</option></select><button aria-label="Atualizar pasta" disabled={loading} onClick={()=>setRetry(value=>value+1)} className="rounded-xl border border-[var(--border)] px-3 text-[var(--text-secondary)] disabled:opacity-50"><RefreshCw size={16}/></button></div>
@@ -61,7 +71,7 @@ function CreativeBrowser({ clientId }: { clientId: string }) {
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{files.map(file => {
       const isFolder = file.mimeType===folderMime
       const Icon = isFolder?Folder:file.mimeType.startsWith('image/')?Image:file.mimeType.startsWith('video/')?Video:FileText
-      const content = <><div className="mb-4 inline-flex rounded-xl bg-[var(--accent-tint)] p-3 text-[var(--accent)]"><Icon size={22}/></div><h3 className="break-words text-sm font-semibold">{file.name}</h3><p className="mt-2 text-xs text-[var(--text-tertiary)]">{isFolder?'Abrir pasta':file.mimeType.startsWith('video/')?'Vídeo · abrir no Drive':file.mimeType.startsWith('image/')?'Imagem · abrir no Drive':'Documento de criação · abrir no Drive'}</p>{!isFolder&&file.modifiedTime&&<p className="mt-2 text-[10px] text-[var(--text-quaternary)]">Arquivo atualizado em {new Date(file.modifiedTime).toLocaleDateString('pt-BR')}</p>}</>
+      const content = <>{/^(image|video)\//.test(file.mimeType)?<DriveAssetPreview clientId={clientId} path={path} fileId={file.id} video={file.mimeType.startsWith('video/')}/>:<div className="mb-4 inline-flex rounded-xl bg-[var(--accent-tint)] p-3 text-[var(--accent)]"><Icon size={22}/></div>}<h3 className="break-words text-sm font-semibold">{file.name}</h3><p className="mt-2 text-xs text-[var(--text-tertiary)]">{isFolder?'Abrir pasta':file.mimeType.startsWith('video/')?'Vídeo · abrir no Drive':file.mimeType.startsWith('image/')?'Imagem · abrir no Drive':'Documento · abrir no Drive'}</p>{!isFolder&&file.modifiedTime&&<p className="mt-2 text-[10px] text-[var(--text-quaternary)]">Arquivo atualizado em {new Date(file.modifiedTime).toLocaleDateString('pt-BR')}</p>}</>
       const style = 'rounded-2xl border border-[var(--border)] bg-[var(--bg-surface)] p-5 text-left transition hover:border-[var(--accent-a44)] focus-visible:outline-2 focus-visible:outline-[var(--accent)]'
       return isFolder ? <button className={style} key={file.id} onClick={()=>enter(file.id)}>{content}</button> : safeSourceUrl(file.url) ? <a className={style} key={file.id} href={safeSourceUrl(file.url)!} target="_blank" rel="noopener noreferrer">{content}</a> : null
     })}</div>

@@ -6,6 +6,7 @@ import { useTasks } from '../hooks/useTasks'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
 import { previousMonth } from '../lib/clientTimeline'
+import { buildWhatsAppReport } from '../lib/whatsappReport'
 import { AssistantMessage } from './AssistantMessage'
 
 type Report = { status: string; currency?: string; totals?: {spend:number;impressions:number;clicks:number}; checked_at?:string }
@@ -34,11 +35,7 @@ export function WhatsAppReportComposer() {
     }catch{return {platform,status:'unavailable'} as Report&{platform:string}}
    })):[]
    const periodTasks=tasks.filter(task=>task.deadline&&task.deadline>=start&&task.deadline<=end)
-   const context=[`Cliente: ${selected.name}`,`Período: ${start} a ${end}`,`Tarefas com prazo no período: ${periodTasks.length}. Concluídas hoje: ${periodTasks.filter(task=>task.status==='concluido').length}. Esse é o estado atual, não uma medição do estado histórico no fim do mês.`,...sources.map(source=>`${source.platform==='meta'?'Meta Ads':'Google Ads'}: ${source.status==='ready'&&source.totals?JSON.stringify({moeda:source.currency??'não informada',investimento:source.totals.spend,impressoes:source.totals.impressions,cliques:source.totals.clicks,consulta:source.checked_at}):'indisponível; não contar como zero'}`),sources.length?'':'Investimento e métricas financeiros não disponíveis para este perfil.','Matrículas, vendas, receita, CAC e LTV: não conciliados neste relatório; não estimar e não confundir cliques com vendas.'].join('\n')
-   const response=await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/orbe-ai-chat`,{method:'POST',headers:{authorization:`Bearer ${session.access_token}`,'content-type':'application/json'},body:JSON.stringify({stream:false,max_tokens:1800,temperature:0.2,messages:[{role:'system',content:'Você prepara mensagens de resultados para WhatsApp da Orbe. Escreva em português, no máximo 250 palavras, texto simples com títulos curtos e listas. Use APENAS os dados fornecidos, com números, período, moeda e limitações. Não some moedas diferentes. Não invente resultados, comparações, metas, campanhas ou conversões. Separe fatos de recomendações. Sem HTML, sem tabelas. Termine com até três próximos passos que resolvam as lacunas.'},{role:'user',content:context}]})})
-   if(!response.ok)throw new Error('Não foi possível gerar o texto. Tente novamente.')
-   const body=await response.json(),text=body.choices?.[0]?.message?.content
-   if(typeof text!=='string'||!text.trim())throw new Error('A IA não retornou um relatório. Tente novamente.')
+   const text=buildWhatsAppReport(selected.name,start,end,sources,{total:periodTasks.length,done:periodTasks.filter(task=>task.status==='concluido').length},!!profile?.can_view_financials)
    setReport({clientId:selected.id,month,text})
   }catch(cause){setError(cause instanceof Error?cause.message:'Não foi possível gerar o relatório.')}
   finally{setBusy(false)}

@@ -12,6 +12,7 @@ export function useWorkspaceClient() {
   const selectClient = (id: string) => {
     const [section, query] = window.location.hash.split('?')
     const params = new URLSearchParams(query)
+    params.delete('pastas')
     if (id) params.set('cliente', id); else params.delete('cliente')
     window.location.hash = `${section}${params.size ? `?${params}` : ''}`
     setClientId(id)

@@ -1,4 +1,4 @@
-import type {TrackingRecord} from './whatsappTracking'
+import type {TrackingRecord} from './whatsappTracking.js'
 import {firstContacts,trackingChannel,campaignName} from './trackingDashboard.js'
 export type ConversationEvent={event_id:string;contact_id:string;direction:'incoming'|'outgoing';author_kind:'external'|'human'|'automatic'|'unknown';author_name:string;message_text:string;occurred_at:string;captured_at:string}
 export type CommercialOutcome={contact_id:string;status:'open'|'contacted'|'won'|'lost';evidence:string;updated_at:string;updated_by:string}

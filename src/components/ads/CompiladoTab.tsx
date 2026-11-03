@@ -3,7 +3,7 @@ import { Download, RefreshCw } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../hooks/useAuth'
 import { useClientAdsMetrics } from '../../hooks/useClientAdsMetrics'
-import { previousMonth } from '../../lib/clientTimeline'
+import { useAdsPeriod } from '../../hooks/useAdsPeriod'
 import { exportToCSV } from '../../lib/csvExport'
 
 type Report = { status: string; account_name?: string; currency?: string; totals?: { spend: number; impressions: number; clicks: number }; checked_at?: string; error?: string }
@@ -18,10 +18,7 @@ export function CompiladoTab({ clientId, onOpenConnections, onVerified }: { clie
   return <LiveCompilado key={clientId} clientId={clientId} onOpenConnections={onOpenConnections} onVerified={onVerified}/>
 }
 function LiveCompilado({ clientId, onOpenConnections, onVerified }: { clientId: string; onOpenConnections?: () => void; onVerified?: () => void }) {
-  const initial = previousMonth()
-  const query = new URLSearchParams(window.location.hash.split('?')[1] ?? '')
-  const [start, setStart] = useState(query.get('de') || initial.start)
-  const [end, setEnd] = useState(query.get('ate') || initial.end)
+  const {start,end,setStart,setEnd}=useAdsPeriod()
   const [sources, setSources] = useState<Source[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')

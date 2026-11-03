@@ -51,7 +51,17 @@ function KnowledgeLibrary({ clientId, clientName }: {clientId:string;clientName:
  }
  async function read(entry:KnowledgeEntry) {
   const current=++request.current;setOpening(true);setOpened(null);setMessage('')
-  const {data,error}=await supabase.from('client_knowledge').select('title,content').eq('id',entry.id).eq('client_id',clientId).maybeSingle()
+  let data: {title:string;content:string}|null=null
+  let error: unknown
+  if(entry.source==='drive' && /^[\w-]+$/.test(entry.source_ref??'')) {
+   const result=await supabase.from('client_knowledge').select('title,content,source_ref').eq('client_id',clientId).eq('source','drive').or(`source_ref.eq.${entry.source_ref},source_ref.like.${entry.source_ref}:chunk:*`)
+   error=result.error
+   const parts=(result.data??[]).sort((a,b)=>Number(a.source_ref?.split(':chunk:')[1]??0)-Number(b.source_ref?.split(':chunk:')[1]??0))
+   if(parts.length)data={title:entry.title.replace(/ · parte 1\/\d+$/,''),content:parts.map(part=>part.content).join('\n\n')}
+  } else {
+   const result=await supabase.from('client_knowledge').select('title,content').eq('id',entry.id).eq('client_id',clientId).maybeSingle()
+   data=result.data;error=result.error
+  }
   if(current!==request.current)return
   if(error||!data)setMessage('A nota não está disponível para seu acesso.');else setOpened({id:entry.id,...data})
   setOpening(false)
