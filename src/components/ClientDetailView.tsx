@@ -993,8 +993,8 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
         </div>
       </div>
 
-      {googleOAuthMessage&&<p role="status" className="border-b border-[var(--border)] bg-[var(--accent-tint)] px-5 py-3 text-xs text-[var(--text-secondary)]">{googleOAuthMessage}</p>}
       <div id={tabPanelId} role="tabpanel" aria-labelledby={`${tabListId}-${tab}`} tabIndex={0} className="min-w-0 flex-1 overflow-y-auto px-4 py-5 sm:px-7 sm:py-6 focus:outline-none" style={{ minHeight: 0 }}>
+        {googleOAuthMessage&&<p role="status" className="mb-5 rounded-lg border border-[var(--border)] bg-[var(--accent-tint)] px-5 py-3 text-xs text-[var(--text-secondary)]">{googleOAuthMessage}</p>}
 
         {tab === "overview" && (
           <div className="space-y-6">

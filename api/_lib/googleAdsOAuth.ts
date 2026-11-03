@@ -1,9 +1,9 @@
 import {createHash,randomBytes,timingSafeEqual} from 'node:crypto';
 import type {ServerResponse} from 'node:http';
-import {answer,storage,type Request} from './_lib/trackingServer.js';
-import {qrUser} from './_lib/qrAccess.js';
-import {adsBinding} from './_lib/adsCredentials.js';
-import {object,ORBE_ORIGIN,seal,unseal} from './_lib/kommo.js';
+import {answer,storage,type Request} from './trackingServer.js';
+import {qrUser} from './qrAccess.js';
+import {adsBinding} from './adsCredentials.js';
+import {object,ORBE_ORIGIN,seal,unseal} from './kommo.js';
 const callback=`${ORBE_ORIGIN}/api/google-ads-oauth`,scope='https://www.googleapis.com/auth/adwords';
 const digest=(value:string)=>createHash('sha256').update(value).digest('hex');
 const cookieName='__Secure-orbe_google_oauth';

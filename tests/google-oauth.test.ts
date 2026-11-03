@@ -2,8 +2,8 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {createHash} from 'node:crypto'
 import {registerHooks} from 'node:module'
-registerHooks({resolve(specifier,context,next){return next(context.parentURL?.includes('/api/')&&['./_lib/trackingServer.js','./_lib/qrAccess.js','./_lib/kommo.js','./_lib/adsCredentials.js','./trackingServer.js'].includes(specifier)?specifier.replace(/\.js$/,'.ts'):specifier,context)}})
-const {default:handler}=await import('../api/google-ads-oauth.ts')
+registerHooks({resolve(specifier,context,next){return next(context.parentURL?.includes('/api/')&&['./trackingServer.js','./qrAccess.js','./kommo.js','./adsCredentials.js'].includes(specifier)?specifier.replace(/\.js$/,'.ts'):specifier,context)}})
+const {default:handler}=await import('../api/_lib/googleAdsOAuth.ts')
 import {seal,unseal} from '../api/_lib/kommo.ts'
 import {adsBinding} from '../api/_lib/adsCredentials.ts'
 const client='589481f6-3a15-4c93-b384-5d33373c20e3'

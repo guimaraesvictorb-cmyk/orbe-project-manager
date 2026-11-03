@@ -1,4 +1,20 @@
 {
-  "rewrites": [{ "source": "/((?!api/).*)", "destination": "/" }],
-  "functions": { "api/evo-connection.ts": { "maxDuration": 60 } }
+  "rewrites": [
+    {
+      "source": "/api/google-ads-oauth",
+      "destination": "/api/ads-credentials?oauth=1"
+    },
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/"
+    }
+  ],
+  "functions": {
+    "api/ads-credentials.ts": {
+      "maxDuration": 60
+    },
+    "api/evo-connection.ts": {
+      "maxDuration": 60
+    }
+  }
 }

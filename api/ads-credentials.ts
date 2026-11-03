@@ -1,3 +1,4 @@
+import googleAdsOAuth from './_lib/googleAdsOAuth.js';
 import type {ServerResponse} from 'node:http';
 import {answer,type Request} from './_lib/trackingServer.js';
 import {qrUser} from './_lib/qrAccess.js';
@@ -5,6 +6,8 @@ import {object,ORBE_ORIGIN,scalar,seal,unseal} from './_lib/kommo.js';
 import {adsBinding,normalizeAdsCredentials,verifyMetaAccess} from './_lib/adsCredentials.js';
 import {googleAdsReport} from './_lib/googleAdsReport.js';
 export default async function handler(req:Request,res:ServerResponse){
+ const route=new URL(req.url??'/api/ads-credentials',ORBE_ORIGIN);
+ if(route.pathname==='/api/google-ads-oauth'||route.searchParams.get('oauth')==='1')return googleAdsOAuth(req,res);
  if(req.method!=='POST')return answer(res,405,{error:'method_not_allowed'});
  if(req.headers.origin!==ORBE_ORIGIN)return answer(res,403,{error:'forbidden'});
  if(!req.headers['content-type']?.startsWith('application/json'))return answer(res,415,{error:'json_required'});
