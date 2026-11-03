@@ -6,7 +6,12 @@ export function storage() {
   if(!url||!key)throw new Error('storage_unavailable');
   return async<T>(path:string,init:RequestInit={},bearer=key):Promise<T>=>{
     const r=await fetch(`${url}/${path}`,{...init,headers:{apikey:key,Authorization:`Bearer ${bearer}`,'Content-Type':'application/json',Prefer:'return=representation',...init.headers},signal:AbortSignal.timeout(10000)});
-    if(!r.ok)throw new Error('storage_unavailable');
+    if(!r.ok){
+      // Preserve only a bounded database error code for server diagnostics.
+      // Database messages and details may contain private values.
+      let code='unknown';try{const value=await r.json() as {code?:unknown};if(typeof value.code==='string'&&/^[A-Z0-9]{5,10}$/.test(value.code))code=value.code}catch{/* No response body is exposed. */}
+      throw new Error('storage_unavailable',{cause:{status:r.status,code}});
+    }
     return (r.status===204?null:await r.json()) as T;
   };
 }

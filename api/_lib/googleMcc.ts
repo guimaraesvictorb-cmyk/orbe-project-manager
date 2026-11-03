@@ -53,17 +53,19 @@ async function status(db:Db){
  return {configuration:config,accounts,sources};
 }
 export async function googleMccAdmin(req:Request,res:ServerResponse){
+ let stage='authorization';
  try{
   const {db,user}=await administrator(req),input=object(req.body),action=String(input.action);
   if(action==='mcc_status')return answer(res,200,await status(db));
-  const cfg=await mccConfig(db);
+  stage='read_configuration';const cfg=await mccConfig(db);
   if((cfg?.updated_at??null)!==(input.expected_version??null))return answer(res,409,{error:'configuration_changed'});
   if(action==='mcc_configure'){
    const manager=typeof input.manager_id==='string'?input.manager_id.replace(/-/g,''):'',source=String(input.credential_client_id??'');
    if(!/^[1-9]\d{9}$/.test(manager)||!/^[0-9a-f-]{36}$/.test(source))throw Error('invalid_configuration');
-   const row=await stored(db,source);if(!row)throw Error('credentials_missing');
+   stage='read_credential_metadata';const row=await stored(db,source);if(!row)throw Error('credentials_missing');
+   stage='validate_protected_registration';
    const secrets=object(JSON.parse(unseal(row.ciphertext,adsBinding(source,'google'))));if(typeof secrets.client_id!=='string'||typeof secrets.client_secret!=='string')throw Error('credentials_missing');
-   await db('rest/v1/rpc/orbe_mcc_configure',{method:'POST',body:JSON.stringify({p_manager:manager,p_source:source,p_expected:input.expected_version??null,p_actor:user.id})});
+   stage='write_configuration';await db('rest/v1/rpc/orbe_mcc_configure',{method:'POST',body:JSON.stringify({p_manager:manager,p_source:source,p_expected:input.expected_version??null,p_actor:user.id})});
   }else if(action==='mcc_inventory'){
    if(!cfg?.enabled||!cfg.credential_client_id)throw Error('credentials_missing');const source=await stored(db,cfg.credential_client_id);if(!source)throw Error('credentials_missing');
    const inventory=await googleMccInventory(cfg.manager_id,object(JSON.parse(unseal(source.ciphertext,adsBinding(cfg.credential_client_id,'google')))));
@@ -81,6 +83,8 @@ export async function googleMccAdmin(req:Request,res:ServerResponse){
   }else if(action==='mcc_disable'){
    const updated=await db<Array<{id:boolean}>>(`rest/v1/orbe_google_mcc?id=eq.true&updated_at=eq.${encodeURIComponent(cfg?.updated_at??'')}`,{method:'PATCH',body:JSON.stringify({enabled:false,updated_at:new Date().toISOString(),updated_by:user.id})});if(updated.length!==1)throw Error('configuration_changed');
   }else return answer(res,400,{error:'invalid_action'});
-  return answer(res,200,await status(db));
- }catch(cause){const code=cause instanceof Error?cause.message:'';const allowed=['unauthorized','owner_required','invalid_configuration','invalid_mapping','invalid_credentials','credentials_missing','configuration_changed','google_oauth_invalid','google_developer_token_denied','google_permission_denied','google_unavailable','google_not_manager','google_incomplete_inventory','google_inventory_too_large'];return answer(res,code==='unauthorized'||code==='owner_required'?403:code.startsWith('invalid_')?400:503,{error:allowed.includes(code)?code:'mcc_unavailable'});}
+  stage='read_saved_configuration';return answer(res,200,await status(db));
+ }catch(cause){const code=cause instanceof Error?cause.message:'';const allowed=['unauthorized','owner_required','invalid_configuration','invalid_mapping','invalid_credentials','credentials_missing','configuration_changed','google_oauth_invalid','google_developer_token_denied','google_permission_denied','google_unavailable','google_not_manager','google_incomplete_inventory','google_inventory_too_large'];
+  if(!allowed.includes(code)){const detail=cause instanceof Error?cause.cause:undefined,dbCode=detail&&typeof detail==='object'&&'code' in detail?detail.code:null;console.error('orbe_google_mcc_failure',{stage,code:code==='storage_unavailable'?'storage_unavailable':code==='encryption_not_configured'?'encryption_not_configured':'internal_error',database_code:typeof dbCode==='string'&&/^[A-Z0-9]{5,10}$/.test(dbCode)?dbCode:null})}
+  return answer(res,code==='unauthorized'||code==='owner_required'?403:code.startsWith('invalid_')?400:503,{error:allowed.includes(code)?code:'mcc_unavailable'});}
 }
