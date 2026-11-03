@@ -1,6 +1,7 @@
 import {useEffect,useState} from 'react'
 import {LockKeyhole,ChevronDown,ChevronUp} from 'lucide-react'
 import {supabase} from '../lib/supabase'
+import {parseWebOAuthClient} from '../lib/googleOAuthClient'
 import {useAuth} from '../hooks/useAuth'
 type Platform='meta'|'google'
 type Verification={status:string;account_id:string;account_name?:string;checked_at?:string}
@@ -28,11 +29,9 @@ export function AdsCredentials({clientId}:{clientId:string}){
  function clear(){setVerification(null);setOauthIdEditing(false);setForm(blank);setFilename('');setError('');setNotice('')}
  async function importClient(file:File){setError('');try{
   if(file.size>65536)throw new Error('Use o arquivo JSON do cliente OAuth, de até 64 KB.')
-  let json;try{json=JSON.parse(await file.text())}catch{throw new Error('O arquivo não é um JSON válido. Exporte novamente o cliente OAuth do Google.')}
-  const client=json?.installed??json?.web
-  if(!client?.client_id||!client?.client_secret||json?.type==='service_account')throw new Error('Esse arquivo não é um cliente OAuth. Use o JSON do cliente OAuth do Google, não uma chave de conta de serviço.')
-  if(typeof client.client_id!=='string'||typeof client.client_secret!=='string')throw new Error('Arquivo OAuth inválido.')
-  setForm(f=>({...f,oauth_client_id:client.client_id,oauth_client_secret:client.client_secret}));setFilename(file.name)
+  const client=parseWebOAuthClient(await file.text())
+  setForm(f=>({...f,account_id:f.account_id||configs.find(config=>config.platform==='google')?.account_id||'',oauth_client_id:client.clientId,oauth_client_secret:client.clientSecret,refresh_token:''}));setFilename(file.name)
+
  }catch(e){setError(e instanceof Error?e.message:'Não foi possível ler o JSON.')}
  }
  async function verify(){setBusy(true);setError('');setVerification(null);try{const result=await request('verify');setVerification(result.verification??null);if(result.verification?.status==='access_verified'){const metadata=await request('status');setConfigs(metadata.configurations);window.dispatchEvent(new Event('orbe-ads-updated'))}}catch(e){setError(e instanceof Error?e.message:'Não foi possível verificar.')}finally{setBusy(false)}}

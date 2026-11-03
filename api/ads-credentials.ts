@@ -54,9 +54,16 @@ export default async function handler(req:Request,res:ServerResponse){
   }
   if(input.action==='save'){
    const value=normalizeAdsCredentials(input);
-   const current=await db<{updated_at:string}[]>(`rest/v1/wa_ads_credentials?client_id=eq.${client}&platform=eq.${value.platform}&select=updated_at`);
+   const current=await db<{updated_at:string;account_id?:string;ciphertext?:string}[]>(`rest/v1/wa_ads_credentials?client_id=eq.${client}&platform=eq.${value.platform}&select=${value.platform==='google'?'updated_at,account_id,ciphertext':'updated_at'}`);
    if((current[0]?.updated_at??null)!==(input.expected_version??null))return answer(res,409,{error:'configuration_changed'});
-   const cipher=seal(JSON.stringify(value.secrets),adsBinding(client,value.platform));
+   let secrets:Record<string,unknown>=value.secrets;
+   // Replacing an OAuth app requires fresh authorization, but must not discard
+   // the separately registered developer token or manager binding.
+   if(value.platform==='google'&&current[0]?.account_id===value.account_id&&current[0].ciphertext){
+    const previous=object(JSON.parse(unseal(current[0].ciphertext,adsBinding(client,'google'))));
+    secrets={...secrets,developer_token:secrets.developer_token||previous.developer_token||'',manager_id:secrets.manager_id||previous.manager_id||''};
+   }
+   const cipher=seal(JSON.stringify(secrets),adsBinding(client,value.platform));
    await db('rest/v1/rpc/wa_ads_save',{method:'POST',body:JSON.stringify({p_client:client,p_platform:value.platform,p_account:value.account_id,p_ciphertext:cipher,p_status:value.status,p_refresh:value.has_refresh_token,p_expiry:value.expires_at,p_actor:user.id,p_expected:input.expected_version??null})});
   }else if(input.action!=='status')return answer(res,400,{error:'invalid_action'});
   const configurations=await db(`rest/v1/wa_ads_credentials?client_id=eq.${client}&select=platform,account_id,status,has_refresh_token,expires_at,updated_at&order=platform`);

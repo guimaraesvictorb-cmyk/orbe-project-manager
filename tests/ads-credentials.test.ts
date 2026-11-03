@@ -81,6 +81,12 @@ test('Google verification performs a live read and persists verified metadata wi
   const preserved=JSON.parse(unseal(String((lastSave as Record<string,unknown>).p_ciphertext),adsBinding(client,'google')))
   assert.equal(preserved.refresh_token,secrets.refresh_token);assert.equal(preserved.client_secret,secrets.client_secret);assert.equal(preserved.developer_token,'SYNTHETIC_REPLACEMENT_DEVELOPER')
   assert.equal(partial.body.includes(secrets.refresh_token),false);assert.equal(partial.body.includes('SYNTHETIC_REPLACEMENT_DEVELOPER'),false)
+  const replaced={...res,statusCode:0,body:''}
+  await handler({method:'POST',headers:{origin:'https://studio.agenciaorbe.co','content-type':'application/json',authorization:'Bearer synthetic.jwt.token'},body:{action:'save',client_id:client,platform:'google',account_id:'3528081021',oauth_client_id:'newweb.apps.googleusercontent.com',oauth_client_secret:'NEW_SYNTHETIC_CLIENT_SECRET',expected_version:'2026-11-02T00:00:00Z'}} as never,replaced as never)
+  assert.equal(replaced.statusCode,200)
+  const rotated=JSON.parse(unseal(String((lastSave as Record<string,unknown>).p_ciphertext),adsBinding(client,'google')))
+  assert.equal(rotated.developer_token,secrets.developer_token);assert.equal(rotated.client_id,'newweb.apps.googleusercontent.com');assert.equal(rotated.refresh_token,'');assert.equal((lastSave as Record<string,unknown>).p_status,'oauth_pending');assert.equal(replaced.body.includes('NEW_SYNTHETIC_CLIENT_SECRET'),false)
+
 
  }finally{globalThis.fetch=before.fetch;for(const [key,value]of Object.entries({VITE_SUPABASE_URL:before.url,SUPABASE_SERVICE_ROLE_KEY:before.key,KOMMO_ENCRYPTION_KEY:before.crypto})){if(value===undefined)delete process.env[key];else process.env[key]=value}}
 })
