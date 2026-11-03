@@ -40,3 +40,13 @@ test('previous month crosses January and respects leap-year February', () => {
   assert.deepEqual(previousMonth(new Date(2027, 0, 15)), { start: '2026-12-01', end: '2026-12-31', month: '2026-12' })
   assert.deepEqual(previousMonth(new Date(2028, 2, 1)), { start: '2028-02-01', end: '2028-02-29', month: '2028-02' })
 })
+
+test('campaign navigation retains client and date filters, and exits to the project for configuration', () => {
+ const current = `#campanhas/rayafit?cliente=${raya}&area=meta&de=2026-10-01&ate=2026-10-31&unidade=ibes`
+ const google = buildClientWorkspace(raya, 'Rayafit', 'google', current)
+ assert.ok(google.startsWith('#campanhas/rayafit?'))
+ assert.equal(parseClientWorkspace(google).params.get('de'), '2026-10-01')
+ assert.equal(parseClientWorkspace(google).params.get('unidade'), 'ibes')
+ assert.ok(buildClientWorkspace(raya, 'Rayafit', 'connections', google).startsWith('#clientes/'))
+ assert.ok(buildClientWorkspace(raya, 'Rayafit', 'overview', google).startsWith('#clientes/'))
+})

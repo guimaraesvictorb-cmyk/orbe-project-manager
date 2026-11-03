@@ -3,6 +3,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { advanceSync, newSyncState, staleKnowledgeIds, syncProgress, type DriveFile, type SyncState } from "./sync-engine.ts";
 import { documentText, officeTypes, textTypes } from "./document-text.ts";
 
+import { browseCreativeFolder, DriveBrowseError } from "./creative-browser.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -18,10 +20,10 @@ serve(async (req) => {
     if (authError || !user) return json({ error: "Sessão inválida" }, 401);
 
     if (req.method !== "POST") return json({ error: "Método inválido" }, 405);
-    const { client_id: clientId, batch, action } = await req.json();
+    const { client_id: clientId, batch, action, path, page_token: pageToken } = await req.json();
     if (typeof clientId !== "string" || !/^[0-9a-f-]{36}$/.test(clientId)) return json({ error: "Cliente inválido" }, 400);
     const [{ data: profile }, { data: client }, { data: driveConfig }] = await Promise.all([
-      supabase.from("profiles").select("role,is_active").eq("id", user.id).maybeSingle(),
+      supabase.from("profiles").select("role,is_active,can_view_financials").eq("id", user.id).maybeSingle(),
       supabase.from("clients").select("id,name,deleted_at").eq("id", clientId).maybeSingle(),
       supabase.from("client_drive_config").select("folder_id").eq("client_id", clientId).maybeSingle(),
     ]);
@@ -30,6 +32,13 @@ serve(async (req) => {
     if (!elevated) {
       const { data: assignment } = await supabase.from("client_assignments").select("id").eq("client_id", clientId).eq("user_id", user.id).eq("is_active", true).maybeSingle();
       if (!assignment) return json({ error: "Sem acesso a este cliente" }, 403);
+    }
+
+    if (action === 'browse_creatives') {
+      const resolved = await resolveServiceAccount(Deno.env.get('GOOGLE_DRIVE_SERVICE_ACCOUNT_JSON'),Deno.env.get('GOOGLE_SERVICE_ACCOUNT_KEY'));
+      if (!resolved) return json({ error: 'Integração do Drive sem credencial de serviço válida no servidor.' },503);
+      try { return json(await browseCreativeFolder(driveConfig.folder_id,path,pageToken,url=>driveFetch(url,resolved.token),!!profile.can_view_financials)); }
+      catch(error) { return json({ error: error instanceof DriveBrowseError ? error.message : 'Não foi possível abrir esta pasta no Drive. Confira o compartilhamento com o Studio.' },error instanceof DriveBrowseError ? error.status : 503); }
     }
 
     type Job = { client_id: string; job_id: string; folder_id: string; revision: number; lease_until: string; state: SyncState };

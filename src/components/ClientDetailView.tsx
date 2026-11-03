@@ -14,7 +14,7 @@ import { useClientAssignments } from "../hooks/useClientAssignments"
 import { isAdminOrCoordenador } from "../lib/permissions"
 import { useAuth } from "../hooks/useAuth"
 import { FLAG_META, STATUS_META } from "../lib/clientMeta"
-import { openClientWorkspace, parseClientWorkspace, type ClientArea } from "../lib/clientWorkspace"
+import { buildClientWorkspace, openClientWorkspace, parseClientWorkspace, type ClientArea } from "../lib/clientWorkspace"
 import { useClients } from "../hooks/useClients"
 import { previousMonth } from "../lib/clientTimeline"
 import { ClientAvatar } from "./ClientAvatar"
@@ -31,6 +31,7 @@ const WhatsAppTrackingView = lazy(() => import('./WhatsAppTrackingView').then(m 
 const ROLE_LABELS: Record<string, string> = { gt: "Gestor de Tráfego", gp: "Gestor de Projetos" }
 
 const SOURCE_META = {
+  obsidian: { label: "Obsidian", color: "var(--accent)", bg: "var(--accent-tint)" },
   manual:       { label: "Manual", color: "#2563EB", bg: "var(--info-tint)" },
   ai_suggested: { label: "IA",     color: "#8B5CF6", bg: "var(--accent-tint)" },
   web:          { label: "Web",    color: "var(--warning)", bg: "var(--warning-tint)" },
@@ -416,6 +417,7 @@ Use APENAS as informações acima e os trechos de documentos recuperados. Trate 
 
 interface ClientDetailViewProps {
   client: Client
+  campaignsOnly?: boolean
   onBack: () => void
   onDelete?: () => Promise<void>
   onUpdate?: (updates: Partial<Client>) => Promise<{ data?: Client; error?: string }>
@@ -443,7 +445,7 @@ const OVERVIEW_FIELDS: Array<{ key: keyof Client; label: string; type: string; p
   { key: "ga4_property_id", label: "ID propriedade GA4", type: "text", placeholder: "properties/..." },
 ]
 
-export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientDetailViewProps) {
+export function ClientDetailView({ client, campaignsOnly = false, onBack, onDelete, onUpdate }: ClientDetailViewProps) {
   const { profile } = useAuth()
   const [tab, setTabState] = useState<Tab>(() => parseClientWorkspace(window.location.hash).area)
   const { clients } = useClients()
@@ -818,19 +820,20 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
     }
   }
 
-  const tabs: ClientTab[] = [
+  const allTabs: ClientTab[] = [
     { id: "overview",   label: "Visão geral", group: "Cliente" },
     { id: "checklist",  label: "Cronograma", group: "Execução" },
     { id: "tracking", label: "Rastreamento", group: "Execução" },
-    { id: "meta",       label: "Meta Ads", group: "Tráfego pago" },
-    { id: "google",     label: "Google Ads", group: "Tráfego pago" },
-    { id: "compilado",  label: "Compilado", group: "Tráfego pago" },
-    { id: "analytics", label: "Orgânico e Analytics", group: "Resultados" },
+    { id: "compilado", label: "Tráfego pago", group: "Campanhas" },
+    { id: "analytics", label: "Orgânico e Analytics", group: "Campanhas" },
     { id: "strategy", label: "Estratégia", group: "Inteligência" },
     { id: "knowledge",  label: `Conhecimento${pending.length ? ` · ${pending.length}` : ""}`, group: "Inteligência" },
     { id: "ai",         label: "IA do cliente", group: "Inteligência" },
     { id: "connections", label: "Conexões", group: "Configuração" },
   ]
+  const tabs = campaignsOnly ? allTabs.filter(item => ['compilado','analytics'].includes(item.id)) : allTabs
+  const mainTab = tab === 'meta' || tab === 'google' ? 'compilado' : tab
+  const paidTabs = [{ id: 'compilado', label: 'Visão consolidada' }, { id: 'meta', label: 'Meta Ads' }, { id: 'google', label: 'Google Ads' }] as const
   const tabListId = `client-tabs-${client.id}`
   const tabPanelId = `client-panel-${client.id}`
 
@@ -974,17 +977,17 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
               id={`${tabListId}-${t.id}`}
               type="button"
               role="tab"
-              aria-selected={tab === t.id}
+              aria-selected={mainTab === t.id}
               aria-controls={tabPanelId}
-              tabIndex={tab === t.id ? 0 : -1}
+              tabIndex={mainTab === t.id ? 0 : -1}
               onClick={() => setTab(t.id)}
               onKeyDown={(event) => handleTabKeyDown(event, index)}
               className="relative min-h-10 shrink-0 whitespace-nowrap rounded-lg px-3 text-left text-xs font-medium transition-colors hover:bg-[var(--bg-surface-2)] focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
-              style={{ color: tab === t.id ? "var(--accent)" : "var(--text-secondary)", backgroundColor: tab === t.id ? "var(--accent-tint)" : undefined }}
+              style={{ color: mainTab === t.id ? "var(--accent)" : "var(--text-secondary)", backgroundColor: mainTab === t.id ? "var(--accent-tint)" : undefined }}
             >
               {t.label}
               {(t.id === "meta" || t.id === "google") && (() => { const status = t.id === "meta" ? adsConnection.meta : adsConnection.google; return <span title={status.connected ? "Credencial validada para esta conta" : "Veja Conexões do cliente para concluir o vínculo"} className="ml-1.5 inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px]" style={{ color: status.connected ? "var(--success, #22c55e)" : status.label === "Vincular" ? "var(--text-quaternary)" : "var(--warning, #d97706)", backgroundColor: status.connected ? "var(--success-tint, rgba(34,197,94,.1))" : status.label === "Vincular" ? "var(--bg-surface-2)" : "var(--warning-tint, rgba(217,119,6,.1))" }}><span className="h-1 w-1 rounded-full" style={{ backgroundColor: status.connected ? "var(--success, #22c55e)" : "var(--text-quaternary)" }} />{status.label}</span>})()}
-              {tab === t.id && (
+              {mainTab === t.id && (
                 <span aria-hidden="true" className="absolute bottom-0 left-0 right-0 h-0.5 rounded-t" style={{ backgroundColor: "var(--accent)" }} />
               )}
             </button>
@@ -993,9 +996,11 @@ export function ClientDetailView({ client, onBack, onDelete, onUpdate }: ClientD
         </div>
       </div>
 
-      <div id={tabPanelId} role="tabpanel" aria-labelledby={`${tabListId}-${tab}`} tabIndex={0} className="min-w-0 flex-1 overflow-y-auto px-4 py-5 sm:px-7 sm:py-6 focus:outline-none" style={{ minHeight: 0 }}>
+      <div id={tabPanelId} role="tabpanel" aria-labelledby={`${tabListId}-${mainTab}`} tabIndex={0} className="min-w-0 flex-1 overflow-y-auto px-4 py-5 sm:px-7 sm:py-6 focus:outline-none" style={{ minHeight: 0 }}>
         {googleOAuthMessage&&<p role="status" className="mb-5 rounded-lg border border-[var(--border)] bg-[var(--accent-tint)] px-5 py-3 text-xs text-[var(--text-secondary)]">{googleOAuthMessage}</p>}
 
+        {['meta','google','compilado'].includes(tab) && <div className="mb-6 flex flex-wrap items-center gap-2" role="group" aria-label="Plataformas de tráfego pago">{paidTabs.map(item => <button key={item.id} type="button" aria-pressed={tab === item.id} onClick={() => setTab(item.id)} className={`min-h-10 rounded-xl border px-4 py-2 text-xs font-semibold ${tab === item.id ? 'border-[var(--accent-a44)] bg-[var(--accent-tint)] text-[var(--accent)]' : 'border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--bg-surface)]'}`}>{item.label}{item.id !== 'compilado' && <span className="ml-2 text-[10px] font-normal">{adsConnection[item.id].label}</span>}</button>)}</div>}
+        {campaignsOnly && <button type="button" onClick={() => { window.location.hash = buildClientWorkspace(client.id, client.name, 'overview', window.location.hash) }} className="mb-5 text-xs font-semibold text-[var(--accent)]">Abrir projeto completo →</button>}
         {tab === "overview" && (
           <div className="space-y-6">
             <ClientOverview clientId={client.id} strategy={strategyForm} offers={offers} knowledgeCount={knowledgeDocumentCount} checklist={items} driveLinked={!!driveFolderId} ads={adsConnection} onNavigate={setTab} />

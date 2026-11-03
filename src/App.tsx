@@ -30,16 +30,19 @@ const SettingsView = lazy(() => import("./components/SettingsView").then((m) => 
 const RastreamentoView = lazy(() => import("./components/RastreamentoView").then((m) => ({ default: m.RastreamentoView })));
 const SuperAgenteView = lazy(() => import("./components/SuperAgenteView").then((m) => ({ default: m.SuperAgenteView })));
 const CopyIAView = lazy(() => import("./components/CopyIAView").then((m) => ({ default: m.CopyIAView })));
-const RelatoriosView = lazy(() => import("./components/RelatoriosView").then((m) => ({ default: m.RelatoriosView })));
 const WhatsAppView = lazy(() => import("./components/WhatsAppView").then((m) => ({ default: m.WhatsAppView })));
 const LeadsCapturadosView = lazy(() => import("./components/LeadsCapturadosView").then((m) => ({ default: m.LeadsCapturadosView })));
+
+const CampaignsView = lazy(() => import("./components/CampaignsView").then(m => ({ default: m.CampaignsView })));
+const CreativeLibraryView = lazy(() => import("./components/CreativeLibraryView").then(m => ({ default: m.CreativeLibraryView })));
+const SecondBrainView = lazy(() => import("./components/SecondBrainView").then(m => ({ default: m.SecondBrainView })));
 
 const VIEW_KEY = "orbe_view";
 
 const VALID_VIEWS: AppView[] = [
   "home","dashboard","tarefas","clientes","financeiro","roi-day","pipeline","processos",
   "central","rastreamento","super-agente","copy-ia","relatorios","whatsapp",
-  "leads-capturados","profile","settings",
+  "leads-capturados","profile","settings","campanhas","criativos","segundo-cerebro",
 ];
 
 // Removed views keep resolving to somewhere sensible instead of silently
@@ -249,8 +252,11 @@ function App() {
           {view === "rastreamento"  && (new URLSearchParams(window.location.hash.split('?')[1]).get('visao') === 'cliente' || new URLSearchParams(window.location.hash.split('?')[1]).get('modo') === 'utm' ? <RastreamentoView /> : <ClientesView />)}
           {view === "super-agente" && <SuperAgenteView />}
           {view === "copy-ia"      && <CopyIAView />}
-          {view === "relatorios"   && <RelatoriosView />}
+          {view === "relatorios"   && <WhatsAppView />}
           {view === "whatsapp"     && <WhatsAppView />}
+          {view === "campanhas" && <CampaignsView />}
+          {view === "criativos" && <CreativeLibraryView />}
+          {view === "segundo-cerebro" && <SecondBrainView />}
           {view === "leads-capturados" && <LeadsCapturadosView />}
           {view === "profile"    && <ProfileView profile={profile} userEmail={user?.email ?? ""} />}
           {view === "settings"   && <SettingsView profile={profile} />}

@@ -6,7 +6,7 @@ export interface KnowledgeEntry {
   client_id: string
   title: string
   content?: string
-  source: 'manual' | 'ai_suggested' | 'web' | 'drive'
+  source: 'manual' | 'ai_suggested' | 'web' | 'drive' | 'obsidian'
   source_ref?: string | null
   source_url?: string | null
   financial_restricted?: boolean

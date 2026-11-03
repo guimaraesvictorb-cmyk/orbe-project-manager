@@ -19,7 +19,8 @@ export function buildClientWorkspace(clientId: string, name: string, area: Clien
   if (area === 'connections') params.set('aba', 'connections')
   if (area === 'tracking' && current.area === 'connections') params.set('aba', 'overview')
   const slug = name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
-  return `#clientes/${slug}?${params}`
+  const section = currentHash.replace(/^#\/?/, '').startsWith('campanhas') && ['meta','google','compilado','analytics'].includes(area) ? 'campanhas' : 'clientes'
+  return `#${section}/${slug}?${params}`
 }
 export function openClientWorkspace(clientId: string, name: string, area: ClientArea = 'overview') {
   window.location.hash = buildClientWorkspace(clientId, name, area, window.location.hash)

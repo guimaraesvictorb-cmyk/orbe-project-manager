@@ -8,7 +8,8 @@ export const SECTION_ACCESS: Record<string, string[]> = {
 }
 
 export const SECTION_LABELS: Record<string, string> = {
-  dashboard: "Dashboard", tarefas: "Tarefas", clientes: "Clientes",
+  campanhas: "Campanhas", "segundo-cerebro": "Segundo cérebro", criativos: "Criativos",
+  dashboard: "Visão geral", tarefas: "Tarefas", clientes: "Clientes",
   financeiro: "Financeiro", "roi-day": "ROI Day", pipeline: "Oportunidades", processos: "Processos",
   central: "Central", rastreamento: "Rastreamento", "super-agente": "Super Agente",
   "copy-ia": "Copy IA", relatorios: "Relatórios", whatsapp: "WhatsApp",
@@ -29,7 +30,10 @@ export function getAllowedSections(profile: Pick<Profile, "role" | "custom_secti
   const base = profile.custom_sections ?? SECTION_ACCESS[profile.role] ?? []
   // Financeiro shows client fees/investment/revenue — restricted to
   // specifically-flagged users regardless of role, not just admin/coord.
-  return profile.can_view_financials ? base : base.filter((s) => !FINANCIAL_ONLY_SECTIONS.includes(s))
+  const sections = profile.can_view_financials ? [...base] : base.filter((s) => !FINANCIAL_ONLY_SECTIONS.includes(s))
+  // These are alternate client workspaces, with the same client ACL and RLS.
+  if (sections.includes("clientes")) sections.push("campanhas", "segundo-cerebro", "criativos")
+  return [...new Set(sections)]
 }
 
 export function canAccessSection(profile: Pick<Profile, "role" | "custom_sections" | "can_view_financials"> | null | undefined, section: string): boolean {

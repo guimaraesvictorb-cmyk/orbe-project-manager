@@ -1,7 +1,7 @@
 import {
   Sparkles, LayoutDashboard, CheckSquare, Users, DollarSign,
   TrendingUp, BookOpen, Building2, UserCircle, LogOut, ShieldCheck,
-  ChevronRight, Settings, PenTool, FileText, Bot, MessageSquare, UserPlus, Trophy,
+  ChevronRight, Settings, PenTool, Bot, MessageSquare, UserPlus, Trophy, Brain, Images, Megaphone,
 } from "lucide-react";
 import type { Profile } from "../lib/database.types";
 import { getAllowedSections, isAdminOrCoordenador } from "../lib/permissions";
@@ -17,59 +17,45 @@ export type AppView =
   | "super-agente" | "copy-ia" | "relatorios"
   | "whatsapp"
   | "leads-capturados"
+  | "campanhas" | "segundo-cerebro" | "criativos"
   | "profile" | "settings";
 
 interface NavItem { view: AppView; label: string; icon: React.ReactNode; children?: NavItem[] }
-interface NavGroup { label?: string; items: NavItem[] }
+interface NavGroup { label?: string; items: NavItem[]; compact?: boolean }
 
 const NAV: NavGroup[] = [
-  {
-    items: [
-      { view: "dashboard", label: "Dashboard", icon: <LayoutDashboard size={15} /> },
-      { view: "home",      label: "Orbe AI",     icon: <Sparkles size={15} /> },
-    ],
-  },
-  {
-    label: "Operação",
-    items: [
-      { view: "tarefas",  label: "Tarefas",  icon: <CheckSquare size={15} /> },
-      { view: "clientes", label: "Clientes", icon: <Users size={15} /> },
-      { view: "roi-day",  label: "ROI Day",  icon: <Trophy size={15} /> },
-    ],
-  },
-  {
-    items: [
-      { view: "financeiro", label: "Financeiro", icon: <DollarSign size={15} /> },
-    ],
-  },
-  {
-    label: "Comercial",
-    items: [
-      { view: "pipeline",         label: "Oportunidades",   icon: <TrendingUp size={15} /> },
-      { view: "leads-capturados", label: "Leads Capturados", icon: <UserPlus size={15} /> },
-    ],
-  },
-  {
-    items: [
-      { view: "processos",    label: "Processos",    icon: <BookOpen size={15} /> },
-      { view: "central",      label: "Central",      icon: <Building2 size={15} /> },
-    ],
-  },
-  {
-    label: "Comunicação",
-    items: [
-      { view: "whatsapp",    label: "Comunicações Orbe",    icon: <MessageSquare size={15} /> },
-    ],
-  },
-  {
-    label: "Ferramentas IA",
-    items: [
-      { view: "super-agente", label: "Super Agente", icon: <Bot size={15} /> },
-      { view: "copy-ia",      label: "Copy IA",      icon: <PenTool size={15} /> },
-      { view: "relatorios",   label: "Relatórios",   icon: <FileText size={15} /> },
-    ],
-  },
+  { label: "Campanhas", items: [
+    { view: "campanhas", label: "Campanhas", icon: <Megaphone size={15} /> },
+  ] },
+  { label: "Pessoas e operação", items: [
+    { view: "dashboard", label: "Visão geral", icon: <LayoutDashboard size={15} /> },
+    { view: "tarefas", label: "Tarefas", icon: <CheckSquare size={15} /> },
+    { view: "clientes", label: "Clientes", icon: <Users size={15} /> },
+    { view: "financeiro", label: "Financeiro", icon: <DollarSign size={15} /> },
+  ] },
+  { label: "Ferramentas de IA", items: [
+    { view: "home", label: "Orbe AI", icon: <Sparkles size={15} /> },
+    { view: "segundo-cerebro", label: "Segundo cérebro", icon: <Brain size={15} /> },
+    { view: "criativos", label: "Criativos", icon: <Images size={15} /> },
+  ] },
+  { label: "Comunicação", items: [
+    { view: "whatsapp", label: "Relatórios no WhatsApp", icon: <MessageSquare size={15} /> },
+    { view: "pipeline", label: "CRM · Oportunidades", icon: <TrendingUp size={15} /> },
+    { view: "leads-capturados", label: "Leads do WhatsApp", icon: <UserPlus size={15} /> },
+  ] },
+  { label: "Mais ferramentas", compact: true, items: [
+    { view: "super-agente", label: "Super Agente", icon: <Bot size={15} /> },
+    { view: "copy-ia", label: "Copy IA", icon: <PenTool size={15} /> },
+    { view: "roi-day", label: "ROI Day", icon: <Trophy size={15} /> },
+    { view: "processos", label: "Processos", icon: <BookOpen size={15} /> },
+    { view: "central", label: "Pessoas e Central Orbe", icon: <Building2 size={15} /> },
+  ] },
 ];
+
+function NavSection({ group, active, children }: {group: NavGroup; active: AppView; children: React.ReactNode}) {
+ const label = <span className="text-[9px] font-bold uppercase tracking-widest" style={{color:'var(--text-quaternary)'}}>{group.label}</span>
+ return group.compact ? <details open={group.items.some(item=>item.view===active)} className="group/nav"><summary className="mb-1.5 cursor-pointer list-none px-2">{label}<ChevronRight size={11} className="float-right mt-1 text-[var(--text-tertiary)] transition-transform group-open/nav:rotate-90"/></summary>{children}</details> : <section aria-label={group.label}><p className="mb-1.5 px-2">{label}</p>{children}</section>
+}
 
 const ROLE_LABELS: Record<string, string> = {
   admin: "Admin", coordenador: "Coord", gt: "GT", gp: "GP",
@@ -138,15 +124,10 @@ export function AppNav({ active, onChange, profile, onLogout, isOpen, onClose }:
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-5 overflow-y-auto">
         {visibleNav.map((group, gi) => (
-          <div key={gi}>
-            {group.label && (
-              <p className="text-[9px] font-bold tracking-widest uppercase px-2 mb-1.5" style={{ color: "var(--text-quaternary)" }}>
-                {group.label}
-              </p>
-            )}
+          <NavSection key={gi} group={group} active={active}>
             <div className="space-y-0.5">
               {group.items.map(({ view, label, icon, children }) => {
-                const isActive = active === view;
+                const isActive = active === view || view === "whatsapp" && active === "relatorios";
                 return (
                   <div key={view}>
                     <button
@@ -205,7 +186,7 @@ export function AppNav({ active, onChange, profile, onLogout, isOpen, onClose }:
                 );
               })}
             </div>
-          </div>
+          </NavSection>
         ))}
       </nav>
 
