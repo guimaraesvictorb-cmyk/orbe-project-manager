@@ -1,14 +1,14 @@
 {
   "name": "orbe-operating-system",
   "private": true,
-  "version": "1.53.0",
+  "version": "1.54.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test:tracking": "node --test tests/tracking.test.ts tests/kommo.test.ts tests/rayafit-site.test.ts tests/ga4.test.ts tests/evolution.test.ts tests/qr-access.test.ts tests/qr-connection.test.ts tests/commercial.test.ts tests/ads-credentials.test.ts tests/meta-agency.test.ts tests/bi-dashboard.test.ts tests/client-dashboard.test.ts tests/dashboard-access.test.ts tests/evo.test.ts tests/evo-reconciliation.test.ts tests/drive-content-filters.test.ts tests/client-workspace.test.ts tests/google-report.test.ts tests/source-links.test.ts tests/google-oauth.test.ts tests/creative-browser.test.ts tests/obsidian-notes.test.ts tests/whatsapp-report.test.ts tests/google-oauth-client.test.ts tests/google-mcc.test.ts tests/google-mcc-inventory.test.ts tests/report-period.test.ts",
+    "test:tracking": "node --test tests/tracking.test.ts tests/kommo.test.ts tests/rayafit-site.test.ts tests/ga4.test.ts tests/evolution.test.ts tests/qr-access.test.ts tests/qr-connection.test.ts tests/commercial.test.ts tests/ads-credentials.test.ts tests/meta-agency.test.ts tests/bi-dashboard.test.ts tests/client-dashboard.test.ts tests/client-logo.test.ts tests/dashboard-access.test.ts tests/evo.test.ts tests/evo-reconciliation.test.ts tests/drive-content-filters.test.ts tests/client-workspace.test.ts tests/google-report.test.ts tests/source-links.test.ts tests/google-oauth.test.ts tests/creative-browser.test.ts tests/obsidian-notes.test.ts tests/whatsapp-report.test.ts tests/google-oauth-client.test.ts tests/google-mcc.test.ts tests/google-mcc-inventory.test.ts tests/report-period.test.ts",
     "test:drive": "npx -y deno@2.9.6 test --config supabase/functions/orbe-drive-sync/deno.json --allow-read supabase/functions/orbe-drive-sync/document-text.test.ts supabase/functions/orbe-drive-sync/sync-engine.test.ts",
     "test:ai": "npx -y deno@2.9.6 test supabase/functions/orbe-ai-chat/anthropic-stream.test.ts supabase/functions/orbe-ai-chat/copy-agent.test.ts"
   },

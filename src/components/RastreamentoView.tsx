@@ -6,42 +6,13 @@ import {ClientDashboardShare} from './ClientDashboardShare'
 import { supabase } from '../lib/supabase'
 import type { TrackingConnection } from '../lib/whatsappTracking'
 import { syncIsFresh } from '../lib/whatsappTracking'
-import { useAuth } from '../contexts/AuthContext'
+import {ClientAvatar} from './ClientAvatar'
 import { systemNames, type TrackingSetup } from '../lib/whatsappSetup'
 const WhatsAppTrackingView=lazy(()=>import('./WhatsAppTrackingView').then(m=>({default:m.WhatsAppTrackingView})))
 const UTMLinkBuilder=lazy(()=>import('./UTMLinkBuilder').then(m=>({default:m.UTMLinkBuilder})))
 
 function ClientLogo({id,name}:{id:string;name:string}) {
-  const {profile}=useAuth()
-  const [url,setUrl]=useState('')
-  const [busy,setBusy]=useState(false)
-  const [error,setError]=useState('')
-  useEffect(()=>{let active=true;supabase.auth.getSession().then(async({data})=>{
-    if(!data.session)return
-    try{const r=await fetch(`/api/client-logo?client_id=${id}`,{headers:{Authorization:`Bearer ${data.session.access_token}`}});if(r.ok){const logo=await r.json();if(active)setUrl(logo.url)}}catch{/* Initials remain available when no logo is present. */}
-  });return()=>{active=false}},[id])
-  async function upload(file:File) {
-    setError('')
-    if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>5*1024*1024){setError('Use PNG, JPG ou WebP de até 5 MB.');return}
-    setBusy(true)
-    try {
-      const bitmap=await createImageBitmap(file)
-      const canvas=document.createElement('canvas');canvas.width=256;canvas.height=256
-      const ctx=canvas.getContext('2d');if(!ctx)throw new Error('Não foi possível abrir a imagem.')
-      const ratio=Math.min(240/bitmap.width,240/bitmap.height)
-      ctx.drawImage(bitmap,(256-bitmap.width*ratio)/2,(256-bitmap.height*ratio)/2,bitmap.width*ratio,bitmap.height*ratio);bitmap.close()
-      const {data}=await supabase.auth.getSession();if(!data.session)throw new Error('Entre novamente.')
-      const r=await fetch(`/api/client-logo?client_id=${id}`,{method:'POST',headers:{Authorization:`Bearer ${data.session.access_token}`,'Content-Type':'application/json'},body:JSON.stringify({image:canvas.toDataURL('image/png')})})
-      const result=await r.json();if(!r.ok)throw new Error(result.error)
-      setUrl(result.url)
-    }catch(e){setError(e instanceof Error?e.message:'Não foi possível salvar o logo.')}finally{setBusy(false)}
-  }
-  const rayafit=id==='589481f6-3a15-4c93-b384-5d33373c20e3'
-  return <div className="mb-4 flex items-center gap-3">
-    <div style={{backgroundColor:url?(rayafit||id==='14d33095-9db2-4f7f-b667-10110c52c919'?'#111827':'#ffffff'):undefined}} className="h-24 w-40 shrink-0 rounded-xl border border-[var(--border)] flex items-center justify-center overflow-hidden">{url?<img src={url} alt={`Logo ${name}`} onError={()=>setUrl('')} className="h-full w-full object-contain p-3"/>:<span aria-hidden="true" className="font-semibold text-[var(--text-tertiary)]">{name.split(' ').slice(0,2).map(n=>n[0]).join('')}</span>}</div>
-    {profile?.role==='admin'&&<label className="text-xs text-[var(--accent)] cursor-pointer">{busy?'Salvando…':url?'Trocar logo':'+ Adicionar logo'}<input type="file" accept="image/png,image/jpeg,image/webp" disabled={busy} className="sr-only" aria-label={`Logo de ${name}`} onChange={e=>{const f=e.target.files?.[0];e.target.value='';if(f)void upload(f)}}/></label>}
-    {error&&<p role="alert" className="text-xs text-[var(--danger)]">{error}</p>}
-  </div>
+ return <div className="mb-4"><ClientAvatar id={id} name={name} className="h-24 w-40" editable/></div>
 }
 
 export function RastreamentoView() {
