@@ -38,3 +38,16 @@ sai daqui.
 **Também depende de (não resolvido ainda):** como seriam cadastrados esses
 colaboradores externos (role novo? tabela própria distinta de `profiles`?)
 e como fica o controle de quem pode convidar/revogar.
+
+## Comece por aqui — orientação de novos usuários
+
+**Pedido de Victor em 02/11/2026 — para uma próxima etapa.**
+
+Criar ou ampliar a orientação inicial para quem entrar na plataforma: explicar
+o menu, como escolher um cliente, encontrar tarefas e cronogramas, consultar
+conhecimento, usar a IA e preparar relatórios. Adaptar a explicação ao papel
+e às permissões; nenhuma orientação deve revelar clientes ou finanças sem acesso.
+Distinguir esse guia do onboarding comercial de um cliente.
+
+Campanhas não deve aparecer como entrada no menu principal da Orbe. As visões
+de tráfego pago e orgânico/analytics ficam dentro de cada cliente.

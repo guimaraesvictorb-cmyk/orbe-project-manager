@@ -1,7 +1,7 @@
 import {
   Sparkles, LayoutDashboard, CheckSquare, Users, DollarSign,
   TrendingUp, BookOpen, Building2, UserCircle, LogOut, ShieldCheck,
-  ChevronRight, Settings, PenTool, Bot, MessageSquare, UserPlus, Trophy, Brain, Images, Megaphone,
+  ChevronRight, Settings, PenTool, Bot, MessageSquare, UserPlus, Trophy, Brain, Images,
 } from "lucide-react";
 import type { Profile } from "../lib/database.types";
 import { getAllowedSections, isAdminOrCoordenador } from "../lib/permissions";
@@ -24,9 +24,6 @@ interface NavItem { view: AppView; label: string; icon: React.ReactNode; childre
 interface NavGroup { label?: string; items: NavItem[]; compact?: boolean }
 
 const NAV: NavGroup[] = [
-  { label: "Campanhas", items: [
-    { view: "campanhas", label: "Campanhas", icon: <Megaphone size={15} /> },
-  ] },
   { label: "Pessoas e operação", items: [
     { view: "dashboard", label: "Visão geral", icon: <LayoutDashboard size={15} /> },
     { view: "tarefas", label: "Tarefas", icon: <CheckSquare size={15} /> },
