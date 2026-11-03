@@ -101,7 +101,7 @@ function App() {
     localStorage.setItem(VIEW_KEY, v);
     setView(v);
     const current = parseClientWorkspace(window.location.hash);
-    const contextual = ["campanhas","criativos","segundo-cerebro","whatsapp","relatorios"].includes(v);
+    const contextual = ["campanhas","criativos","segundo-cerebro","copy-ia","whatsapp","relatorios"].includes(v);
     const params = new URLSearchParams();
     if (contextual && current.clientId) {
       params.set("cliente", current.clientId);

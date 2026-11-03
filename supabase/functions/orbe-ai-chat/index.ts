@@ -1,4 +1,5 @@
 import { normalizeAnthropicStream } from "./anthropic-stream.ts";
+import { CopyError, handleCopyAgent } from "./copy-agent.ts";
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -46,7 +47,20 @@ serve(async (req) => {
     const {data:profile,error:profileError}=await supabaseAdmin.from("profiles").select("is_active").eq("id",user.id).maybeSingle();
     if(profileError||!profile?.is_active)return json({error:"Seu acesso à IA não está ativo."},403);
 
-    const body = await req.json();
+    const rawBody = await req.text();
+    if (rawBody.length > 1000000) return json({ error: 'Solicitação muito extensa.' }, 413);
+    const body = JSON.parse(rawBody);
+    if (body.feature === 'neuro_copy') {
+      const userDb = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_ANON_KEY') ?? '', {
+        global: { headers: { Authorization: `Bearer ${jwt}` } }, auth: { persistSession: false, autoRefreshToken: false },
+      });
+      try {
+        if (rawBody.length > 60000) return json({error:'Briefing muito extenso.'},413);
+        return json(await handleCopyAgent(userDb, body, Deno.env.get('ANTHROPIC_API_KEY'), ANTHROPIC_MODEL));
+      } catch (error) {
+        return json({error:error instanceof CopyError ? error.message : 'Não foi possível preparar a copy. Tente novamente.'}, error instanceof CopyError ? error.status : 502);
+      }
+    }
     const { system, messages, tools, tool_choice, max_tokens, temperature } = body;
     if (!Array.isArray(messages)) return json({ error: "Campo obrigatório: messages" }, 400);
     const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY");

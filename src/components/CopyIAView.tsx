@@ -1,303 +1,665 @@
-import { useState } from "react";
-import { Sparkles, Copy, Check, Loader2, RefreshCw } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import {
+  Check,
+  Copy,
+  ExternalLink,
+  Loader2,
+  RefreshCw,
+  Sparkles,
+} from "lucide-react";
 import { supabase } from "../lib/supabase";
+import { useWorkspaceClient } from "../hooks/useWorkspaceClient";
+import { WorkspaceClientPicker } from "./WorkspaceClientPicker";
 import { Footer } from "./Footer";
+import { safeSourceUrl } from "../lib/safeSourceUrl";
+import {
+  BRIEF_LABELS,
+  COPY_PLATFORMS,
+  type CopyBrief,
+  type CopyBriefResponse,
+  type CopyCatalog,
+  type CopyOutput,
+  type CopyPlatform,
+  type CopySource,
+} from "../../supabase/functions/orbe-ai-chat/copy-contract";
 
-type Platform = "meta" | "google" | "instagram" | "whatsapp";
-type Objective = "conversao" | "trafego" | "engajamento" | "awareness" | "leads";
-type Tone = "profissional" | "casual" | "urgente" | "inspirador" | "educativo";
-
-const PLATFORM_META: Record<Platform, { label: string; color: string; bg: string; fields: string[] }> = {
-  meta: {
-    label: "Meta Ads", color: "#1877F2", bg: "var(--info-tint)",
-    fields: ["Headline (título)", "Texto principal", "Descrição", "Call to Action"],
-  },
-  google: {
-    label: "Google Ads", color: "#EA4335", bg: "var(--danger-tint)",
-    fields: ["Headline 1", "Headline 2", "Headline 3", "Descrição 1", "Descrição 2"],
-  },
-  instagram: {
-    label: "Instagram", color: "#E1306C", bg: "var(--danger-tint)",
-    fields: ["Legenda", "Stories copy", "CTA do stories"],
-  },
-  whatsapp: {
-    label: "WhatsApp", color: "#25D366", bg: "var(--success-tint)",
-    fields: ["Mensagem de abordagem", "Follow-up", "Mensagem de conversão"],
-  },
-};
-
-const OBJECTIVE_LABELS: Record<Objective, string> = {
-  conversao: "Conversão / Venda", trafego: "Tráfego / Visitas",
-  engajamento: "Engajamento", awareness: "Reconhecimento de marca", leads: "Geração de leads",
-};
-
-const TONE_LABELS: Record<Tone, string> = {
-  profissional: "Profissional", casual: "Casual / Próximo",
-  urgente: "Urgente / Escassez", inspirador: "Inspirador / Motivacional", educativo: "Educativo / Informativo",
-};
-
-interface CopyResult {
-  platform: Platform;
-  fields: Record<string, string>;
+const input =
+  "mt-1.5 w-full rounded-xl border border-[var(--border-strong)] bg-[var(--bg-input)] px-3 py-2.5 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] disabled:opacity-50";
+const button =
+  "inline-flex items-center justify-center gap-2 rounded-xl border border-[var(--border-strong)] px-3 py-2 text-xs font-medium hover:bg-[var(--bg-surface-2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-40";
+const panel =
+  "rounded-2xl border border-[var(--border)] bg-[var(--bg-surface)] p-5 sm:p-6";
+async function call<T>(
+  body: Record<string, unknown>,
+  signal: AbortSignal,
+  endpoint = "orbe-ai-chat",
+): Promise<T> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) throw new Error("Entre novamente no Studio para continuar.");
+  const response = await fetch(
+    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${endpoint}`,
+    {
+      method: "POST",
+      signal,
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify(
+        endpoint === "orbe-ai-chat" ? { feature: "neuro_copy", ...body } : body,
+      ),
+    },
+  );
+  const result = await response.json();
+  if (!response.ok)
+    throw new Error(
+      result.error || "Não foi possível concluir. Tente novamente.",
+    );
+  return result as T;
 }
-
-async function generateCopy(
-  params: {
-    platform: Platform;
-    product: string;
-    objective: Objective;
-    tone: Tone;
-    audience: string;
-    differentials: string;
-  }
-): Promise<CopyResult> {
-  const platMeta = PLATFORM_META[params.platform];
-  const fieldsStr = platMeta.fields.map((f, i) => `${i + 1}. ${f}`).join("\n");
-
-  const prompt = `Você é um especialista em copywriting para marketing digital brasileiro. Crie copy de alta conversão.
-
-**Produto/Serviço:** ${params.product}
-**Plataforma:** ${platMeta.label}
-**Objetivo:** ${OBJECTIVE_LABELS[params.objective]}
-**Tom de voz:** ${TONE_LABELS[params.tone]}
-**Público-alvo:** ${params.audience || "Geral"}
-${params.differentials ? `**Diferenciais:** ${params.differentials}` : ""}
-
-Crie o seguinte copy para ${platMeta.label}:
-${fieldsStr}
-
-Responda APENAS em JSON válido, sem markdown, sem texto fora do JSON:
-{
-${platMeta.fields.map((f) => `  "${f}": "texto aqui"`).join(",\n")}
-}
-
-Regras:
-- Português brasileiro natural e persuasivo
-- ${params.platform === "google" ? "Headlines: máximo 30 caracteres cada. Descrições: máximo 90 caracteres cada." : ""}
-- ${params.platform === "meta" ? "Texto principal: 2-3 parágrafos com gancho, benefício e CTA. Headline: até 40 chars." : ""}
-- ${params.platform === "instagram" ? "Legenda: use emojis estratégicos, hashtags relevantes no final (5-10)." : ""}
-- ${params.platform === "whatsapp" ? "Tom pessoal, sem spam, foco em iniciar conversa." : ""}`;
-
-  const { data: { session } } = await supabase.auth.getSession();
-  const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/orbe-ai-chat`, {
-    method: "POST",
-    headers: { "content-type": "application/json", authorization: `Bearer ${session?.access_token ?? ""}` },
-    body: JSON.stringify({
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: 1024,
-      temperature: 0.8,
-      stream: false,
-    }),
-  });
-
-  if (!res.ok) throw new Error(`Erro ${res.status}`);
-  const json = await res.json();
-  const text: string = json.choices?.[0]?.message?.content ?? "{}";
-  const match = text.match(/\{[\s\S]*\}/);
-  if (!match) throw new Error("Resposta inválida da IA");
-  const parsed = JSON.parse(match[0]);
-  return { platform: params.platform, fields: parsed };
-}
-
-function CopyCard({ result, onRegenerate, loading }: { result: CopyResult; onRegenerate: () => void; loading: boolean }) {
-  const [copied, setCopied] = useState<string | null>(null);
-  const platMeta = PLATFORM_META[result.platform];
-
-  function copyField(key: string, value: string) {
-    navigator.clipboard.writeText(value);
-    setCopied(key);
-    setTimeout(() => setCopied(null), 2000);
-  }
-
-  function copyAll() {
-    const all = Object.entries(result.fields).map(([k, v]) => `${k}:\n${v}`).join("\n\n");
-    navigator.clipboard.writeText(all);
-    setCopied("all");
-    setTimeout(() => setCopied(null), 2000);
-  }
-
+function Sources({ sources }: { sources: CopySource[] }) {
+  const seen = new Set<string>();
   return (
-    <div className="rounded-2xl border overflow-hidden" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
-      <div className="flex items-center justify-between px-5 py-3 border-b" style={{ borderColor: "var(--bg-surface-2)", backgroundColor: platMeta.bg }}>
-        <span className="text-xs font-bold" style={{ color: platMeta.color }}>{platMeta.label}</span>
-        <div className="flex items-center gap-2">
-          <button onClick={copyAll} className="flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-lg transition-colors"
-            style={{ color: copied === "all" ? "var(--accent)" : "var(--text-tertiary)", backgroundColor: "var(--bg-surface-2)" }}>
-            {copied === "all" ? <Check size={11} /> : <Copy size={11} />}
-            {copied === "all" ? "Copiado!" : "Copiar tudo"}
-          </button>
-          <button onClick={onRegenerate} disabled={loading}
-            className="flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-lg transition-colors disabled:opacity-40"
-            style={{ color: "var(--text-tertiary)", backgroundColor: "var(--bg-surface-2)" }}>
-            <RefreshCw size={11} className={loading ? "animate-spin" : ""} />
-            Regerar
-          </button>
-        </div>
-      </div>
-      <div className="divide-y" style={{ borderColor: "var(--bg-surface-2)" }}>
-        {Object.entries(result.fields).map(([key, value]) => (
-          <div key={key} className="px-5 py-4 group">
-            <div className="flex items-start justify-between gap-3 mb-1">
-              <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--text-quaternary)" }}>{key}</p>
-              <button
-                onClick={() => copyField(key, value)}
-                className="opacity-0 group-hover:opacity-100 p-1 rounded transition-all flex-shrink-0"
-                style={{ color: copied === key ? "var(--accent)" : "var(--text-tertiary)" }}>
-                {copied === key ? <Check size={12} /> : <Copy size={12} />}
-              </button>
-            </div>
-            <p className="text-sm text-[var(--text-primary)] leading-relaxed whitespace-pre-wrap">{value}</p>
-          </div>
-        ))}
-      </div>
-    </div>
+    <details className="mt-4 text-xs text-[var(--text-tertiary)]">
+      <summary className="cursor-pointer">
+        Documentos consultados no Drive
+      </summary>
+      <ul className="mt-3 space-y-2">
+        {sources
+          .filter((s) => {
+            const key = s.url || s.id;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          })
+          .map((s) => (
+            <li key={s.id} className="break-words">
+              {s.url && safeSourceUrl(s.url) ? (
+                <a
+                  className="inline-flex items-start gap-1 text-[var(--accent)] underline"
+                  href={safeSourceUrl(s.url)!}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {s.title.replace(/ · parte \d+\/\d+$/, "")}
+                  <ExternalLink size={12} className="shrink-0" />
+                </a>
+              ) : (
+                s.title
+              )}
+            </li>
+          ))}
+      </ul>
+    </details>
   );
 }
-
-export function CopyIAView() {
-  const [platform, setPlatform] = useState<Platform>("meta");
-  const [form, setForm] = useState({ product: "", audience: "", differentials: "" });
-  const [objective, setObjective] = useState<Objective>("conversao");
-  const [tone, setTone] = useState<Tone>("profissional");
-  const [results, setResults] = useState<CopyResult[]>([]);
-  const [loading, setLoading] = useState(false);
+function Warnings({ values }: { values: string[] }) {
+  return values.length ? (
+    <ul className="mt-4 list-disc space-y-1 rounded-xl bg-[var(--warning-tint)] py-3 pl-7 pr-3 text-xs leading-relaxed text-[var(--text-secondary)]">
+      {values.map((v, i) => (
+        <li key={i}>{v}</li>
+      ))}
+    </ul>
+  ) : null;
+}
+function CopyWorkspace({ clientId }: { clientId: string }) {
+  const [catalog, setCatalog] = useState<CopyCatalog | null>(null);
+  const [campaignId, setCampaignId] = useState("");
+  const [briefData, setBriefData] = useState<CopyBriefResponse | null>(null);
+  const [brief, setBrief] = useState<CopyBrief | null>(null);
+  const [offerChoice, setOfferChoice] = useState("");
+  const [platform, setPlatform] = useState<CopyPlatform>("meta");
+  const [tone, setTone] = useState("Profissional e próximo");
+  const [confirmed, setConfirmed] = useState(false);
+  const [busy, setBusy] = useState("Carregando campanhas…");
+  const [syncing, setSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState("");
   const [error, setError] = useState("");
+  const [result, setResult] = useState<
+    (CopyOutput & { campaign: string }) | null
+  >(null);
+  const [copied, setCopied] = useState("");
+  const [revision, setRevision] = useState(0);
+  const request = useRef<AbortController | null>(null);
+  const syncRequest = useRef<AbortController | null>(null);
+  const generation = useRef(0);
 
-  async function handleGenerate(e: React.FormEvent) {
-    e.preventDefault();
-    if (!form.product) return;
-    setLoading(true);
-    setError("");
-    try {
-      const result = await generateCopy({ platform, objective, tone, ...form });
-      setResults((prev) => {
-        const idx = prev.findIndex((r) => r.platform === platform);
-        return idx >= 0 ? prev.map((r, i) => (i === idx ? result : r)) : [...prev, result];
+  useEffect(() => {
+    const controller = new AbortController();
+    request.current = controller;
+    void call<CopyCatalog>(
+      { action: "catalog", client_id: clientId },
+      controller.signal,
+    )
+      .then((data) => {
+        if (!controller.signal.aborted) {
+          setCatalog(data);
+          setBusy("");
+        }
+      })
+      .catch((err) => {
+        if (!controller.signal.aborted) {
+          setError((err as Error).message);
+          setBusy("");
+        }
       });
-    } catch (err: unknown) {
-      setError((err as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  }
+    return () => {
+      controller.abort();
+      request.current?.abort();
+      syncRequest.current?.abort();
+    };
+  }, [clientId, revision]);
 
-  async function regenerate(p: Platform) {
-    if (!form.product) return;
-    setLoading(true);
+  function resetReview() {
+    setConfirmed(false);
+    setResult(null);
+    setCopied("");
+  }
+  async function chooseCampaign(id: string) {
+    request.current?.abort();
+    const controller = new AbortController();
+    request.current = controller;
+    const version = ++generation.current;
+    setCampaignId(id);
+    setBrief(null);
+    setBriefData(null);
+    setOfferChoice("");
+    resetReview();
+    setError("");
+    if (!id) {
+      setBusy("");
+      return;
+    }
+    setBusy("Lendo a campanha e preparando o briefing…");
     try {
-      const result = await generateCopy({ platform: p, objective, tone, ...form });
-      setResults((prev) => prev.map((r) => (r.platform === p ? result : r)));
-    } catch (err: unknown) {
-      setError((err as Error).message);
+      const data = await call<CopyBriefResponse>(
+        { action: "brief", client_id: clientId, campaign_id: id },
+        controller.signal,
+      );
+      if (controller.signal.aborted || version !== generation.current) return;
+      setBriefData(data);
+      setBrief(data.brief);
+      if (data.offers.length === 1) {
+        setOfferChoice("0");
+        setBrief({
+          ...data.brief,
+          offer: data.offers[0].offer,
+          product: data.offers[0].product || data.brief.product,
+        });
+      }
+    } catch (err) {
+      if (!controller.signal.aborted) setError((err as Error).message);
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted && version === generation.current)
+        setBusy("");
     }
   }
-
-  const sel = "rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] focus:outline-none appearance-none cursor-pointer";
-  const selStyle = { backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" };
-  const inp = "w-full rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] placeholder-[var(--text-quaternary)] focus:outline-none focus:border-[var(--accent-a44)] transition-colors";
-  const inpStyle = { backgroundColor: "var(--bg-surface-2)", border: "1px solid var(--border-strong)" };
-
+  function edit(key: keyof CopyBrief, value: string) {
+    if (!brief) return;
+    setBrief({ ...brief, [key]: value });
+    resetReview();
+  }
+  async function generate() {
+    if (!brief || !confirmed || busy) return;
+    const controller = new AbortController();
+    request.current?.abort();
+    request.current = controller;
+    const version = ++generation.current;
+    setBusy("Neuro Copywriter está criando sua copy…");
+    setError("");
+    setResult(null);
+    setCopied("");
+    try {
+      const data = await call<CopyOutput>(
+        {
+          action: "generate",
+          client_id: clientId,
+          campaign_id: campaignId,
+          brief,
+          platform,
+          tone,
+          confirmed,
+        },
+        controller.signal,
+      );
+      if (!controller.signal.aborted && version === generation.current)
+        setResult({
+          ...data,
+          campaign:
+            catalog?.campaigns.find((c) => c.id === campaignId)?.label ||
+            campaignId,
+        });
+    } catch (err) {
+      if (!controller.signal.aborted) setError((err as Error).message);
+    } finally {
+      if (!controller.signal.aborted && version === generation.current)
+        setBusy("");
+    }
+  }
+  async function syncDrive() {
+    request.current?.abort();
+    ++generation.current;
+    setBusy("");
+    setSyncing(true);
+    setError("");
+    setSyncStatus("Buscando alterações no Drive…");
+    setCampaignId("");
+    setBrief(null);
+    setBriefData(null);
+    resetReview();
+    const controller = new AbortController();
+    syncRequest.current = controller;
+    try {
+      for (let batch = 0; batch < 600; batch++) {
+        const progress = await call<{
+          complete: boolean;
+          synced?: number;
+          scanned?: number;
+        }>(
+          { client_id: clientId, batch: true },
+          controller.signal,
+          "orbe-drive-sync",
+        );
+        if (controller.signal.aborted) return;
+        setSyncStatus(
+          `${progress.synced ?? 0} documentos sincronizados · ${progress.scanned ?? 0} encontrados`,
+        );
+        if (progress.complete) {
+          setSyncStatus("Drive atualizado.");
+          setRevision((v) => v + 1);
+          return;
+        }
+      }
+      throw new Error(
+        "A sincronização continua pendente. Clique novamente em Atualizar do Drive para retomar.",
+      );
+    } catch (err) {
+      if (!controller.signal.aborted) {
+        setError((err as Error).message);
+        setSyncStatus(
+          "Sincronização pendente. Você pode retomar pelo mesmo botão.",
+        );
+      }
+    } finally {
+      if (!controller.signal.aborted) setSyncing(false);
+    }
+  }
+  function cancelSync() {
+    syncRequest.current?.abort();
+    setSyncing(false);
+    setSyncStatus(
+      "Atualização pausada. Clique em Atualizar do Drive para retomar.",
+    );
+    setRevision((v) => v + 1);
+  }
+  async function copy(text: string, id: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(id);
+    } catch {
+      setError(
+        "O navegador não permitiu copiar. Selecione o texto e copie manualmente.",
+      );
+    }
+  }
+  const multipleOffers = (briefData?.offers.length ?? 0) > 1;
+  const ready =
+    !!brief?.product.trim() &&
+    !!brief?.offer.trim() &&
+    !!brief?.audience.trim() &&
+    !!brief?.objective.trim() &&
+    (!multipleOffers || !!offerChoice);
   return (
-    <div className="flex flex-col min-h-full">
-      <div className="flex-1 max-w-screen-xl mx-auto w-full px-6 py-8 space-y-8">
-        <div>
-          <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: "var(--accent)" }}>Ferramentas de IA</p>
-          <h2 className="text-[var(--text-primary)] font-bold text-lg leading-tight">Copy IA</h2>
-          <p className="text-xs mt-1" style={{ color: "var(--text-tertiary)" }}>Gere copy de alta conversão para Meta Ads, Google Ads, Instagram e WhatsApp.</p>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-8">
-          {/* Form */}
-          <form onSubmit={handleGenerate} className="space-y-4">
-            {/* Platform tabs */}
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: "var(--text-tertiary)" }}>Plataforma</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {(Object.keys(PLATFORM_META) as Platform[]).map((p) => {
-                  const meta = PLATFORM_META[p];
-                  const active = platform === p;
-                  return (
-                    <button
-                      type="button" key={p} onClick={() => setPlatform(p)}
-                      className="px-3 py-2.5 rounded-xl text-xs font-semibold border transition-all text-left"
-                      style={{
-                        borderColor: active ? meta.color + "66" : "var(--border)",
-                        backgroundColor: active ? meta.bg : "var(--bg-surface)",
-                        color: active ? meta.color : "var(--text-tertiary)",
-                      }}>
-                      {meta.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "var(--text-tertiary)" }}>Produto / Serviço *</label>
-              <input value={form.product} onChange={(e) => setForm((p) => ({ ...p, product: e.target.value }))}
-                placeholder="ex: Curso online de vendas, Clínica de estética..." required className={inp} style={inpStyle} />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "var(--text-tertiary)" }}>Objetivo</label>
-                <select value={objective} onChange={(e) => setObjective(e.target.value as Objective)} className={sel} style={selStyle}>
-                  {(Object.entries(OBJECTIVE_LABELS) as [Objective, string][]).map(([k, v]) => (
-                    <option key={k} value={k}>{v}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "var(--text-tertiary)" }}>Tom de voz</label>
-                <select value={tone} onChange={(e) => setTone(e.target.value as Tone)} className={sel} style={selStyle}>
-                  {(Object.entries(TONE_LABELS) as [Tone, string][]).map(([k, v]) => (
-                    <option key={k} value={k}>{v}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "var(--text-tertiary)" }}>Público-alvo</label>
-              <input value={form.audience} onChange={(e) => setForm((p) => ({ ...p, audience: e.target.value }))}
-                placeholder="ex: Mulheres 25-45 anos, interessadas em..." className={inp} style={inpStyle} />
-            </div>
-
-            <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest block mb-1" style={{ color: "var(--text-tertiary)" }}>Diferenciais / Oferta especial</label>
-              <textarea value={form.differentials} onChange={(e) => setForm((p) => ({ ...p, differentials: e.target.value }))}
-                placeholder="ex: 7 dias grátis, garantia de 30 dias, frete grátis..." rows={2}
-                className={`${inp} resize-none`} style={inpStyle} />
-            </div>
-
-            {error && <p className="text-xs" style={{ color: "var(--danger)" }}>{error}</p>}
-
-            <button type="submit" disabled={loading || !form.product}
-              className="w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-40"
-              style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}>
-              {loading ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-              {loading ? "Gerando copy..." : `Gerar copy para ${PLATFORM_META[platform].label}`}
-            </button>
-          </form>
-
-          {/* Results */}
-          <div className="space-y-4">
-            {results.length === 0 ? (
-              <div className="rounded-2xl border border-[var(--border)] py-20 flex flex-col items-center justify-center" style={{ backgroundColor: "var(--bg-surface)" }}>
-                <Sparkles size={28} className="mb-3" style={{ color: "#222" }} />
-                <p className="text-sm font-semibold text-[var(--text-primary)] mb-1">Nenhum copy gerado ainda</p>
-                <p className="text-xs" style={{ color: "var(--text-quaternary)" }}>Preencha o formulário e clique em Gerar</p>
-              </div>
-            ) : (
-              results.map((r) => (
-                <CopyCard key={r.platform} result={r} loading={loading} onRegenerate={() => regenerate(r.platform)} />
-              ))
-            )}
+    <>
+      <section className={panel} aria-label="Campanha do cliente">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h2 className="font-display text-lg font-semibold">
+              1. Escolha a campanha
+            </h2>
+            <p className="mt-1 text-xs text-[var(--text-tertiary)]">
+              Campanhas e documentos de campanha da pasta deste cliente,
+              conforme seu acesso.
+            </p>
           </div>
+          <button
+            type="button"
+            className={button}
+            disabled={syncing || !catalog?.configured}
+            onClick={() => void syncDrive()}
+          >
+            <RefreshCw size={14} className={syncing ? "animate-spin" : ""} />
+            Atualizar do Drive
+          </button>
         </div>
-      </div>
+        <label className="mt-5 block text-xs text-[var(--text-secondary)]">
+          Campanha do Drive
+          <select
+            className={input}
+            value={campaignId}
+            disabled={!catalog || syncing}
+            onChange={(e) => void chooseCampaign(e.target.value)}
+          >
+            <option value="">Selecione uma campanha</option>
+            {catalog?.campaigns.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.label} · {c.documentCount} doc.
+              </option>
+            ))}
+          </select>
+        </label>
+        {catalog?.syncedAt && (
+          <p className="mt-2 text-[11px] text-[var(--text-tertiary)]">
+            Base sincronizada em{" "}
+            {new Date(catalog.syncedAt).toLocaleString("pt-BR")}. Ano não
+            informado no Drive aparece como “a confirmar”.
+          </p>
+        )}
+        {catalog && !catalog.configured && (
+          <p role="status" className="mt-4 text-sm">
+            Configure a pasta deste cliente em Clientes → Conhecimento e
+            sincronize o Drive.
+          </p>
+        )}
+        {catalog?.configured && !catalog.campaigns.length && (
+          <p role="status" className="mt-4 text-sm">
+            Nenhum documento de campanha acessível foi indexado. Atualize o
+            Drive; documentos restritos continuam dependendo da sua permissão.
+          </p>
+        )}
+        {syncStatus && (
+          <p
+            role="status"
+            className="mt-3 text-xs text-[var(--text-secondary)]"
+          >
+            {syncStatus}
+          </p>
+        )}
+        {syncing && (
+          <button
+            type="button"
+            className={`${button} mt-3`}
+            onClick={cancelSync}
+          >
+            Pausar atualização
+          </button>
+        )}
+        {catalog?.campaigns.find((c) => c.id === campaignId) && (
+          <p className="mt-3 break-words text-xs text-[var(--text-tertiary)]">
+            Pasta/documento:{" "}
+            {catalog.campaigns.find((c) => c.id === campaignId)!.path}
+          </p>
+        )}
+      </section>
+      {error && (
+        <div
+          role="alert"
+          className="rounded-xl border border-[var(--danger)] bg-[var(--danger-tint)] p-4 text-sm"
+        >
+          <p>{error}</p>
+          {!brief && !busy && !syncing && (
+            <button
+              className={`${button} mt-3`}
+              onClick={() =>
+                campaignId
+                  ? void chooseCampaign(campaignId)
+                  : setRevision((v) => v + 1)
+              }
+            >
+              Tentar novamente
+            </button>
+          )}
+        </div>
+      )}
+      {busy && (
+        <p
+          role="status"
+          className="flex items-center gap-2 text-sm text-[var(--text-secondary)]"
+        >
+          <Loader2 size={17} className="animate-spin" />
+          {busy}
+        </p>
+      )}
+      {brief && briefData && (
+        <section className={panel}>
+          <h2 className="font-display text-lg font-semibold">
+            2. Confira o briefing
+          </h2>
+          <p className="mt-1 text-xs text-[var(--text-tertiary)]">
+            Preenchido pelo Neuro Copywriter a partir dos documentos. Corrija
+            hipóteses e complete os campos pendentes antes de confirmar.
+          </p>
+          {!!briefData.offers.length && (
+            <label className="mt-5 block text-xs text-[var(--text-secondary)]">
+              {multipleOffers
+                ? "Escolha uma oferta / unidade para esta copy"
+                : "Oferta encontrada"}
+              <select
+                className={input}
+                disabled={!!busy}
+                value={offerChoice}
+                onChange={(e) => {
+                  const choice = e.target.value;
+                  setOfferChoice(choice);
+                  const offer = choice
+                    ? briefData.offers[Number(choice)]
+                    : null;
+                  setBrief({
+                    ...brief,
+                    offer: offer?.offer || "",
+                    product: offer?.product || "",
+                  });
+                  resetReview();
+                }}
+              >
+                <option value="">Selecione a oferta</option>
+                {briefData.offers.map((o, i) => (
+                  <option key={i} value={String(i)}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            {(
+              Object.entries(BRIEF_LABELS) as Array<[keyof CopyBrief, string]>
+            ).map(([key, label]) => (
+              <label
+                key={key}
+                className={`block text-xs text-[var(--text-secondary)] ${key === "offer" ? "md:col-span-2" : ""}`}
+              >
+                {label}
+                {["product", "offer", "objective", "audience"].includes(key) &&
+                  " *"}
+                <textarea
+                  rows={key === "offer" ? 4 : 3}
+                  maxLength={5000}
+                  disabled={!!busy}
+                  className={`${input} resize-y`}
+                  value={brief[key]}
+                  placeholder="Não identificado nas fontes — preencha ou confirme com o cliente."
+                  onChange={(e) => edit(key, e.target.value)}
+                />
+              </label>
+            ))}
+          </div>
+          <Warnings values={briefData.warnings} />
+          <Sources sources={briefData.sources} />
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <label className="text-xs text-[var(--text-secondary)]">
+              Plataforma
+              <select
+                className={input}
+                disabled={!!busy}
+                value={platform}
+                onChange={(e) => {
+                  setPlatform(e.target.value as CopyPlatform);
+                  resetReview();
+                }}
+              >
+                {Object.entries(COPY_PLATFORMS).map(([key, p]) => (
+                  <option key={key} value={key}>
+                    {p.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-xs text-[var(--text-secondary)]">
+              Tom de voz
+              <select
+                className={input}
+                disabled={!!busy}
+                value={tone}
+                onChange={(e) => {
+                  setTone(e.target.value);
+                  resetReview();
+                }}
+              >
+                {[
+                  "Profissional e próximo",
+                  "Casual e acolhedor",
+                  "Inspirador",
+                  "Educativo",
+                  "Urgente, somente com prazo real",
+                ].map((t) => (
+                  <option key={t}>{t}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <label className="mt-6 flex items-start gap-3 text-xs leading-relaxed text-[var(--text-secondary)]">
+            <input
+              type="checkbox"
+              className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--accent)]"
+              checked={confirmed}
+              disabled={!ready || !!busy}
+              onChange={(e) => setConfirmed(e.target.checked)}
+            />
+            Revisei produto, oferta, unidade, público e validade para esta
+            campanha. Confirmo o briefing acima.
+          </label>
+          {!ready && (
+            <p className="mt-2 text-xs text-[var(--text-tertiary)]">
+              Preencha produto, oferta, objetivo e público-alvo
+              {multipleOffers ? " e escolha a oferta/unidade" : ""} para
+              confirmar.
+            </p>
+          )}
+          <button
+            type="button"
+            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
+            disabled={!ready || !confirmed || !!busy || syncing}
+            onClick={() => void generate()}
+          >
+            <Sparkles size={16} />
+            {result ? "Gerar outra versão" : "Gerar copy"}
+          </button>
+        </section>
+      )}
+      {result && (
+        <section className={panel} aria-label="Copy gerada">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="font-display text-lg font-semibold">
+                {COPY_PLATFORMS[result.platform].label}
+              </h2>
+              <p className="mt-1 text-xs text-[var(--text-tertiary)]">
+                {result.campaign} · Rascunho para revisão
+              </p>
+            </div>
+            <button
+              className={button}
+              onClick={() =>
+                void copy(
+                  Object.entries(result.fields)
+                    .map(([k, v]) => `${k}:\n${v}`)
+                    .join("\n\n"),
+                  "all",
+                )
+              }
+            >
+              {copied === "all" ? <Check size={14} /> : <Copy size={14} />}{" "}
+              {copied === "all" ? "Copiado" : "Copiar tudo"}
+            </button>
+          </div>
+          <div className="mt-5 space-y-5">
+            {Object.entries(result.fields).map(([key, value]) => (
+              <article
+                key={key}
+                className="rounded-xl bg-[var(--bg-surface-2)] p-4"
+              >
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <h3 className="text-xs font-semibold text-[var(--text-secondary)]">
+                    {key}
+                    {result.platform === "google" && (
+                      <span className="ml-2 font-normal">
+                        {[...value].length}/
+                        {key.startsWith("Headline") ? 30 : 90}
+                      </span>
+                    )}
+                  </h3>
+                  <button
+                    aria-label={`Copiar ${key}`}
+                    className={button}
+                    onClick={() => void copy(value, key)}
+                  >
+                    {copied === key ? <Check size={13} /> : <Copy size={13} />}
+                  </button>
+                </div>
+                <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">
+                  {value}
+                </p>
+              </article>
+            ))}
+          </div>
+          <Warnings values={result.warnings} />
+          <Sources sources={result.sources} />
+          <p className="mt-4 text-xs text-[var(--text-tertiary)]">
+            A geração não publica anúncios nem envia mensagens.
+          </p>
+        </section>
+      )}
+    </>
+  );
+}
+export function CopyIAView() {
+  const { clients, selected, selectClient, clientId, loading } =
+    useWorkspaceClient();
+  return (
+    <div className="flex min-h-full min-w-0 flex-col">
+      <main className="mx-auto w-full max-w-5xl flex-1 space-y-6 px-4 py-8 sm:px-8">
+        <header>
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-[var(--accent-tint)] px-3 py-1.5 text-xs font-medium text-[var(--accent)]">
+            <Sparkles size={14} />
+            Neuro Copywriter · Anthropic
+          </div>
+          <h1 className="font-display text-2xl font-semibold">Copy IA</h1>
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[var(--text-tertiary)]">
+            A voz do cliente, a oferta da campanha e uma copy pensada para cada
+            plataforma. Selecione o cliente para começar.
+          </p>
+        </header>
+        <WorkspaceClientPicker
+          clients={clients}
+          selected={clientId}
+          onChange={selectClient}
+        />
+        {selected ? (
+          <CopyWorkspace key={selected.id} clientId={selected.id} />
+        ) : (
+          <p
+            role="status"
+            className={`${panel} text-sm text-[var(--text-tertiary)]`}
+          >
+            {loading
+              ? "Carregando clientes…"
+              : "Selecione um cliente para carregar as campanhas do Drive."}
+          </p>
+        )}
+      </main>
       <Footer />
     </div>
   );
