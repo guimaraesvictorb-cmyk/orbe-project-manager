@@ -37,4 +37,43 @@ class QRWorkerTest(unittest.TestCase):
    worker.tick()
    self.assertEqual(worker.session['destination'],'5511999999999');self.assertEqual(hooks,[True])
    self.assertTrue(any(a=='worker_state' and v.get('number')=='5511999999999' for a,v in calls))
+class QRRecoveryTest(unittest.TestCase):
+ def worker(self, folder, status='qr', active=False):
+  from datetime import datetime, timezone, timedelta
+  worker=module.Worker({'token':'synthetic'},'',str(Path(folder)/'queue.sqlite3'))
+  session={'instance':'orbe-qr-test','destination':'','request_id':'request','expires_at':(datetime.now(timezone.utc)+timedelta(minutes=2 if active else -2)).isoformat(),'verified_at':None,'status':status}
+  worker.cloud=lambda action,**values:session if action=='worker_poll' else {'ok':True,'verified_at':None}
+  worker.instances=lambda:[{'name':'orbe-qr-test','ownerJid':'5511999999999@s.whatsapp.net'}]
+  return worker
+ def test_already_linked_device_recovers_after_qr_deadline(self):
+  with tempfile.TemporaryDirectory() as folder:
+   worker=self.worker(folder);states=[];hooks=[]
+   worker.evo=lambda *a,**k:{'instance':{'state':'open'}}
+   worker.state=lambda status,**values:(states.append(status),setattr(worker,'last_status',status))
+   worker.webhook=lambda enabled:hooks.append(enabled);worker.flush=lambda:None
+   worker.tick();self.assertEqual(states,['open']);self.assertEqual(hooks,[True])
+ def test_expired_closed_device_does_not_generate_another_qr(self):
+  with tempfile.TemporaryDirectory() as folder:
+   worker=self.worker(folder);states=[]
+   def evo(path,*a,**k):
+    self.assertNotIn('/connect/',path);return {'instance':{'state':'close'}}
+   worker.evo=evo;worker.state=lambda status,**values:states.append(status)
+   worker.tick();self.assertEqual(states,['close'])
+ def test_disconnect_targets_only_the_current_instance_before_acknowledging(self):
+  with tempfile.TemporaryDirectory() as folder:
+   worker=self.worker(folder,'disconnecting');calls=[];states=[]
+   def evo(path,body=None,**kwargs):
+    calls.append((path,kwargs.get('method')))
+    return {'instance':{'state':'close' if any(method=='DELETE' for _,method in calls) else 'open'}}
+   worker.evo=evo;worker.webhook=lambda enabled:self.assertFalse(enabled)
+   worker.state=lambda status,**values:states.append(status)
+   worker.flush=lambda:self.fail('must not flush after disconnect')
+   worker.tick();self.assertIn(('/instance/logout/orbe-qr-test','DELETE'),calls);self.assertEqual(states,['close'])
+ def test_failed_verification_cannot_enable_webhook(self):
+  with tempfile.TemporaryDirectory() as folder:
+   worker=self.worker(folder);worker.evo=lambda *a,**k:{'instance':{'state':'open'}}
+   worker.state=lambda *a,**k:(_ for _ in ()).throw(ConnectionError())
+   worker.webhook=lambda enabled:self.fail('unverified webhook enabled')
+   with self.assertRaises(ConnectionError):worker.tick()
+
 if __name__=='__main__':unittest.main()

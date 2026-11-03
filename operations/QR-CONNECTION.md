@@ -21,3 +21,20 @@ The client number is unknown until the device is paired. `wa_qr_verify` atomical
 `compose.qr-broker.yml` replaces only the LK QR worker with one private provisioning broker. Its key hash is stored in server-only `wa_qr_workers`; the plaintext key and Evolution provisioning key remain private on the VPS. It receives only QR jobs assigned to its worker ID. Each client gets a separate derived instance/webhook key and SQLite outbox. The existing LK instance key is retained during migration. The personal ORBE pilot and official Kommo remain separate.
 
 Apply `20261030_whatsapp_self_service.sql`, register the broker hash, run the rollback-only `tests/qr-self-service.sql`, deploy the API/UI, stop the old LK QR worker, and then start the broker. Do not start both workers with the same network alias. Keep the old component available for rollback. A local build alone does not prove production publication or real device pairing.
+
+
+## Operational release 1.51 (03 November 2026)
+Number verification no longer has an ambiguous SQL variable. LK and Octagon
+have explicitly authorized `client` capture, without the legacy sender allowlist.
+The unrelated personal ORBE pilot retains its original restriction.
+
+A linked device is reconciled even if the QR window expired before cloud
+verification succeeded. The authenticated disconnect action disables capture,
+rotates the request ID and asks the scoped worker to log out only that instance.
+The old number binding is cleared only after the worker acknowledges close.
+A stale open reply cannot cancel a pending disconnect. The UI then permits a
+new QR for the client's replacement phone. History is retained; the test badge
+requires a test message received after the current device verification.
+
+Production readiness still requires the user's actual inbound test per client.
+This is a linked-device connection; it does not migrate the number to Meta Cloud API.

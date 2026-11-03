@@ -61,20 +61,22 @@ export default async function handler(req:Request,res:ServerResponse){
    let verified=session.verified_at;
    const number=status==='open'?scalar(input.number,15):'';
    if(status==='open'){
+    if(session.status==='disconnecting')return answer(res,409,{error:'disconnect_in_progress'});
     if(session.verified_at&&number!==conn.destination)return answer(res,409,{error:'number_changed'});
     try{verified=await db<string>('rest/v1/rpc/wa_qr_verify',{method:'POST',body:JSON.stringify({p_connection:conn.id,p_number:number})})}catch{return answer(res,409,{error:'number_unavailable'})}
    }
    if(['qr','connecting'].includes(status)&&(!session.expires_at||Date.parse(session.expires_at)<=Date.now()))return answer(res,409,{error:'request_expired'});
    const qr=status==='qr'?scalar(input.qr,100000):'';
    if(qr&&!/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(qr))return answer(res,400,{error:'invalid_qr'});
-   const patch={status,qr_ciphertext:qr?seal(qr,conn.id):'',worker_seen_at:now,error_code:status==='error'?'provider_unavailable':status==='wrong_number'?'wrong_number':'',...(status==='open'?{verified_at:verified}:{})};
+   const disconnected=status==='close'&&session.status==='disconnecting';
+   const patch={status,qr_ciphertext:qr?seal(qr,conn.id):'',worker_seen_at:now,error_code:status==='error'?'provider_unavailable':status==='wrong_number'?'wrong_number':'',...(status==='open'?{verified_at:verified}:disconnected?{verified_at:null,expires_at:null}:{})};
    const updated=await db<Session[]>(`rest/v1/wa_qr_sessions?connection_id=eq.${conn.id}&request_id=eq.${session.request_id}`,{method:'PATCH',body:JSON.stringify(patch)});
    if(!updated.length)return answer(res,409,{error:'stale_request'});
-   await db(`rest/v1/wa_tracking_connections?id=eq.${conn.id}`,{method:'PATCH',body:JSON.stringify({enabled:status==='open',connection_state:status==='open'?'open':status==='close'?'close':'connecting',last_sync_at:now,...(status==='open'?{name:Array.from(scalar(input.profile_name,100)).filter(c=>c.charCodeAt(0)>=32&&c.charCodeAt(0)!==127).join('').trim()||'WhatsApp conectado'}:{})})});
-   await db(`rest/v1/wa_tracking_setups?client_id=eq.${conn.client_id}`,{method:'PATCH',body:JSON.stringify({connection_id:conn.id,activation_status:status==='open'?(conn.last_received_at?'receiving':'waiting_message'):['wrong_number','error'].includes(status)?'error':'authorizing',activation_error:patch.error_code,last_verified_at:status==='open'?now:null})});
+   await db(`rest/v1/wa_tracking_connections?id=eq.${conn.id}`,{method:'PATCH',body:JSON.stringify({enabled:status==='open',connection_state:status==='open'?'open':['qr','connecting'].includes(status)?'connecting':'close',last_sync_at:now,...(status==='open'?{name:Array.from(scalar(input.profile_name,100)).filter(c=>c.charCodeAt(0)>=32&&c.charCodeAt(0)!==127).join('').trim()||'WhatsApp conectado'}:{})})});
+   await db(`rest/v1/wa_tracking_setups?client_id=eq.${conn.client_id}`,{method:'PATCH',body:JSON.stringify({connection_id:conn.id,activation_status:status==='open'?(conn.last_received_at?'receiving':'waiting_message'):status==='close'?'not_connected':['wrong_number','error'].includes(status)?'error':'authorizing',activation_error:patch.error_code,last_verified_at:status==='open'?now:null})});
    return answer(res,200,{ok:true,verified_at:updated[0].verified_at,destination:status==='open'?number:conn.destination});
   }
-  if(!['status','generate'].includes(action))return answer(res,400,{error:'invalid_action'});
+  if(!['status','generate','disconnect'].includes(action))return answer(res,400,{error:'invalid_action'});
   const clientId=scalar(input.client_id,36),access=await qrUser(req,clientId);
   const prepared=await db<string>('rest/v1/rpc/wa_qr_prepare',{method:'POST',body:JSON.stringify({p_client:clientId,p_user:access.user.id})});
   const connections=await db<Conn[]>(`rest/v1/wa_tracking_connections?id=eq.${prepared}&client_id=eq.${clientId}&provider=eq.evolution&select=id,client_id,destination,instance,enabled,connection_state,last_received_at,capture_mode,allowed_senders`),conn=connections[0];
@@ -83,7 +85,19 @@ export default async function handler(req:Request,res:ServerResponse){
   if(setups[0]?.connection_method!=='qr'||setups[0].destination!==conn.destination)return answer(res,409,{error:'setup_changed'});
   let session=(await db<Session[]>(`rest/v1/wa_qr_sessions?connection_id=eq.${conn.id}`))[0];
   if(!session)return answer(res,200,{ok:true,status:'not_prepared'});
+  if(action==='disconnect'){
+   // Stop capture immediately; the private worker logs out only this client's
+   // device before acknowledging close and allowing another number to bind.
+   if(!recent(session.worker_seen_at))return answer(res,503,{error:'worker_offline'});
+   const condition=session.request_id?`request_id=eq.${session.request_id}`:'request_id=is.null';
+   const stopped=await db<Session[]>(`rest/v1/wa_qr_sessions?connection_id=eq.${conn.id}&${condition}`,{method:'PATCH',body:JSON.stringify({request_id:randomUUID(),requested_at:new Date().toISOString(),expires_at:null,status:'disconnecting',qr_ciphertext:'',error_code:''})});
+   if(!stopped.length)return answer(res,409,{error:'stale_request'});
+   await db(`rest/v1/wa_tracking_connections?id=eq.${conn.id}`,{method:'PATCH',body:JSON.stringify({enabled:false,connection_state:'close'})});
+   await db(`rest/v1/wa_tracking_setups?client_id=eq.${conn.client_id}`,{method:'PATCH',body:JSON.stringify({activation_status:'not_connected',activation_error:'',last_verified_at:null})});
+   return answer(res,200,{ok:true,status:'disconnecting',connection_id:conn.id});
+  }
   if(action==='generate'){
+   if(session.status==='disconnecting')return answer(res,409,{error:'disconnect_in_progress'});
    if(!recent(session.worker_seen_at))return answer(res,503,{error:'worker_offline'});
    if(session.status==='open'&&conn.enabled)return answer(res,200,{ok:true,status:'open',connection_id:conn.id,destination:conn.destination});
    if(!session.expires_at||Date.parse(session.expires_at)<=Date.now()||!['requested','connecting','qr'].includes(session.status)){
@@ -96,7 +110,7 @@ export default async function handler(req:Request,res:ServerResponse){
   }
   const online=recent(session.worker_seen_at),expired=!session.expires_at||Date.parse(session.expires_at)<=Date.now();
   const status=!online?'offline':['requested','connecting','qr'].includes(session.status)&&expired?'expired':session.status;
-  const test=conn.enabled?await db<{occurred_at:string}[]>(`rest/v1/wa_tracking_records?connection_id=eq.${conn.id}&entity=eq.messages&payload->>utm_source=eq.orbe_teste&payload->>utm_campaign=eq.validacao_conexao&payload->>source_status=eq.Identificada&select=occurred_at&order=occurred_at.desc&limit=1`):[];
+  const test=conn.enabled&&session.verified_at?await db<{occurred_at:string}[]>(`rest/v1/wa_tracking_records?connection_id=eq.${conn.id}&entity=eq.messages&occurred_at=gte.${encodeURIComponent(session.verified_at)}&payload->>utm_source=eq.orbe_teste&payload->>utm_campaign=eq.validacao_conexao&payload->>source_status=eq.Identificada&select=occurred_at&order=occurred_at.desc&limit=1`):[];
   return answer(res,200,{ok:true,test_received_at:test[0]?.occurred_at??null,status,connection_id:conn.id,destination:session.verified_at?conn.destination:'',expires_at:session.expires_at,last_received_at:conn.last_received_at,capture_mode:conn.capture_mode,allowed_senders:conn.allowed_senders,
    qr:status==='qr'&&session.qr_ciphertext?unseal(session.qr_ciphertext,conn.id):null});
  }catch(error){const code=error instanceof Error?error.message:'';return answer(res,['unauthorized','forbidden'].includes(code)?403:503,{error:['unauthorized','forbidden'].includes(code)?code:'qr_temporarily_unavailable'});}

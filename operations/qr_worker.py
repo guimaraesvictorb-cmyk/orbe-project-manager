@@ -78,19 +78,28 @@ class Worker:
         if not request_id:return
         from datetime import datetime
         active=bool(self.session.get('expires_at')) and datetime.fromisoformat(self.session['expires_at'].replace('Z','+00:00')).timestamp()>time.time()
-        if not active and not self.session.get('verified_at'):return
         try:rows=self.instances()
         except HTTPError as error:
             if error.code not in (401,404):raise
             rows=[]
         if not rows:
-            if not active or not self.global_key:raise ValueError('instance_not_prepared')
+            if self.session.get('status')=='disconnecting':
+                self.state('close');return
+            if not active:return
+            if not self.global_key:raise ValueError('instance_not_prepared')
             hook={'enabled':False,'url':'http://orbe-qr-worker:8090/events','headers':{'Authorization':'Bearer '+self.webhook_key},'byEvents':False,'base64':False,'events':['MESSAGES_UPSERT','CONNECTION_UPDATE']}
             self.evo('/instance/create',{'instanceName':self.instance,'integration':'WHATSAPP-BAILEYS','token':self.instance_key,'qrcode':False,'groupsIgnore':True,'alwaysOnline':False,'readMessages':False,'readStatus':False,'syncFullHistory':False,'rejectCall':False,'webhook':hook},global_key=True)
             self.webhook(False)
             rows=self.instances()
         if len(rows)!=1 or rows[0].get('name')!=self.instance:raise ValueError('instance_binding')
         state=self.evo('/instance/connectionState/'+self.instance).get('instance',{}).get('state')
+        if self.session.get('status')=='disconnecting':
+            self.webhook(False)
+            if state!='close':
+                self.evo('/instance/logout/'+self.instance,method='DELETE')
+                state=self.evo('/instance/connectionState/'+self.instance).get('instance',{}).get('state')
+            if state=='close':self.state('close')
+            return
         if state=='open':
             number=str(rows[0].get('ownerJid','')).split('@')[0].split(':')[0]
             if self.session.get('verified_at') and number!=self.session['destination']:
@@ -129,7 +138,7 @@ class Worker:
             try:self.tick()
             except Exception:
                 try:
-                    if self.session and self.session.get('request_id'):self.state('error')
+                    if self.session and self.session.get('request_id') and self.session.get('status')!='disconnecting':self.state('error')
                 except Exception:pass
                 # Do not log bodies, API keys, QR contents or private contact data.
                 print('ORBE_QR_RETRY',flush=True)
@@ -155,7 +164,7 @@ class Broker:
                     try:worker.tick()
                     except Exception:
                         try:
-                            if worker.session and worker.session.get('request_id'):worker.state('error')
+                            if worker.session and worker.session.get('request_id') and worker.session.get('status')!='disconnecting':worker.state('error')
                         except Exception:pass
             except Exception:print('ORBE_QR_BROKER_RETRY',flush=True)
             time.sleep(5)
