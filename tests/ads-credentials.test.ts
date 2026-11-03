@@ -1,5 +1,5 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';import {registerHooks} from 'node:module'
-registerHooks({resolve(s,c,n){const allowed=['./_lib/googleMcc.js','./googleMcc.js','./googleMccInventory.js','./_lib/trackingServer.js','./_lib/qrAccess.js','./_lib/kommo.js','./_lib/adsCredentials.js','./_lib/googleAdsReport.js','./_lib/googleAdsOAuth.js','./trackingServer.js','./qrAccess.js','./kommo.js','./adsCredentials.js'];return n(allowed.includes(s)&&c.parentURL?.includes('/api/')?s.replace(/\.js$/,'.ts'):s,c)}})
+registerHooks({resolve(s,c,n){const allowed=['./_lib/googleMcc.js','./googleMcc.js','./googleMccInventory.js','./googleAdsReport.js','./_lib/trackingServer.js','./_lib/qrAccess.js','./_lib/kommo.js','./_lib/adsCredentials.js','./_lib/googleAdsReport.js','./_lib/googleAdsOAuth.js','./trackingServer.js','./qrAccess.js','./kommo.js','./adsCredentials.js'];return n(allowed.includes(s)&&c.parentURL?.includes('/api/')?s.replace(/\.js$/,'.ts'):s,c)}})
 const {normalizeAdsCredentials,adsBinding}=await import('../api/_lib/adsCredentials.ts')
 const {seal,unseal}=await import('../api/_lib/kommo.ts')
 const {default:handler}=await import('../api/ads-credentials.ts')

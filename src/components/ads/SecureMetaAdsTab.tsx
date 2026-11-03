@@ -34,14 +34,14 @@ export function SecureMetaAdsTab({ clientId, onOpenConnections, onVerified, plat
       const data = await response.json()
       if (signal?.aborted) return
       if (!response.ok) {
-        const googleErrors: Record<string, string> = { google_oauth_invalid: 'A autorização do Google expirou ou os dados OAuth precisam ser revisados. Confira Conexões.', google_developer_token_denied: 'Verifique a aprovação e o nível de acesso do developer token no Google Ads.', google_permission_denied: 'O Google não autorizou a leitura desta conta. Confira o usuário e a conta gerenciadora.', google_account_mismatch: 'A conta retornada pelo Google não corresponde à conta cadastrada.' }
+        const googleErrors: Record<string, string> = { google_oauth_invalid: 'A autorização do Google expirou ou os dados OAuth precisam ser revisados. Confira Conexões.', google_cloud_access_required: 'O Google Cloud ainda não liberou este projeto para consultar contas reais. A autorização Google está salva.', google_cloud_api_disabled: 'A Google Ads API precisa estar ativada no projeto do aplicativo OAuth.', google_permission_denied: 'O Google não autorizou a leitura desta conta. Confira o usuário e a conta gerenciadora.', google_account_mismatch: 'A conta retornada pelo Google não corresponde à conta cadastrada.' }
         if (googleErrors[data.error]) throw new Error(googleErrors[data.error])
         if (data.error === "financial_access_required") throw new Error("Seu perfil ainda não tem permissão para consultar métricas de investimento.")
         if (data.error === "meta_token_invalid") throw new Error("A credencial da Meta expirou ou foi revogada. Atualize-a em Conexões do cliente.")
         if (data.error === "meta_permission_denied") throw new Error("A credencial não tem permissão para ler esta conta Meta.")
-        throw new Error(data.error === "invalid_period" ? "Selecione um período de até 92 dias." : "Não foi possível consultar o relatório da Meta.")
+        throw new Error(data.error === "invalid_period" ? "Selecione um período de até 92 dias." : "Não foi possível consultar o relatório de anúncios.")
       }
-      if (['not_configured','oauth_pending','developer_token_required'].includes(data.status)) { setReport(null); setStatus(data.status); return }
+      if (['not_configured','oauth_pending'].includes(data.status)) { setReport(null); setStatus(data.status); return }
       if (data.status !== 'ready' || !data.totals || !Array.isArray(data.daily)) throw new Error('O relatório retornou um formato inválido.')
       setReport(data as Report)
       onVerified?.()
@@ -74,7 +74,7 @@ export function SecureMetaAdsTab({ clientId, onOpenConnections, onVerified, plat
   const border = { borderColor: "var(--border)", backgroundColor: "var(--bg-surface)" }
   if (status === "not_configured") return <div className="rounded-2xl border p-8 text-center" style={border}><BarChart3 size={28} className="mx-auto" style={{ color: "var(--text-quaternary)" }}/><h3 className="mt-3 text-sm font-semibold text-[var(--text-primary)]">Conexão {label} ainda não cadastrada para este cliente</h3><p className="mx-auto mt-1 max-w-md text-xs" style={{ color: "var(--text-tertiary)" }}>Cadastre a conta e valide o acesso em Conexões do cliente. A credencial fica protegida no servidor.</p><button onClick={onOpenConnections} className="mt-4 rounded-lg px-4 py-2 text-xs font-semibold" style={{ backgroundColor: "var(--accent)", color: "var(--bg-page)" }}>Abrir conexões</button></div>
 
-  if (status === 'oauth_pending' || status === 'developer_token_required') return <section className="rounded-2xl border p-6" style={border}><h3 className="text-sm font-semibold text-[var(--text-primary)]">{status === 'oauth_pending' ? 'Falta concluir a autorização do Google Ads' : 'Falta o developer token do Google Ads'}</h3><p className="mt-3 text-sm text-[var(--text-tertiary)]">{status === 'oauth_pending' ? 'O cadastro existe, mas ainda não contém uma autorização OAuth válida para consultar os relatórios.' : 'A consulta exige um developer token autorizado pelo Google para esta conta.'}</p><button onClick={onOpenConnections} className="mt-4 text-sm font-semibold text-[var(--accent)]">Abrir conexões →</button></section>
+  if (status === 'oauth_pending') return <section className="rounded-2xl border p-6" style={border}><h3 className="text-sm font-semibold text-[var(--text-primary)]">Falta concluir a autorização do Google Ads</h3><p className="mt-3 text-sm text-[var(--text-tertiary)]">O cadastro existe, mas ainda não contém uma autorização OAuth válida para consultar os relatórios.</p><button onClick={onOpenConnections} className="mt-4 text-sm font-semibold text-[var(--accent)]">Abrir conexões →</button></section>
   return <section className="space-y-4" aria-label={`Relatório ${label}`}>
     <div className="flex flex-wrap items-end justify-between gap-3 rounded-xl border p-4" style={border}>
       <div><p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#1877F2" }}>Conta segura · somente leitura</p><h3 className="mt-1 text-sm font-semibold text-[var(--text-primary)]">{report?.account_name || label}</h3><p className="mt-1 text-xs" style={{ color: "var(--text-tertiary)" }}>Período máximo de 92 dias · dados obtidos diretamente de {label}.</p></div>

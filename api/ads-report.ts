@@ -36,5 +36,5 @@ export default async function handler(req:Request,res:ServerResponse){
   await db(`rest/v1/wa_ads_credentials?client_id=eq.${client}&platform=eq.${platform}&updated_at=eq.${encodeURIComponent(row.updated_at)}`,{method:'PATCH',body:JSON.stringify({status:'access_verified'})}).catch(()=>{});
  }
  return answer(res,200,report);
- }catch(e){const code=e instanceof Error?e.message:'';return answer(res,['unauthorized','forbidden'].includes(code)?403:code==='invalid_period'?400:503,{error:['invalid_period','meta_token_invalid','meta_permission_denied','report_too_large','meta_account_mismatch','google_oauth_invalid','google_developer_token_denied','google_permission_denied','google_account_mismatch'].includes(code)?code:'report_unavailable'});}
+ }catch(e){const code=e instanceof Error?e.message:'';return answer(res,['unauthorized','forbidden'].includes(code)?403:code==='invalid_period'?400:503,{error:['invalid_period','meta_token_invalid','meta_permission_denied','report_too_large','meta_account_mismatch','google_oauth_invalid','google_developer_token_denied','google_cloud_access_required','google_cloud_api_disabled','google_permission_denied','google_account_mismatch'].includes(code)?code:'report_unavailable'});}
 }

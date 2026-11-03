@@ -10,7 +10,7 @@ type Report = { status: string; account_name?: string; currency?: string; totals
 type Source = { platform: 'meta' | 'google'; data: Report }
 const label = (platform: string) => platform === 'meta' ? 'Meta Ads' : 'Google Ads'
 const money = (value: number, currency?: string) => /^[A-Z]{3}$/.test(currency ?? '') ? value.toLocaleString('pt-BR', { style: 'currency', currency }) : `${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} · moeda não informada`
-const reason = (data: Report) => data.status === 'not_configured' ? 'Conta não cadastrada' : data.status === 'oauth_pending' ? 'Autorização Google pendente' : data.status === 'developer_token_required' ? 'Developer token pendente' : data.error === 'financial_access_required' ? 'Perfil sem permissão financeira' : 'Consulta indisponível · confira a conexão'
+const reason = (data: Report) => data.status === 'not_configured' ? 'Conta não cadastrada' : data.status === 'oauth_pending' ? 'Autorização Google pendente' : data.error === 'google_cloud_access_required' ? 'Projeto Google sem acesso de produção' : data.error === 'google_cloud_api_disabled' ? 'Google Ads API desativada no projeto' : data.error === 'financial_access_required' ? 'Perfil sem permissão financeira' : 'Consulta indisponível · confira a conexão'
 
 export function CompiladoTab({ clientId, onOpenConnections, onVerified }: { clientId: string; onOpenConnections?: () => void; onVerified?: () => void }) {
   const { profile } = useAuth()

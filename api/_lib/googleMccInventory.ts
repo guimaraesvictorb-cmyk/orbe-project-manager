@@ -1,3 +1,4 @@
+import {googleAdsFailure} from './googleAdsReport.js';
 type Secrets={client_id?:unknown;client_secret?:unknown;refresh_token?:unknown;developer_token?:unknown};
 export type MccAccount={id:string;name:string;manager:boolean;currency:string|null;timezone:string|null;status:string;level:number};
 const token=(value:unknown)=>typeof value==='string'&&value.length<=4096&&!/\s/.test(value)?value:'';
@@ -9,23 +10,22 @@ const id=(value:unknown)=>/^\d{10}$/.test(String(value??''))?String(value):null;
 export async function googleMccInventory(managerId:string,secrets:Secrets) {
  const deadline=Date.now()+45000;
  if(!/^[1-9]\d{9}$/.test(managerId))throw Error('invalid_manager');
- const refresh=token(secrets.refresh_token),developer=token(secrets.developer_token);
+ const refresh=token(secrets.refresh_token);
  if(!refresh)return {status:'oauth_pending' as const};
- if(!developer)return {status:'developer_token_required' as const};
  const client=token(secrets.client_id),clientSecret=token(secrets.client_secret);
  if(!client||!clientSecret)throw Error('invalid_credentials');
  const auth=await fetch('https://oauth2.googleapis.com/token',{method:'POST',redirect:'error',signal:AbortSignal.timeout(12000),headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({grant_type:'refresh_token',client_id:client,client_secret:clientSecret,refresh_token:refresh})});
  const oauth=await auth.json() as {access_token?:unknown;error?:string};
  if(!auth.ok||!token(oauth.access_token))throw Error(['invalid_grant','invalid_client'].includes(oauth.error??'')?'google_oauth_invalid':'google_unavailable');
  const version=/^v\d+$/.test(process.env.GOOGLE_ADS_API_VERSION??'')?process.env.GOOGLE_ADS_API_VERSION:'v26';
- const headers={Authorization:`Bearer ${token(oauth.access_token)}`,'developer-token':developer,'login-customer-id':managerId,'Content-Type':'application/json'};
+ const headers={Authorization:`Bearer ${token(oauth.access_token)}`,'login-customer-id':managerId,'Content-Type':'application/json'};
  async function search(query:string) {
   const rows:Record<string,unknown>[]=[],seen=new Set<string>();let next:string|undefined;
   for(let page=0;page<20;page++) {
    if(Date.now()>deadline)throw Error('google_incomplete_inventory');
    const response=await fetch(`https://googleads.googleapis.com/${version}/customers/${managerId}/googleAds:search`,{method:'POST',redirect:'error',signal:AbortSignal.timeout(15000),headers,body:JSON.stringify({query,...(next?{pageToken:next}:{})})});
    const body=await response.json() as {results?:Record<string,unknown>[];nextPageToken?:unknown;error?:unknown};
-   if(!response.ok||body.error){const code=JSON.stringify(body.error??{});throw Error(/DEVELOPER_TOKEN/.test(code)?'google_developer_token_denied':response.status===401?'google_oauth_invalid':response.status===403?'google_permission_denied':'google_unavailable')}
+   if(!response.ok||body.error)throw googleAdsFailure(response.status,body.error);
    if(body.results&&!Array.isArray(body.results))throw Error('google_unavailable');
    rows.push(...body.results??[]);if(rows.length>5000)throw Error('google_inventory_too_large');
    if(!body.nextPageToken)return rows;

@@ -1,19 +1,33 @@
 import type { Insight } from './adsReport.js';
 type Secrets = { client_id?: unknown; client_secret?: unknown; refresh_token?: unknown; developer_token?: unknown; manager_id?: unknown };
 const tokenValue = (value: unknown) => typeof value === 'string' && value.length <= 4096 && !/\s/.test(value) ? value : '';
+export function googleAdsFailure(status:number,error:unknown){
+ const details=error&&typeof error==='object'&&'details' in error&&Array.isArray(error.details)?error.details:[];
+ const codes:string[]=[];
+ for(const detail of details){
+  if(!detail||typeof detail!=='object')continue;
+  if(typeof detail.reason==='string')codes.push(detail.reason);
+  if(Array.isArray(detail.errors))for(const item of detail.errors){if(item?.errorCode&&typeof item.errorCode==='object')for(const code of Object.values(item.errorCode))if(typeof code==='string')codes.push(code)}
+ }
+ if(codes.some(code=>code==='CLOUD_PROJECT_NOT_APPROVED_FOR_PRODUCTION'||/DEVELOPER_TOKEN/.test(code)))return Error('google_cloud_access_required');
+ if(codes.includes('SERVICE_DISABLED')||codes.includes('API_NOT_ACTIVATED'))return Error('google_cloud_api_disabled');
+ return Error(status===401?'google_oauth_invalid':status===403?'google_permission_denied':'google_unavailable');
+}
 
 // Google Ads REST v26: https://developers.google.com/google-ads/api/rest/common/search
 // All queries are SELECT-only. Provider bodies/tokens are never returned to callers.
 export async function googleAdsReport(account: string, secrets: Secrets, period: { since: string; until: string }) {
   if (!/^[1-9]\d{9}$/.test(account) || !/^\d{4}-\d{2}-\d{2}$/.test(period.since) || !/^\d{4}-\d{2}-\d{2}$/.test(period.until)) throw new Error('invalid_credentials');
-  const clientId = tokenValue(secrets.client_id), clientSecret = tokenValue(secrets.client_secret), refresh = tokenValue(secrets.refresh_token), developer = tokenValue(secrets.developer_token), manager = tokenValue(secrets.manager_id);
+  const clientId = tokenValue(secrets.client_id), clientSecret = tokenValue(secrets.client_secret), refresh = tokenValue(secrets.refresh_token), manager = tokenValue(secrets.manager_id);
   if (!refresh) return { status: 'oauth_pending' as const };
-  if (!developer) return { status: 'developer_token_required' as const };
   if (!clientId || !clientSecret || (manager && !/^\d{10}$/.test(manager))) throw new Error('invalid_credentials');
   const auth = await fetch('https://oauth2.googleapis.com/token', { method: 'POST', redirect: 'error', signal: AbortSignal.timeout(12000), headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ grant_type: 'refresh_token', client_id: clientId, client_secret: clientSecret, refresh_token: refresh }) });
   const oauth = await auth.json() as { access_token?: unknown; error?: string };
   if (!auth.ok || !tokenValue(oauth.access_token)) throw new Error(['invalid_grant','invalid_client'].includes(oauth.error ?? '') ? 'google_oauth_invalid' : 'google_unavailable');
-  const headers: Record<string,string> = { Authorization: `Bearer ${tokenValue(oauth.access_token)}`, 'developer-token': developer, 'Content-Type': 'application/json' };
+  // Google sunset developer tokens on 2026-09-09. Access is now governed by
+  // the Cloud project owning the OAuth client; legacy tokens stay unused.
+  // https://developers.google.com/google-ads/api/docs/api-policy/developer-token
+  const headers: Record<string,string> = { Authorization: `Bearer ${tokenValue(oauth.access_token)}`, 'Content-Type': 'application/json' };
   if (manager) headers['login-customer-id'] = manager;
   const version = /^v\d+$/.test(process.env.GOOGLE_ADS_API_VERSION ?? '') ? process.env.GOOGLE_ADS_API_VERSION : 'v26';
   async function search(query: string) {
@@ -23,9 +37,7 @@ export async function googleAdsReport(account: string, secrets: Secrets, period:
       const response = await fetch(`https://googleads.googleapis.com/${version}/customers/${account}/googleAds:search`, { method: 'POST', redirect: 'error', signal: AbortSignal.timeout(15000), headers, body: JSON.stringify({ query, ...(pageToken ? { pageToken } : {}) }) });
       const data = await response.json() as { results?: Record<string,unknown>[]; nextPageToken?: unknown; error?: { details?: { errors?: { errorCode?: Record<string,string> }[] }[] } };
       if (!response.ok || data.error) {
-        const codes = data.error?.details?.flatMap(detail => detail.errors?.flatMap(error => Object.values(error.errorCode ?? {})) ?? []) ?? [];
-        if (codes.some(code => /DEVELOPER_TOKEN/.test(code))) throw new Error('google_developer_token_denied');
-        throw new Error(response.status === 401 ? 'google_oauth_invalid' : response.status === 403 ? 'google_permission_denied' : 'google_unavailable');
+        throw googleAdsFailure(response.status,data.error);
       }
       if (data.results && !Array.isArray(data.results)) throw new Error('invalid_provider_response');
       results.push(...data.results ?? []);
