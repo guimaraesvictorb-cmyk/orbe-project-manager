@@ -13,7 +13,7 @@ import {ChannelPerformance} from './ChannelPerformance'
 import {historicalContactOrigin} from '../lib/originReview'
 import {KommoOriginReview} from './KommoOriginReview'
 const historySuffix=' · origem histórica'
-const originGroup=(r:TrackingRecord)=>{const history=historicalContactOrigin(r);return history?channel(history)+historySuffix:channel(r.payload)}
+const originGroup=(r:TrackingRecord)=>{const history=historicalContactOrigin(r);return history?(history.recorded_source_label&&!history.utm_source&&!history.gclid&&!history.fbclid?'Cadastro · '+String(history.recorded_source_label):channel(history))+historySuffix:channel(r.payload)}
 const originName=(v:string)=>v.endsWith(historySuffix)?channelTitle(v.slice(0,-historySuffix.length))+historySuffix:channelTitle(v)
 const colors:Record<string,string>={Google:'var(--warning)',Meta:'var(--accent)',Site:'var(--success)',Instagram:'var(--danger)','Origem não identificada':'var(--text-tertiary)'}
 export function TrackingDashboard({connectionId,clientId,start,end,source,revision,unit,onUnitChange}:{connectionId:string;clientId?:string|null;start:string|null;end:string|null;source:string;revision:number;unit:string;onUnitChange:(v:string)=>void}){

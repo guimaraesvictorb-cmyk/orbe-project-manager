@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import {registerHooks} from 'node:module'
 import {historicalContactOrigin} from '../src/lib/originReview.ts'
 registerHooks({resolve(s,c,n){return n(c.parentURL?.includes('/api/')&&s.endsWith('.js')?s.replace(/\.js$/,'.ts'):s,c)}})
-const {deepReviewOrigins,noteOriginHints}=await import('../api/_lib/kommoDeepOrigin.ts')
+const {deepReviewOrigins,noteOriginHints,recordedOriginLabel}=await import('../api/_lib/kommoDeepOrigin.ts')
 const {seal}=await import('../api/_lib/kommo.ts')
 test('historical origins remove only evidenced contacts from unknowns without altering message attribution',()=>{
  const rows=Array.from({length:49},(_,i)=>({entity:'messages',entity_key:String(i),occurred_at:'2026-11-03T10:00:00Z',payload:{contact_id:String(i),source_status:'Não identificada',origin_review_status:i<37?'historical':'missing',crm_lead_created_at:'2026-09-01T10:00:00Z',crm_origin_utm_source:i<20?'meta':'',crm_origin_utm_campaign:i<20?'old_campaign':''}}));
@@ -33,4 +33,11 @@ test('deep review binds contact, all related leads and notes before a revision-g
 test('UTM links in notes stay review hints and cross-account notes are rejected',()=>{
  const notes={_embedded:{notes:[{account_id:456,entity_id:123,params:{text:'https://example.test/?utm_source=meta'}}]}};
  assert.deepEqual(noteOriginHints(notes,'456','123'),{count:1,hints:1});assert.throws(()=>noteOriginHints(notes,'999','123'));assert.throws(()=>noteOriginHints(notes,'456','999'));
+});
+test('explicit CRM origin fields remain labels and ambiguous or generic channels are not invented origins',()=>{
+ const field=(value:unknown)=>({field_name:'Como nos conheceu?',values:[{value}]});
+ assert.equal(recordedOriginLabel([field('Indicação')]),'Indicação');
+ for(const value of ['WhatsApp','Import','Outros','{{source}}',123])assert.equal(recordedOriginLabel([field(value)]),'');
+ assert.equal(recordedOriginLabel([field('Google'),field('Indicação')]),'');
+ assert.equal(recordedOriginLabel([{field_name:'Nome',values:[{value:'Meta'}]}]),'');
 });

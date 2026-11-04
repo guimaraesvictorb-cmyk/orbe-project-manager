@@ -16,7 +16,7 @@ export function OriginReviewEvidence({payload:p}:{payload:TrackingRecord['payloa
   {p.crm_entry_channel&&<p className="text-[var(--text-tertiary)]">Canal de entrada na Kommo: {String(p.crm_entry_channel)}. O canal de atendimento não confirma a campanha de aquisição.</p>}
   {declared&&<p className="text-[var(--text-tertiary)]">Mensagem: {declared}</p>}
   {p.origin_deep_checked_at&&<p className="text-[var(--text-tertiary)]">Histórico completo conferido: {String(p.origin_deep_leads_checked)} negócio(s) vinculado(s) e {String(p.origin_deep_notes_checked)} nota(s). {p.origin_deep_status==='not_found'?'Nenhuma origem comprovada nesses registros.':''}</p>}
-  {p.origin_deep_status==='historical_evidence'&&<p>Origem no histórico do contato: {String(p.crm_contact_origin_utm_source||(p.crm_contact_origin_gclid?'Google':'Meta'))}{p.crm_contact_origin_utm_campaign?` · ${p.crm_contact_origin_utm_campaign}`:''}. Registro de {date(p.crm_contact_origin_created_at)}.</p>}
+  {p.origin_deep_status==='historical_evidence'&&<p>Origem no histórico do contato: {String(p.crm_contact_origin_utm_source||p.crm_contact_origin_label||(p.crm_contact_origin_gclid?'Google':p.crm_contact_origin_fbclid?'Meta':'Não informada'))}{p.crm_contact_origin_utm_campaign?` · ${p.crm_contact_origin_utm_campaign}`:''}. Registro de {date(p.crm_contact_origin_created_at)}.</p>}
   {Number(p.origin_deep_note_hints)>0&&<p className="text-[var(--text-tertiary)]">{String(p.origin_deep_note_hints)} nota(s) com parâmetros de campanha para revisão manual; um link citado em nota não comprova um clique.</p>}
  </div>
 }

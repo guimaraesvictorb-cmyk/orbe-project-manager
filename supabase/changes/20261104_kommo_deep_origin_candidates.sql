@@ -10,8 +10,9 @@ RETURNS SETOF public.wa_tracking_records LANGUAGE sql STABLE SET search_path='' 
  WHERE payload->>'attribution_reason'='no_reference'
  AND coalesce(payload->>'crm_origin_utm_source','')='' AND coalesce(payload->>'crm_origin_gclid','')='' AND coalesce(payload->>'crm_origin_fbclid','')=''
  AND coalesce(payload->>'crm_contact_origin_utm_source','')='' AND coalesce(payload->>'crm_contact_origin_gclid','')='' AND coalesce(payload->>'crm_contact_origin_fbclid','')=''
+ AND coalesce(payload->>'crm_contact_origin_label','')=''
  AND (p_start IS NULL OR occurred_at>=p_start) AND (p_end IS NULL OR occurred_at<p_end)
- AND (payload->>'origin_deep_version' IS DISTINCT FROM '1' OR (payload->>'origin_deep_checked_at')::timestamptz<now()-interval '24 hours')
+ AND (payload->>'origin_deep_version' IS DISTINCT FROM '2' OR (payload->>'origin_deep_checked_at')::timestamptz<now()-interval '24 hours')
  ORDER BY occurred_at,entity_key LIMIT 2;
 $$;
 REVOKE ALL ON FUNCTION public.wa_kommo_deep_origin_candidates(uuid,timestamptz,timestamptz) FROM PUBLIC,anon,authenticated;

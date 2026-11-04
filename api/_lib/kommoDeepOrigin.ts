@@ -4,7 +4,22 @@ import type {KommoConfig} from './kommoEnrichment.js';
 type Row={entity_key:string;revision:number;occurred_at:string;payload:Record<string,string|number>};
 const id=(value:unknown)=>/^[1-9][0-9]{0,18}$/.test(String(value??''));
 const hasSource=(fields:Record<string,string>|null):fields is Record<string,string>=>!!(fields?.utm_source||fields?.gclid||fields?.fbclid);
-type Evidence={fields:Record<string,string>;createdAt:string;lead:string;kind:string};
+type Evidence={fields:Record<string,string>;createdAt:string;lead:string;kind:string;label?:string};
+export function recordedOriginLabel(fields:unknown) {
+ const normalize=(s:string)=>s.normalize('NFD').replace(/\p{Diacritic}/gu,'').toLowerCase().trim().replace(/[? :]+$/u,'');
+ const labels=new Set<string>();
+ for(const raw of Array.isArray(fields)?fields:[]){
+  const field=object(raw),name=normalize(String(field.field_name??''));
+  if(!['origem','origem do lead','fonte','source','lead source','canal de origem','como nos conheceu'].includes(name))continue;
+  for(const rawValue of Array.isArray(field.values)?field.values:[]){
+   const value=object(rawValue).value;
+   if(typeof value!=='string'||!value.trim()||value.length>160||/[{}]/u.test(value)||[...value].some(c=>c.charCodeAt(0)<32||c.charCodeAt(0)===127))continue;
+   if(['whatsapp','waba','import','importacao','crm','kommo','rayafit','nenhum','nao informado','outros'].includes(normalize(value)))continue;
+   labels.add(value.trim());
+  }
+ }
+ return labels.size===1?[...labels][0]:'';
+}
 
 // Notes are inspected for explicit UTM-bearing links, but those links are only
 // review hints: an agent can paste a campaign URL into any note after acquisition.
@@ -42,12 +57,14 @@ export async function deepReviewOrigins(cfg:KommoConfig,start:string|null,end:st
    const value=object(raw),key=String(value.id);if(!ids.includes(key))throw new Error('invalid_lead_binding');
    const origin=leadOriginEvidence(value,{account:cfg.account_id,lead:key,contact});if(!origin)throw new Error('invalid_lead_binding');
    checked++;if(key===lead)currentBound=true;
-   if(Date.parse(origin.createdAt)<=Date.parse(row.occurred_at)&&hasSource(origin.fields))evidence.push({...origin,lead:key,kind:'linked_lead_fields'});
+   const label=recordedOriginLabel(value.custom_fields_values);
+   if(Date.parse(origin.createdAt)<=Date.parse(row.occurred_at)&&(hasSource(origin.fields)||label))evidence.push({...origin,label,lead:key,kind:'linked_lead_fields'});
   }
   if(!currentBound)throw new Error('invalid_lead_binding');
   if(new Set(leadRows.map(raw=>String(object(raw).id))).size!==ids.length)throw new Error('review_incomplete');
   const fields=crmOriginFields(c.custom_fields_values),created=Number(c.created_at)*1000;
-  if(hasSource(fields)&&Number.isFinite(created)&&created>=Date.parse('2020-01-01')&&created<=Date.parse(row.occurred_at))evidence.push({fields,createdAt:new Date(created).toISOString(),lead:'',kind:'contact_fields'});
+  const label=recordedOriginLabel(c.custom_fields_values);
+  if(fields&&(hasSource(fields)||label)&&Number.isFinite(created)&&created>=Date.parse('2020-01-01')&&created<=Date.parse(row.occurred_at))evidence.push({fields,label,createdAt:new Date(created).toISOString(),lead:'',kind:'contact_fields'});
   const notesFor=async(kind:'leads'|'contacts',key:string)=>{
    let count=0,hints=0;
    for(let page=1;page<=4;page++){
@@ -66,8 +83,8 @@ export async function deepReviewOrigins(cfg:KommoConfig,start:string|null,end:st
   }
   evidence.sort((a,b)=>a.createdAt.localeCompare(b.createdAt)||a.lead.localeCompare(b.lead));
   const best=evidence[0];
-  const update:Record<string,string|number>={...row.payload,origin_deep_version:'1',origin_deep_checked_at:new Date().toISOString(),origin_deep_status:best?'historical_evidence':'not_found',origin_deep_leads_checked:checked,origin_deep_notes_checked:counts.reduce((n,r)=>n+r.count,0),origin_deep_note_hints:counts.reduce((n,r)=>n+r.hints,0)};
-  if(best){update.crm_contact_origin_created_at=best.createdAt;update.crm_contact_origin_lead=best.lead;update.crm_contact_origin_kind=best.kind;for(const key of sourceFields)update['crm_contact_origin_'+key]=best.fields[key]??'';}
+  const update:Record<string,string|number>={...row.payload,origin_deep_version:'2',origin_deep_checked_at:new Date().toISOString(),origin_deep_status:best?'historical_evidence':'not_found',origin_deep_leads_checked:checked,origin_deep_notes_checked:counts.reduce((n,r)=>n+r.count,0),origin_deep_note_hints:counts.reduce((n,r)=>n+r.hints,0)};
+  if(best){update.crm_contact_origin_created_at=best.createdAt;update.crm_contact_origin_lead=best.lead;update.crm_contact_origin_kind=best.kind;update.crm_contact_origin_label=best.label??'';for(const key of sourceFields)update['crm_contact_origin_'+key]=best.fields[key]??'';}
   const saved=await db<Row[]>(`rest/v1/wa_tracking_records?connection_id=eq.${cfg.connection_id}&entity=eq.messages&entity_key=eq.${encodeURIComponent(row.entity_key)}&revision=eq.${row.revision}`,{method:'PATCH',body:JSON.stringify({payload:update,revision:row.revision+1,synced_at:new Date().toISOString()})});
   return {reviewed:saved.length?1:0,recovered:saved.length&&best?1:0,failed:0,has_more:rows.length>1||!saved.length};
  }catch(error){const reason=error instanceof Error&&['invalid_contact_binding','invalid_lead_binding','invalid_note_binding','review_incomplete','kommo_permission_denied','kommo_token_invalid','kommo_unavailable','storage_unavailable'].includes(error.message)?error.message:'verification_failed';console.error('KOMMO_DEEP_ORIGIN',reason);return {reviewed:0,recovered:0,failed:1,has_more:rows.length>1,failure_reason:reason};}
