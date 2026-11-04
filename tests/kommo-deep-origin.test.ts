@@ -37,7 +37,7 @@ test('UTM links in notes stay review hints and cross-account notes are rejected'
 test('explicit CRM origin fields remain labels and ambiguous or generic channels are not invented origins',()=>{
  const field=(value:unknown)=>({field_name:'Como nos conheceu?',values:[{value}]});
  assert.equal(recordedOriginLabel([field('Indicação')]),'Indicação');
- for(const value of ['WhatsApp','Import','Outros','{{source}}',123])assert.equal(recordedOriginLabel([field(value)]),'');
+ for(const value of ['WhatsApp','Import','Outros','Não sei','Não identificado','{{source}}',123])assert.equal(recordedOriginLabel([field(value)]),'');
  assert.equal(recordedOriginLabel([field('Google'),field('Indicação')]),'');
  assert.equal(recordedOriginLabel([{field_name:'Nome',values:[{value:'Meta'}]}]),'');
 });

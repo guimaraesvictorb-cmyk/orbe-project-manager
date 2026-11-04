@@ -14,7 +14,7 @@ export function recordedOriginLabel(fields:unknown) {
   for(const rawValue of Array.isArray(field.values)?field.values:[]){
    const value=object(rawValue).value;
    if(typeof value!=='string'||!value.trim()||value.length>160||/[{}]/u.test(value)||[...value].some(c=>c.charCodeAt(0)<32||c.charCodeAt(0)===127))continue;
-   if(['whatsapp','waba','import','importacao','crm','kommo','rayafit','nenhum','nao informado','outros'].includes(normalize(value)))continue;
+   if(['whatsapp','waba','import','importacao','crm','kommo','rayafit','nenhum','nenhuma','nao informado','nao informada','nao identificado','nao identificada','nao sei','sem origem','sem informacao','selecionar','outros','-'].includes(normalize(value)))continue;
    labels.add(value.trim());
   }
  }
