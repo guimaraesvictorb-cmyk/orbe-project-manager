@@ -25,6 +25,7 @@ export function OriginReviewEvidence({payload:p}:{payload:TrackingRecord['payloa
   {p.origin_history_messages_access==='plan_required'&&<p className="text-[var(--text-tertiary)]">A Kommo exige um plano compatível para liberar as mensagens antigas pela API.</p>}
   {p.origin_history_messages_access==='history_unavailable'&&<p className="text-[var(--text-tertiary)]">A Kommo não disponibilizou as mensagens antigas desta conversa pela API.</p>}
   {p.origin_history_status==='conflicting_channels'&&<p>O histórico cita mais de um canal. A origem permanece sem definição para evitar atribuição incorreta.</p>}
+  {p.origin_history_events_access==='unavailable'&&<p className="text-[var(--text-tertiary)]">A Kommo não disponibilizou o histórico de alterações de campos pela integração. A consulta dessas alterações permanece incompleta.</p>}
  </div>
 }
 
