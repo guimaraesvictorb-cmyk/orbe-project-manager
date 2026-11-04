@@ -46,7 +46,7 @@ export async function reviewChannelHistory(cfg:KommoConfig,start:string|null,end
     if(source||String(field.code??'').toUpperCase()==='UTM_SOURCE'||String(field.name??'').toLowerCase()==='utm_source')sourceFields.add(String(field.id));
    }
    const created=Number(current.created_at);
-   const q=new URLSearchParams({'filter[entity][]':entity,'filter[entity_id][]':key,'filter[created_at][from]':String(Number.isSafeInteger(created)&&created>0?created:0),'filter[created_at][to]':String(Math.floor(at/1000))});
+   const q=new URLSearchParams({'filter[entity]':entity,'filter[entity_id]':key,'filter[created_at][from]':String(Number.isSafeInteger(created)&&created>0?created:0),'filter[created_at][to]':String(Math.floor(at/1000))});
    let events:Record<string,unknown>[]=[];
    try{events=await collect(`/api/v4/events?${q}`,'events')}catch(e){
     if(httpStatus===400||httpStatus===403){eventsAccess='unavailable';console.error('KOMMO_CHANNEL_EVENTS_UNAVAILABLE',httpStatus,validation)}else throw e;

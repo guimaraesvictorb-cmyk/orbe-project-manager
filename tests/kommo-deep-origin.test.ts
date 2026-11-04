@@ -80,7 +80,7 @@ test('channel history uses scoped events and reports denied message access witho
   if(u.pathname.endsWith('/custom_fields'))return new Response(JSON.stringify({_embedded:{custom_fields:[{id:55,name:'Origem'}]}}));
   if(u.pathname==='/api/v4/contacts/123')return new Response(JSON.stringify({id:123,account_id:wrong?999:456}));
   if(u.pathname==='/api/v4/leads/987')return new Response(JSON.stringify({id:987,account_id:456,_embedded:{contacts:[{id:123}]}}));
-  if(u.pathname==='/api/v4/events')return new Response(JSON.stringify({_embedded:{events:[{id:'event',account_id:456,entity_id:Number(u.searchParams.get('filter[entity_id][]')),entity_type:u.searchParams.get('filter[entity][]'),type:'custom_field_value_changed',created_at:1735689600,value_after:[{custom_field_value:{field_id:55,text:'Google'}}]}]}}));
+  if(u.pathname==='/api/v4/events')return new Response(JSON.stringify({_embedded:{events:[{id:'event',account_id:456,entity_id:Number(u.searchParams.get('filter[entity_id]')),entity_type:u.searchParams.get('filter[entity]'),type:'custom_field_value_changed',created_at:1735689600,value_after:[{custom_field_value:{field_id:55,text:'Google'}}]}]}}));
   if(u.pathname==='/api/v4/talks')return new Response(JSON.stringify({_embedded:{talks:[{talk_id:12,account_id:456,contact_id:123,chat_id:'chat',created_at:1735689600}]}}));
   assert.equal(u.pathname,'/api/v4/talks/12/messages');return new Response('{}',{status:403});
  };
