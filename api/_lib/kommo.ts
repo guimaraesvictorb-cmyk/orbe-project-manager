@@ -41,7 +41,17 @@ export function decimal(input: unknown) {
 export async function kommoRequest<T>(origin: string,token: string,path: string,init: RequestInit={}) {
   if(!path.startsWith('/api/v4/'))throw new Error('invalid_path');
   const response=await fetch(kommoOrigin(origin)+path,{...init,redirect:'error',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json',Accept:'application/json'},signal:AbortSignal.timeout(10000)});
-  if(!response.ok)throw Object.assign(new Error(response.status===401?'kommo_token_invalid':response.status===403?'kommo_permission_denied':'kommo_unavailable'),{status:response.status});
+  if(!response.ok){
+    const validation:string[]=[];
+    if(response.status===400){
+      const detail=await response.json().catch(()=>null) as {'validation-errors'?:{errors?:{code?:unknown;path?:unknown}[]}[]}|null;
+      for(const group of Array.isArray(detail?.['validation-errors'])?detail['validation-errors']:[])for(const error of Array.isArray(group.errors)?group.errors:[]){
+        const path=String(error.path??''),code=String(error.code??'');
+        if(/^[\w.[\]]{1,100}$/u.test(path)&&/^[\w]{1,80}$/u.test(code))validation.push(`${path}:${code}`);
+      }
+    }
+    throw Object.assign(new Error(response.status===401?'kommo_token_invalid':response.status===403?'kommo_permission_denied':'kommo_unavailable'),{status:response.status,validation:validation.slice(0,5).join(',')});
+  }
   return (response.status===204?null:await response.json()) as T;
 }
 export type KommoWebhook={id:number;destination:string;disabled:boolean;settings:string[]};
