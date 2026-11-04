@@ -51,6 +51,11 @@ export async function reviewChannelHistory(cfg:KommoConfig,start:string|null,end
    try{events=await collect(`/api/v4/events?${q}`,'events')}catch(e){
     if(httpStatus===400||httpStatus===403){eventsAccess='unavailable';console.error('KOMMO_CHANNEL_EVENTS_UNAVAILABLE',httpStatus,validation)}else throw e;
    }
+   // A provider response outside the requested entity cannot be used, even if
+   // some entries look valid. Discard the whole batch and retain partial status.
+   if(events.some(event=>String(event.account_id)!==cfg.account_id||String(event.entity_id)!==key||event.entity_type!==entity)){
+    eventsAccess='invalid_response';events=[];console.error('KOMMO_CHANNEL_EVENTS_UNBOUND');
+   }
    for(const event of events){
     if(String(event.account_id)!==cfg.account_id||String(event.entity_id)!==key||event.entity_type!==entity)throw new Error('history_invalid_binding');
     eventsChecked++;
