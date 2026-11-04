@@ -26,7 +26,7 @@ export async function reviewChannelHistory(cfg:KommoConfig,start:string|null,end
  const collect=async(path:string,key:string,max=8)=>{
   const result:Record<string,unknown>[]=[];
   for(let page=1;page<=max;page++){
-   const response=await read(`${path}${path.includes('?')?'&':'?'}limit=250&page=${page}`);result.push(...items(response,key));
+   const response=await read(`${path}${path.includes('?')?'&':'?'}limit=100&page=${page}`);result.push(...items(response,key));
    if(!response||!object(object(response)._links??{}).next)return result;
   }
   throw new Error('history_incomplete');
