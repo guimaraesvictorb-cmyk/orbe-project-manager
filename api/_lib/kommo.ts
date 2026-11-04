@@ -133,8 +133,14 @@ export function leadOriginEvidence(input:unknown,binding:{account:string;lead:st
   if(!contacts.some(c=>String(object(c).id)===binding.contact))return null;
   const created=Number(lead.created_at);
   if(!Number.isSafeInteger(created)||created<1577836800||created*1000>Date.now()+300000)return null;
+  const values=crmOriginFields(lead.custom_fields_values);if(!values)return null;
+  const source=embedded.source&&typeof embedded.source==='object'&&!Array.isArray(embedded.source)?object(embedded.source):{};
+  const channel=typeof source.name==='string'&&![...source.name].some(c=>c.charCodeAt(0)<32||c.charCodeAt(0)===127)?source.name.trim().slice(0,160):'';
+  return {createdAt:new Date(created*1000).toISOString(),fields:values,channel};
+}
+export function crmOriginFields(fields:unknown) {
   const values:Record<string,string>={};
-  for(const raw of Array.isArray(lead.custom_fields_values)?lead.custom_fields_values:[]) {
+  for(const raw of Array.isArray(fields)?fields:[]) {
     const field=object(raw),code=String(field.field_code??'').toLowerCase(),name=String(field.field_name??'').trim().toLowerCase();
     const key=sourceFields.find(k=>k===code||k===name);
     if(!key||!Array.isArray(field.values))continue;
@@ -148,9 +154,7 @@ export function leadOriginEvidence(input:unknown,binding:{account:string;lead:st
       values[key]=value;
     }
   }
-  const source=embedded.source&&typeof embedded.source==='object'&&!Array.isArray(embedded.source)?object(embedded.source):{};
-  const channel=typeof source.name==='string'&&![...source.name].some(c=>c.charCodeAt(0)<32||c.charCodeAt(0)===127)?source.name.trim().slice(0,160):'';
-  return {createdAt:new Date(created*1000).toISOString(),fields:values,channel};
+  return values;
 }
 export function leadAttribution(input:unknown,binding:{account:string;lead:string;contact:string;messageAt:string}) {
   const evidence=leadOriginEvidence(input,binding),message=Date.parse(binding.messageAt);

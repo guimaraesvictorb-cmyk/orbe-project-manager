@@ -6,3 +6,19 @@ export function messageOriginStatement(text:unknown) {
  if(/^(?:ola[!,.\s]*)?vi o anuncio\b/u.test(value))return 'Anúncio, declarado pelo contato; plataforma e campanha não confirmadas.'
  return ''
 }
+import type {TrackingRecord} from './whatsappTracking'
+// Display-only evidence. The original message UTMs, click IDs and timestamp
+// remain untouched; a historical acquisition never becomes a new click.
+export function historicalContactOrigin(row:TrackingRecord):TrackingRecord['payload']|null {
+ const p=row.payload
+ if(p.source_status==='Identificada'||p.utm_source||p.gclid||p.fbclid)return null
+ for(const prefix of ['crm_origin_','crm_contact_origin_']){
+  if(prefix==='crm_origin_'&&p.origin_review_status!=='historical')continue
+  if(prefix==='crm_contact_origin_'&&p.origin_deep_status!=='historical_evidence')continue
+  if(!p[prefix+'utm_source']&&!p[prefix+'gclid']&&!p[prefix+'fbclid'])continue
+  const created=Date.parse(String(prefix==='crm_origin_'?p.crm_lead_created_at:p.crm_contact_origin_created_at))
+  if(!Number.isFinite(created)||created>Date.parse(row.occurred_at))continue
+  return Object.fromEntries(['utm_source','utm_medium','utm_campaign','utm_content','utm_term','gclid','fbclid'].map(key=>[key,p[prefix+key]||'']))
+ }
+ return null
+}
