@@ -41,7 +41,7 @@ export function decimal(input: unknown) {
 export async function kommoRequest<T>(origin: string,token: string,path: string,init: RequestInit={}) {
   if(!path.startsWith('/api/v4/'))throw new Error('invalid_path');
   const response=await fetch(kommoOrigin(origin)+path,{...init,redirect:'error',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json',Accept:'application/json'},signal:AbortSignal.timeout(10000)});
-  if(!response.ok)throw new Error(response.status===401?'kommo_token_invalid':response.status===403?'kommo_permission_denied':'kommo_unavailable');
+  if(!response.ok)throw Object.assign(new Error(response.status===401?'kommo_token_invalid':response.status===403?'kommo_permission_denied':'kommo_unavailable'),{status:response.status});
   return (response.status===204?null:await response.json()) as T;
 }
 export type KommoWebhook={id:number;destination:string;disabled:boolean;settings:string[]};

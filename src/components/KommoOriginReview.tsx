@@ -22,6 +22,8 @@ export function OriginReviewEvidence({payload:p}:{payload:TrackingRecord['payloa
   {p.origin_history_checked_at&&<p className="text-[var(--text-tertiary)]">Histórico de conversas: {String(p.origin_history_events_checked)} eventos, {String(p.origin_history_talks_checked)} conversas e {String(p.origin_history_messages_checked)} mensagens consultadas.</p>}
   {p.origin_history_channel&&<p>Canal: {String(p.origin_history_channel)} · {p.origin_history_evidence_kind==='contact_declaration'?'informado pelo contato na mensagem':p.origin_history_evidence_kind==='instagram_conversation'?'conversa recebida no Instagram':'registrado no histórico do campo de origem'}. Não confirma um novo clique ou campanha.</p>}
   {p.origin_history_messages_access==='permission_required'&&<p className="text-[var(--text-tertiary)]">A Kommo não autorizou a leitura das mensagens antigas. A integração precisa da permissão “External chat history”.</p>}
+  {p.origin_history_messages_access==='plan_required'&&<p className="text-[var(--text-tertiary)]">A Kommo exige um plano compatível para liberar as mensagens antigas pela API.</p>}
+  {p.origin_history_messages_access==='history_unavailable'&&<p className="text-[var(--text-tertiary)]">A Kommo não disponibilizou as mensagens antigas desta conversa pela API.</p>}
   {p.origin_history_status==='conflicting_channels'&&<p>O histórico cita mais de um canal. A origem permanece sem definição para evitar atribuição incorreta.</p>}
  </div>
 }
