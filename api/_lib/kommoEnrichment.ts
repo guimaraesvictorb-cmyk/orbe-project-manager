@@ -1,6 +1,7 @@
 import {contactIdentity,kommoRequest,unseal} from './kommo.js';
 import {storage} from './trackingServer.js';
 import {reviewOrigins} from './kommoOriginReview.js';
+import {deepReviewOrigins} from './kommoDeepOrigin.js';
 export type KommoConfig={connection_id:string;client_id:string;account_id:string;account_origin:string;token_ciphertext:string;webhook_ciphertext:string;enabled:boolean};
 export async function enrich(connectionId:string,ids:string[],retry=true) {
   const db=storage();
@@ -19,4 +20,5 @@ export async function enrich(connectionId:string,ids:string[],retry=true) {
   // Native ad metadata can arrive just after the message webhook. Retry once;
   // subsequent incoming events and the connection check also retry pending rows.
   if(retry&&result.reviewed){await new Promise(resolve=>setTimeout(resolve,8000));await enrich(connectionId,[],false);}
+  else await deepReviewOrigins(cfg,new Date(Date.now()-86400000).toISOString(),null);
 }
