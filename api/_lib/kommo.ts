@@ -44,11 +44,12 @@ export async function kommoRequest<T>(origin: string,token: string,path: string,
   if(!response.ok){
     const validation:string[]=[];
     if(response.status===400){
-      const detail=await response.json().catch(()=>null) as {'validation-errors'?:{errors?:{code?:unknown;path?:unknown}[]}[]}|null;
+      const detail=await response.json().catch(()=>null) as {title?:string;detail?:string;'validation-errors'?:{errors?:{code?:unknown;path?:unknown}[]}[]}|null;
       for(const group of Array.isArray(detail?.['validation-errors'])?detail['validation-errors']:[])for(const error of Array.isArray(group.errors)?group.errors:[]){
         const path=String(error.path??''),code=String(error.code??'');
         if(/^[\w.[\]]{1,100}$/u.test(path)&&/^[\w]{1,80}$/u.test(code))validation.push(`${path}:${code}`);
       }
+      if(!validation.length&&detail)validation.push(String(detail.detail??detail.title??'').replace(/[0-9]{4,}/gu,'[id]').replace(/[^\p{L}\p{N}\s.,:;_\-[\]()]/gu,'').slice(0,240));
     }
     throw Object.assign(new Error(response.status===401?'kommo_token_invalid':response.status===403?'kommo_permission_denied':'kommo_unavailable'),{status:response.status,validation:validation.slice(0,5).join(',')});
   }

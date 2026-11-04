@@ -26,6 +26,7 @@ export function OriginReviewEvidence({payload:p}:{payload:TrackingRecord['payloa
   {p.origin_history_messages_access==='history_unavailable'&&<p className="text-[var(--text-tertiary)]">A Kommo não disponibilizou as mensagens antigas desta conversa pela API.</p>}
   {p.origin_history_status==='conflicting_channels'&&<p>O histórico cita mais de um canal. A origem permanece sem definição para evitar atribuição incorreta.</p>}
   {p.origin_history_events_access==='unavailable'&&<p className="text-[var(--text-tertiary)]">A Kommo não disponibilizou o histórico de alterações de campos pela integração. A consulta dessas alterações permanece incompleta.</p>}
+  {p.origin_manual_history_checked_at&&<p className="text-[var(--text-tertiary)]">Conferido também na tela da Kommo em {date(p.origin_manual_history_checked_at)}. {p.origin_manual_history_result==='explicit_site_declaration'?'O contato informou que veio do Site.':'Nenhuma comprovação de Google, Meta, Site ou Instagram encontrada nas conversas disponíveis.'}</p>}
  </div>
 }
 
