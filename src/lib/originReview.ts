@@ -22,6 +22,11 @@ export function contactChannel(row:TrackingRecord) {
  if(current!=='Origem não identificada')return current
  if(p.gclid)return 'Google'
  if(p.fbclid)return 'Meta'
+ const historyAt=Date.parse(String(p.origin_history_evidence_at))
+ if(p.origin_history_status==='channel_found'&&p.origin_history_evidence_id&&Number.isFinite(historyAt)&&historyAt<=Date.parse(row.occurred_at)){
+  const channel=recordedChannel(p.origin_history_channel)
+  if(channel!=='Origem não identificada')return channel
+ }
  const history=recoveredContactOrigin(row)
  if(!history||history.origin_return_context)return 'Origem não identificada'
  const historical=recordedChannel(history.utm_source)

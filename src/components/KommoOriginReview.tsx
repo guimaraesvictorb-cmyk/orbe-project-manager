@@ -19,6 +19,10 @@ export function OriginReviewEvidence({payload:p}:{payload:TrackingRecord['payloa
   {p.origin_deep_checked_at&&<p className="text-[var(--text-tertiary)]">Histórico completo conferido: {String(p.origin_deep_leads_checked)} negócio(s) vinculado(s) e {String(p.origin_deep_notes_checked)} nota(s). {p.origin_deep_status==='not_found'?'Origem de aquisição não registrada nesses cadastros.':''}</p>}
   {p.origin_deep_status==='historical_evidence'&&<p>Origem registrada no cadastro do contato: {String(p.crm_contact_origin_utm_source||p.crm_contact_origin_label||(p.crm_contact_origin_gclid?'Google':p.crm_contact_origin_fbclid?'Meta':'Não informada'))}{p.crm_contact_origin_utm_campaign?` · ${p.crm_contact_origin_utm_campaign}`:''}. Registro de {date(p.crm_contact_origin_created_at)}.</p>}
   {Number(p.origin_deep_note_hints)>0&&<p className="text-[var(--text-tertiary)]">{String(p.origin_deep_note_hints)} nota(s) com parâmetros de campanha para revisão manual; um link citado em nota não comprova um clique.</p>}
+  {p.origin_history_checked_at&&<p className="text-[var(--text-tertiary)]">Histórico de conversas: {String(p.origin_history_events_checked)} eventos, {String(p.origin_history_talks_checked)} conversas e {String(p.origin_history_messages_checked)} mensagens consultadas.</p>}
+  {p.origin_history_channel&&<p>Canal: {String(p.origin_history_channel)} · {p.origin_history_evidence_kind==='contact_declaration'?'informado pelo contato na mensagem':p.origin_history_evidence_kind==='instagram_conversation'?'conversa recebida no Instagram':'registrado no histórico do campo de origem'}. Não confirma um novo clique ou campanha.</p>}
+  {p.origin_history_messages_access==='permission_required'&&<p className="text-[var(--text-tertiary)]">A Kommo não autorizou a leitura das mensagens antigas. A integração precisa da permissão “External chat history”.</p>}
+  {p.origin_history_status==='conflicting_channels'&&<p>O histórico cita mais de um canal. A origem permanece sem definição para evitar atribuição incorreta.</p>}
  </div>
 }
 
@@ -31,14 +35,14 @@ export function KommoOriginReview({clientId,start,end,rows,onReviewed}:{clientId
  const withoutCurrent=rows.filter(r=>r.payload.source_status!=='Identificada')
  const restored=withoutCurrent.filter(r=>contactChannel(r)!=='Origem não identificada')
  const unknown=withoutCurrent.filter(r=>contactChannel(r)==='Origem não identificada')
- async function review(deep=false){
+ async function review(deep=false,history=false){
   const requestedScope=scope;setBusy(true);setNotice('Consultando os registros da Kommo…');setError('')
   let total=0
   try{
    const {data}=await supabase.auth.getSession();if(!data.session)throw new Error('Entre novamente para revisar as origens.')
    for(let batch=0;batch<40;batch++){
     if(activeScope.current!==requestedScope)return
-    const response=await fetch('/api/kommo-status',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${data.session.access_token}`},body:JSON.stringify({client_id:clientId,action:deep?'review_origins_deep':'review_origins',start,end})})
+    const response=await fetch('/api/kommo-status',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${data.session.access_token}`},body:JSON.stringify({client_id:clientId,action:history?'review_channel_history':deep?'review_origins_deep':'review_origins',start,end})})
     const result=await response.json() as {reviewed:number;recovered:number;failed:number;has_more:boolean;error?:string}
     if(!response.ok||typeof result.reviewed!=='number')throw new Error(result.error||'Não foi possível consultar a Kommo.')
     if(activeScope.current!==requestedScope)return
@@ -51,7 +55,7 @@ export function KommoOriginReview({clientId,start,end,rows,onReviewed}:{clientId
   finally{if(activeScope.current===requestedScope){setBusy(false);onReviewed()}}
  }
  return <section aria-label="Revisão de origens da Kommo" className="rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] p-5 space-y-3">
-  <div className="flex justify-between items-start gap-4 flex-wrap"><div><h3 className="font-semibold">Revisão das origens</h3><p className="text-sm text-[var(--text-tertiary)] mt-2">{historical} contatos já existiam na Kommo antes desta conversa · {Math.max(0,unknown.length-unknown.filter(r=>r.payload.origin_review_status).length)} sem revisão neste período.</p></div><div className="flex flex-wrap gap-4"><button disabled={busy} onClick={()=>void review()} className="text-sm text-[var(--accent)] disabled:opacity-50">{busy?'Revisando…':'Investigar origens na Kommo'}</button><button disabled={busy} onClick={()=>void review(true)} className="text-sm text-[var(--accent)] disabled:opacity-50">Conferir histórico completo</button></div></div>
+  <div className="flex justify-between items-start gap-4 flex-wrap"><div><h3 className="font-semibold">Revisão das origens</h3><p className="text-sm text-[var(--text-tertiary)] mt-2">{historical} contatos já existiam na Kommo antes desta conversa · {Math.max(0,unknown.length-unknown.filter(r=>r.payload.origin_review_status).length)} sem revisão neste período.</p></div><div className="flex flex-wrap gap-4"><button disabled={busy} onClick={()=>void review()} className="text-sm text-[var(--accent)] disabled:opacity-50">{busy?'Revisando…':'Investigar origens na Kommo'}</button><button disabled={busy} onClick={()=>void review(true)} className="text-sm text-[var(--accent)] disabled:opacity-50">Conferir cadastros e notas</button><button disabled={busy} onClick={()=>void review(false,true)} className="text-sm text-[var(--accent)] disabled:opacity-50">Cruzar conversas e eventos antigos</button></div></div>
   <p className="text-xs text-[var(--text-tertiary)]">A origem registrada no cadastro fica separada da origem da conversa atual. Um retorno de cliente não é contado como um novo clique. {reviewed} contatos com revisão registrada.</p>
   <div className="grid sm:grid-cols-2 gap-3 text-sm"><div className="rounded-lg bg-[var(--bg-surface-2)] p-3"><strong className="text-xl">{restored.length}</strong><p className="text-xs mt-1">Canal identificado na Kommo</p></div><div className="rounded-lg bg-[var(--bg-surface-2)] p-3"><strong className="text-xl">{unknown.length}</strong><p className="text-xs mt-1">Canal não informado</p></div></div>
   {notice&&<p role="status" className="text-sm text-[var(--accent)]">{notice}</p>}{error&&<p role="alert" className="text-sm text-[var(--danger)]">{error}</p>}

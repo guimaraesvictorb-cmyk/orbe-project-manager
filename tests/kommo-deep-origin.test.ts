@@ -58,3 +58,31 @@ test('CRM origins join the four real channels; generic classifications never imp
  const originals=[...Array.from({length:20},()=>old),...Array.from({length:7},()=>make('Meta')),...Array.from({length:4},()=>make('Instagram')),...Array.from({length:18},()=>make('Orgânico'))];
  const before=JSON.stringify(originals),counts=new Map<string,number>();for(const r of originals){const c=contactChannel(r);counts.set(c,(counts.get(c)??0)+1)}assert.equal(counts.get('Meta'),27);assert.equal(counts.get('Instagram'),4);assert.equal(counts.get('Origem não identificada'),18);assert.equal(JSON.stringify(originals),before);
 });
+const {declaredChannel,reviewChannelHistory}=await import('../api/_lib/kommoChannelHistory.ts');
+test('specific contact declarations identify channels without guessing from generic ad or service replies',()=>{
+ for(const [text,channel] of [['Olá, vim do site da Rayafit. Meu nome é João.','Site'],['Vim pelo Google','Google'],['Olá! Vim pelo anúncio do Instagram','Instagram']])assert.equal(declaredChannel(text),channel);
+ for(const text of ['Continuar','Vi o anúncio','Não vim do Google','Você veio pelo Instagram?','Instagram: siga nossa página','Vim por indicação'])assert.equal(declaredChannel(text),'Origem não identificada');
+ const row={entity:'messages',entity_key:'one',occurred_at:'2026-11-03T16:00:00Z',payload:{origin_history_status:'channel_found',origin_history_channel:'Site',origin_history_evidence_id:'one',origin_history_evidence_at:'2026-11-03T16:00:00Z'}};
+ assert.equal(contactChannel(row),'Site');assert.equal(contactChannel({...row,payload:{...row.payload,origin_history_evidence_at:'2026-11-04T16:00:00Z'}}),'Origem não identificada');assert.equal(contactChannel({...row,payload:{...row.payload,utm_source:'google'}}),'Google');
+});
+test('channel history uses scoped events and reports denied message access without inventing UTMs',async()=>{
+ const oldFetch=globalThis.fetch,env={...process.env};process.env.VITE_SUPABASE_URL='https://db.example.test';process.env.SUPABASE_SERVICE_ROLE_KEY='synthetic';process.env.KOMMO_ENCRYPTION_KEY='a'.repeat(64);
+ const cfg={client_id:'client',connection_id:'connection',account_id:'456',account_origin:'https://example.kommo.com',token_ciphertext:seal('PRIVATE_TOKEN','client'),webhook_ciphertext:'unused',enabled:true};
+ let wrong=false,writes=0;
+ globalThis.fetch=async(url,init)=>{
+  const u=new URL(String(url));
+  if(u.origin==='https://db.example.test'){
+   if(u.pathname.endsWith('wa_kommo_channel_candidates'))return new Response(JSON.stringify([{entity_key:'message',revision:7,occurred_at:'2026-11-03T10:00:00Z',payload:{kommo_contact_id:'123',kommo_lead_id:'987',text:'Continuar',source_status:'Não identificada'}}]));
+   assert.equal(init?.method,'PATCH');assert.equal(u.searchParams.get('connection_id'),'eq.connection');assert.equal(u.searchParams.get('revision'),'eq.7');writes++;
+   const body=JSON.parse(String(init.body));assert.equal(body.payload.origin_history_channel,'Google');assert.equal(body.payload.origin_history_messages_access,'permission_required');assert.equal(body.payload.origin_history_events_checked,2);assert.equal(body.payload.utm_source,undefined);assert.equal(JSON.stringify(body).includes('PRIVATE'),false);return new Response('[{}]');
+  }
+  assert.equal(u.origin,'https://example.kommo.com');assert.equal(init?.method,undefined);
+  if(u.pathname.endsWith('/custom_fields'))return new Response(JSON.stringify({_embedded:{custom_fields:[{id:55,name:'Origem'}]}}));
+  if(u.pathname==='/api/v4/contacts/123')return new Response(JSON.stringify({id:123,account_id:wrong?999:456}));
+  if(u.pathname==='/api/v4/leads/987')return new Response(JSON.stringify({id:987,account_id:456,_embedded:{contacts:[{id:123}]}}));
+  if(u.pathname==='/api/v4/events')return new Response(JSON.stringify({_embedded:{events:[{id:'event',account_id:456,entity_id:Number(u.searchParams.get('filter[entity_id]')),entity_type:u.searchParams.get('filter[entity]'),type:'custom_field_value_changed',created_at:1735689600,value_after:[{custom_field_value:{field_id:55,text:'Google'}}]}]}}));
+  if(u.pathname==='/api/v4/talks')return new Response(JSON.stringify({_embedded:{talks:[{talk_id:12,account_id:456,contact_id:123,chat_id:'chat',created_at:1735689600}]}}));
+  assert.equal(u.pathname,'/api/v4/talks/12/messages');return new Response('{}',{status:403});
+ };
+ try{const r=await reviewChannelHistory(cfg,null,null);assert.equal(r.reviewed,1);assert.equal(r.recovered,1);assert.equal(writes,1);wrong=true;assert.equal((await reviewChannelHistory(cfg,null,null)).failed,1);assert.equal(writes,1)}finally{globalThis.fetch=oldFetch;for(const key of ['VITE_SUPABASE_URL','SUPABASE_SERVICE_ROLE_KEY','KOMMO_ENCRYPTION_KEY']){if(env[key]===undefined)delete process.env[key];else process.env[key]=env[key]}}
+});

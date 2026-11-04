@@ -5,6 +5,7 @@ import {ensureKommoWebhook,type KommoWebhooks,kommoRequest,object,ORBE_ORIGIN,sc
 import {enrich,type KommoConfig} from './_lib/kommoEnrichment.js';
 import {reviewOrigins} from './_lib/kommoOriginReview.js';
 import {deepReviewOrigins} from './_lib/kommoDeepOrigin.js';
+import {reviewChannelHistory} from './_lib/kommoChannelHistory.js';
 import {isReportDate} from '../src/lib/reportPeriod.js';
 export default async function handler(req:Request,res:ServerResponse) {
   if(req.method!=='POST')return answer(res,405,{error:'method_not_allowed'});
@@ -12,16 +13,16 @@ export default async function handler(req:Request,res:ServerResponse) {
   let phase='session';
   try {
     const body=object(req.body),client=scalar(body.client_id,36),{db}=await owner(req,client);
-    if(body.action!==undefined&&!['review_origins','review_origins_deep'].includes(String(body.action)))return answer(res,400,{error:'invalid_action'});
+    if(body.action!==undefined&&!['review_origins','review_origins_deep','review_channel_history'].includes(String(body.action)))return answer(res,400,{error:'invalid_action'});
     phase='configuration';
     const configs=await db<KommoConfig[]>(`rest/v1/wa_kommo_credentials?client_id=eq.${client}&limit=1`);
     if(!configs[0])return answer(res,200,{status:'not_connected'});
-    if(body.action==='review_origins'||body.action==='review_origins_deep'){
+    if(body.action==='review_origins'||body.action==='review_origins_deep'||body.action==='review_channel_history'){
       if(!configs[0].enabled)return answer(res,409,{error:'A conexão da Kommo está desativada.'});
       const start=body.start?scalar(body.start,10):'',end=body.end?scalar(body.end,10):'';
       if((start&&!isReportDate(start))||(end&&!isReportDate(end))||(start&&end&&start>end))return answer(res,400,{error:'Período inválido.'});
       const bounds={start:start?new Date(`${start}T00:00:00-03:00`).toISOString():null,end:end?new Date(Date.parse(`${end}T00:00:00-03:00`)+86400000).toISOString():null};
-      return answer(res,200,await (body.action==='review_origins_deep'?deepReviewOrigins:reviewOrigins)(configs[0],bounds.start,bounds.end));
+      return answer(res,200,await (body.action==='review_channel_history'?reviewChannelHistory:body.action==='review_origins_deep'?deepReviewOrigins:reviewOrigins)(configs[0],bounds.start,bounds.end));
     }
     const cfg=configs[0],token=unseal(cfg.token_ciphertext,client);
     phase='read_events';
