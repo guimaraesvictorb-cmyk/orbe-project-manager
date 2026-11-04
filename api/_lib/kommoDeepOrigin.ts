@@ -36,8 +36,9 @@ export function noteOriginHints(input:unknown,account:string,entity:string) {
 }
 export async function deepReviewOrigins(cfg:KommoConfig,start:string|null,end:string|null) {
  const db=storage(),token=unseal(cfg.token_ciphertext,cfg.client_id),deadline=Date.now()+45000;
+ const returns=await db<number>('rest/v1/rpc/wa_kommo_service_returns',{method:'POST',body:JSON.stringify({p_connection:cfg.connection_id,p_start:start,p_end:end})});
  const rows=await db<Row[]>('rest/v1/rpc/wa_kommo_deep_origin_candidates',{method:'POST',body:JSON.stringify({p_connection:cfg.connection_id,p_start:start,p_end:end})});
- if(!rows[0])return {reviewed:0,recovered:0,failed:0,has_more:false};
+ if(!rows[0])return {reviewed:returns,recovered:returns,failed:0,has_more:false};
  const row=rows[0],contact=String(row.payload.kommo_contact_id),lead=String(row.payload.kommo_lead_id);
  if(!id(contact)||!id(lead))return {reviewed:0,recovered:0,failed:1,has_more:rows.length>1};
  let nextRead=0;
@@ -86,6 +87,6 @@ export async function deepReviewOrigins(cfg:KommoConfig,start:string|null,end:st
   const update:Record<string,string|number>={...row.payload,origin_deep_version:'2',origin_deep_checked_at:new Date().toISOString(),origin_deep_status:best?'historical_evidence':'not_found',origin_deep_leads_checked:checked,origin_deep_notes_checked:counts.reduce((n,r)=>n+r.count,0),origin_deep_note_hints:counts.reduce((n,r)=>n+r.hints,0)};
   if(best){update.crm_contact_origin_created_at=best.createdAt;update.crm_contact_origin_lead=best.lead;update.crm_contact_origin_kind=best.kind;update.crm_contact_origin_label=best.label??'';for(const key of sourceFields)update['crm_contact_origin_'+key]=best.fields[key]??'';}
   const saved=await db<Row[]>(`rest/v1/wa_tracking_records?connection_id=eq.${cfg.connection_id}&entity=eq.messages&entity_key=eq.${encodeURIComponent(row.entity_key)}&revision=eq.${row.revision}`,{method:'PATCH',body:JSON.stringify({payload:update,revision:row.revision+1,synced_at:new Date().toISOString()})});
-  return {reviewed:saved.length?1:0,recovered:saved.length&&best?1:0,failed:0,has_more:rows.length>1||!saved.length};
+  return {reviewed:(saved.length?1:0)+returns,recovered:(saved.length&&best?1:0)+returns,failed:0,has_more:rows.length>1||!saved.length};
  }catch(error){const reason=error instanceof Error&&['invalid_contact_binding','invalid_lead_binding','invalid_note_binding','review_incomplete','kommo_permission_denied','kommo_token_invalid','kommo_unavailable','storage_unavailable'].includes(error.message)?error.message:'verification_failed';console.error('KOMMO_DEEP_ORIGIN',reason);return {reviewed:0,recovered:0,failed:1,has_more:rows.length>1,failure_reason:reason};}
 }

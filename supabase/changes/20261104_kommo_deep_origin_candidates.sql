@@ -8,6 +8,7 @@ RETURNS SETOF public.wa_tracking_records LANGUAGE sql STABLE SET search_path='' 
  ORDER BY r.payload->>'contact_id',r.occurred_at,r.entity_key
  ) SELECT * FROM firsts
  WHERE payload->>'attribution_reason'='no_reference'
+ AND payload->>'origin_return_kind' IS DISTINCT FROM 'service_resumption'
  AND coalesce(payload->>'crm_origin_utm_source','')='' AND coalesce(payload->>'crm_origin_gclid','')='' AND coalesce(payload->>'crm_origin_fbclid','')=''
  AND coalesce(payload->>'crm_contact_origin_utm_source','')='' AND coalesce(payload->>'crm_contact_origin_gclid','')='' AND coalesce(payload->>'crm_contact_origin_fbclid','')=''
  AND coalesce(payload->>'crm_contact_origin_label','')=''

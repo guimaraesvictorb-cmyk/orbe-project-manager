@@ -9,9 +9,13 @@ export function messageOriginStatement(text:unknown) {
 import type {TrackingRecord} from './whatsappTracking'
 // Display-only evidence. The original message UTMs, click IDs and timestamp
 // remain untouched; a historical acquisition never becomes a new click.
-export function historicalContactOrigin(row:TrackingRecord):TrackingRecord['payload']|null {
+export function recoveredContactOrigin(row:TrackingRecord):TrackingRecord['payload']|null {
  const p=row.payload
  if(p.source_status==='Identificada'||p.utm_source||p.gclid||p.fbclid)return null
+ if(p.origin_return_kind==='service_resumption'&&p.origin_return_event_id){
+  const sent=Date.parse(String(p.origin_return_sent_at)),at=Date.parse(row.occurred_at)
+  if(String(p.text).trim().toLowerCase()==='continuar'&&Number.isFinite(sent)&&sent<at&&at-sent<=1800000)return {recorded_source_label:'Retomada de atendimento',origin_return_context:'true'}
+ }
  for(const prefix of ['crm_origin_','crm_contact_origin_']){
   if(prefix==='crm_origin_'&&p.origin_review_status!=='historical')continue
   if(prefix==='crm_contact_origin_'&&p.origin_deep_status!=='historical_evidence')continue

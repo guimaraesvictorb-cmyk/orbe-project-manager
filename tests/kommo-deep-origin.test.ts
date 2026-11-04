@@ -1,15 +1,15 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {registerHooks} from 'node:module'
-import {historicalContactOrigin} from '../src/lib/originReview.ts'
+import {recoveredContactOrigin} from '../src/lib/originReview.ts'
 registerHooks({resolve(s,c,n){return n(c.parentURL?.includes('/api/')&&s.endsWith('.js')?s.replace(/\.js$/,'.ts'):s,c)}})
 const {deepReviewOrigins,noteOriginHints,recordedOriginLabel}=await import('../api/_lib/kommoDeepOrigin.ts')
 const {seal}=await import('../api/_lib/kommo.ts')
 test('historical origins remove only evidenced contacts from unknowns without altering message attribution',()=>{
  const rows=Array.from({length:49},(_,i)=>({entity:'messages',entity_key:String(i),occurred_at:'2026-11-03T10:00:00Z',payload:{contact_id:String(i),source_status:'Não identificada',origin_review_status:i<37?'historical':'missing',crm_lead_created_at:'2026-09-01T10:00:00Z',crm_origin_utm_source:i<20?'meta':'',crm_origin_utm_campaign:i<20?'old_campaign':''}}));
- const before=JSON.stringify(rows);assert.equal(rows.filter(r=>historicalContactOrigin(r)).length,20);assert.equal(rows.filter(r=>!historicalContactOrigin(r)).length,29);assert.equal(JSON.stringify(rows),before);
- const row=rows[0];assert.equal(historicalContactOrigin({...row,payload:{...row.payload,source_status:'Identificada',utm_source:'google'}}),null);assert.equal(historicalContactOrigin({...row,payload:{...row.payload,crm_lead_created_at:'2026-11-04T10:00:00Z'}}),null);
- assert.equal(historicalContactOrigin({...rows[30],payload:{...rows[30].payload,origin_deep_status:'historical_evidence',crm_contact_origin_created_at:'2026-01-01T10:00:00Z',crm_contact_origin_utm_source:'google'}})?.utm_source,'google');
+ const before=JSON.stringify(rows);assert.equal(rows.filter(r=>recoveredContactOrigin(r)).length,20);assert.equal(rows.filter(r=>!recoveredContactOrigin(r)).length,29);assert.equal(JSON.stringify(rows),before);
+ const row=rows[0];assert.equal(recoveredContactOrigin({...row,payload:{...row.payload,source_status:'Identificada',utm_source:'google'}}),null);assert.equal(recoveredContactOrigin({...row,payload:{...row.payload,crm_lead_created_at:'2026-11-04T10:00:00Z'}}),null);
+ assert.equal(recoveredContactOrigin({...rows[30],payload:{...rows[30].payload,origin_deep_status:'historical_evidence',crm_contact_origin_created_at:'2026-01-01T10:00:00Z',crm_contact_origin_utm_source:'google'}})?.utm_source,'google');
 });
 test('deep review binds contact, all related leads and notes before a revision-guarded write',async()=>{
  const oldFetch=globalThis.fetch,env={...process.env};process.env.VITE_SUPABASE_URL='https://db.example.test';process.env.SUPABASE_SERVICE_ROLE_KEY='synthetic';process.env.KOMMO_ENCRYPTION_KEY='a'.repeat(64);
@@ -18,6 +18,7 @@ test('deep review binds contact, all related leads and notes before a revision-g
  globalThis.fetch=async(url,init)=>{
   const u=new URL(String(url));
   if(u.origin==='https://db.example.test'){
+   if(u.pathname.endsWith('wa_kommo_service_returns'))return new Response('0');
    if(u.pathname.endsWith('wa_kommo_deep_origin_candidates'))return new Response(JSON.stringify([{entity_key:'message',revision:7,occurred_at:'2026-11-03T10:00:00Z',payload:{kommo_contact_id:'123',kommo_lead_id:'987',source_status:'Não identificada'}}]));
    assert.equal(init?.method,'PATCH');assert.equal(u.searchParams.get('connection_id'),'eq.connection');assert.equal(u.searchParams.get('revision'),'eq.7');writes++;const body=JSON.parse(String(init.body));assert.equal(body.payload.crm_contact_origin_utm_source,'google');assert.equal(body.payload.source_status,'Não identificada');assert.equal(body.payload.utm_source,undefined);assert.equal(body.payload.origin_deep_notes_checked,3);assert.equal(body.payload.origin_deep_note_hints,1);assert.equal(JSON.stringify(body).includes('PRIVATE'),false);return new Response('[{}]');
   }
@@ -40,4 +41,11 @@ test('explicit CRM origin fields remain labels and ambiguous or generic channels
  for(const value of ['WhatsApp','Import','Outros','Não sei','Não identificado','{{source}}',123])assert.equal(recordedOriginLabel([field(value)]),'');
  assert.equal(recordedOriginLabel([field('Google'),field('Indicação')]),'');
  assert.equal(recordedOriginLabel([{field_name:'Nome',values:[{value:'Meta'}]}]),'');
+});
+test('a recorded service return requires the exact reply and a preceding invitation within thirty minutes',()=>{
+ const row={entity:'messages',entity_key:'one',occurred_at:'2026-11-03T16:00:00Z',payload:{source_status:'Não identificada',text:'Continuar',origin_return_kind:'service_resumption',origin_return_event_id:'verified-event',origin_return_sent_at:'2026-11-03T15:38:00Z'}};
+ assert.equal(recoveredContactOrigin(row)?.recorded_source_label,'Retomada de atendimento');
+ assert.equal(recoveredContactOrigin({...row,payload:{...row.payload,text:'Olá'}}),null);
+ assert.equal(recoveredContactOrigin({...row,payload:{...row.payload,origin_return_sent_at:'2026-11-03T15:00:00Z'}}),null);
+ assert.equal(recoveredContactOrigin({...row,payload:{...row.payload,origin_return_sent_at:'2026-11-03T16:01:00Z'}}),null);
 });
