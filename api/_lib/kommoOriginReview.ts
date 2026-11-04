@@ -10,7 +10,7 @@ export async function reviewOrigins(cfg:KommoConfig,start:string|null=null,end:s
   const batch=candidates.slice(0,5),leads=new Map<string,Promise<unknown>>();
   for(const row of batch){
     const id=row.payload.kommo_lead_id;
-    if(/^[1-9][0-9]{0,18}$/.test(id)&&!leads.has(id))leads.set(id,kommoRequest(cfg.account_origin,token,`/api/v4/leads/${id}?with=contacts`));
+    if(/^[1-9][0-9]{0,18}$/.test(id)&&!leads.has(id))leads.set(id,kommoRequest(cfg.account_origin,token,`/api/v4/leads/${id}?with=contacts,source`));
   }
   // Attach all rejection handlers before awaiting so one failed CRM read cannot become unhandled.
   const results=await Promise.allSettled([...leads.values()]);
@@ -22,7 +22,7 @@ export async function reviewOrigins(cfg:KommoConfig,start:string|null=null,end:s
     let evidence;
     try{evidence=leadOriginEvidence(result.value,{account:cfg.account_id,lead,contact});}catch{failed++;continue;}
     if(!evidence){failed++;continue;}
-    const saved=await db<string>('rest/v1/rpc/wa_kommo_review_origin',{method:'POST',body:JSON.stringify({p_connection:cfg.connection_id,p_account:cfg.account_id,p_message:row.entity_key,p_contact:contact,p_lead:lead,p_created:evidence.createdAt,p_fields:evidence.fields})});
+    const saved=await db<string>('rest/v1/rpc/wa_kommo_review_origin',{method:'POST',body:JSON.stringify({p_connection:cfg.connection_id,p_account:cfg.account_id,p_message:row.entity_key,p_contact:contact,p_lead:lead,p_created:evidence.createdAt,p_fields:{...evidence.fields,_crm_entry_channel:evidence.channel}})});
     if(saved==='stale'){continue;}
     reviewed++;
     if(saved==='recovered')recovered++;else if(saved==='historical')historical++;else missing++;

@@ -148,7 +148,9 @@ export function leadOriginEvidence(input:unknown,binding:{account:string;lead:st
       values[key]=value;
     }
   }
-  return {createdAt:new Date(created*1000).toISOString(),fields:values};
+  const source=embedded.source&&typeof embedded.source==='object'&&!Array.isArray(embedded.source)?object(embedded.source):{};
+  const channel=typeof source.name==='string'&&![...source.name].some(c=>c.charCodeAt(0)<32||c.charCodeAt(0)===127)?source.name.trim().slice(0,160):'';
+  return {createdAt:new Date(created*1000).toISOString(),fields:values,channel};
 }
 export function leadAttribution(input:unknown,binding:{account:string;lead:string;contact:string;messageAt:string}) {
   const evidence=leadOriginEvidence(input,binding),message=Date.parse(binding.messageAt);

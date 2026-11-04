@@ -12,10 +12,10 @@ BEGIN
  status:=public.wa_kommo_review_origin(c,'36071459','__orbe_review_1','999999991','999999981',n,'{"utm_source":"google","private_note":"ignore"}');
  IF status<>'recovered' THEN RAISE EXCEPTION 'old_message_not_recovered';END IF;
  IF NOT EXISTS(SELECT 1 FROM public.wa_tracking_records WHERE connection_id=c AND entity='messages' AND entity_key='__orbe_review_1' AND payload->>'utm_source'='google' AND NOT payload?'private_note') THEN RAISE EXCEPTION 'wrong_source';END IF;
- status:=public.wa_kommo_review_origin(c,'36071459','__orbe_review_2','999999992','999999982',n-interval '30 days','{"utm_source":"fb","utm_campaign":"old_campaign"}');
+ status:=public.wa_kommo_review_origin(c,'36071459','__orbe_review_2','999999992','999999982',n-interval '30 days','{"utm_source":"fb","utm_campaign":"old_campaign","_crm_entry_channel":"WhatsApp"}');
  IF status<>'historical' THEN RAISE EXCEPTION 'old_lead_not_classified';END IF;
  IF NOT EXISTS(SELECT 1 FROM public.wa_tracking_records WHERE connection_id=c AND entity='messages' AND entity_key='__orbe_review_2' AND payload->>'source_status'='Não identificada' AND payload->>'crm_origin_utm_source'='fb' AND coalesce(payload->>'utm_source','')='' AND payload->>'origin_predates_capture'='true') THEN RAISE EXCEPTION 'historical_source_leaked_into_current';END IF;
- status:=public.wa_kommo_review_origin(c,'36071459','__orbe_review_3','999999993','999999983',n,'{}');
+ status:=public.wa_kommo_review_origin(c,'36071459','__orbe_review_3','999999993','999999983',n,'{"_crm_entry_channel":"WhatsApp"}');
  IF status<>'missing' THEN RAISE EXCEPTION 'missing_origin_guessed';END IF;
  IF EXISTS(SELECT 1 FROM public.wa_kommo_origin_candidates(c,NULL,NULL,6) WHERE entity_key IN ('__orbe_review_2','__orbe_review_3')) THEN RAISE EXCEPTION 'reviewed_repeated';END IF;
  IF public.wa_kommo_review_origin(c,'36071459','__orbe_review_1','999999991','999999981',n,'{"utm_source":"fb"}')<>'stale' THEN RAISE EXCEPTION 'verified_overwritten';END IF;

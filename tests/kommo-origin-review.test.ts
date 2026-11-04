@@ -11,12 +11,12 @@ test('origin review reads only bound leads, caps batches, deduplicates and never
  globalThis.fetch=async(url,init)=>{
   const u=new URL(String(url)),body=init?.body?JSON.parse(String(init.body)):{};
   if(u.origin==='https://example.kommo.com'){
-   reads++;assert.equal(u.pathname,'/api/v4/leads/987');assert.equal(u.search,'?with=contacts');assert.equal(init?.method,undefined);
+   reads++;assert.equal(u.pathname,'/api/v4/leads/987');assert.equal(u.search,'?with=contacts,source');assert.equal(init?.method,undefined);
    return new Response(JSON.stringify({account_id:456,id:987,created_at:1793225805,_embedded:{contacts:[{id:123}]},custom_fields_values:[{field_code:'UTM_SOURCE',values:[{value:'google'}]}],name:'PRIVATE_NAME'}));
   }
   assert.equal(u.origin,'https://db.example.test');
   if(u.pathname.endsWith('/wa_kommo_origin_candidates'))return new Response(JSON.stringify(Array.from({length:6},(_,i)=>({entity_key:String(i),occurred_at:'2026-11-03T10:00:00Z',payload:{kommo_lead_id:'987',kommo_contact_id:i===4?'999':'123'}}))));
-  assert.ok(u.pathname.endsWith('/wa_kommo_review_origin'));writes++;assert.equal(body.p_account,'456');assert.equal(body.p_connection,'conn');assert.equal(body.p_contact,'123');assert.deepEqual(body.p_fields,{utm_source:'google'});assert.equal(JSON.stringify(body).includes('PRIVATE_'),false);
+  assert.ok(u.pathname.endsWith('/wa_kommo_review_origin'));writes++;assert.equal(body.p_account,'456');assert.equal(body.p_connection,'conn');assert.equal(body.p_contact,'123');assert.deepEqual(body.p_fields,{utm_source:'google',_crm_entry_channel:''});assert.equal(JSON.stringify(body).includes('PRIVATE_'),false);
   return new Response(JSON.stringify('historical'));
  };
  try{const result=await reviewOrigins(cfg,'2026-11-01T03:00:00Z','2026-11-05T03:00:00Z');assert.equal(reads,1);assert.equal(writes,4);assert.deepEqual(result,{reviewed:4,recovered:0,historical:4,missing:0,failed:1,has_more:true});assert.equal(JSON.stringify(result).includes('PRIVATE_'),false)}finally{globalThis.fetch=beforeFetch;for(const key of ['KOMMO_ENCRYPTION_KEY','VITE_SUPABASE_URL','SUPABASE_SERVICE_ROLE_KEY']){if(beforeEnv[key]===undefined)delete process.env[key];else process.env[key]=beforeEnv[key]}}

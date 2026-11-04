@@ -38,7 +38,7 @@ RETURNS SETOF public.wa_tracking_records LANGUAGE sql STABLE SET search_path='' 
  ) SELECT * FROM firsts
  WHERE payload->>'attribution_reason'='no_reference'
   AND (p_start IS NULL OR occurred_at>=p_start) AND (p_end IS NULL OR occurred_at<p_end)
-  AND (payload->>'origin_review_checked_at' IS NULL OR (payload->>'origin_review_checked_at')::timestamptz<now()-interval '24 hours'
+  AND (payload->>'origin_review_version' IS DISTINCT FROM '2' OR payload->>'origin_review_checked_at' IS NULL OR (payload->>'origin_review_checked_at')::timestamptz<now()-interval '24 hours'
     OR (payload->>'origin_review_status'='missing' AND occurred_at>now()-interval '15 minutes' AND (payload->>'origin_review_checked_at')::timestamptz<now()-interval '7 seconds'))
  ORDER BY (payload->>'origin_review_checked_at' IS NULL) DESC,occurred_at,entity_key LIMIT greatest(1,least(coalesce(p_limit,6),6));
 $$;
@@ -59,7 +59,8 @@ BEGIN
   OR p_created IS NULL OR p_created<'2020-01-01'::timestamptz OR p_created>now()+interval '5 minutes' THEN RETURN 'stale';END IF;
  IF EXISTS(SELECT 1 FROM public.wa_tracking_records r WHERE r.connection_id=p_connection AND r.entity='messages' AND r.payload->>'kommo_lead_id'=p_lead AND r.payload->>'contact_id'=item.payload->>'contact_id' AND (r.occurred_at,r.entity_key)<(item.occurred_at,item.entity_key)) THEN RETURN 'stale';END IF;
  IF jsonb_typeof(p_fields) IS DISTINCT FROM 'object' THEN RAISE EXCEPTION 'invalid_source';END IF;
- review:=jsonb_build_object('origin_review_checked_at',now(),'crm_lead_created_at',p_created,'origin_predates_capture',CASE WHEN p_created<capture THEN 'true' ELSE 'false' END);
+ IF p_fields?'_crm_entry_channel' AND (jsonb_typeof(p_fields->'_crm_entry_channel')<>'string' OR length(p_fields->>'_crm_entry_channel')>160 OR (p_fields->>'_crm_entry_channel') ~ '[[:cntrl:]]') THEN RAISE EXCEPTION 'invalid_source';END IF;
+ review:=jsonb_build_object('origin_review_version',CASE WHEN p_fields?'_crm_entry_channel' THEN '2' ELSE '1' END,'crm_entry_channel',coalesce(p_fields->>'_crm_entry_channel',''),'origin_review_checked_at',now(),'crm_lead_created_at',p_created,'origin_predates_capture',CASE WHEN p_created<capture THEN 'true' ELSE 'false' END);
  FOREACH field IN ARRAY ARRAY['utm_source','utm_medium','utm_campaign','utm_content','utm_term','gclid','fbclid'] LOOP
   IF p_fields?field AND jsonb_typeof(p_fields->field)<>'string' THEN RAISE EXCEPTION 'invalid_source';END IF;
   value:=coalesce(p_fields->>field,'');

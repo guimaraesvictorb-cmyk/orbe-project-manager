@@ -140,7 +140,7 @@ export function WhatsAppTrackingView({clientId,embedded=false,pilotOnly=false,ev
           {(start||end||source)&&<button className="text-sm text-[var(--accent)] py-2" onClick={()=>{updateTrackingRoute({start:'',end:'',source:''});setPage(0)}}>Limpar filtros</button>}
         </div>}
         {tab==='overview'&&<>
-          <TrackingDashboard clientId={connection?.client_id} key={connectionId} unit={biUnit} onUnitChange={setBiUnit} revision={summary.messages} source={source.trim()} connectionId={connectionId} start={periodBounds(start,end).start} end={periodBounds(start,end).end}/>
+          <TrackingDashboard clientId={connection?.client_id} key={connectionId} unit={biUnit} onUnitChange={setBiUnit} revision={summary.messages+summary.identified} source={source.trim()} connectionId={connectionId} start={periodBounds(start,end).start} end={periodBounds(start,end).end}/>
           <CommercialTracking key={`commercial:${connectionId}`} unit={biUnit} connectionId={connectionId} source={source.trim()} start={periodBounds(start,end).start} end={periodBounds(start,end).end} compact/>
 
         </>}

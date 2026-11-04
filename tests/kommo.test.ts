@@ -1,7 +1,14 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import {messageOriginStatement} from '../src/lib/originReview.ts'
 import {kommoOrigin,parseWebhook,embed,references,visibleText,contactIdentity,seal,unseal,ensureKommoWebhook,leadAttribution,leadOriginEvidence} from '../api/_lib/kommo.ts'
 const ref='D47162B59539C57FE8585270B0D7A664'
+test('explicit message statements stay qualitative and never guess an ad platform',()=>{
+ assert.match(messageOriginStatement('Olá, vim do site da Rayafit. Meu nome é Teste.'),/^Site, declarado/);
+ assert.match(messageOriginStatement('Olá! Vi o anúncio e quero saber mais.'),/^Anúncio, declarado/);
+ for(const text of ['Olá! Posso ter mais informações sobre isso?','Não vi o anúncio','Bom dia','Continuar'])assert.equal(messageOriginStatement(text),'');
+ assert.equal(messageOriginStatement('Olá! Vi o anúncio').includes('Meta'),false);
+});
 const binding={account:'456',lead:'987',contact:'123',messageAt:'2026-10-28T22:16:45Z'};
 const nativeLead=()=>({account_id:456,id:987,created_at:1793225805,_embedded:{contacts:[{id:123}]},custom_fields_values:[{field_code:'UTM_SOURCE',field_name:'utm_source',values:[{value:'ig'}]},{field_code:'UTM_CAMPAIGN',field_name:'utm_campaign',values:[{value:'Rayafit Alecrim'}]}]});
 test('historical CRM evidence remains separate from attribution of a returning message',()=>{
@@ -9,6 +16,10 @@ test('historical CRM evidence remains separate from attribution of a returning m
  assert.equal(leadAttribution(lead,old),null);assert.equal(leadOriginEvidence(lead,old)?.fields.utm_source,'ig');
  assert.equal(leadOriginEvidence(lead,{...old,contact:'999'}),null);
  lead.custom_fields_values=[];assert.deepEqual(leadOriginEvidence(lead,old)?.fields,{});assert.equal(leadAttribution(lead,binding),null);
+});
+test('a CRM entry channel is visible context and never fabricated acquisition UTMs',()=>{
+ const lead={...nativeLead(),custom_fields_values:[],_embedded:{contacts:[{id:123}],source:{id:5,name:'WhatsApp comercial'}}};
+ const evidence=leadOriginEvidence(lead,binding);assert.equal(evidence?.channel,'WhatsApp comercial');assert.deepEqual(evidence?.fields,{});assert.equal(leadAttribution(lead,binding),null);
 });
 test('native CRM acquisition fields require the exact account, lead, contact and creation window',()=>{
  assert.equal(leadAttribution(nativeLead(),binding)?.fields.utm_source,'ig');

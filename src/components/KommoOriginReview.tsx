@@ -1,16 +1,20 @@
 import {useEffect,useRef,useState} from 'react'
 import {supabase} from '../lib/supabase'
 import type {TrackingRecord} from '../lib/whatsappTracking'
+import {messageOriginStatement} from '../lib/originReview'
 
 const date=(value:string|number)=>new Date(String(value)).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short',timeZone:'America/Sao_Paulo'})
 export function OriginReviewEvidence({payload:p}:{payload:TrackingRecord['payload']}){
  if(!p.origin_review_status)return null
  const source=String(p.crm_origin_utm_source||(p.crm_origin_gclid?'Google':p.crm_origin_fbclid?'Meta':''))
+ const declared=messageOriginStatement(p.text)
  return <div className="mt-3 border-t border-[var(--border)] pt-3 text-xs space-y-1">
   <p className="font-medium">{p.origin_review_status==='recovered'?'Origem recuperada na Kommo':p.origin_review_status==='historical'?'Contato já existente na Kommo':'Revisado · origem não registrada na Kommo'}</p>
   <p className="text-[var(--text-tertiary)]">Cadastro do negócio: {date(p.crm_lead_created_at)}{p.origin_predates_capture==='true'?' · anterior à captura do Studio':''}</p>
   {source&&p.origin_review_status!=='recovered'&&<p>Origem do cadastro: {source}{p.crm_origin_utm_campaign?` · ${p.crm_origin_utm_campaign}`:''}. Esse histórico não confirma a origem desta conversa.</p>}
   {!source&&<p className="text-[var(--text-tertiary)]">Sem UTMs ou ID de clique no cadastro consultado.</p>}
+  {p.crm_entry_channel&&<p className="text-[var(--text-tertiary)]">Canal de entrada na Kommo: {String(p.crm_entry_channel)}. O canal de atendimento não confirma a campanha de aquisição.</p>}
+  {declared&&<p className="text-[var(--text-tertiary)]">Mensagem: {declared}</p>}
  </div>
 }
 
@@ -21,6 +25,9 @@ export function KommoOriginReview({clientId,start,end,rows,onReviewed}:{clientId
  const historical=rows.filter(r=>r.payload.origin_review_status==='historical').length
  const reviewed=rows.filter(r=>r.payload.origin_review_status).length
  const unknown=rows.filter(r=>r.payload.source_status!=='Identificada')
+ const historicalWithOrigin=unknown.filter(r=>r.payload.origin_review_status==='historical'&&(r.payload.crm_origin_utm_source||r.payload.crm_origin_gclid||r.payload.crm_origin_fbclid)).length
+ const historicalWithoutOrigin=unknown.filter(r=>r.payload.origin_review_status==='historical').length-historicalWithOrigin
+ const recentWithoutOrigin=unknown.filter(r=>r.payload.origin_review_status==='missing').length
  async function review(){
   const requestedScope=scope;setBusy(true);setNotice('Consultando os registros da Kommo…');setError('')
   let total=0,recovered=0
@@ -43,6 +50,7 @@ export function KommoOriginReview({clientId,start,end,rows,onReviewed}:{clientId
  return <section aria-label="Revisão de origens da Kommo" className="rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] p-5 space-y-3">
   <div className="flex justify-between items-start gap-4 flex-wrap"><div><h3 className="font-semibold">Revisão das origens</h3><p className="text-sm text-[var(--text-tertiary)] mt-2">{historical} contatos já existiam na Kommo antes desta conversa · {Math.max(0,unknown.length-unknown.filter(r=>r.payload.origin_review_status).length)} sem revisão neste período.</p></div><button disabled={busy} onClick={()=>void review()} className="text-sm text-[var(--accent)] disabled:opacity-50">{busy?'Revisando…':'Investigar origens na Kommo'}</button></div>
   <p className="text-xs text-[var(--text-tertiary)]">A origem do cadastro antigo fica separada da origem da conversa atual. Um retorno de cliente não é contado como um novo clique. {reviewed} contatos com revisão registrada.</p>
+  <div className="grid sm:grid-cols-3 gap-3 text-sm"><div className="rounded-lg bg-[var(--bg-surface-2)] p-3"><strong className="text-xl">{historicalWithOrigin}</strong><p className="text-xs mt-1">Com origem no cadastro antigo</p></div><div className="rounded-lg bg-[var(--bg-surface-2)] p-3"><strong className="text-xl">{historicalWithoutOrigin}</strong><p className="text-xs mt-1">Cadastro antigo sem origem registrada</p></div><div className="rounded-lg bg-[var(--bg-surface-2)] p-3"><strong className="text-xl">{recentWithoutOrigin}</strong><p className="text-xs mt-1">Cadastro recente sem origem registrada</p></div></div>
   {notice&&<p role="status" className="text-sm text-[var(--accent)]">{notice}</p>}{error&&<p role="alert" className="text-sm text-[var(--danger)]">{error}</p>}
   {!!unknown.length&&<details><summary className="cursor-pointer text-sm text-[var(--accent)]">Ver os {unknown.length} contatos sem origem confirmada desta conversa</summary><div className="mt-4 max-h-96 overflow-auto"><table className="w-full text-sm"><thead className="text-left text-xs text-[var(--text-tertiary)]"><tr><th className="p-3">Contato / primeiro registro</th><th className="p-3">Diagnóstico e histórico</th></tr></thead><tbody>{unknown.map(r=><tr key={r.entity_key} className="border-t border-[var(--border)] align-top"><td className="p-3">{String(r.payload.name||'Contato Kommo')}<p className="text-xs text-[var(--text-tertiary)] mt-1">{date(r.occurred_at)}</p></td><td className="p-3"><OriginReviewEvidence payload={r.payload}/>{!r.payload.origin_review_status&&<span>Aguardando consulta à Kommo.</span>}</td></tr>)}</tbody></table></div></details>}
  </section>
