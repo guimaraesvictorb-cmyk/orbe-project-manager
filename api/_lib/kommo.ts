@@ -125,14 +125,14 @@ export function contactIdentity(contact:unknown) {
 }
 
 // CRM fields describe the lead's acquisition, not every later WhatsApp message.
-export function leadAttribution(input:unknown,binding:{account:string;lead:string;contact:string;messageAt:string}) {
+export function leadOriginEvidence(input:unknown,binding:{account:string;lead:string;contact:string}) {
   const lead=object(input);
   if(String(lead.account_id)!==binding.account||String(lead.id)!==binding.lead)return null;
   const embedded=lead._embedded?object(lead._embedded):{};
   const contacts:unknown[]=Array.isArray(embedded.contacts)?embedded.contacts:[];
   if(!contacts.some(c=>String(object(c).id)===binding.contact))return null;
-  const created=Number(lead.created_at),message=Date.parse(binding.messageAt)/1000;
-  if(!Number.isSafeInteger(created)||created<1577836800||!Number.isFinite(message)||Math.abs(message-created)>600)return null;
+  const created=Number(lead.created_at);
+  if(!Number.isSafeInteger(created)||created<1577836800||created*1000>Date.now()+300000)return null;
   const values:Record<string,string>={};
   for(const raw of Array.isArray(lead.custom_fields_values)?lead.custom_fields_values:[]) {
     const field=object(raw),code=String(field.field_code??'').toLowerCase(),name=String(field.field_name??'').trim().toLowerCase();
@@ -148,6 +148,11 @@ export function leadAttribution(input:unknown,binding:{account:string;lead:strin
       values[key]=value;
     }
   }
-  if(!values.utm_source&&!values.gclid&&!values.fbclid)return null;
   return {createdAt:new Date(created*1000).toISOString(),fields:values};
+}
+export function leadAttribution(input:unknown,binding:{account:string;lead:string;contact:string;messageAt:string}) {
+  const evidence=leadOriginEvidence(input,binding),message=Date.parse(binding.messageAt);
+  if(!evidence||!Number.isFinite(message)||Math.abs(message-Date.parse(evidence.createdAt))>600000)return null;
+  if(!evidence.fields.utm_source&&!evidence.fields.gclid&&!evidence.fields.fbclid)return null;
+  return evidence;
 }

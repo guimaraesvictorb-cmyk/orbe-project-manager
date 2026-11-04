@@ -10,6 +10,12 @@
     }
   ],
   "functions": {
+    "api/kommo-status.ts": {
+      "maxDuration": 60
+    },
+    "api/kommo-webhook.ts": {
+      "maxDuration": 60
+    },
     "api/ads-credentials.ts": {
       "maxDuration": 60
     },

@@ -3,15 +3,25 @@ import {waitUntil} from '@vercel/functions';
 import {answer,owner,type Request} from './_lib/trackingServer.js';
 import {ensureKommoWebhook,type KommoWebhooks,kommoRequest,object,ORBE_ORIGIN,scalar,unseal} from './_lib/kommo.js';
 import {enrich,type KommoConfig} from './_lib/kommoEnrichment.js';
+import {reviewOrigins} from './_lib/kommoOriginReview.js';
+import {isReportDate} from '../src/lib/reportPeriod.js';
 export default async function handler(req:Request,res:ServerResponse) {
   if(req.method!=='POST')return answer(res,405,{error:'method_not_allowed'});
   if(req.headers.origin && req.headers.origin!==ORBE_ORIGIN)return answer(res,403,{error:'forbidden'});
   let phase='session';
   try {
-    const client=scalar(object(req.body).client_id,36),{db}=await owner(req,client);
+    const body=object(req.body),client=scalar(body.client_id,36),{db}=await owner(req,client);
+    if(body.action!==undefined&&body.action!=='review_origins')return answer(res,400,{error:'invalid_action'});
     phase='configuration';
     const configs=await db<KommoConfig[]>(`rest/v1/wa_kommo_credentials?client_id=eq.${client}&limit=1`);
     if(!configs[0])return answer(res,200,{status:'not_connected'});
+    if(body.action==='review_origins'){
+      if(!configs[0].enabled)return answer(res,409,{error:'A conexão da Kommo está desativada.'});
+      const start=body.start?scalar(body.start,10):'',end=body.end?scalar(body.end,10):'';
+      if((start&&!isReportDate(start))||(end&&!isReportDate(end))||(start&&end&&start>end))return answer(res,400,{error:'Período inválido.'});
+      const bounds={start:start?new Date(`${start}T00:00:00-03:00`).toISOString():null,end:end?new Date(Date.parse(`${end}T00:00:00-03:00`)+86400000).toISOString():null};
+      return answer(res,200,await reviewOrigins(configs[0],bounds.start,bounds.end));
+    }
     const cfg=configs[0],token=unseal(cfg.token_ciphertext,client);
     phase='read_events';
     const hooks=await kommoRequest<KommoWebhooks|null>(cfg.account_origin,token,'/api/v4/webhooks');

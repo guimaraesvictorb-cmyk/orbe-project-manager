@@ -1,9 +1,15 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {kommoOrigin,parseWebhook,embed,references,visibleText,contactIdentity,seal,unseal,ensureKommoWebhook,leadAttribution} from '../api/_lib/kommo.ts'
+import {kommoOrigin,parseWebhook,embed,references,visibleText,contactIdentity,seal,unseal,ensureKommoWebhook,leadAttribution,leadOriginEvidence} from '../api/_lib/kommo.ts'
 const ref='D47162B59539C57FE8585270B0D7A664'
 const binding={account:'456',lead:'987',contact:'123',messageAt:'2026-10-28T22:16:45Z'};
 const nativeLead=()=>({account_id:456,id:987,created_at:1793225805,_embedded:{contacts:[{id:123}]},custom_fields_values:[{field_code:'UTM_SOURCE',field_name:'utm_source',values:[{value:'ig'}]},{field_code:'UTM_CAMPAIGN',field_name:'utm_campaign',values:[{value:'Rayafit Alecrim'}]}]});
+test('historical CRM evidence remains separate from attribution of a returning message',()=>{
+ const lead=nativeLead(),old={...binding,messageAt:'2026-11-04T10:00:00Z'};
+ assert.equal(leadAttribution(lead,old),null);assert.equal(leadOriginEvidence(lead,old)?.fields.utm_source,'ig');
+ assert.equal(leadOriginEvidence(lead,{...old,contact:'999'}),null);
+ lead.custom_fields_values=[];assert.deepEqual(leadOriginEvidence(lead,old)?.fields,{});assert.equal(leadAttribution(lead,binding),null);
+});
 test('native CRM acquisition fields require the exact account, lead, contact and creation window',()=>{
  assert.equal(leadAttribution(nativeLead(),binding)?.fields.utm_source,'ig');
  for(const b of [{...binding,account:'999'},{...binding,contact:'789'},{...binding,lead:'654'},{...binding,messageAt:'2026-10-29T22:16:45Z'}])assert.equal(leadAttribution(nativeLead(),b),null);
