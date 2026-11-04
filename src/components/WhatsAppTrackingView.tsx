@@ -17,8 +17,8 @@ import { OriginReviewEvidence } from './KommoOriginReview'
 import { KommoConnectionStatus } from './KommoConnectionStatus'
 import { AdsCredentials } from './AdsCredentials'
 import { EvoConnection } from './EvoConnection'
-import { emptySummary, periodBounds, syncIsFresh, trackingUrl, utmFields } from '../lib/whatsappTracking'
-import type { TrackingConnection, TrackingLink, TrackingRecord, TrackingSummary } from '../lib/whatsappTracking'
+import { periodBounds, syncIsFresh, trackingUrl, utmFields } from '../lib/whatsappTracking'
+import type { TrackingConnection, TrackingLink, TrackingRecord } from '../lib/whatsappTracking'
 
 const inputClass='w-full rounded-lg border px-3 py-2 text-sm bg-[var(--bg-surface-2)] border-[var(--border)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)]'
 const panelClass='rounded-xl border border-[var(--border)] bg-[var(--bg-surface)]'
@@ -39,7 +39,7 @@ export function WhatsAppTrackingView({clientId,embedded=false,pilotOnly=false,ev
   const setTab=(tab:Tab)=>updateTrackingRoute({tab})
   const setBiUnit=(unit:string)=>updateTrackingRoute({unit})
   const setSource=(source:string)=>updateTrackingRoute({source})
-  const [summary,setSummary]=useState<TrackingSummary>(emptySummary)
+  const [dashboardRevision,setDashboardRevision]=useState(0)
   const [originEvidence,setOriginEvidence]=useState<TrackingRecord[]>([])
   const [records,setRecords]=useState<TrackingRecord[]>([]); const [total,setTotal]=useState(0); const [page,setPage]=useState(0)
   const [links,setLinks]=useState<TrackingLink[]>([])
@@ -65,19 +65,18 @@ export function WhatsAppTrackingView({clientId,embedded=false,pilotOnly=false,ev
       setConnections(available)
       const id=available.find(c=>c.id===connectionId)?.id ?? available[0]?.id ?? ''
       if(id!==connectionId) {setConnectionId(id);return}
-      if(!id) {setSummary(emptySummary);setRecords([]);setLinks([]);setTotal(0);return}
+      if(!id) {setRecords([]);setLinks([]);setTotal(0);return}
       const entity=['messages','leads','clicks'].includes(tab)?tab:'messages'
       let query=supabase.from('wa_tracking_records').select('*',{count:'exact'}).eq('connection_id',id).eq('entity',entity)
         .order('occurred_at',{ascending:false}).order('entity_key').range(page*50,page*50+49)
       if(bounds.start)query=query.gte('occurred_at',bounds.start)
       if(bounds.end)query=query.lt('occurred_at',bounds.end)
       if(source.trim())query=query.eq('payload->>utm_source',source.trim())
-      const [sr,rr,lr]=await Promise.all([
-        supabase.rpc('wa_tracking_summary',{p_connection_id:id,p_start:bounds.start,p_end:bounds.end,p_source:source.trim()||null}),
+      const [rr,lr]=await Promise.all([
         query,
         supabase.from('wa_tracking_links').select('*').eq('connection_id',id).eq('archived',false).order('created_at',{ascending:false}).limit(100),
       ])
-      if(sr.error||rr.error||lr.error)throw sr.error||rr.error||lr.error
+      if(rr.error||lr.error)throw rr.error||lr.error
       if(request!==sequence.current)return
       const pageRows=rr.data as TrackingRecord[]
       const contactIds=[...new Set(pageRows.map(r=>String(r.payload.contact_id||'')).filter(Boolean))]
@@ -92,7 +91,7 @@ export function WhatsAppTrackingView({clientId,embedded=false,pilotOnly=false,ev
       }
       if(request!==sequence.current)return
       setOriginEvidence(evidence)
-      setSummary(sr.data as TrackingSummary);setRecords(rr.data as TrackingRecord[]);setTotal(rr.count??0);setLinks(lr.data as TrackingLink[])
+      setRecords(rr.data as TrackingRecord[]);setTotal(rr.count??0);setLinks(lr.data as TrackingLink[]);setDashboardRevision(v=>v+1)
     } catch {if(request===sequence.current)setError(start&&end&&start>end?'A data inicial deve vir antes da data final.':'Não foi possível atualizar os dados. Tente novamente.')} finally {if(request===sequence.current)setLoading(false)}
   },[clientId,pilotOnly,connectionId,start,end,source,tab,page])
   useEffect(()=>{
@@ -140,7 +139,7 @@ export function WhatsAppTrackingView({clientId,embedded=false,pilotOnly=false,ev
           {(start||end||source)&&<button className="text-sm text-[var(--accent)] py-2" onClick={()=>{updateTrackingRoute({start:'',end:'',source:''});setPage(0)}}>Limpar filtros</button>}
         </div>}
         {tab==='overview'&&<>
-          <TrackingDashboard clientId={connection?.client_id} key={connectionId} unit={biUnit} onUnitChange={setBiUnit} revision={summary.messages+summary.identified} source={source.trim()} connectionId={connectionId} start={periodBounds(start,end).start} end={periodBounds(start,end).end}/>
+          <TrackingDashboard clientId={connection?.client_id} key={connectionId} unit={biUnit} onUnitChange={setBiUnit} revision={dashboardRevision} source={source.trim()} connectionId={connectionId} start={periodBounds(start,end).start} end={periodBounds(start,end).end}/>
           <CommercialTracking key={`commercial:${connectionId}`} unit={biUnit} connectionId={connectionId} source={source.trim()} start={periodBounds(start,end).start} end={periodBounds(start,end).end} compact/>
 
         </>}

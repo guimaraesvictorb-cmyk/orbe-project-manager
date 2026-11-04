@@ -1,7 +1,7 @@
 import {useEffect,useRef,useState} from 'react'
 import {supabase} from '../lib/supabase'
 import type {TrackingRecord} from '../lib/whatsappTracking'
-import {recoveredContactOrigin,messageOriginStatement} from '../lib/originReview'
+import {contactChannel,messageOriginStatement} from '../lib/originReview'
 
 const date=(value:string|number)=>new Date(String(value)).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short',timeZone:'America/Sao_Paulo'})
 export function OriginReviewEvidence({payload:p}:{payload:TrackingRecord['payload']}){
@@ -29,13 +29,11 @@ export function KommoOriginReview({clientId,start,end,rows,onReviewed}:{clientId
  const historical=rows.filter(r=>r.payload.origin_review_status==='historical').length
  const reviewed=rows.filter(r=>r.payload.origin_review_status).length
  const withoutCurrent=rows.filter(r=>r.payload.source_status!=='Identificada')
- const restored=withoutCurrent.filter(r=>recoveredContactOrigin(r))
- const unknown=withoutCurrent.filter(r=>!recoveredContactOrigin(r))
- const returned=restored.filter(r=>recoveredContactOrigin(r)?.origin_return_context).length
- const historicalWithOrigin=restored.length-returned
+ const restored=withoutCurrent.filter(r=>contactChannel(r)!=='Origem não identificada')
+ const unknown=withoutCurrent.filter(r=>contactChannel(r)==='Origem não identificada')
  async function review(deep=false){
   const requestedScope=scope;setBusy(true);setNotice('Consultando os registros da Kommo…');setError('')
-  let total=0,recovered=0
+  let total=0
   try{
    const {data}=await supabase.auth.getSession();if(!data.session)throw new Error('Entre novamente para revisar as origens.')
    for(let batch=0;batch<40;batch++){
@@ -44,9 +42,9 @@ export function KommoOriginReview({clientId,start,end,rows,onReviewed}:{clientId
     const result=await response.json() as {reviewed:number;recovered:number;failed:number;has_more:boolean;error?:string}
     if(!response.ok||typeof result.reviewed!=='number')throw new Error(result.error||'Não foi possível consultar a Kommo.')
     if(activeScope.current!==requestedScope)return
-    total+=result.reviewed;recovered+=result.recovered;setNotice(`${total} registros revisados · ${recovered} origens ${deep?'ou contextos recuperados na Kommo':'de conversa recuperadas'}.`)
+    total+=result.reviewed;setNotice(`${total} registros conferidos na Kommo.`)
     if(result.failed)throw new Error('Alguns registros não puderam ser confirmados na Kommo. Eles continuam sem atribuição; tente revisar novamente.')
-    if(!result.has_more){setNotice(total?`${total} registros revisados · ${recovered} origens ${deep?'ou contextos recuperados na Kommo':'de conversa recuperadas'}.`:'A revisão está atualizada. Novas mensagens acionam consultas; os registros sem origem ficam disponíveis para nova revisão após 24 horas.');break}
+    if(!result.has_more){setNotice(total?`${total} registros conferidos na Kommo.`:'A revisão está atualizada. Novas mensagens acionam consultas; os registros sem origem ficam disponíveis para nova revisão após 24 horas.');break}
     if(batch===39)setNotice('Lote revisado. Clique novamente para continuar os registros restantes.')
    }
   }catch(e){if(activeScope.current===requestedScope)setError(e instanceof Error?e.message:'Não foi possível revisar as origens.')}
@@ -55,8 +53,8 @@ export function KommoOriginReview({clientId,start,end,rows,onReviewed}:{clientId
  return <section aria-label="Revisão de origens da Kommo" className="rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] p-5 space-y-3">
   <div className="flex justify-between items-start gap-4 flex-wrap"><div><h3 className="font-semibold">Revisão das origens</h3><p className="text-sm text-[var(--text-tertiary)] mt-2">{historical} contatos já existiam na Kommo antes desta conversa · {Math.max(0,unknown.length-unknown.filter(r=>r.payload.origin_review_status).length)} sem revisão neste período.</p></div><div className="flex flex-wrap gap-4"><button disabled={busy} onClick={()=>void review()} className="text-sm text-[var(--accent)] disabled:opacity-50">{busy?'Revisando…':'Investigar origens na Kommo'}</button><button disabled={busy} onClick={()=>void review(true)} className="text-sm text-[var(--accent)] disabled:opacity-50">Conferir histórico completo</button></div></div>
   <p className="text-xs text-[var(--text-tertiary)]">A origem registrada no cadastro fica separada da origem da conversa atual. Um retorno de cliente não é contado como um novo clique. {reviewed} contatos com revisão registrada.</p>
-  <div className="grid sm:grid-cols-3 gap-3 text-sm"><div className="rounded-lg bg-[var(--bg-surface-2)] p-3"><strong className="text-xl">{historicalWithOrigin}</strong><p className="text-xs mt-1">Com origem registrada na Kommo</p></div><div className="rounded-lg bg-[var(--bg-surface-2)] p-3"><strong className="text-xl">{returned}</strong><p className="text-xs mt-1">Respostas às retomadas de atendimento</p></div><div className="rounded-lg bg-[var(--bg-surface-2)] p-3"><strong className="text-xl">{unknown.length}</strong><p className="text-xs mt-1">Sem classificação</p></div></div>
+  <div className="grid sm:grid-cols-2 gap-3 text-sm"><div className="rounded-lg bg-[var(--bg-surface-2)] p-3"><strong className="text-xl">{restored.length}</strong><p className="text-xs mt-1">Canal identificado na Kommo</p></div><div className="rounded-lg bg-[var(--bg-surface-2)] p-3"><strong className="text-xl">{unknown.length}</strong><p className="text-xs mt-1">Canal não informado</p></div></div>
   {notice&&<p role="status" className="text-sm text-[var(--accent)]">{notice}</p>}{error&&<p role="alert" className="text-sm text-[var(--danger)]">{error}</p>}
-  {[{key:'restored',label:`Ver ${restored.length} contatos identificados na conferência`,items:restored},{key:'unknown',label:`Ver ${unknown.length} contatos ainda sem classificação`,items:unknown}].filter(group=>group.items.length).map(group=><details key={group.key}><summary className="cursor-pointer text-sm text-[var(--accent)]">{group.label}</summary><div className="mt-4 max-h-96 overflow-auto"><table className="w-full text-sm"><thead className="text-left text-xs text-[var(--text-tertiary)]"><tr><th className="p-3">Contato / primeiro registro</th><th className="p-3">Diagnóstico e histórico</th></tr></thead><tbody>{group.items.map(r=><tr key={r.entity_key} className="border-t border-[var(--border)] align-top"><td className="p-3">{String(r.payload.name||'Contato Kommo')}<p className="text-xs text-[var(--text-tertiary)] mt-1">{date(r.occurred_at)}</p></td><td className="p-3"><OriginReviewEvidence payload={r.payload}/>{!r.payload.origin_review_status&&<span>Aguardando consulta à Kommo.</span>}</td></tr>)}</tbody></table></div></details>)}
+  {[{key:'restored',label:`Ver ${restored.length} contatos com canal identificado`,items:restored},{key:'unknown',label:`Ver ${unknown.length} contatos com canal não informado`,items:unknown}].filter(group=>group.items.length).map(group=><details key={group.key}><summary className="cursor-pointer text-sm text-[var(--accent)]">{group.label}</summary><div className="mt-4 max-h-96 overflow-auto"><table className="w-full text-sm"><thead className="text-left text-xs text-[var(--text-tertiary)]"><tr><th className="p-3">Contato / primeiro registro</th><th className="p-3">Diagnóstico e histórico</th></tr></thead><tbody>{group.items.map(r=><tr key={r.entity_key} className="border-t border-[var(--border)] align-top"><td className="p-3">{String(r.payload.name||'Contato Kommo')}<p className="text-xs text-[var(--text-tertiary)] mt-1">{date(r.occurred_at)}</p></td><td className="p-3"><OriginReviewEvidence payload={r.payload}/>{!r.payload.origin_review_status&&<span>Aguardando consulta à Kommo.</span>}</td></tr>)}</tbody></table></div></details>)}
  </section>
 }

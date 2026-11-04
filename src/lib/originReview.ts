@@ -7,6 +7,29 @@ export function messageOriginStatement(text:unknown) {
  return ''
 }
 import type {TrackingRecord} from './whatsappTracking'
+export function recordedChannel(value:unknown) {
+ const source=String(value??'').normalize('NFD').replace(/\p{Diacritic}/gu,'').toLowerCase().trim().replace(/[_-]+/gu,' ').replace(/\s+/gu,' ')
+ if(['google','google ads','googleads','adwords'].includes(source))return 'Google'
+ if(['meta','meta ads','facebook','facebook ads','fb'].includes(source))return 'Meta'
+ if(['instagram','instagram ads','insta','ig','linktree'].includes(source))return 'Instagram'
+ if(['site','website','site rayafit','site institucional'].includes(source))return 'Site'
+ return 'Origem não identificada'
+}
+// Group by the actual channel, keeping evidence and costs separate. Generic CRM
+// labels (organic, reactivation, events) do not identify one of these channels.
+export function contactChannel(row:TrackingRecord) {
+ const p=row.payload,current=recordedChannel(p.utm_source)
+ if(current!=='Origem não identificada')return current
+ if(p.gclid)return 'Google'
+ if(p.fbclid)return 'Meta'
+ const history=recoveredContactOrigin(row)
+ if(!history||history.origin_return_context)return 'Origem não identificada'
+ const historical=recordedChannel(history.utm_source)
+ if(historical!=='Origem não identificada')return historical
+ if(history.gclid)return 'Google'
+ if(history.fbclid)return 'Meta'
+ return recordedChannel(history.recorded_source_label)
+}
 // Display-only evidence. The original message UTMs, click IDs and timestamp
 // remain untouched; a historical acquisition never becomes a new click.
 export function recoveredContactOrigin(row:TrackingRecord):TrackingRecord['payload']|null {

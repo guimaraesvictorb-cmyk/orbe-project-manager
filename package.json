@@ -1,7 +1,7 @@
 {
   "name": "orbe-operating-system",
   "private": true,
-  "version": "1.56.5",
+  "version": "1.57.0",
   "type": "module",
   "scripts": {
     "dev": "vite",

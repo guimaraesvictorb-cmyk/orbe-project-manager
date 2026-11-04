@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {registerHooks} from 'node:module'
-import {recoveredContactOrigin} from '../src/lib/originReview.ts'
+import {contactChannel,recoveredContactOrigin} from '../src/lib/originReview.ts'
 registerHooks({resolve(s,c,n){return n(c.parentURL?.includes('/api/')&&s.endsWith('.js')?s.replace(/\.js$/,'.ts'):s,c)}})
 const {deepReviewOrigins,noteOriginHints,recordedOriginLabel}=await import('../api/_lib/kommoDeepOrigin.ts')
 const {seal}=await import('../api/_lib/kommo.ts')
@@ -48,4 +48,13 @@ test('a recorded service return requires the exact reply and a preceding invitat
  assert.equal(recoveredContactOrigin({...row,payload:{...row.payload,text:'Olá'}}),null);
  assert.equal(recoveredContactOrigin({...row,payload:{...row.payload,origin_return_sent_at:'2026-11-03T15:00:00Z'}}),null);
  assert.equal(recoveredContactOrigin({...row,payload:{...row.payload,origin_return_sent_at:'2026-11-03T16:01:00Z'}}),null);
+});
+test('CRM origins join the four real channels; generic classifications never imply a website or ad platform',()=>{
+ const make=(source:string)=>({entity:'messages',entity_key:'one',occurred_at:'2026-11-03T16:00:00Z',payload:{source_status:'Não identificada',origin_deep_status:'historical_evidence',crm_contact_origin_created_at:'2026-09-01T00:00:00Z',crm_contact_origin_label:source}});
+ assert.equal(contactChannel(make('Meta')),'Meta');assert.equal(contactChannel(make('Instagram')),'Instagram');assert.equal(contactChannel(make('Google Ads')),'Google');assert.equal(contactChannel(make('Site')),'Site');
+ for(const source of ['Orgânico','Reativação','Evento','Prospecção ativa','Retomada de atendimento'])assert.equal(contactChannel(make(source)),'Origem não identificada');
+ const old={...make(''),payload:{source_status:'Não identificada',origin_review_status:'historical',crm_lead_created_at:'2026-09-01T00:00:00Z',crm_origin_utm_source:'meta'}};
+ assert.equal(contactChannel(old),'Meta');assert.equal(contactChannel({...old,payload:{...old.payload,utm_source:'google',source_status:'Identificada'}}),'Google');
+ const originals=[...Array.from({length:20},()=>old),...Array.from({length:7},()=>make('Meta')),...Array.from({length:4},()=>make('Instagram')),...Array.from({length:18},()=>make('Orgânico'))];
+ const before=JSON.stringify(originals),counts=new Map<string,number>();for(const r of originals){const c=contactChannel(r);counts.set(c,(counts.get(c)??0)+1)}assert.equal(counts.get('Meta'),27);assert.equal(counts.get('Instagram'),4);assert.equal(counts.get('Origem não identificada'),18);assert.equal(JSON.stringify(originals),before);
 });
