@@ -97,12 +97,16 @@ export function ClientAnalyticsWorkspace({
     isWorkspace = !!clientId;
   useEffect(() => {
     if (embedded) return;
+    const previousTitle = document.title;
     document.title = "BI do cliente · ORBE Studio";
     const robots = document.createElement("meta");
     robots.name = "robots";
     robots.content = "noindex,nofollow,noarchive";
     document.head.append(robots);
-    return () => robots.remove();
+    return () => {
+      robots.remove();
+      document.title = previousTitle;
+    };
   }, [embedded]);
   useEffect(() => {
     const controller = new AbortController();
@@ -154,7 +158,7 @@ export function ClientAnalyticsWorkspace({
           setSnapshot({
             key,
             error:
-              e instanceof Error
+              e instanceof Error && !(e instanceof SyntaxError)
                 ? e.message
                 : "Não foi possível carregar o BI.",
           });

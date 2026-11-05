@@ -898,7 +898,7 @@ export function ClientAnalyticsPanels({
                           <td className="px-5 py-4">
                             {campaign
                               ? m.native
-                              : (data.native_channels?.[c] ?? "—")}
+                              : (data.segments?.[c]?.native ?? "—")}
                           </td>
                         </tr>
                       ))}
