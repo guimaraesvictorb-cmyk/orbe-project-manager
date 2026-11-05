@@ -20,6 +20,7 @@ import { previousMonth } from "../lib/clientTimeline"
 import { ClientAvatar } from "./ClientAvatar"
 import { ClientMonthlyResults } from "./ClientMonthlyResults"
 import { ClientOverview } from "./ClientOverview"
+import { ClientAnalyticsWorkspace } from "./ClientAnalyticsWorkspace"
 import { ClientChronogram } from "./ClientChronogram"
 import { CompiladoTab } from "./ads/CompiladoTab"
 import { SecureMetaAdsTab } from "./ads/SecureMetaAdsTab"
@@ -27,7 +28,6 @@ import { AssistantMessage } from "./AssistantMessage"
 import { safeSourceUrl } from "../lib/safeSourceUrl"
 
 const WhatsAppTrackingView = lazy(() => import('./WhatsAppTrackingView').then(m => ({default:m.WhatsAppTrackingView})))
-const ClientAnalyticsWorkspace = lazy(() => import('./ClientAnalyticsWorkspace').then(m => ({default:m.ClientAnalyticsWorkspace})))
 
 const ROLE_LABELS: Record<string, string> = { gt: "Gestor de Tráfego", gp: "Gestor de Projetos" }
 
