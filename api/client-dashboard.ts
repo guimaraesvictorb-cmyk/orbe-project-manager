@@ -33,6 +33,16 @@ export default async function handler(req:Request,res:ServerResponse){
  return answer(res,200,data);
  }
  const client=scalar(input.client_id,36),{db,user}=await qrUser(req,client);
+ if(action==='workspace_view'){
+  const period=reportPeriod(input.start,input.end),unit=String(input.unit??'all');
+  if(!['all','alecrim','ibes','itapua','unassigned'].includes(unit))return answer(res,400,{error:'invalid_unit'});
+  return answer(res,200,await clientDashboardData(db,client,period.since,period.until,unit));
+ }
+ if(action==='workspace_media'){
+  const period=reportPeriod(input.start,input.end),platform=String(input.platform??'meta');
+  if(!['meta','google'].includes(platform))return answer(res,400,{error:'invalid_platform'});
+  return answer(res,200,await clientDashboardMedia(db,{client_id:client,token_hash:`workspace:${user.id}:${client}`,token_ciphertext:'',enabled:true,include_media:true,updated_at:'workspace'},period.since,period.until,platform));
+ }
  const profiles=await db<{role:string;can_view_financials:boolean}[]>(`rest/v1/profiles?id=eq.${user.id}&select=role,can_view_financials`);if(profiles[0]?.role!=='admin'||!profiles[0]?.can_view_financials)return answer(res,403,{error:'owner_required'});
  if(action==='preview'){const period=reportPeriod(input.start,input.end);return answer(res,200,await clientDashboardData(db,client,period.since,period.until,'all'))}
  if(!['status','enable','disable','set_code'].includes(action))return answer(res,400,{error:'invalid_action'});

@@ -27,6 +27,7 @@ import { AssistantMessage } from "./AssistantMessage"
 import { safeSourceUrl } from "../lib/safeSourceUrl"
 
 const WhatsAppTrackingView = lazy(() => import('./WhatsAppTrackingView').then(m => ({default:m.WhatsAppTrackingView})))
+const ClientAnalyticsWorkspace = lazy(() => import('./ClientAnalyticsWorkspace').then(m => ({default:m.ClientAnalyticsWorkspace})))
 
 const ROLE_LABELS: Record<string, string> = { gt: "Gestor de Tráfego", gp: "Gestor de Projetos" }
 
@@ -1003,8 +1004,8 @@ export function ClientDetailView({ client, campaignsOnly = false, onBack, onDele
         {campaignsOnly && <button type="button" onClick={() => { window.location.hash = buildClientWorkspace(client.id, client.name, 'overview', window.location.hash) }} className="mb-5 text-xs font-semibold text-[var(--accent)]">Abrir projeto completo →</button>}
         {tab === "overview" && (
           <div className="space-y-6">
-            <ClientOverview clientId={client.id} strategy={strategyForm} offers={offers} knowledgeCount={knowledgeDocumentCount} checklist={items} driveLinked={!!driveFolderId} ads={adsConnection} onNavigate={setTab} />
-            <ClientMonthlyResults clientId={client.id} source={strategyForm.conversionSource} observations={observations} onConnections={() => setTab("connections")} />
+            <Suspense fallback={<p className="p-5 text-sm text-[var(--text-tertiary)]">Carregando BI do cliente…</p>}><ClientAnalyticsWorkspace key={client.id} clientId={client.id} embedded onOpenTracking={(period,unit)=>{const target=buildClientWorkspace(client.id,client.name,'tracking',window.location.hash);const [path,query]=target.split('?');const params=new URLSearchParams(query);params.set('de',period.start);params.set('ate',period.end);params.set('unidade',unit);params.set('aba','overview');setTabState('tracking');window.location.hash=`${path}?${params}`}}/></Suspense>
+            <details className="rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] p-5"><summary className="cursor-pointer text-sm font-semibold text-[var(--text-secondary)]">Operação, estratégia e resultados registrados do projeto</summary><div className="mt-5 space-y-6"><ClientOverview clientId={client.id} strategy={strategyForm} offers={offers} knowledgeCount={knowledgeDocumentCount} checklist={items} driveLinked={!!driveFolderId} ads={adsConnection} onNavigate={setTab} /><ClientMonthlyResults clientId={client.id} source={strategyForm.conversionSource} observations={observations} onConnections={() => setTab("connections")} /></div></details>
             {canEdit && (
               <div className="rounded-xl border p-4 mb-5" style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border)" }}>
                 <div className="flex items-center gap-1.5 mb-2.5">

@@ -201,3 +201,18 @@ html, body {
 @media (prefers-reduced-motion: reduce) {
   .app-nav-shell, .app-nav-panel { transition: none; }
 }
+
+/* Client analytics: a quiet canvas and one client-branded navigation rail. */
+:root {
+  --bi-canvas: #0c1723;
+  --bi-nav-bg: #103750;
+  --bi-nav-text: #f4f8fb;
+}
+:root[data-theme="light"] { --bi-canvas: #eef4f8; }
+.client-bi .client-bi-sidebar { position: sticky; top: 0; height: 100dvh; }
+.client-bi-dialog::backdrop { background: rgb(0 0 0 / .45); backdrop-filter: blur(3px); }
+@media (prefers-reduced-motion: reduce) {
+  .client-bi *, .client-bi *::before, .client-bi *::after { transition-duration: 0ms !important; animation-duration: 0ms !important; }
+}
+.client-bi-preview > .client-bi { min-height: calc(100dvh - 44px); }
+.client-bi-preview .client-bi-sidebar { height: calc(100dvh - 44px); }

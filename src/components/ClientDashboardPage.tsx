@@ -1,34 +1,48 @@
-import {useEffect,useState} from 'react'
-import {Eye,RefreshCw,ShieldCheck,Sun,Moon} from 'lucide-react'
-import {useTheme} from '../contexts/ThemeContext'
-import {OrbeMark} from './OrbeMark'
-import {BiKpi,BiLineChart,biPanel} from './BiCharts'
-import {TrackingChannelLogo} from './TrackingChannelLogo'
-import {biChannels,channelTitle,dayBrt} from '../lib/biDashboard'
-import type {ClientDashboardData,SharedMedia} from '../lib/sharedDashboard'
-const input='rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] px-3 py-2 text-sm'
-export function ClientDashboardVisual({data,channel,onChannel,media}:{data:ClientDashboardData;channel:string;onChannel:(v:string)=>void;media?:SharedMedia}){
- const darkLogo=/rayafit|lk premium/i.test(data.client.name)
- const currency=media?.currency||'BRL',money=(v:number)=>new Intl.NumberFormat('pt-BR',{style:'currency',currency}).format(v),n=(v:number)=>v.toLocaleString('pt-BR',{maximumFractionDigits:2})
- const campaigns=data.campaigns.filter(c=>channel==='all'||c.channel===channel)
- const metaCampaigns=new Map<string,{name:string;spend:number;clicks:number;impressions:number}>();for(const row of media?.daily??[]){const value=metaCampaigns.get(row.campaign_id)??{name:row.campaign_name,spend:0,clicks:0,impressions:0};value.spend+=row.spend;value.clicks+=row.link_clicks;value.impressions+=row.impressions;metaCampaigns.set(row.campaign_id,value)}
- return <div className="space-y-6"><div className={`${biPanel} p-6 md:p-8`} style={{background:'linear-gradient(120deg,var(--bg-surface),var(--accent-tint))'}}><div className="flex flex-wrap items-center justify-between gap-5"><div className="flex items-center gap-4">{data.client.logo&&<img src={data.client.logo} alt={data.client.name} className={`w-24 h-16 rounded-lg object-contain p-2 ${darkLogo?'bg-neutral-950':'bg-white'}`}/>}<div><p className="text-[10px] uppercase tracking-[.2em] text-[var(--accent)]">ORBE Intelligence · Portal do cliente</p><h1 className="text-3xl font-display font-semibold mt-2">{data.client.name}</h1><p className="mt-2 text-sm text-[var(--text-secondary)]">Resultados de marketing e oportunidades do seu negócio.</p></div></div><span className="flex items-center gap-2 text-xs text-[var(--accent)] rounded-full border border-[var(--border)] bg-[var(--bg-surface)] px-4 py-2"><Eye size={15}/>Somente visualização</span></div></div>
- <div className="grid sm:grid-cols-2 xl:grid-cols-5 gap-3">{biChannels.map(c=><button key={c} aria-pressed={channel===c} onClick={()=>onChannel(channel===c?'all':c)} className={`${biPanel} p-5 text-left ${channel===c?'ring-2 ring-[var(--accent)]':''}`}>{c==='Site'&&data.client.logo?<img src={data.client.logo} alt={`Site de ${data.client.name}`} className={`h-10 w-16 rounded object-contain p-1 ${darkLogo?'bg-neutral-950':'bg-white'}`}/>:<TrackingChannelLogo channel={c}/>}<p className="mt-4 text-sm">{channelTitle(c)}</p><strong className="block text-4xl font-display mt-2">{data.channels[c]??0}</strong><p className="text-xs text-[var(--text-tertiary)] mt-2">Primeiros contatos</p></button>)}</div>
- <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-3"><BiKpi label="Leads recebidos" value={data.total} detail="Primeiro contato observado por WhatsApp"/><BiKpi label="Origem identificada" value={data.identified} detail={`${data.total?Math.round(data.identified/data.total*100):0}% dos primeiros contatos`}/><BiKpi label="Atendimentos comprovados" value={data.funnel.answered} detail="Respostas identificadas ou confirmadas pela equipe"/><BiKpi label="Vendas confirmadas" value={data.funnel.won} detail="Resultados confirmados pela equipe"/></div>
- <div className="grid lg:grid-cols-3 gap-5"><section className={`${biPanel} p-6 lg:col-span-2`}><h2 className="font-semibold">Evolução de oportunidades</h2><p className="text-xs mt-1 text-[var(--text-tertiary)]">Primeiros contatos por dia · todas as origens</p><BiLineChart points={data.daily} label="Evolução de primeiros contatos"/></section><section className={`${biPanel} p-6`}><h2 className="font-semibold">Participação por origem</h2><div className="space-y-5 mt-5">{Object.entries(data.channels).sort((a,b)=>b[1]-a[1]).map(([c,v])=><div key={c}><div className="flex justify-between text-xs"><span>{channelTitle(c)}</span><strong>{v}</strong></div><div className="h-2 rounded-full bg-[var(--bg-surface-2)] mt-2"><div className="h-full rounded-full bg-[var(--accent)]" style={{width:`${v/Math.max(1,data.total)*100}%`}}/></div></div>)}</div></section></div>
- {['Meta','Google'].includes(channel)&&<section className="space-y-4"><h2 className="text-lg font-semibold">Performance · {channelTitle(channel)}</h2>{!media?<p role="status" className={`${biPanel} p-5`}>Consultando indicadores…</p>:media.status==='ready'&&media.totals?<><div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-3"><BiKpi label="Investimento em mídia" value={money(media.totals.spend)} detail="Informado pela plataforma de anúncios"/><BiKpi label="Impressões" value={n(media.totals.impressions)} detail={`Alcance: ${n(media.totals.reach)}`}/><BiKpi label="Cliques no link" value={n(media.totals.link_clicks)} detail={`CTR: ${media.totals.impressions?n(media.totals.link_clicks/media.totals.impressions*100)+'%':'—'}`}/><BiKpi label="CPC · link" value={media.totals.link_clicks?money(media.totals.spend/media.totals.link_clicks):'—'} detail={`CPM: ${media.totals.impressions?money(media.totals.spend/media.totals.impressions*1000):'—'}`}/></div><div className={`${biPanel} overflow-x-auto`}><table className="w-full text-sm"><caption className="p-5 text-left font-semibold">Campanhas · métricas de mídia</caption><thead><tr className="text-left text-xs text-[var(--text-tertiary)]"><th className="p-4">Campanha</th><th className="p-4">Investimento</th><th className="p-4">Impressões</th><th className="p-4">Cliques no link</th></tr></thead><tbody>{[...metaCampaigns.values()].sort((a,b)=>b.spend-a.spend).map(c=><tr key={c.name} className="border-t border-[var(--border)]"><td className="p-4 min-w-60">{c.name}</td><td className="p-4">{money(c.spend)}</td><td className="p-4">{n(c.impressions)}</td><td className="p-4">{n(c.clicks)}</td></tr>)}</tbody></table></div></>:<p role="status" className={`${biPanel} p-5 text-sm text-[var(--text-tertiary)]`}>As estatísticas de mídia deste canal ainda não estão disponíveis. Os leads identificados continuam no painel.</p>}</section>}
- {Object.values(data.units).some((v,i)=>i<3&&v>0)&&<section className={`${biPanel} p-6`}><h2 className="font-semibold">Oportunidades por unidade</h2><div className="grid sm:grid-cols-3 gap-4 mt-5">{[['alecrim','Alecrim'],['ibes','Ibes'],['itapua','Itapuã']].map(([id,label])=><div key={id} className="rounded-xl bg-[var(--bg-surface-2)] p-5"><h3 className="text-sm font-medium">{label}</h3><strong className="block text-3xl mt-3 font-display">{data.units[id]??0}</strong><p className="mt-2 text-xs text-[var(--text-tertiary)]">Primeiros contatos no período</p></div>)}</div><p className="text-xs mt-4 text-[var(--text-tertiary)]">{data.units.unassigned??0} contato(s) sem unidade identificada.</p></section>}
- {data.goals.length>0&&<section className={`${biPanel} p-6`}><h2 className="font-semibold">Metas de primeiros contatos · {data.goal_month.split('-').reverse().join('/')}</h2><p className="text-xs text-[var(--text-tertiary)] mt-1">Acompanhamento do mês completo. Metas definidas pela equipe.</p><div className="grid sm:grid-cols-3 gap-4 mt-5">{[...new Set(data.goals.map(g=>g.unit))].map(unit=>{const target=data.goals.filter(g=>g.unit===unit).reduce((n,g)=>n+g.target,0),value=data.monthly_units[unit]??0;return <div key={unit} className="rounded-xl bg-[var(--bg-surface-2)] p-5"><h3 className="font-medium text-sm">{({all:'Todas as unidades',alecrim:'Alecrim',ibes:'Ibes',itapua:'Itapuã'} as Record<string,string>)[unit]}</h3><p className="text-2xl font-display font-semibold mt-3">{value} <span className="text-sm font-normal text-[var(--text-tertiary)]">/ {target}</span></p><div className="h-2 rounded-full bg-[var(--border)] mt-4 overflow-hidden"><div className="h-full bg-[var(--accent)]" style={{width:`${Math.min(100,value/target*100)}%`}}/></div><p className="text-xs text-[var(--text-tertiary)] mt-3">{Math.round(value/target*100)}% da meta</p></div>})}</div></section>}
- <div className={`${biPanel} overflow-x-auto`}><table className="w-full text-sm"><caption className="p-5 text-left"><span className="font-semibold">Campanhas que geraram oportunidades</span><span className="block text-xs text-[var(--text-tertiary)] mt-1">{channel==='all'?'Todas as origens':channelTitle(channel)}</span></caption><thead><tr className="text-xs text-left text-[var(--text-tertiary)]"><th className="px-5 py-3">Canal</th><th className="px-5 py-3">Campanha</th><th className="px-5 py-3 text-right">Leads</th></tr></thead><tbody>{campaigns.map(c=><tr key={c.channel+c.name} className="border-t border-[var(--border)]"><td className="p-5">{channelTitle(c.channel)}</td><td className="p-5 min-w-56">{c.name}</td><td className="p-5 text-right font-semibold">{c.leads}</td></tr>)}</tbody></table>{!campaigns.length&&<p className="p-5 text-sm">Nenhum primeiro contato para esta seleção.</p>}</div>
- <p className="text-xs text-[var(--text-tertiary)]">Cada contato conta uma vez por WhatsApp, pela primeira mensagem observada. Linktree é agrupado como Instagram. Histórico anterior à integração pode estar incompleto. {data.funnel.partial} contato(s) com histórico parcial de atendimento. Dados atualizados em {new Date(data.updated_at).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'})}.</p>
- </div>
+import { ClientAnalyticsWorkspace } from "./ClientAnalyticsWorkspace";
+import { ClientAnalyticsPanels } from "./ClientAnalyticsPanels";
+import type { ClientDashboardData, SharedMedia } from "../lib/sharedDashboard";
+export function ClientDashboardVisual({
+  data,
+  channel,
+  onChannel,
+  media,
+}: {
+  data: ClientDashboardData;
+  channel: string;
+  onChannel: (v: string) => void;
+  media?: SharedMedia;
+}) {
+  return (
+    <ClientAnalyticsPanels
+      data={data}
+      section="executive"
+      channel={channel}
+      onChannel={onChannel}
+      media={
+        media && ["Meta", "Google"].includes(channel)
+          ? { [channel]: media }
+          : undefined
+      }
+    />
+  );
 }
-export function ClientDashboardPage({token,slug,onAccessExpired,onLock}:{token?:string;slug?:string;onAccessExpired?:()=>void;onLock?:()=>void}){
- const {theme,toggleTheme}=useTheme()
- const [start,setStart]=useState(()=>dayBrt(new Date(Date.now()-29*86400000).toISOString())),[end,setEnd]=useState(()=>dayBrt(new Date().toISOString())),[channel,setChannel]=useState('all'),[revision,setRevision]=useState(0),[snapshot,setSnapshot]=useState<{key:string;data?:ClientDashboardData;error?:string}>(),[media,setMedia]=useState<{key:string;data:SharedMedia}>()
- const key=[slug||token,start,end,revision].join(':');const current=snapshot?.key===key?snapshot:undefined;const mediaKey=key+channel
- useEffect(()=>{document.title='Dashboard do cliente · ORBE';const robots=document.createElement('meta');robots.name='robots';robots.content='noindex,nofollow,noarchive';document.head.append(robots);return()=>robots.remove()},[])
- useEffect(()=>{let active=true;const controller=new AbortController();async function load(){try{const r=await fetch('/api/client-dashboard',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'view',...(slug?{slug}:{token}),start,end}),signal:controller.signal});if(r.status===401&&onAccessExpired){onAccessExpired();return}let value;try{value=await r.json()}catch{throw new Error('O painel está temporariamente indisponível. Tente atualizar em alguns instantes.')}if(!r.ok)throw new Error(r.status===404?'Este link está indisponível. Solicite o endereço atualizado à equipe ORBE.':value.error==='invalid_period'?'Escolha um período válido de até 93 dias.':'Não foi possível atualizar o dashboard. Tente novamente.');if(active)setSnapshot({key,data:value})}catch(e){if(active)setSnapshot({key,error:e instanceof Error?e.message:'Não foi possível carregar.'})}}void load();return()=>{active=false;controller.abort()}},[token,slug,start,end,key,onAccessExpired])
- useEffect(()=>{if(!current?.data||!['Meta','Google'].includes(channel))return;let active=true;const controller=new AbortController();void(async()=>{try{const r=await fetch('/api/client-dashboard',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'media',...(slug?{slug}:{token}),start,end,platform:channel==='Meta'?'meta':'google'}),signal:controller.signal});if(r.status===401&&onAccessExpired){onAccessExpired();return}const value=await r.json();if(active)setMedia({key:mediaKey,data:r.ok?value:{status:'unavailable'}})}catch{if(active)setMedia({key:mediaKey,data:{status:'unavailable'}})}})();return()=>{active=false;controller.abort()}},[token,slug,start,end,channel,mediaKey,current?.data,onAccessExpired])
- return <div className="min-h-screen bg-[var(--bg-page)] text-[var(--text-primary)]"><header className="border-b border-[var(--border)] bg-[var(--bg-surface)]"><div className="max-w-screen-2xl mx-auto px-5 py-5 flex justify-between items-center"><div className="flex items-center gap-3"><OrbeMark size={32}/><div><p className="font-semibold text-sm">ORBE Studio</p><p className="text-[10px] text-[var(--text-tertiary)]">Dashboard do cliente</p></div></div><div className="flex items-center gap-4"><button onClick={toggleTheme} aria-label={theme==='dark'?'Usar tema claro':'Usar tema escuro'} className="p-2 rounded-lg text-[var(--accent)]">{theme==='dark'?<Sun size={18}/>:<Moon size={18}/>}</button><ShieldCheck size={20} className="text-[var(--accent)]"/>{onLock&&<button onClick={onLock} className="text-xs text-[var(--text-secondary)]">Encerrar acesso</button>}</div></div></header><main className="max-w-screen-2xl mx-auto px-4 md:px-6 py-6 md:py-10 space-y-6"><div className="flex flex-wrap gap-3 items-end"><label className="text-xs">De<input aria-label="Data inicial do painel" type="date" value={start} onChange={e=>setStart(e.target.value)} className={`${input} block mt-1`}/></label><label className="text-xs">Até<input aria-label="Data final do painel" type="date" value={end} onChange={e=>setEnd(e.target.value)} className={`${input} block mt-1`}/></label><button onClick={()=>setRevision(v=>v+1)} className={`${input} flex gap-2 items-center text-[var(--accent)]`}><RefreshCw size={15}/>Atualizar painel</button></div>{!current?<p role="status" className={`${biPanel} p-8`}>Carregando seu dashboard…</p>:current.error?<p role="alert" className={`${biPanel} p-8 text-sm`}>{current.error}</p>:current.data&&<ClientDashboardVisual data={current.data} channel={channel} onChannel={setChannel} media={media?.key===mediaKey?media.data:undefined}/>}</main><footer className="text-center p-6 text-xs text-[var(--text-tertiary)]">ORBE Marketing · Inteligência para decisões</footer></div>
+export function ClientDashboardPage({
+  token,
+  slug,
+  onAccessExpired,
+  onLock,
+}: {
+  token?: string;
+  slug?: string;
+  onAccessExpired?: () => void;
+  onLock?: () => void;
+}) {
+  return (
+    <ClientAnalyticsWorkspace
+      token={token}
+      slug={slug}
+      onAccessExpired={onAccessExpired}
+      onLock={onLock}
+    />
+  );
 }

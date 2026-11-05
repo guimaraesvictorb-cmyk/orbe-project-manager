@@ -3,6 +3,8 @@ import {storage} from './trackingServer.js';
 import {dayBrt,unitOf,dailyLeads} from '../../src/lib/biDashboard.js';
 import {campaignName,firstContacts,trackingChannel} from '../../src/lib/trackingDashboard.js';
 import {commercialContacts,type CommercialOutcome,type ConversationEvent,type ServiceSettings} from '../../src/lib/commercialTracking.js';
+import {contactChannel,recoveredContactOrigin} from '../../src/lib/originReview.js';
+import {comparisonPeriod} from '../../src/lib/clientAnalytics.js';
 import type {TrackingRecord} from '../../src/lib/whatsappTracking.js';
 import {metaReport} from './adsReport.js';
 import {googleCredential} from './googleMcc.js';
@@ -24,23 +26,37 @@ async function all<T>(db:Db,table:string,connection:string,select:string,order:s
  const out:T[]=[];for(let offset=0;offset<20000;offset+=1000){const rows=await db<T[]>(`rest/v1/${table}?connection_id=eq.${connection}&select=${select}&order=${order}&limit=1000&offset=${offset}${extra}`);out.push(...rows);if(rows.length<1000)return out}throw new Error('report_too_large');
 }
 export function aggregateClientDashboard(sources:{connection:string;records:TrackingRecord[];events:ConversationEvent[];outcomes:CommercialOutcome[];settings:ServiceSettings|null}[],start:string,end:string,unit='all'){
- const channels:Record<string,number>=Object.create(null),campaigns=new Map<string,{channel:string;name:string;leads:number}>(),units:Record<string,number>={alecrim:0,ibes:0,itapua:0,unassigned:0},daily=new Map<string,number>();let total=0,won=0,answered=0,waiting=0,partial=0;let coverage:string|null=null;
- for(const source of sources){const first=firstContacts(source.records,null,null),selected=firstContacts(source.records,`${start}T03:00:00.000Z`,new Date(Date.parse(`${end}T03:00:00Z`)+86400000).toISOString()).filter(r=>unit==='all'||unitOf(r.payload)===unit);if(first[0]&&(!coverage||first[0].occurred_at<coverage))coverage=first[0].occurred_at;
- const commercial=source.settings?commercialContacts(source.records,source.events,source.outcomes,source.settings,`${start}T03:00:00Z`,new Date(Date.parse(`${end}T03:00:00Z`)+86400000).toISOString(),'',new Date().toISOString(),source.connection):[];const selectedIds=new Set(selected.map(r=>String(r.payload.contact_id||r.payload.sender_id)));
- for(const row of selected){total++;const channel=trackingChannel(row.payload),name=campaignName(row.payload,source.connection),key=channel+'\0'+name;channels[channel]=(channels[channel]??0)+1;units[unitOf(row.payload)]++;const item=campaigns.get(key)??{channel,name,leads:0};item.leads++;campaigns.set(key,item)}
- for(const point of dailyLeads(selected,start,end))daily.set(point.day,(daily.get(point.day)??0)+point.value);
- for(const row of commercial.filter(r=>selectedIds.has(r.id))){if(row.state==='won')won++;if(['won','answered'].includes(row.state))answered++;if(['waiting','late'].includes(row.state))waiting++;if(row.state==='partial')partial++}if(!source.settings)partial+=selected.length;
+ const channels:Record<string,number>=Object.create(null),nativeChannels:Record<string,number>=Object.create(null),units:Record<string,number>={alecrim:0,ibes:0,itapua:0,unassigned:0};
+ const bucket=()=>({total:0,native:0,won:0,answered:0,waiting:0,late:0,lost:0,review:0,partial:0,rows:[] as TrackingRecord[]});
+ const total=bucket(),segments=new Map<string,ReturnType<typeof bucket>>(),unitSegments=new Map<string,ReturnType<typeof bucket>>(),campaigns=new Map<string,{channel:string;name:string;leads:number;bucket:ReturnType<typeof bucket>}>();let coverage:string|null=null;
+ const increment=(b:ReturnType<typeof bucket>,row:TrackingRecord,state:string)=>{b.total++;b.rows.push(row);if(trackingChannel(row.payload)!=='Origem não identificada')b.native++;if(state==='won')b.won++;if(['answered','won'].includes(state))b.answered++;if(['waiting','late'].includes(state))b.waiting++;if(state==='late')b.late++;if(state==='lost')b.lost++;if(state==='review')b.review++;if(state==='partial')b.partial++};
+ for(const source of sources){
+  const first=firstContacts(source.records,null,null),selected=firstContacts(source.records,`${start}T03:00:00.000Z`,new Date(Date.parse(`${end}T03:00:00Z`)+86400000).toISOString()).filter(r=>unit==='all'||unitOf(r.payload)===unit);
+  if(first[0]&&(!coverage||first[0].occurred_at<coverage))coverage=first[0].occurred_at;
+  const commercial=source.settings?commercialContacts(source.records,source.events,source.outcomes,source.settings,`${start}T03:00:00Z`,new Date(Date.parse(`${end}T03:00:00Z`)+86400000).toISOString(),'',new Date().toISOString(),source.connection):[];
+  const statuses=new Map(commercial.map(r=>[r.id,r.state]));
+  for(const row of selected){
+   const native=trackingChannel(row.payload),verified=contactChannel(row),channel=verified==='Origem não identificada'?native:verified,history=recoveredContactOrigin(row),name=campaignName(history&&!history.origin_return_context?history:row.payload,source.connection),key=channel+'\0'+name,whichUnit=unitOf(row.payload),state=statuses.get(String(row.payload.contact_id||row.payload.sender_id))??'partial';
+   channels[channel]=(channels[channel]??0)+1;nativeChannels[native]=(nativeChannels[native]??0)+1;units[whichUnit]++;
+   const segment=segments.get(channel)??bucket(),unitSegment=unitSegments.get(whichUnit)??bucket(),campaign=campaigns.get(key)??{channel,name,leads:0,bucket:bucket()};campaign.leads++;
+   for(const b of [total,segment,unitSegment,campaign.bucket])increment(b,row,state);
+   segments.set(channel,segment);unitSegments.set(whichUnit,unitSegment);campaigns.set(key,campaign);
+  }
  }
- // Explicit aggregates only: identities, messages, CRM IDs, phones and evidence never leave this function.
- return {total,identified:total-(channels['Origem não identificada']??0),channels,units,campaigns:[...campaigns.values()].sort((a,b)=>b.leads-a.leads),daily:[...daily].map(([day,value])=>({day,value})).sort((a,b)=>a.day.localeCompare(b.day)),funnel:{won,answered,waiting,partial},coverage_start:coverage?dayBrt(coverage):null};
+ const finish=(b:ReturnType<typeof bucket>)=>{const {rows,...metrics}=b;return {...metrics,daily:dailyLeads(rows,start,end)}};
+ const {total:count,native:_native,daily,...funnel}=finish(total);void _native;
+ // Whitelisted aggregates only. No identities, message content, CRM IDs or
+ // attribution evidence are serialized into the client-facing response.
+ return {total:count,identified:count-(channels['Origem não identificada']??0),channels,native_channels:nativeChannels,units,segments:Object.fromEntries([...segments].map(([key,b])=>[key,finish(b)])),unit_segments:Object.fromEntries([...unitSegments].map(([key,b])=>[key,finish(b)])),campaigns:[...campaigns.values()].map(c=>({channel:c.channel,name:c.name,leads:c.leads,metrics:finish(c.bucket)})).sort((a,b)=>b.leads-a.leads),daily,funnel,coverage_start:coverage?dayBrt(coverage):null};
 }
 export async function clientDashboardData(db:Db,client:string,start:string,end:string,unit:string){
- const [clients,connections]=await Promise.all([db<{name:string}[]>(`rest/v1/clients?id=eq.${client}&select=name`),db<Connection[]>(`rest/v1/wa_tracking_connections?client_id=eq.${client}&select=id,name&order=created_at`)]);if(clients.length!==1)throw new Error('link_unavailable');
+ const [clients,connections,strategy]=await Promise.all([db<{name:string}[]>(`rest/v1/clients?id=eq.${client}&select=name`),db<Connection[]>(`rest/v1/wa_tracking_connections?client_id=eq.${client}&select=id,name&order=created_at`),db<{conversion_event:string|null}[]>(`rest/v1/client_marketing_strategy?client_id=eq.${client}&select=conversion_event`)]);if(clients.length!==1)throw new Error('link_unavailable');
  const sources=await Promise.all(connections.map(async c=>{const [records,events,outcomes,settings]=await Promise.all([all<TrackingRecord>(db,'wa_tracking_records',c.id,'entity_key,entity,occurred_at,payload','occurred_at.asc,entity_key.asc','&entity=eq.messages'),all<ConversationEvent>(db,'wa_conversation_events',c.id,'event_id,contact_id,direction,author_kind,author_name,message_text,occurred_at,captured_at','event_id.asc'),all<CommercialOutcome>(db,'wa_commercial_outcomes',c.id,'contact_id,status,evidence,updated_at,updated_by','contact_id.asc'),db<ServiceSettings[]>(`rest/v1/wa_service_settings?connection_id=eq.${c.id}&select=weekdays,opens,closes,target_minutes,outbound_started_at,capture_ready_at`)]);return {connection:c.id,records,events,outcomes,settings:settings[0]??null}}));
  const monthly_units:Record<string,number>={all:0,alecrim:0,ibes:0,itapua:0,unassigned:0};for(const source of sources)for(const row of firstContacts(source.records,null,null)){if(dayBrt(row.occurred_at).startsWith(end.slice(0,7))){monthly_units.all++;monthly_units[unitOf(row.payload)]++}}
  const goals=(await Promise.all(connections.map(c=>db<{unit:string;target:number}[]>(`rest/v1/wa_bi_goals?connection_id=eq.${c.id}&month=eq.${end.slice(0,7)}-01&select=unit,target`)))).flat();
  let logo='';try{const signed=await db<{signedURL:string}>(`storage/v1/object/sign/client-logos/${client}/logo.png`,{method:'POST',body:JSON.stringify({expiresIn:3600})});logo=`${process.env.VITE_SUPABASE_URL}/storage/v1${signed.signedURL}`}catch{/* Logo is optional. */}
- return {client:{name:clients[0].name,logo},period:{start,end},unit,...aggregateClientDashboard(sources,start,end,unit),goals,goal_month:end.slice(0,7),monthly_units,updated_at:new Date().toISOString()};
+ const previous=comparisonPeriod({start,end}),comparison=aggregateClientDashboard(sources,previous.start,previous.end,unit);
+ return {client:{name:clients[0].name,logo,conversion_event:strategy[0]?.conversion_event||''},period:{start,end},unit,...aggregateClientDashboard(sources,start,end,unit),goals,goal_month:end.slice(0,7),monthly_units,comparison:{period:previous,unit,...comparison,coverage_complete:!!comparison.coverage_start&&previous.start>=comparison.coverage_start},updated_at:new Date().toISOString()};
 }
 const mediaCache=new Map<string,{expires:number;value:unknown}>();
 export async function clientDashboardMedia(db:Db,link:DashboardLink,start:string,end:string,platform:string){
