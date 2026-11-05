@@ -1,4 +1,4 @@
-import {isReportDate} from './reportPeriod.ts'
+import {isReportDate} from './reportPeriod.js'
 import type {TrackingRecord} from './whatsappTracking.js'
 export const biChannels=['Google','Meta','Site','Instagram','Origem não identificada'] as const
 export const channelTitle=(v:string)=>v==='Google'?'Google Ads':v==='Meta'?'Meta Ads':v==='Site'?'Site':v==='Origem não identificada'?'Sem origem':v
