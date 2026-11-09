@@ -93,14 +93,15 @@ export function WhatsAppTrackingView({clientId,embedded=false,pilotOnly=false,ev
       const evidence:TrackingRecord[]=[]
       if(entity==='messages'&&contactIds.length){
         const newest=pageRows.reduce((a,r)=>r.occurred_at>a?r.occurred_at:a,'')
-        // Keep request URLs bounded: hundreds of Kommo contact IDs exceed proxy limits.
-        for(let batch=0;batch<contactIds.length;batch+=50)for(let offset=0;;offset+=1000){
+        // Fetch the connection's smaller evidence set once; avoid huge contact-ID URLs or an N+1 request per contact batch.
+        const contactSet=new Set(contactIds)
+        for(let offset=0;;offset+=1000){
           const origins=await supabase.from('wa_tracking_records').select('entity,entity_key,occurred_at,payload')
             .eq('connection_id',id).eq('entity','messages').eq('payload->>source_status','Identificada')
-            .in('payload->>contact_id',contactIds.slice(batch,batch+50)).lte('occurred_at',newest).order('occurred_at',{ascending:false}).order('entity_key').range(offset,offset+999)
+            .lte('occurred_at',newest).order('occurred_at',{ascending:false}).order('entity_key').range(offset,offset+999)
           if(origins.error)throw origins.error
           if(request!==sequence.current)return
-          evidence.push(...origins.data as TrackingRecord[])
+          evidence.push(...(origins.data as TrackingRecord[]).filter(r=>contactSet.has(String(r.payload.contact_id||''))))
           if(origins.data.length<1000)break
         }
       }

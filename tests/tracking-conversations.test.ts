@@ -46,3 +46,5 @@ test('a confirmed conversation-history channel can be shown without fabricating 
  const m={...row('h','person','2026-11-09T11:00:00Z'),payload:{contact_id:'person',origin_history_status:'channel_found',origin_history_evidence_id:'event-1',origin_history_evidence_at:'2026-11-01T11:00:00Z',origin_history_channel:'Meta'}}
  const origin=conversationOrigins([m]);assert.equal(origin.historical,true);assert.equal(originKind(origin.rows[0].payload),'meta');assert.equal(origin.rows[0].payload.utm_source,undefined)
 })
+
+test('previews describe gym plans without calling an academy a workshop',()=>{const brief=conversationBrief(['Quais os planos da academia? Onde fica o endereço?']);assert.match(brief.summary,/planos e valores/);assert.match(brief.summary,/matrícula e treinos/);assert.doesNotMatch(brief.summary,/oficina/)})

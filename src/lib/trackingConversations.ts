@@ -43,13 +43,16 @@ export function conversationOrigins(messages: TrackingRecord[],evidence: Trackin
 
 }
 const topics:[string,RegExp][]=[
+ ['planos e valores',/(?<!\p{L})(plano|planos|mensalidade|mensalidades|valor|valores|pagamento|parcelado)(?!\p{L})/iu],
+ ['matrícula e treinos',/(?<!\p{L})(matrícula|matricula|treino|treinar|musculação|academia|aulas)(?!\p{L})/iu],
+ ['campanha Black Friday',/(?<!\p{L})(black friday|black)(?!\p{L})/iu],
  ['faturamento e cobranças',/(?<!\p{L})(faturamento|fatura|boleto|vencimento|vencimentos|cobrança|cobranças|nota fiscal|notas fiscais)(?!\p{L})/iu],
  ['óleo e lubrificantes',/(?<!\p{L})(óleo|oleo|lubrificante|lubrificantes)(?!\p{L})/iu],
  ['peças e manutenção',/(?<!\p{L})(peça|peças|pastilha|pastilhas|freio|freios|motor|suspensão|câmbio|revisão)(?!\p{L})/iu],
  ['vistoria e seguro',/(?<!\p{L})(vistoria|sinistro|seguro|seguradora)(?!\p{L})/iu],
  ['agendamento',/(?<!\p{L})(agendar|agendado|agendada|agendamento|horário|horarios)(?!\p{L})/iu],
  ['orçamento',/(?<!\p{L})(orçamento|orcamento|cotação|cotacao)(?!\p{L})/iu],
- ['localização da oficina',/(?<!\p{L})(endereço|endereco|localização|localizacao)(?!\p{L})/iu],
+ ['localização e endereço',/(?<!\p{L})(endereço|endereco|localização|localizacao)(?!\p{L})/iu],
 ]
 export function conversationBrief(texts: string[]) {
  const cleaned=texts.map(cleanConversationText).filter(Boolean)
