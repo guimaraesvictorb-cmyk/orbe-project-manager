@@ -1,3 +1,4 @@
+import {OrganicAnalytics} from "./OrganicAnalytics"
 import { useState, useRef, useEffect, useMemo, useCallback, lazy, Suspense } from "react"
 import {
   ArrowLeft, Globe, User, Phone, Mail, DollarSign, Tag,
@@ -967,12 +968,12 @@ export function ClientDetailView({ client, campaignsOnly = false, onBack, onDele
         </div>
       )}
 
-      <div className="flex min-h-0 flex-1 flex-col md:flex-row">
-      <div className="shrink-0 overflow-x-auto border-b border-[var(--border)] bg-[var(--bg-surface)] px-3 py-3 md:w-52 md:overflow-y-auto md:border-b-0 md:border-r">
-        <div id={tabListId} className="flex w-max min-w-full gap-1 md:w-full md:flex-col" role="tablist" aria-orientation="vertical" aria-label={`${client.name}: áreas do cliente`}>
+      <div className="flex min-h-0 flex-1 flex-col">
+      <div className="shrink-0 overflow-x-auto border-b border-[var(--border)] bg-[var(--bg-surface)] px-4 py-2">
+        <div id={tabListId} className="flex w-max min-w-full items-center gap-1" role="tablist" aria-orientation="horizontal" aria-label={`${client.name}: áreas do cliente`}>
           {tabs.map((t, index) => (
             <span key={`wrap-${t.id}`} role="presentation" className="contents">
-            {index === 0 || tabs[index - 1].group !== t.group ? <span role="presentation" aria-hidden="true" className={`${index ? "md:mt-4" : ""} hidden px-3 py-1 text-[9px] font-bold uppercase tracking-widest md:block`} style={{ color: "var(--text-quaternary)", borderColor: "var(--border)" }}>{t.group}</span> : null}
+
             <button
               key={t.id}
               id={`${tabListId}-${t.id}`}
@@ -1144,8 +1145,8 @@ export function ClientDetailView({ client, campaignsOnly = false, onBack, onDele
         )}
 
         {tab === "checklist" && <ClientChronogram clientId={client.id} items={items} members={teamMembers} canEdit={canEdit} onToggle={id => profile ? toggleItem(id, profile.id) : Promise.resolve(undefined)} onUpdate={updateItem} />}
-        {tab === "connections" && <Suspense fallback={<p>Carregando conexões…</p>}><WhatsAppTrackingView clientId={client.id} embedded evoEnabled={/evo/i.test(strategyForm.conversionSource)} /></Suspense>}
-        {tab === "analytics" && <section className="rounded-2xl border border-[var(--border)] bg-[var(--bg-surface)] p-6"><h2 className="text-lg font-semibold text-[var(--text-primary)]">Orgânico e Analytics</h2><p className="mt-2 text-sm text-[var(--text-tertiary)]">{client.ga4_property_id ? `Propriedade GA4 cadastrada: ${client.ga4_property_id}. A coleta de relatórios ainda precisa ser validada.` : 'Nenhuma propriedade GA4 vinculada a este cliente.'}</p><p className="mt-3 text-sm text-[var(--text-tertiary)]">Perfis orgânicos ainda sem integração de métricas validada.</p><button onClick={() => setTab('connections')} className="mt-5 text-sm font-semibold text-[var(--accent)]">Conferir conexões →</button></section>}
+        {tab === "connections" && <Suspense fallback={<p>Carregando conexões…</p>}><WhatsAppTrackingView clientId={client.id} embedded connectionsOnly evoEnabled={/evo/i.test(strategyForm.conversionSource)} /></Suspense>}
+        {tab === "analytics" && <OrganicAnalytics key={client.id} clientId={client.id} onConnections={()=>setTab('connections')}/>}
         {tab === "meta"      && <SecureMetaAdsTab clientId={client.id} onVerified={refreshAdsConnection} onOpenConnections={() => setTab("connections")} />}
         {tab === "google"    && <SecureMetaAdsTab clientId={client.id} platform="google" onVerified={refreshAdsConnection} onOpenConnections={() => setTab("connections")} />}
         {tab === "compilado" && <CompiladoTab clientId={client.id} onVerified={refreshAdsConnection} onOpenConnections={() => setTab("connections")} />}

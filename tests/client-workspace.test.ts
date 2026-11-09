@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { buildClientWorkspace, parseClientWorkspace } from '../src/lib/clientWorkspace.ts'
-import { inTimelinePeriod, previousMonth } from '../src/lib/clientTimeline.ts'
+import { inTimelinePeriod, previousMonth, timelineDate, quarterBounds } from '../src/lib/clientTimeline.ts'
 const raya = '589481f6-3a15-4c93-b384-5d33373c20e3'
 const other = 'b1253dc9-1414-4c5f-9f13-3c34961960e0'
 test('legacy tracking bookmarks retain their client and open the client workspace', () => {
@@ -49,4 +49,14 @@ test('campaign navigation retains client and date filters, and exits to the proj
  assert.equal(parseClientWorkspace(google).params.get('unidade'), 'ibes')
  assert.ok(buildClientWorkspace(raya, 'Rayafit', 'connections', google).startsWith('#clientes/'))
  assert.ok(buildClientWorkspace(raya, 'Rayafit', 'overview', google).startsWith('#clientes/'))
+})
+
+test('quarters use calendar boundaries and preserve undated tasks by their real registration quarter',()=>{
+ assert.deepEqual(quarterBounds(2026,1),{start:'2026-01-01',end:'2026-03-31'})
+ assert.deepEqual(quarterBounds(2026,4),{start:'2026-10-01',end:'2026-12-31'})
+ assert.throws(()=>quarterBounds(2026,5))
+ assert.equal(timelineDate(null,null,'2026-11-09T12:00:00Z'),'2026-11-09')
+ assert.equal(timelineDate(null,'2026-04-01','2026-11-09T12:00:00Z'),'2026-04-01')
+ assert.equal(timelineDate('2026-10-31','2026-04-01','2026-11-09T12:00:00Z'),'2026-10-31')
+ assert.equal(timelineDate(null,null,'2026-10-01T01:00:00Z'),'2026-09-30')
 })

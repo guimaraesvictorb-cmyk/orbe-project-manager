@@ -1,18 +1,19 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Globe, HelpCircle, Search, TestTubeDiagonal, X } from 'lucide-react'
+import { Globe, HelpCircle, Camera, Search, TestTubeDiagonal, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import type { TrackingRecord } from '../lib/whatsappTracking'
 import { utmFields } from '../lib/whatsappTracking'
 import { campaignName } from '../lib/trackingDashboard'
-import { cleanConversationText, conversationBrief, conversationOrigins, groupConversations, originKind } from '../lib/trackingConversations'
+import { cleanConversationText, contactJourney, conversationBrief, conversationOrigins, groupConversations, originKind } from '../lib/trackingConversations'
 import type { ConversationContext, ConversationEvent, OriginKind } from '../lib/trackingConversations'
 
 const date=(v:string)=>new Date(v).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short',timeZone:'America/Sao_Paulo'})
 const shortDate=(v:string)=>new Date(v).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',timeZone:'America/Sao_Paulo'})
-const originLabels:Record<OriginKind,string>={google:'Google',meta:'Meta',site:'Site',test:'Teste',other:'Outra origem',unknown:'Origem não identificada'}
+const originLabels:Record<OriginKind,string>={google:'Google',meta:'Meta',instagram:'Instagram',site:'Site',test:'Teste',other:'Outra origem',unknown:'Origem não identificada'}
 function OriginIcon({kind}:{kind:OriginKind}) {
  if(kind==='google')return <svg aria-hidden="true" viewBox="0 0 24 24" className="w-4 h-4 shrink-0"><path fill="currentColor" d="M21.6 12.23c0-.71-.06-1.39-.18-2.05H12v3.88h5.38a4.6 4.6 0 0 1-2 3.02 6.1 6.1 0 1 1 1.74-9.7l2.9-2.9A10 10 0 1 0 22 12c0 .08-.4.15-.4.23Z"/></svg>
  if(kind==='meta')return <svg aria-hidden="true" viewBox="0 0 24 24" className="w-5 h-4 shrink-0"><path fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" d="M12 12C9 6 7 5 5 7c-3 3-5 11 0 11 3 0 5-7 7-10 2-3 4-3 6 0 3 4 4 10 0 10-3 0-4-3-6-6Z"/></svg>
+ if(kind==='instagram')return <Camera size={15}/>
  if(kind==='site')return <Globe size={15}/>
  if(kind==='test')return <TestTubeDiagonal size={15}/>
  return <HelpCircle size={15}/>
@@ -29,7 +30,8 @@ export function TrackingConversations({connectionId,records,originEvidence=[],re
  const [selected,setSelected]=useState(''),[search,setSearch]=useState(''),[page,setPage]=useState(0)
  const [history,setHistory]=useState<{key:string;events:ConversationEvent[];context:ConversationContext|null;error:string}>({key:'',events:[],context:null,error:''})
  const conversations=useMemo(()=>groupConversations(records),[records])
- const contactsKey=JSON.stringify(conversations.map(c=>c.id).sort())
+ const visibleIds=conversations.filter(c=>!search||`${c.name} ${c.phone}`.toLowerCase().includes(search.toLowerCase())).slice(page*25,(page+1)*25).map(c=>c.id)
+ const contactsKey=JSON.stringify([...new Set([...visibleIds,...(selected?[selected]:[])])].sort())
  const revision=conversations.map(c=>`${c.id}:${c.last.occurred_at}:${c.messages.length}`).sort().join('|')
  const requestKey=`${connectionId}:${contactsKey}:${revision}:${refreshRevision}`
  useEffect(()=>{
@@ -60,7 +62,7 @@ export function TrackingConversations({connectionId,records,originEvidence=[],re
   const events=eventsByContact.get(c.id)||[]
   const brief=conversationBrief(events.length?events.map(e=>e.message_text):c.messages.map(m=>String(m.payload.text||'')))
   const role=context?.contacts[c.id]
-  return {...c,events,brief,role,origins:conversationOrigins(c.messages,originEvidence)}
+  return {...c,events,brief,role,journey:contactJourney(c.messages),origins:conversationOrigins(c.messages,originEvidence)}
  })
  const filtered=cards.filter(c=>`${c.name} ${c.phone} ${c.role?.role||''} ${c.brief.summary}`.toLocaleLowerCase('pt-BR').includes(search.toLocaleLowerCase('pt-BR')))
  const current=cards.find(c=>c.id===selected)
@@ -77,15 +79,15 @@ export function TrackingConversations({connectionId,records,originEvidence=[],re
       <p className="mt-0.5 text-xs text-[var(--text-tertiary)]">{c.role?.role||'Relação a confirmar'}</p>
       <p className="mt-2 text-sm line-clamp-2">{c.brief.summary}</p>
       <p className="mt-1 text-xs text-[var(--text-tertiary)] line-clamp-2">{c.brief.quote?`“${c.brief.quote}”`:'Mensagem sem texto'}</p>
-      <div className="flex flex-wrap gap-1 mt-2">{c.origins.rows.length?c.origins.rows.map(r=><OriginBadge key={r.entity_key} row={r} historical={c.origins.historical}/>):<OriginBadge/>}</div>
+      {c.journey&&<p className="text-[10px] mt-1 text-[var(--text-tertiary)]">{c.journey}</p>}<div className="flex flex-wrap gap-1 mt-2">{c.origins.rows.length?c.origins.rows.map(r=><OriginBadge key={r.entity_key} row={r} historical={c.origins.historical}/>):<OriginBadge/>}</div>
      </div></button>)}{!filtered.length&&<p className="p-5 text-sm">Nenhuma conversa encontrada.</p>}</div>
     <div className="p-3 flex justify-between gap-2 text-xs text-[var(--text-tertiary)]"><button disabled={!safePage} className="disabled:opacity-30" onClick={()=>setPage(p=>Math.max(0,p-1))}>Anterior</button><span>Página {safePage+1}</span><button disabled={(safePage+1)*25>=filtered.length} className="disabled:opacity-30" onClick={()=>setPage(safePage+1)}>Próxima</button></div>
    </div>
    <div className="min-w-0 bg-[var(--bg-surface-2)]">{current?<>
     <header className="p-4 bg-[var(--bg-surface)] border-b border-[var(--border)] flex gap-3 items-center"><Avatar name={current.name}/><div className="flex-1 min-w-0"><h2 className="font-semibold">{current.name}</h2><p className="text-xs text-[var(--text-tertiary)]">{current.role?.role||'Relação a confirmar'} · {current.phone}</p>{current.role&&<p className="text-[10px] text-[var(--text-tertiary)]">{current.role.evidence}</p>}</div><button aria-label="Fechar conversa" onClick={()=>setSelected('')} className="p-2 rounded-lg hover:bg-[var(--bg-surface-2)]"><X size={18}/></button></header>
-    <div className="p-4 space-y-3"><div className="p-3 rounded-xl bg-[var(--bg-surface)]"><p className="text-[10px] uppercase tracking-wider text-[var(--text-tertiary)]">Resumo da conversa</p><p className="text-sm mt-1">{current.brief.summary}</p><p className="text-xs mt-1 text-[var(--text-tertiary)]">Temas encontrados no texto; não confirma profissão, compra ou conclusão.</p></div>
+    <div className="p-4 space-y-3"><div className="p-3 rounded-xl bg-[var(--bg-surface)]"><p className="text-[10px] uppercase tracking-wider text-[var(--text-tertiary)]">Resumo da conversa</p><p className="text-sm mt-1">{current.brief.summary}</p>{current.journey&&<p className="text-xs mt-2 text-[var(--accent)]">{current.journey}</p>}<p className="text-xs mt-1 text-[var(--text-tertiary)]">Temas encontrados no texto; não confirma profissão, compra ou conclusão.</p></div>
      <details className="rounded-xl p-3 bg-[var(--bg-surface)]" open><summary className="cursor-pointer text-sm font-medium">Origem e UTMs <span className="ml-2 inline-flex gap-1 align-middle">{current.origins.rows.length?current.origins.rows.map(r=><OriginBadge key={r.entity_key} row={r} historical={current.origins.historical}/>):<OriginBadge/>}</span></summary>
-      {!current.origins.rows.length?<p className="text-xs mt-3 text-[var(--text-tertiary)]">Nenhuma UTM comprovada para esta conversa. Cliques sem mensagem vinculada ficam na aba Cliques.</p>:<div className="mt-3 space-y-3">{current.origins.historical&&<p className="text-xs text-[var(--text-tertiary)]">Origem de uma mensagem anterior. Não comprova a origem do retorno atual.</p>}{current.origins.rows.map(r=><div key={r.entity_key} className="border-t border-[var(--border)] pt-2"><p className="text-xs font-medium">{campaignName(r.payload,connectionId)} · {date(r.occurred_at)}</p><dl className="grid sm:grid-cols-2 gap-x-3 gap-y-1 mt-2 text-xs">{[...utmFields,'gclid','fbclid'].map(field=><div key={field} className="flex gap-2 min-w-0"><dt className="shrink-0 text-[var(--text-tertiary)]">{field}</dt><dd className="break-all">{String(r.payload[field]||'—')}</dd></div>)}</dl></div>)}</div>}
+      {!current.origins.rows.length?<p className="text-xs mt-3 text-[var(--text-tertiary)]">Nenhuma UTM comprovada para esta conversa. Cliques sem mensagem vinculada ficam na aba Cliques.</p>:<div className="mt-3 space-y-3">{current.origins.historical&&<p className="text-xs text-[var(--text-tertiary)]">Origem comprovada no histórico da Kommo. As UTMs abaixo são daquele registro; não representam um novo clique ou a origem do retorno atual.</p>}{current.origins.rows.map(r=><div key={r.entity_key} className="border-t border-[var(--border)] pt-2"><p className="text-xs font-medium">{campaignName(r.payload,connectionId)} · {date(r.occurred_at)}</p><dl className="grid sm:grid-cols-2 gap-x-3 gap-y-1 mt-2 text-xs">{[...utmFields,'gclid','fbclid'].map(field=><div key={field} className="flex gap-2 min-w-0"><dt className="shrink-0 text-[var(--text-tertiary)]">{field}</dt><dd className="break-all">{String(r.payload[field]||'—')}</dd></div>)}</dl></div>)}</div>}
      </details>
     </div>
     <div aria-label={`Histórico de ${current.name}`} className="px-4 pb-4 max-h-[52vh] overflow-y-auto space-y-3">{loading?<p role="status" className="text-sm">Carregando conversa…</p>:currentEvents.map(e=><div key={`${e.direction}:${e.event_id}`} className={`rounded-2xl p-3 text-sm max-w-[90%] shadow-sm ${e.direction==='outgoing'?'ml-auto bg-[var(--accent-tint)] rounded-tr-sm':'bg-[var(--bg-surface)] rounded-tl-sm'}`}><p className="text-[10px] mb-1 font-medium text-[var(--text-tertiary)]">{e.direction==='incoming'?current.name:e.author_name||context?.attendant_name||'Atendimento'} · {date(e.occurred_at)}</p><p className="whitespace-pre-wrap break-words">{cleanConversationText(e.message_text)||'Mensagem sem texto'}</p></div>)}{!loading&&!current.events.length&&<p className="text-xs text-[var(--text-tertiary)]">Somente mensagens recebidas no período; respostas não disponíveis.</p>}</div>

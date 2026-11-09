@@ -616,7 +616,7 @@ export function ClientAnalyticsPanels({
       (channel === "all" || c.channel === channel) &&
       (!campaign || campaignKey(c.channel, c.name) === campaign),
   );
-  const channelRows = Object.entries(data.channels)
+  const channelRows = Object.entries(data.channels).filter(([name])=>name!=="Origem não identificada")
     .filter(([c]) => channel === "all" || c === channel)
     .map(([c, n]) => [c, campaign ? m.total : n] as const);
   const alertRows = [
@@ -835,6 +835,7 @@ export function ClientAnalyticsPanels({
               </p>
             </div>
             <div className="overflow-x-auto">
+              {marketingTab === "channels"&&unknown>0&&<div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border)] bg-[var(--warning-tint)] px-5 py-4"><p className="text-xs"><strong>{unknown} registros com origem em apuração</strong> · incluídos no total; separados dos canais confirmados.</p><button type="button" onClick={()=>onChannel?.('Origem não identificada')} className="text-xs font-semibold text-[var(--accent)]">Conferir registros →</button></div>}
               {marketingTab === "channels" ? (
                 <table className="w-full text-xs">
                   <thead className="bg-[var(--bg-surface-2)] text-left text-[var(--text-tertiary)]">
@@ -869,7 +870,7 @@ export function ClientAnalyticsPanels({
                             >
                               <TrackingChannelLogo channel={c} />
                               {c === "Origem não identificada"
-                                ? "Canal não informado"
+                                ? "Origem em apuração"
                                 : channelTitle(c)}
                             </button>
                           </td>

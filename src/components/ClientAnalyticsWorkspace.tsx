@@ -29,6 +29,7 @@ import { presetPeriod, type ReportPeriod } from "../lib/reportPeriod";
 import type { ClientDashboardData, SharedMedia } from "../lib/sharedDashboard";
 import { ReportPeriodPicker } from "./ReportPeriodPicker";
 import { ClientAnalyticsPanels } from "./ClientAnalyticsPanels";
+import {ClientGoalsEditor} from "./ClientGoalsEditor";
 import { OrbeMark } from "./OrbeMark";
 
 const icons = {
@@ -488,7 +489,7 @@ export function ClientAnalyticsWorkspace({
                     {channels.map((c) => (
                       <option key={c} value={c}>
                         {c === "Origem não identificada"
-                          ? "Canal não informado"
+                          ? "Origem em apuração"
                           : channelTitle(c)}
                       </option>
                     ))}
@@ -535,6 +536,7 @@ export function ClientAnalyticsWorkspace({
           </div>
         </header>
         <main className="space-y-5 p-4 sm:p-6">
+          {embedded&&clientId&&section==="goals"&&<ClientGoalsEditor key={`${clientId}:${data?.goal_month||period.end.slice(0,7)}`} clientId={clientId} month={data?.goal_month||period.end.slice(0,7)} onSaved={()=>setRevision(v=>v+1)}/>}
           {!current ? (
             <div
               role="status"

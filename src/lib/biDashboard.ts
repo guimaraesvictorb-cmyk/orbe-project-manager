@@ -1,7 +1,7 @@
 import {isReportDate} from './reportPeriod.js'
 import type {TrackingRecord} from './whatsappTracking.js'
 export const biChannels=['Google','Meta','Site','Instagram','Origem não identificada'] as const
-export const channelTitle=(v:string)=>v==='Google'?'Google Ads':v==='Meta'?'Meta Ads':v==='Site'?'Site':v==='Origem não identificada'?'Sem origem':v
+export const channelTitle=(v:string)=>v==='Google'?'Google Ads':v==='Meta'?'Meta Ads':v==='Site'?'Site':v==='Origem não identificada'?'Origem em apuração':v
 export function dayBrt(value:string){const stamp=Date.parse(value);return Number.isFinite(stamp)?new Date(stamp-10800000).toISOString().slice(0,10):''}
 export function unitOf(p:TrackingRecord['payload']){const value=String(p.unit||p.unidade||p.utm_term||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();return /^(alecrim|ibes|itapua)$/.test(value)?value:'unassigned'}
 export function dailyLeads(rows:TrackingRecord[],start:string,end:string){

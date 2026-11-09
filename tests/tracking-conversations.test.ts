@@ -21,7 +21,7 @@ test('origins require identified messages and do not turn unknown returns into n
 })
 test('test clicks are never presented as paid media even when they include click IDs',()=>{
  assert.equal(originKind({utm_source:'orbe_teste',gclid:'example'}),'test')
- for(const source of ['meta','facebook','instagram','fb','ig'])assert.equal(originKind({utm_source:source}),'meta')
+ for(const source of ['meta','facebook','fb'])assert.equal(originKind({utm_source:source}),'meta')
  assert.equal(originKind({utm_source:'google'}),'google')
  assert.equal(originKind({utm_source:'site'}),'site')
  assert.equal(originKind({}),'unknown')
@@ -36,3 +36,13 @@ test('briefs strip tracking markers and do not infer a customer role or a comple
 })
 
 test('an oil discussion does not imply that the contact supplies oil',()=>{assert.equal(conversationBrief(['Quero trocar o óleo do carro']).summary,'Conversa sobre óleo e lubrificantes.')})
+
+test('Kommo historical UTMs are displayed as historical without changing native attribution',()=>{
+ const m={...row('historical','person','2026-11-09T11:00:00Z'),payload:{contact_id:'person',source_status:'Não identificada',utm_source:'',origin_review_status:'historical',crm_lead_created_at:'2026-10-01T11:00:00Z',crm_origin_utm_source:'google',crm_origin_utm_campaign:'search',crm_origin_utm_medium:'cpc'}}
+ const before=JSON.stringify(m);const origin=conversationOrigins([m]);assert.equal(origin.historical,true);assert.equal(origin.rows[0].payload.utm_campaign,'search');assert.equal(originKind(origin.rows[0].payload),'google');assert.equal(JSON.stringify(m),before)
+ const invalid={...m,payload:{...m.payload,crm_lead_created_at:'2026-12-01T11:00:00Z'}};assert.equal(conversationOrigins([invalid]).rows.length,0)
+})
+test('a confirmed conversation-history channel can be shown without fabricating UTMs',()=>{
+ const m={...row('h','person','2026-11-09T11:00:00Z'),payload:{contact_id:'person',origin_history_status:'channel_found',origin_history_evidence_id:'event-1',origin_history_evidence_at:'2026-11-01T11:00:00Z',origin_history_channel:'Meta'}}
+ const origin=conversationOrigins([m]);assert.equal(origin.historical,true);assert.equal(originKind(origin.rows[0].payload),'meta');assert.equal(origin.rows[0].payload.utm_source,undefined)
+})

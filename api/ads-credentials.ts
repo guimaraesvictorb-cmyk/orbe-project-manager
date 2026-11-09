@@ -1,3 +1,4 @@
+import {organicAnalytics,organicAnalyticsCallback} from './_lib/organicAnalytics.js';
 import {metaAgencyAdmin,metaAgencyConfig,metaCredential,metaMetadata,markMetaVerified} from './_lib/metaAgency.js';
 import {googleMccAdmin,googleMetadata,googleCredential,markGoogleVerified,isMccCredentialSource} from './_lib/googleMcc.js';
 import googleAdsOAuth from './_lib/googleAdsOAuth.js';
@@ -9,13 +10,13 @@ import {adsBinding,normalizeAdsCredentials,verifyMetaAccess} from './_lib/adsCre
 import {googleAdsReport} from './_lib/googleAdsReport.js';
 export default async function handler(req:Request,res:ServerResponse){
  const route=new URL(req.url??'/api/ads-credentials',ORBE_ORIGIN);
- if(route.pathname==='/api/google-ads-oauth'||route.searchParams.get('oauth')==='1')return googleAdsOAuth(req,res);
+ if(route.pathname==='/api/google-ads-oauth'||route.searchParams.get('oauth')==='1'){if(req.method==='GET'&&route.searchParams.get('state')?.startsWith('ga4_'))return organicAnalyticsCallback(req,res);return googleAdsOAuth(req,res);}
  if(req.method!=='POST')return answer(res,405,{error:'method_not_allowed'});
  if(req.headers.origin!==ORBE_ORIGIN)return answer(res,403,{error:'forbidden'});
  if(!req.headers['content-type']?.startsWith('application/json'))return answer(res,415,{error:'json_required'});
  try{
   if(Buffer.byteLength(JSON.stringify(req.body)??'')>32768)return answer(res,413,{error:'too_large'});
-  const input=object(req.body);if(typeof input.action==='string'&&input.action.startsWith('meta_agency_'))return metaAgencyAdmin(req,res);if(typeof input.action==='string'&&input.action.startsWith('mcc_'))return googleMccAdmin(req,res);
+  const input=object(req.body);if(typeof input.action==='string'&&input.action.startsWith('ga4_'))return organicAnalytics(req,res);if(typeof input.action==='string'&&input.action.startsWith('meta_agency_'))return metaAgencyAdmin(req,res);if(typeof input.action==='string'&&input.action.startsWith('mcc_'))return googleMccAdmin(req,res);
   const client=scalar(input.client_id,36),{db,user}=await qrUser(req,client);
   const profiles=await db<{role:string;can_view_financials:boolean}[]>(`rest/v1/profiles?id=eq.${user.id}&select=role,can_view_financials`);
   if(input.action==='status'){
