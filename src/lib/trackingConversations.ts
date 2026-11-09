@@ -31,13 +31,13 @@ export function conversationOrigins(messages: TrackingRecord[],evidence: Trackin
  return {historical:!confirmed.length&&!!historical.length,rows:[...new Map(rows.map(r=>[[originKind(r.payload),r.payload.utm_source,r.payload.utm_campaign,r.payload.utm_content].join('|'),r])).values()]}
 }
 const topics:[string,RegExp][]=[
- ['faturamento e cobranças',/\b(faturamento|fatura|boleto|vencimento|vencimentos|cobrança|cobranças|nota fiscal|notas fiscais)\b/iu],
- ['óleo e lubrificantes',/\b(óleo|oleo|lubrificante|lubrificantes)\b/iu],
- ['peças e manutenção',/\b(peça|peças|pastilha|pastilhas|freio|freios|motor|suspensão|câmbio|revisão)\b/iu],
- ['vistoria e seguro',/\b(vistoria|sinistro|seguro|seguradora)\b/iu],
- ['agendamento',/\b(agendar|agendado|agendada|agendamento|horário|horarios)\b/iu],
- ['orçamento',/\b(orçamento|orcamento|cotação|cotacao)\b/iu],
- ['localização da oficina',/\b(endereço|endereco|localização|localizacao)\b/iu],
+ ['faturamento e cobranças',/(?<!\p{L})(faturamento|fatura|boleto|vencimento|vencimentos|cobrança|cobranças|nota fiscal|notas fiscais)(?!\p{L})/iu],
+ ['óleo e lubrificantes',/(?<!\p{L})(óleo|oleo|lubrificante|lubrificantes)(?!\p{L})/iu],
+ ['peças e manutenção',/(?<!\p{L})(peça|peças|pastilha|pastilhas|freio|freios|motor|suspensão|câmbio|revisão)(?!\p{L})/iu],
+ ['vistoria e seguro',/(?<!\p{L})(vistoria|sinistro|seguro|seguradora)(?!\p{L})/iu],
+ ['agendamento',/(?<!\p{L})(agendar|agendado|agendada|agendamento|horário|horarios)(?!\p{L})/iu],
+ ['orçamento',/(?<!\p{L})(orçamento|orcamento|cotação|cotacao)(?!\p{L})/iu],
+ ['localização da oficina',/(?<!\p{L})(endereço|endereco|localização|localizacao)(?!\p{L})/iu],
 ]
 export function conversationBrief(texts: string[]) {
  const cleaned=texts.map(cleanConversationText).filter(Boolean)
