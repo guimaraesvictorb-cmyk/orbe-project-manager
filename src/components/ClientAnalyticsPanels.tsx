@@ -404,7 +404,7 @@ function GoalCard({
       <p className="mt-3 text-[10px] text-[var(--text-tertiary)]">
         {g.target
           ? `Esperado pelo calendário: ${num(g.expected)}`
-          : "A equipe pode cadastrar a meta no rastreamento."}
+          : "A equipe pode definir o objetivo em Metas e planejamento."}
       </p>
       <div className="mt-6 grid grid-cols-2 gap-x-5 gap-y-5 border-t border-[var(--border)] pt-5">
         {[
@@ -1221,7 +1221,7 @@ export function ClientAnalyticsPanels({
               {!data.goals.length && (
                 <p className="p-5 text-sm text-[var(--text-tertiary)]">
                   Nenhuma meta cadastrada neste ciclo. A equipe pode definir o
-                  objetivo em Rastreamento → Metas e projeções.
+                  objetivo em Metas e planejamento do cliente.
                 </p>
               )}
             </div>

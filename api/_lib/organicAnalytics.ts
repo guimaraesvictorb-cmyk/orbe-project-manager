@@ -75,7 +75,7 @@ export async function organicAnalyticsCallback(req:Request,res:ServerResponse){
   const secrets=object(credential.secrets),response=await fetch('https://oauth2.googleapis.com/token',{method:'POST',redirect:'error',signal:AbortSignal.timeout(15000),headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({grant_type:'authorization_code',client_id:String(secrets.client_id),client_secret:String(secrets.client_secret),redirect_uri:callback,code,code_verifier:unseal(session.verifier_ciphertext,`ga4-oauth:${hash}`)})})
   const token=await response.json() as {refresh_token?:unknown;scope?:unknown}
   if(!response.ok||typeof token.refresh_token!=='string'||token.refresh_token.length<10||token.refresh_token.length>4096||!String(token.scope||'').split(' ').includes(analyticsScope))return finish(res,client,'authorization_failed')
-  await db('rest/v1/wa_ga4_credentials?on_conflict=client_id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({client_id:client,ciphertext:seal(JSON.stringify({client_id:secrets.client_id,client_secret:secrets.client_secret,refresh_token:token.refresh_token}),binding(client)),updated_at:new Date().toISOString(),updated_by:session.user_id})})
+  await db('rest/v1/wa_ga4_credentials?on_conflict=client_id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=representation'},body:JSON.stringify({client_id:client,ciphertext:seal(JSON.stringify({client_id:secrets.client_id,client_secret:secrets.client_secret,refresh_token:token.refresh_token}),binding(client)),updated_at:new Date().toISOString(),updated_by:session.user_id})})
   return finish(res,client,'success')
  }catch{return finish(res,client,'authorization_failed')}
 }

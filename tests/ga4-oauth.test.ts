@@ -24,7 +24,7 @@ test('GA4 OAuth checks admin and client access, binds the browser, encrypts its 
    if(init?.method==='POST'){session=JSON.parse(String(init.body));consumed=false}
    else if(init?.method==='PATCH'){data=consumed?[]:[{state_hash:session?.state_hash}];consumed=true}
    else data=session&&!consumed&&target.searchParams.get('state_hash')==='eq.'+session.state_hash?[session]:[]
-  }else if(target.pathname.endsWith('/wa_ga4_credentials')&&init?.method==='POST')saved=JSON.parse(String(init.body))
+  }else if(target.pathname.endsWith('/wa_ga4_credentials')&&init?.method==='POST'){saved=JSON.parse(String(init.body));if(new Headers(init.headers).get('Prefer')?.includes('return=minimal'))return new Response(null,{status:201});data=[{client_id:client,updated_at:'2026-11-09T12:00:00Z'}]}
   else if(!['client_assignments','orbe_google_mcc','orbe_google_mcc_accounts','wa_ga4_credentials'].some(name=>target.pathname.endsWith('/'+name)))throw Error('Unexpected synthetic request '+target.pathname)
   return new Response(JSON.stringify(data))
  }
