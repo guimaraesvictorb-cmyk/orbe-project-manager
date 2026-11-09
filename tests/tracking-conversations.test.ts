@@ -34,3 +34,5 @@ test('briefs strip tracking markers and do not infer a customer role or a comple
  assert.equal(conversationBrief(['Bom dia']).summary,'Conversa sem tema específico identificado.')
  assert.equal(conversationBrief([]).summary,'Sem texto disponível para resumir.')
 })
+
+test('an oil discussion does not imply that the contact supplies oil',()=>{assert.equal(conversationBrief(['Quero trocar o óleo do carro']).summary,'Conversa sobre óleo e lubrificantes.')})

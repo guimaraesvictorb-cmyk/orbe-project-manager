@@ -32,7 +32,7 @@ export function conversationOrigins(messages: TrackingRecord[],evidence: Trackin
 }
 const topics:[string,RegExp][]=[
  ['faturamento e cobranças',/\b(faturamento|fatura|boleto|vencimento|vencimentos|cobrança|cobranças|nota fiscal|notas fiscais)\b/iu],
- ['fornecimento de óleo',/\b(óleo|oleo|lubrificante|lubrificantes)\b/iu],
+ ['óleo e lubrificantes',/\b(óleo|oleo|lubrificante|lubrificantes)\b/iu],
  ['peças e manutenção',/\b(peça|peças|pastilha|pastilhas|freio|freios|motor|suspensão|câmbio|revisão)\b/iu],
  ['vistoria e seguro',/\b(vistoria|sinistro|seguro|seguradora)\b/iu],
  ['agendamento',/\b(agendar|agendado|agendada|agendamento|horário|horarios)\b/iu],
