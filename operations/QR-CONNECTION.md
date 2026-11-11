@@ -42,7 +42,7 @@ This is a linked-device connection; it does not migrate the number to Meta Cloud
 ## Periodic checks and immediate commands (2026-11-11)
 
 The broker performs a complete connection check every 1800 seconds. One shared,
-authenticated `worker_list` command check runs every five seconds, using the existing
+authenticated `worker_list` command check runs every ten seconds, using the existing
 broker API and credential. It returns only assigned instance/connection/request IDs.
 No new database permission, public RPC, provider key or public management endpoint
 is introduced. Session heartbeat writes are coalesced to once per 30 seconds, keeping

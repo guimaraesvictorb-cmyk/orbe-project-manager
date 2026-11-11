@@ -15,7 +15,7 @@ from urllib.error import HTTPError
 from urllib.request import Request, build_opener, HTTPRedirectHandler
 
 POLL_INTERVAL_SECONDS = 30 * 60
-COMMAND_INTERVAL_SECONDS = 5
+COMMAND_INTERVAL_SECONDS = 10
 
 class NoRedirect(HTTPRedirectHandler):
     def redirect_request(self, *args, **kwargs):
