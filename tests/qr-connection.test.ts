@@ -45,3 +45,27 @@ test('QR disconnect is scoped, stops capture, blocks stale open and clears the o
   if(original.key===undefined)delete process.env.SUPABASE_SERVICE_ROLE_KEY;else process.env.SUPABASE_SERVICE_ROLE_KEY=original.key;
  }
 });
+
+test('broker command list returns only assigned request IDs and refreshes heartbeat in one scoped write',async()=>{
+ const original={fetch:globalThis.fetch,url:process.env.VITE_SUPABASE_URL,key:process.env.SUPABASE_SERVICE_ROLE_KEY};
+ process.env.VITE_SUPABASE_URL='https://storage.test';process.env.SUPABASE_SERVICE_ROLE_KEY='synthetic-key';
+ const seen:string[]=[];
+ globalThis.fetch=async(input,init)=>{
+  const url=String(input);seen.push(url);let value:unknown=[];
+  if(url.includes('/wa_qr_workers?')&&init?.method!=='PATCH')value=[{id:'test-worker'}];
+  else if(url.includes('/wa_qr_sessions?')&&init?.method!=='PATCH')value=[{connection_id:connection,request_id:'command-1'}];
+  else if(url.includes('/wa_tracking_connections?'))value=[{id:connection,instance:'orbe-qr-test'}];
+  return new Response(JSON.stringify(value),{status:200});
+ };
+ try{
+  const res={statusCode:0,body:'',setHeader(){},end(v:string){this.body=v}};
+  await handler({method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+'a'.repeat(43)},body:{action:'worker_list'}} as never,res as never);
+  assert.equal(res.statusCode,200);assert.deepEqual(JSON.parse(res.body).jobs,[{id:connection,instance:'orbe-qr-test',request_id:'command-1'}]);
+  assert.ok(seen.some(url=>url.includes('wa_qr_sessions?worker_id=eq.test-worker&or=')));
+  assert.ok(seen.every(url=>!url.includes('wa_tracking_records')));
+ }finally{
+  globalThis.fetch=original.fetch;
+  if(original.url===undefined)delete process.env.VITE_SUPABASE_URL;else process.env.VITE_SUPABASE_URL=original.url;
+  if(original.key===undefined)delete process.env.SUPABASE_SERVICE_ROLE_KEY;else process.env.SUPABASE_SERVICE_ROLE_KEY=original.key;
+ }
+});

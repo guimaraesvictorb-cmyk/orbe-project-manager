@@ -76,4 +76,29 @@ class QRRecoveryTest(unittest.TestCase):
    worker.webhook=lambda enabled:self.fail('unverified webhook enabled')
    with self.assertRaises(ConnectionError):worker.tick()
 
+class QRSchedulingTest(unittest.TestCase):
+ def broker(self):
+  from types import SimpleNamespace
+  broker=object.__new__(module.Broker);broker.next_poll=0
+  worker=SimpleNamespace(session={'request_id':'r1'},active=lambda:False,tick=lambda:None,refresh_pending=module.threading.Event())
+  broker.workers={'11111111-1111-1111-1111-111111111111':worker}
+  broker.commands=lambda:[{'id':next(iter(broker.workers)),'instance':'orbe-qr-test','request_id':'r1'}]
+  return broker,worker
+ def test_idle_full_checks_are_thirty_minutes_apart(self):
+  broker,worker=self.broker();calls=[];worker.tick=lambda:calls.append(True)
+  broker.cycle(0);broker.cycle(5);broker.cycle(1799);self.assertEqual(len(calls),1)
+  broker.cycle(1800);self.assertEqual(len(calls),2)
+ def test_new_command_wakes_connection_between_full_checks(self):
+  broker,worker=self.broker();broker.next_poll=1800;calls=[];worker.tick=lambda:calls.append(True)
+  worker.session={'request_id':'old'};broker.cycle(5);self.assertEqual(calls,[True])
+ def test_active_pairing_keeps_fast_processing(self):
+  broker,worker=self.broker();broker.next_poll=1800;calls=[];worker.tick=lambda:calls.append(True)
+  worker.active=lambda:True;broker.cycle(5);self.assertEqual(calls,[True])
+ def test_message_wakes_delivery_without_waiting_for_periodic_poll(self):
+  with tempfile.TemporaryDirectory() as tmp:
+   worker=module.Worker({'token':'test'},'',str(Path(tmp)/'queue.sqlite3'))
+   worker.instance='orbe-qr-lk-lucas';worker.session={'verified_at':'now','capture_mode':'client'};worker.last_status='open'
+   worker.receive(QRWorkerTest().event());self.assertTrue(worker.delivery_pending.is_set())
+   with worker.db() as db:self.assertEqual(db.execute('SELECT count(*) FROM outbox').fetchone()[0],1)
+
 if __name__=='__main__':unittest.main()

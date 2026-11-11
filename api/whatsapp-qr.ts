@@ -23,10 +23,13 @@ export default async function handler(req:Request,res:ServerResponse){
    if(action==='worker_list'){
     if(!broker)return answer(res,403,{error:'unauthorized'});
     await db(`rest/v1/wa_qr_workers?id=eq.${broker.id}`,{method:'PATCH',body:JSON.stringify({last_seen_at:new Date().toISOString()})});
-    const sessions=await db<{connection_id:string}[]>(`rest/v1/wa_qr_sessions?worker_id=eq.${broker.id}&select=connection_id`);
+    const sessions=await db<{connection_id:string;request_id:string|null}[]>(`rest/v1/wa_qr_sessions?worker_id=eq.${broker.id}&select=connection_id,request_id`);
+    // One broker heartbeat keeps all assigned sessions fresh without a full
+    // per-client worker_poll / worker_state round trip every five seconds.
+    if(sessions.length)await db(`rest/v1/wa_qr_sessions?worker_id=eq.${broker.id}&or=(worker_seen_at.is.null,worker_seen_at.lt.${encodeURIComponent(new Date(Date.now()-30000).toISOString())})`,{method:'PATCH',body:JSON.stringify({worker_seen_at:new Date().toISOString()})});
     if(!sessions.length)return answer(res,200,{ok:true,jobs:[]});
     const jobs=await db<{id:string;instance:string}[]>(`rest/v1/wa_tracking_connections?id=in.(${sessions.map(s=>s.connection_id).join(',')})&provider=eq.evolution&select=id,instance`);
-    return answer(res,200,{ok:true,jobs});
+    return answer(res,200,{ok:true,jobs:jobs.map(job=>({...job,request_id:sessions.find(s=>s.connection_id===job.id)?.request_id??null}))});
    }
    let connectionId='';
    if(broker){connectionId=scalar(input.connection_id,36);if(!/^[0-9a-f-]{36}$/.test(connectionId))return answer(res,403,{error:'forbidden'})}

@@ -38,3 +38,21 @@ requires a test message received after the current device verification.
 
 Production readiness still requires the user's actual inbound test per client.
 This is a linked-device connection; it does not migrate the number to Meta Cloud API.
+
+## Periodic checks and immediate commands (2026-11-11)
+
+The broker performs a complete connection check every 1800 seconds. One shared,
+authenticated `worker_list` command check runs every five seconds, using the existing
+broker API and credential. It returns only assigned instance/connection/request IDs.
+No new database permission, public RPC, provider key or public management endpoint
+is introduced. Session heartbeat writes are coalesced to once per 30 seconds, keeping
+the existing 45-second API freshness guard. QR/disconnect commands and authenticated
+private connection updates wake the affected connection; active pairing stays fast.
+Messages wake durable-outbox delivery immediately; failures preserve unacknowledged
+rows. Routine UI polling remains separate and must not be confused with the worker.
+
+Deploy the backward-compatible API first, then back up the installed worker and restart
+only `orbe-qr-broker` with the new file. No config/SQL changes are required. Preserve
+all outboxes and other containers. Rollback restores the previous worker file. The
+legacy standalone worker is not used by this broker deployment. A quota suspension
+is not lifted by this optimization alone.

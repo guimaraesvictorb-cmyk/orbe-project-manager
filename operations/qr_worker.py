@@ -14,6 +14,9 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.error import HTTPError
 from urllib.request import Request, build_opener, HTTPRedirectHandler
 
+POLL_INTERVAL_SECONDS = 30 * 60
+COMMAND_INTERVAL_SECONDS = 5
+
 class NoRedirect(HTTPRedirectHandler):
     def redirect_request(self, *args, **kwargs):
         return None
@@ -57,7 +60,7 @@ class Worker:
         self.config=config;self.global_key=global_key;self.lock=threading.Lock();self.db_path=db_path
         self.instance_key=hmac.new(config['token'].encode(),b'evolution-instance',hashlib.sha256).hexdigest()
         self.webhook_key=hmac.new(config['token'].encode(),b'evolution-webhook',hashlib.sha256).hexdigest()
-        self.instance=None;self.session=None;self.last_status=None
+        self.instance=None;self.session=None;self.last_status=None;self.delivery_pending=threading.Event();self.refresh_pending=threading.Event()
         with self.db() as db: db.execute('CREATE TABLE IF NOT EXISTS outbox (id INTEGER PRIMARY KEY,event TEXT NOT NULL)')
     def db(self):return sqlite3.connect(self.db_path,timeout=10)
     def cloud(self,action,**values):return call('https://studio.agenciaorbe.co/api/whatsapp-qr',self.config.get('cloud_token',self.config['token']),{'action':action,**({'connection_id':self.config['connection_id']} if 'connection_id' in self.config else {}),**values})
@@ -120,9 +123,13 @@ class Worker:
         else:
             self.state('close')
     def flush(self):
+        with self.lock:
+            self._flush()
+    def _flush(self):
         with self.db() as db:rows=db.execute('SELECT id,event FROM outbox ORDER BY id LIMIT 30').fetchall()
         if not rows:return
         result=self.cloud('worker_messages',events=[json.loads(row[1]) for row in rows])
+        if not result.get('ok'):raise ConnectionError('delivery_not_acknowledged')
         if result.get('ok'):
             with self.db() as db:db.executemany('DELETE FROM outbox WHERE id=?',[(row[0],) for row in rows])
     def receive(self,value):
@@ -133,46 +140,72 @@ class Worker:
             with self.db() as db:
                 if db.execute('SELECT count(*) FROM outbox').fetchone()[0]>10000:raise ValueError('outbox_full')
                 db.execute('INSERT INTO outbox(event) VALUES(?)',(json.dumps(event),))
-    def run(self):
+            self.delivery_pending.set()
+    def deliver(self):
+        # Events wake delivery immediately; retries retain the durable outbox.
         while True:
-            try:self.tick()
+            self.delivery_pending.wait()
+            self.delivery_pending.clear()
+            try:
+                while True:
+                    with self.db() as db: pending=db.execute('SELECT 1 FROM outbox LIMIT 1').fetchone()
+                    if not pending:break
+                    self.flush()
             except Exception:
-                try:
-                    if self.session and self.session.get('request_id') and self.session.get('status')!='disconnecting':self.state('error')
-                except Exception:pass
-                # Do not log bodies, API keys, QR contents or private contact data.
-                print('ORBE_QR_RETRY',flush=True)
-            time.sleep(5)
+                print('ORBE_QR_DELIVERY_RETRY',flush=True)
+                time.sleep(COMMAND_INTERVAL_SECONDS)
+                self.delivery_pending.set()
+    def active(self):
+        if not self.session:return False
+        from datetime import datetime
+        expiry=self.session.get('expires_at')
+        return self.session.get('status')=='disconnecting' or bool(expiry) and self.last_status!='open' and datetime.fromisoformat(expiry.replace('Z','+00:00')).timestamp()>time.time()
+    def run(self):
+        # Legacy single-worker installs must also configure the command channel.
+        raise RuntimeError('Use the broker with the scoped command channel')
 
 class Broker:
     def __init__(self,config):
         self.config=config;self.workers={}
         self.global_key=Path('/private/evolution-key').read_text().strip()
+    def commands(self):
+        # Reuse the broker's existing authenticated API. No new DB access.
+        return call('https://studio.agenciaorbe.co/api/whatsapp-qr',self.config['token'],{'action':'worker_list'})['jobs']
+    def cycle(self,now):
+        commands=self.commands()
+        full=now>=self.next_poll
+        # One lightweight shared command check replaces per-connection polling.
+        # Full connection checks run every 30 minutes, or on a command/event.
+        if full:self.next_poll=now+POLL_INTERVAL_SECONDS
+        for job in commands:
+            cid=job['id']
+            import re
+            if not re.fullmatch(r'[0-9a-f-]{36}',cid) or not re.fullmatch(r'orbe-qr-[a-z0-9-]+',job['instance']):continue
+            if cid not in self.workers:
+                token=self.config.get('legacy_tokens',{}).get(cid) or hmac.new(self.config['token'].encode(),cid.encode(),hashlib.sha256).hexdigest()
+                worker=Worker({'token':token,'cloud_token':self.config['token'],'connection_id':cid},self.global_key,'/data/'+cid+'.sqlite3')
+                worker.instance=job['instance'];self.workers[cid]=worker
+                threading.Thread(target=worker.deliver,daemon=True).start()
+                worker.delivery_pending.set()
+            worker=self.workers[cid]
+            changed=not worker.session or worker.session.get('request_id')!=job.get('request_id')
+            if full or changed or worker.active() or worker.refresh_pending.is_set():
+                worker.refresh_pending.clear()
+                try:worker.tick()
+                except Exception:print('ORBE_QR_CONNECTION_RETRY',flush=True)
     def run(self):
+        self.next_poll=0
         while True:
-            try:
-                jobs=call('https://studio.agenciaorbe.co/api/whatsapp-qr',self.config['token'],{'action':'worker_list'})['jobs']
-                for job in jobs:
-                    cid=job['id']
-                    import re
-                    if not re.fullmatch(r'[0-9a-f-]{36}',cid) or not re.fullmatch(r'orbe-qr-[a-z0-9-]+',job['instance']):continue
-                    if cid not in self.workers:
-                        token=self.config.get('legacy_tokens',{}).get(cid) or hmac.new(self.config['token'].encode(),cid.encode(),hashlib.sha256).hexdigest()
-                        self.workers[cid]=Worker({'token':token,'cloud_token':self.config['token'],'connection_id':cid},self.global_key,'/data/'+cid+'.sqlite3')
-                        self.workers[cid].instance=job['instance']
-                    worker=self.workers[cid]
-                    try:worker.tick()
-                    except Exception:
-                        try:
-                            if worker.session and worker.session.get('request_id') and worker.session.get('status')!='disconnecting':worker.state('error')
-                        except Exception:pass
+            try:self.cycle(time.monotonic())
             except Exception:print('ORBE_QR_BROKER_RETRY',flush=True)
-            time.sleep(5)
+            time.sleep(COMMAND_INTERVAL_SECONDS)
     def receive(self,value,auth):
         if not isinstance(value,dict):return False
         worker=next((w for w in self.workers.values() if w.instance==value.get('instance')),None)
         if not worker or not hmac.compare_digest(auth,'Bearer '+worker.webhook_key):return False
-        worker.receive(value);return True
+        if value.get('event')=='connection.update':worker.refresh_pending.set()
+        else:worker.receive(value)
+        return True
 
 def main():
     os.umask(0o077)
